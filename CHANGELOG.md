@@ -2,7 +2,7 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
-## Unreleased - 0.3.0a3.dev0
+## 0.3.0-alpha.3 - 2026-07-21
 
 ### Added
 
@@ -18,7 +18,7 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 - a fail-closed pseudonymous-publication scanner covering tracked text, DOCX XML and relationships, PDF metadata, archives, release artifacts, and Git commit authorship;
 - a machine-readable identity policy, release-date erratum, and preserved operational-branch tip ledger.
 
-This development interface records and rejects malformed proof claims. It does not execute theorem provers or interval backends and cannot satisfy an admission gate. The exact rational linear solver is scoped only to the finite derived-holonomy system.
+This release records and rejects malformed proof claims. It does not execute theorem provers or interval backends and cannot satisfy an admission gate. The exact rational linear solver is scoped only to the finite derived-holonomy system.
 
 ## 0.3.0-alpha.2 - 2026-07-21
 

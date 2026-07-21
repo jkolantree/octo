@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/jkolantree/octo/main/schemas/derived-holonomy-v0.1.schema.json",
+  "$id": "https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.3/schemas/derived-holonomy-v0.1.schema.json",
   "title": "BSC exact derived-holonomy record",
   "$defs": {
     "scalar": {"oneOf": [{"type": "integer"}, {"type": "string", "pattern": "^-?[0-9]+(?:/[1-9][0-9]*)?$"}]},

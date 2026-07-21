@@ -38,7 +38,7 @@ Exit criterion: every registered poisoned null is mechanically distinguished fro
 
 Exit criterion: a submitted receipt can be checked as a finite provenance object, while no submitted field can promote a theorem before supervised adapter execution exists.
 
-## v0.3.0a3 development - exact derived witnessed descent
+## v0.3.0-alpha.3 - exact derived witnessed descent
 
 - exact rational homotopy solver with replayed primal and dual certificates;
 - arbitrary-length presented path relations without weakening strict `complex` squares;

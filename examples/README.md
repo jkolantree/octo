@@ -1,6 +1,6 @@
 # Example Catalog
 
-Examples are known-answer fixtures for the checker. They are not evidence that the represented scientific claims are true. Run them from the repository root with the current checkout. The `holonomy` fixtures require development engine `0.3.0a3.dev0`; the published alpha.2 examples remain preserved.
+Examples are known-answer fixtures for the checker. They are not evidence that the represented scientific claims are true. Run them from the repository root with the current checkout. The `holonomy` fixtures require engine `0.3.0a3`; the published alpha.2 examples remain preserved.
 
 | File | Command | Expected decision | Exit | Lesson |
 |---|---|---:|---:|---|

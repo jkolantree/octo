@@ -1,6 +1,6 @@
 # Programmer Tutorial
 
-This guide runs the published v0.3.0-alpha.2 research preview or the `0.3.0a3.dev0` development checkout. The `holonomy` route is development-line functionality and is not present in the alpha.2 release artifact.
+This guide runs the published v0.3.0-alpha.3 research preview. The `holonomy` route first appears in this release; preserve the exact engine version with every output.
 
 ## Requirements
 
@@ -24,10 +24,10 @@ python run_audit.py --version
 The output must identify the source you intended to audit. The published release reports:
 
 ```text
-bsc-audit 0.3.0a2
+bsc-audit 0.3.0a3
 ```
 
-The current development checkout reports `bsc-audit 0.3.0a3.dev0`. Record the exact value with every audit and do not attribute development-route output to alpha.2.
+Record the exact value with every audit and do not attribute alpha.3 route output to an earlier release.
 
 ## 2. Zero-install route
 
@@ -93,7 +93,7 @@ Example shape:
 
 ```json
 {
-  "engine_version": "0.3.0a2",
+  "engine_version": "0.3.0a3",
   "checks": {
     "run": ["strict_json_parse", "finite_observation_descent"],
     "not_run": ["claim_manifest_lint", "gate_product", "domain_plugins"]
@@ -146,7 +146,7 @@ python run_audit.py lint work/my_claim.json
 python run_audit.py audit work/my_claim.json
 ```
 
-The machine-readable contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The manifest version is `0.3.0`; it is independent of the engine’s PEP 440 version `0.3.0a2`.
+The machine-readable contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The manifest version is `0.3.0`; it is independent of the engine’s PEP 440 version `0.3.0a3`.
 
 ## 7. Evidence and hashes
 
