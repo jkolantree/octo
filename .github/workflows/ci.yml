@@ -22,11 +22,17 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: ${{ matrix.python-version }}
       - run: python scripts/run_tests.py
       - run: python scripts/run_null_discrimination.py
+      - name: Fail-closed privacy and commit-identity scan
+        env:
+          PRIVACY_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python scripts/check_privacy.py --protected-history "$PRIVACY_COMMIT"
       - run: python scripts/check_release.py
       - run: python run_audit.py audit examples/claim_valid.json
       - run: python run_audit.py complex examples/complex_valid_transport.json
@@ -43,11 +49,17 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: "3.12.13"
       - run: python -m pip install --disable-pip-version-check "setuptools==82.0.1"
       - run: SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py
+      - name: Fail-closed source, artifact, and commit-identity scan
+        env:
+          PRIVACY_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python scripts/check_privacy.py --protected-history "$PRIVACY_COMMIT" --artifacts dist
       - name: Reproducible distributions
         run: |
           mkdir /tmp/bsc-build-a /tmp/bsc-build-b

@@ -8,11 +8,13 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 
 - an explicitly non-admissive proof-carrying adapter receipt schema;
 - structural, artifact-binding, result-consistency, replay, and assumption-policy checks for Lean 4, SMT-LIB 2, and interval receipts;
-- adversarial adapter tests that prevent receipts from silently acquiring theorem authority.
+- adversarial adapter tests that prevent receipts from silently acquiring theorem authority;
+- a fail-closed pseudonymous-publication scanner covering tracked text, DOCX XML and relationships, PDF metadata, archives, release artifacts, and Git commit authorship;
+- a machine-readable identity policy, release-date erratum, and preserved operational-branch tip ledger.
 
 This development interface records and rejects malformed proof claims. It does not yet execute theorem provers, solvers, or interval backends and cannot satisfy an admission gate.
 
-## 0.3.0-alpha.2 - 2026-07-20
+## 0.3.0-alpha.2 - 2026-07-21
 
 ### Corrected false passes
 

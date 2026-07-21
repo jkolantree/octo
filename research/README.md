@@ -10,6 +10,10 @@ The release checker verifies both research-artifact digests. Neither the PDF
 nor its DOCX source is included in Python distributions or the Apache-2.0
 software release bundle.
 
+GitHub's automatic tag source archives include both files because they are
+tracked source artifacts. This directory's CC BY 4.0 license continues to
+govern them inside those archives.
+
 The Apache-2.0 repository license covers code, schemas, templates, and
 documentation created for the software. The paper and its editable source are
 separately licensed under Creative Commons Attribution 4.0 International; see

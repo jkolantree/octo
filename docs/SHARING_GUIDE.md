@@ -12,11 +12,19 @@ The v0.3.0-alpha.2 release is a research preview. Every public description shoul
 Create tag `v0.3.0-alpha.2` and attach:
 
 - `bsc-audit-engine-0.3.0-alpha.2.zip`;
-- `BSC_AUDIT_LLM_PACKET.md`;
+- the wheel and source distribution;
+- the conformance packet;
+- `RELEASE_MANIFEST.json` and `SBOM.spdx.json`;
 - `SHA256SUMS`;
-- a machine-readable source archive or the automatically generated GitHub source archive.
+- GitHub's automatically generated source archives.
 
 Do not place the research PDF or its DOCX source inside the Apache-2.0 software bundle. Archive them as a separate CC BY 4.0 publication using `research/zenodo.json`.
+
+GitHub generates `Source code (zip)` and `Source code (tar.gz)` from the
+complete tagged tree. Unlike the custom software bundle, those automatic
+archives include the tracked `research/` PDF and DOCX. Their
+`research/LICENSE` applies to those paths; the root Apache-2.0 license does not
+replace it.
 
 Do not manually zip a working directory containing caches or untracked files. Build from the tagged tree. Preserve the prior `v0.2.1` tag rather than moving it.
 
@@ -37,6 +45,11 @@ Use separate related records:
 Add reciprocal `isSupplementTo`/`isSupplementedBy` or equivalent relations and include the final repository URL in both `CITATION.cff` and `.zenodo.json`.
 
 The creator identity remains **J. Tree** unless the maintainer deliberately updates it. Do not invent an ORCID, institution, or endorsement.
+
+Run `python scripts/check_privacy.py --protected-history HEAD` before publication. The
+checker rejects personal contact information, unapproved document authors,
+local paths, secrets, unsafe archives, detailed publication-tool fingerprints,
+and non-noreply commit addresses.
 
 ## What a trustworthy audit release contains
 

@@ -3,7 +3,7 @@ message: "If you use the checker, cite this software release. Cite the research 
 title: "BSC Audit Engine"
 type: software
 version: 0.3.0-alpha.2
-date-released: 2026-07-20
+date-released: 2026-07-21
 authors:
   - family-names: "Tree"
     given-names: "J."

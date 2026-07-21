@@ -192,6 +192,7 @@ def main() -> int:
         raise SystemExit(f"release output directory must be empty: {output}")
     output.mkdir(parents=True, exist_ok=True)
 
+    run([sys.executable, "scripts/check_privacy.py", "--protected-history", "HEAD"])
     run([sys.executable, "scripts/run_tests.py"])
     run([sys.executable, "scripts/check_release.py"])
     env = dict(os.environ, SOURCE_DATE_EPOCH=str(SOURCE_DATE_EPOCH))
@@ -240,6 +241,7 @@ def main() -> int:
         "verification": {
             "source_tests": "pass",
             "release_integrity_checks": "pass",
+            "privacy_scan": "pass",
             "reproducible_distributions": "pass",
             "clean_git_tree": "pass",
             "exact_release_tag": "pass",
@@ -252,6 +254,9 @@ def main() -> int:
     write_json(manifest_path, manifest)
     checksum_paths = sorted(artifacts + [manifest_path])
     (output / "SHA256SUMS").write_text("".join(f"{sha256(path)}  {path.name}\n" for path in checksum_paths), encoding="utf-8")
+    # The last successful gate covers the complete release directory,
+    # including its manifest and checksum ledger.
+    run([sys.executable, "scripts/check_privacy.py", "--protected-history", "HEAD", "--artifacts", str(output)])
     print(f"release assets written to {output}")
     return 0
 

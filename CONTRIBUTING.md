@@ -63,8 +63,14 @@ Run:
 
 ```bash
 python scripts/run_tests.py
+python scripts/check_privacy.py --protected-history HEAD
 git diff --check
 ```
+
+Commits must use a GitHub `users.noreply.github.com` author address. Do not
+place a personal email, affiliation, ORCID, telephone number, postal address,
+local machine path, credential, or unapproved document author in an issue,
+fixture, archive, publication property, or commit identity.
 
 Do not weaken a fatal gate into a score. Do not delete a negative result because a preferred model fails it. Do not silently change prior output semantics.
 

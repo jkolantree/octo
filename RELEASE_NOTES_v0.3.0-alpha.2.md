@@ -36,6 +36,14 @@ The suite is run by `python scripts/run_null_discrimination.py` and by the ordin
 
 Code, schemas, templates, and software documentation remain Apache-2.0. The `Audit_Descent_Calculus` PDF and its DOCX source are CC BY 4.0 and are excluded from Python distributions and the Apache-labelled software release bundle.
 
+GitHub's automatically generated tag source archives contain the complete
+tracked tree, including the separately licensed research files. Their embedded
+`research/LICENSE` remains authoritative for those paths.
+
+The source metadata recorded `2026-07-20`, while the immutable tag and GitHub
+Release were created on `2026-07-21` UTC. See [ERRATA.md](ERRATA.md); no tagged
+bytes or checksums are rewritten.
+
 ## Compatibility
 
 Engine `0.3.0a2` continues to accept manifest schema `0.3.0`, with stricter enforcement of the already published contract. Prior alpha.1 artifacts remain preserved but must be rerun before being cited as clear under alpha.2.

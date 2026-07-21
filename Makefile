@@ -1,8 +1,9 @@
-.PHONY: help test null-check check audit build clean
+.PHONY: help test null-check privacy check audit build clean
 
 help:
 	@echo "test   Run the complete source test suite"
 	@echo "null-check  Run the adversarial Null-Discrimination suite"
+	@echo "privacy  Run the pseudonymous-publication privacy gate"
 	@echo "check  Run release-integrity checks"
 	@echo "audit  Run the worked positive and negative examples"
 	@echo "build  Build wheel and source distribution"
@@ -13,7 +14,10 @@ test:
 null-check:
 	python scripts/run_null_discrimination.py
 
-check: test null-check
+privacy:
+	python scripts/check_privacy.py --protected-history HEAD
+
+check: test null-check privacy
 	python scripts/check_release.py
 
 audit:

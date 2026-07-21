@@ -1,0 +1,21 @@
+{
+  "policy_version": "1.0.0",
+  "allowed_project_identities": [
+    "J. Tree",
+    "Tree, J.",
+    "jtree",
+    "jkolantree"
+  ],
+  "allowed_bot_identities": [
+    "GitHub",
+    "github-actions[bot]",
+    "web-flow"
+  ],
+  "allowed_bot_emails": [
+    "41898282+github-actions[bot]@users.noreply.github.com",
+    "github-actions[bot]@users.noreply.github.com",
+    "noreply@github.com"
+  ],
+  "enforcement_base_commit": "2c611ab693f09bc2f3b5304f972d9a3b8a8f1969",
+  "publication_pipeline_identity": "BSC publication pipeline"
+}
