@@ -6,6 +6,10 @@ It is not a truth machine. It cannot turn a plausible idea into a theorem, valid
 
 ## Choose your route
 
+### One-page local builder
+
+Open the [accessible GitHub Pages packet builder](https://jkolantree.github.io/octo/), paste or attach material, choose an audit depth, then copy or download the generated packet. Target material stays in the browser while the packet is built. The page does not call an LLM or run the Python checker; sharing the result with a model is a separate action governed by that service's privacy terms.
+
 ### Human route
 
 Open [AUDIT_WORKSHEET.md](AUDIT_WORKSHEET.md). Answer the twelve questions in ordinary language. No code or LLM is required.

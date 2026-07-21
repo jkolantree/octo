@@ -2,8 +2,7 @@
 
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
-**Current release:** `v0.3.0-alpha.3`<br>
-**Development version:** `0.3.0a4.dev0`<br>
+**Current release:** `v0.3.0-alpha.4`<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
 BSC is offered as infrastructure for careful imagination. It permits ambition, but not free authority.
@@ -31,6 +30,7 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 
 ## Choose an entry point
 
+- **One-page local packet builder:** [open the accessible GitHub Pages module](https://jkolantree.github.io/octo/)
 - **First visit:** [START_HERE.md](START_HERE.md) or the accessible offline [START_HERE.html](START_HERE.html)
 - **Human-only audit:** [AUDIT_WORKSHEET.md](AUDIT_WORKSHEET.md)
 - **LLM-assisted draft:** [BSC_AUDIT_LLM_PACKET.md](BSC_AUDIT_LLM_PACKET.md)
@@ -44,6 +44,8 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 - **Proof adapter boundary:** [docs/PROOF_CARRYING_ADAPTERS.md](docs/PROOF_CARRYING_ADAPTERS.md)
 - **Pseudonymous publication policy:** [PRIVACY.md](PRIVACY.md)
 - **Published corrections:** [ERRATA.md](ERRATA.md)
+
+The Pages module reads pasted and attached material only inside your browser, verifies the versioned audit protocol before enabling output, and prepares a packet for an LLM you choose. It does not upload target material, call an LLM, or run the Python checker. Do not put sensitive material into any third-party model without separate authorization.
 
 ## Thirty-second example
 
