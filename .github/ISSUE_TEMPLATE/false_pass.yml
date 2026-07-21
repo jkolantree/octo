@@ -1,0 +1,52 @@
+name: Scientific false pass
+description: Report a supported obligation that the engine failed to block or demote.
+title: "[False pass]: "
+labels: ["false-pass", "scientific-integrity", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: "A false pass is high priority. Provide a minimal public reproducer. Use private security reporting if the fixture is sensitive or the bypass is exploitable."
+  - type: input
+    id: version
+    attributes:
+      label: Engine and schema version
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: Frozen claim and scope
+    validations:
+      required: true
+  - type: textarea
+    id: obligation
+    attributes:
+      label: Violated supported obligation
+      description: Name the documented gate, theorem, schema rule, or exact contract.
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal sanitized reproducer
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Actual decision, findings, and exit code
+    validations:
+      required: true
+  - type: textarea
+    id: witness
+    attributes:
+      label: Counterexample or failure witness
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Scope and impact
+      description: Explain which claims or releases may be affected without exaggerating.
+    validations:
+      required: true

@@ -1,0 +1,11 @@
+{
+  "format": "bsc-audit-evidence/0.3",
+  "id": "evidence:fixture:boundary-accounting",
+  "method": "repository conformance fixture",
+  "result": "pass",
+  "scope": "The example declares both its included boundary and its exclusion.",
+  "limitations": [
+    "No external geometric completeness claim is made."
+  ]
+}
+

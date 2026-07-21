@@ -1,0 +1,28 @@
+name: Documentation or accessibility
+description: Report unclear instructions, broken links, terminology drift, or an accessibility barrier.
+title: "[Docs/A11y]: "
+labels: ["documentation", "accessibility", "triage"]
+body:
+  - type: input
+    id: location
+    attributes:
+      label: File or page
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Include assistive technology, viewport, zoom, browser, or reading context when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: User impact
+    validations:
+      required: true
+  - type: textarea
+    id: repair
+    attributes:
+      label: Suggested repair

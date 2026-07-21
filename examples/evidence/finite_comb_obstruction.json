@@ -1,0 +1,15 @@
+{
+  "format": "bsc-audit-evidence/0.3",
+  "id": "evidence:arithmetic:finite-comb-obstruction",
+  "method": "finite-dimensional distributional obstruction",
+  "result": "fail",
+  "scope": "Exact equality on all compactly supported smooth test functions.",
+  "argument": [
+    "For finite self-adjoint matrices, the trace of each unitary flow is a finite exponential sum and therefore a real-analytic function of the flow parameter.",
+    "The difference of two such traces is again represented by a real-analytic function and has no atomic singular support.",
+    "The prime-power side is a locally finite distribution with nonzero atoms at off-origin logarithmic prime-power locations.",
+    "Distributions with different singular supports cannot be equal."
+  ],
+  "boundary": "The obstruction does not rule out finite truncations, infinite-dimensional distributional traces, or counterterms declared independently of the forbidden comb."
+}
+

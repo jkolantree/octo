@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bsc-audit:schema:claim-manifest:v0.3",
+  "title": "BSC claim manifest 0.3.0",
+  "type": "object",
+  "required": [
+    "manifest_version",
+    "draft",
+    "claim",
+    "system",
+    "observation",
+    "representation",
+    "target",
+    "experiment",
+    "admission",
+    "demotion",
+    "preservation"
+  ],
+  "properties": {
+    "manifest_version": {"const": "0.3.0"},
+    "draft": {"type": "boolean"},
+    "claim": {
+      "type": "object",
+      "required": ["id", "title", "type", "evidence_maturity", "deployment_status", "statement", "scope"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "title": {"type": "string", "minLength": 3},
+        "type": {
+          "enum": ["definition", "theorem", "theorem_schema", "conjecture", "diagnostic", "empirical_claim", "analogy", "open_problem"]
+        },
+        "evidence_maturity": {
+          "enum": ["declared", "structurally_checked", "empirically_passed", "externally_replicated"]
+        },
+        "deployment_status": {"enum": ["research_only", "sandboxed", "candidate", "admitted", "retired"]},
+        "statement": {"type": "string", "minLength": 12},
+        "scope": {"type": "string", "minLength": 3},
+        "family": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "system": {"type": "object", "required": ["domain", "state_type"], "additionalProperties": true},
+    "observation": {"type": "object", "required": ["kernel_or_instrument", "legal_filtration"], "additionalProperties": true},
+    "representation": {"type": "object", "required": ["kind"], "additionalProperties": true},
+    "target": {"type": "object", "required": ["outcome", "horizon", "loss_or_score"], "additionalProperties": true},
+    "experiment": {"type": "object", "required": ["baseline_model", "search_budget"], "additionalProperties": true},
+    "admission": {
+      "type": "object",
+      "required": ["hard_gates", "gate_results"],
+      "properties": {
+        "hard_gates": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "gate_results": {"type": "array", "items": {"$ref": "#/$defs/gateResult"}}
+      },
+      "additionalProperties": true
+    },
+    "demotion": {
+      "type": "object",
+      "required": ["owner", "rules", "negative_result_destination"],
+      "properties": {
+        "owner": {"type": "string", "minLength": 1},
+        "rules": {"type": "array", "minItems": 1},
+        "negative_result_destination": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "preservation": {
+      "type": "object",
+      "properties": {
+        "source_artifact": {"$ref": "#/$defs/relativePath"},
+        "source_hash": {"$ref": "#/$defs/sha256"},
+        "code_artifact": {"$ref": "#/$defs/relativePath"},
+        "code_hash": {"$ref": "#/$defs/sha256"},
+        "known_failures": {"type": "array", "items": {"type": "string"}}
+      },
+      "dependentRequired": {
+        "source_artifact": ["source_hash"],
+        "source_hash": ["source_artifact"],
+        "code_artifact": ["code_hash"],
+        "code_hash": ["code_artifact"]
+      },
+      "additionalProperties": true
+    },
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "dependency_graph": {"$ref": "#/$defs/dependencyGraph"},
+    "domain_checks": {"type": "object"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,191}$"},
+    "relativePath": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "sha256": {"type": "string", "pattern": "^sha256:(?!0{64}$)[0-9a-f]{64}$"},
+    "gateResult": {
+      "type": "object",
+      "required": ["id", "state", "fatal", "evidence"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "state": {"enum": ["unrun", "pass", "fail", "conflict"]},
+        "fatal": {"type": "boolean"},
+        "evidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["id", "kind", "status", "result", "verifies_gates"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {
+          "enum": ["proof", "formal_proof", "exact_certificate", "dataset", "statistical_certificate", "experimental_record", "independent_replication", "counterexample", "audit_report"]
+        },
+        "status": {"enum": ["declared", "verified"]},
+        "result": {"enum": ["pass", "fail", "inconclusive"]},
+        "artifact": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "verifies_gates": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "verified"}}, "required": ["status"]},
+          "then": {"required": ["artifact", "sha256"]}
+        }
+      ],
+      "dependentRequired": {
+        "artifact": ["sha256"],
+        "sha256": ["artifact"]
+      },
+      "additionalProperties": false
+    },
+    "dependencyGraph": {
+      "type": "object",
+      "required": ["root", "nodes", "edges"],
+      "properties": {
+        "root": {"$ref": "#/$defs/id"},
+        "nodes": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source", "target"],
+            "properties": {"source": {"$ref": "#/$defs/id"}, "target": {"$ref": "#/$defs/id"}},
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

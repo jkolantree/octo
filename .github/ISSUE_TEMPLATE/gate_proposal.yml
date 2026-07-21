@@ -1,0 +1,48 @@
+name: Gate proposal
+description: Propose a new fatal gate or a scoped change to an existing one.
+title: "[Gate]: "
+labels: ["gate-proposal", "needs-domain-review"]
+body:
+  - type: textarea
+    id: obligation
+    attributes:
+      label: Exact obligation
+    validations:
+      required: true
+  - type: textarea
+    id: activation
+    attributes:
+      label: Typed activation scope
+      description: List the manifest fields that activate the gate.
+    validations:
+      required: true
+  - type: textarea
+    id: basis
+    attributes:
+      label: Mathematical or methodological basis
+      description: Include primary references and all required hypotheses.
+    validations:
+      required: true
+  - type: textarea
+    id: witnesses
+    attributes:
+      label: Positive, negative, and ordinary-baseline fixtures
+    validations:
+      required: true
+  - type: textarea
+    id: errors
+    attributes:
+      label: False-pass and false-block analysis
+    validations:
+      required: true
+  - type: textarea
+    id: retirement
+    attributes:
+      label: Retirement or narrowing condition
+    validations:
+      required: true
+  - type: input
+    id: reviewer
+    attributes:
+      label: Proposed independent domain reviewer
+      placeholder: "Name, handle, or unassigned"

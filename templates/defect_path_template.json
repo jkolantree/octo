@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {"lipschitz": "3/2", "epsilon": "1/100", "failure_probability": "1/1000"},
+    {"lipschitz": "2", "epsilon": "1/50", "failure_probability": "1/500"}
+  ],
+  "declared_composite": {
+    "lipschitz": "3",
+    "epsilon": "1/25",
+    "failure_probability": "3/1000"
+  }
+}

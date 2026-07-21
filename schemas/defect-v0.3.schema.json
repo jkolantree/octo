@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jkolantree/bsc-audit-engine/schemas/defect-v0.3.schema.json",
+  "title": "BSC affine upper-bound propagation record",
+  "$defs": {
+    "rational": {"oneOf": [{"type": "integer"}, {"type": "string", "pattern": "^-?[0-9]+(?:/[1-9][0-9]*)?$"}]},
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lipschitz", "epsilon"],
+      "properties": {
+        "lipschitz": {"$ref": "#/$defs/rational"},
+        "epsilon": {"$ref": "#/$defs/rational"},
+        "failure_probability": {"$ref": "#/$defs/rational"}
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["steps"],
+  "properties": {
+    "steps": {"type": "array", "minItems": 1, "maxItems": 256, "items": {"$ref": "#/$defs/step"}},
+    "declared_composite": {"$ref": "#/$defs/step"}
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jkolantree/bsc-audit-engine/schemas/observation-v0.3.schema.json",
+  "title": "BSC finite observation-descent record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["states", "relation", "queries"],
+  "properties": {
+    "states": {"type": "array", "minItems": 1, "uniqueItems": true, "maxItems": 10000, "items": {"type": "string", "minLength": 1}},
+    "relation_kind": {"enum": ["relation", "equivalence"]},
+    "require_equivalence": {"type": "boolean"},
+    "relation": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "type": "array",
+        "prefixItems": [{"type": "string"}, {"type": "string"}],
+        "items": false,
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "queries": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 10000,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {"type": ["string", "integer", "boolean", "null"]}
+      }
+    }
+  }
+}
