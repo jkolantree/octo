@@ -16,6 +16,8 @@ The engine checks a narrow set of declared structural obligations. Current route
 - exact rational matrix and chain-complex checks;
 - certificate-interchange defects and finite witnesses;
 - square holonomy and path-dependence checks;
+- arbitrary-path strict, derived, and observed-derived holonomy over exact rationals;
+- replayable chain-homotopy or dual-obstruction certificates with exact residuals;
 - finite observation/query descent witnesses;
 - product-valued gates with non-averaged conflict states;
 - fatal dependency propagation in acyclic claim graphs;
@@ -36,6 +38,9 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 - **Documentation map:** [docs/index.md](docs/index.md)
 - **Example catalog:** [examples/README.md](examples/README.md)
 - **Mathematical definitions:** [docs/MATHEMATICS.md](docs/MATHEMATICS.md)
+- **Derived holonomy:** [docs/DERIVED_HOLONOMY.md](docs/DERIVED_HOLONOMY.md)
+- **Spectral obstruction boundary:** [docs/SPECTRAL_OBSTRUCTIONS.md](docs/SPECTRAL_OBSTRUCTIONS.md)
+- **New research packet:** [research/derived-witnessed-descent/README.md](research/derived-witnessed-descent/README.md)
 - **Proof adapter boundary:** [docs/PROOF_CARRYING_ADAPTERS.md](docs/PROOF_CARRYING_ADAPTERS.md)
 - **Pseudonymous publication policy:** [PRIVACY.md](PRIVACY.md)
 - **Published corrections:** [ERRATA.md](ERRATA.md)
@@ -56,6 +61,14 @@ Run a passing structural example:
 ```bash
 python run_audit.py complex examples/complex_valid_transport.json
 ```
+
+Run a strict mismatch that is harmless on homology:
+
+```bash
+python run_audit.py holonomy examples/holonomy_contractible_derived_pass.json
+```
+
+The output preserves the strict defect as a warning and emits an exact chain homotopy. It checks only the supplied finite rational complexes and semantic bindings.
 
 Run the tests from a source checkout on every supported platform:
 

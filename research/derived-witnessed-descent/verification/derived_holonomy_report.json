@@ -1,0 +1,139 @@
+{
+  "arithmetic": "fractions.Fraction only; no floating-point operations",
+  "cases": [
+    {
+      "certificate": {
+        "Ax": [
+          "1",
+          "1"
+        ],
+        "status": "pass",
+        "x": [
+          "1"
+        ]
+      },
+      "derived_holonomy": "pass",
+      "homology_dimensions_C": {
+        "0": 0,
+        "1": 0
+      },
+      "homology_dimensions_D": {
+        "0": 0,
+        "1": 0
+      },
+      "homotopy_matrix_A": [
+        [
+          "1"
+        ],
+        [
+          "1"
+        ]
+      ],
+      "induced_homology_equal": true,
+      "name": "contractible_strict_false_block",
+      "omega": [
+        "1",
+        "1"
+      ],
+      "strict_equal": false,
+      "variables": [
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "certificate": {
+        "status": "fail",
+        "y": [
+          "1"
+        ],
+        "yTA": [],
+        "yTb": "1"
+      },
+      "derived_holonomy": "fail",
+      "homology_dimensions_C": {
+        "0": 1
+      },
+      "homology_dimensions_D": {
+        "0": 1
+      },
+      "homotopy_matrix_A": [
+        []
+      ],
+      "induced_homology_equal": false,
+      "name": "homology_visible_failure",
+      "omega": [
+        "1"
+      ],
+      "strict_equal": false,
+      "variables": []
+    },
+    {
+      "certificate": {
+        "status": "fail",
+        "y": [
+          "0",
+          "1"
+        ],
+        "yTA": [],
+        "yTb": "1"
+      },
+      "derived_holonomy": "fail",
+      "homology_dimensions_C": {
+        "0": 1
+      },
+      "homology_dimensions_D": {
+        "0": 2
+      },
+      "homotopy_matrix_A": [
+        [],
+        []
+      ],
+      "induced_homology_equal": false,
+      "name": "observation_hidden_before_quotient",
+      "omega": [
+        "0",
+        "1"
+      ],
+      "strict_equal": false,
+      "variables": []
+    },
+    {
+      "certificate": {
+        "Ax": [
+          "0"
+        ],
+        "status": "pass",
+        "x": []
+      },
+      "derived_holonomy": "pass",
+      "homology_dimensions_C": {
+        "0": 1
+      },
+      "homology_dimensions_D": {
+        "0": 1
+      },
+      "homotopy_matrix_A": [
+        []
+      ],
+      "induced_homology_equal": true,
+      "name": "observation_hidden_after_quotient",
+      "omega": [
+        "0"
+      ],
+      "strict_equal": true,
+      "variables": []
+    }
+  ],
+  "convention": "f-g = d_D h + h d_C",
+  "exhaustive_small_model_check": {
+    "chain_maps": "all scalar degree maps in {-1,0,1}",
+    "complexes": "all 1x1 two-term differentials in {-1,0,1}",
+    "map_pairs_checked": 153,
+    "result": "homotopy-system verdict equals induced-homology-map equality in every case"
+  },
+  "schema": "derived-holonomy-exact-report/v1"
+}

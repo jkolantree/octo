@@ -17,6 +17,7 @@ ROUTE_SCHEMAS = {
     "atomic": "atomic-modulus-v0.3.schema.json",
     "defect": "defect-v0.3.schema.json",
     "adapter": "adapter-receipt-v0.1.schema.json",
+    "holonomy": "derived-holonomy-v0.1.schema.json",
 }
 
 

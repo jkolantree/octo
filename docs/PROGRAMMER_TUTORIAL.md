@@ -1,6 +1,6 @@
 # Programmer Tutorial
 
-This guide runs the v0.3.0-alpha.2 research preview from a source archive or editable installation.
+This guide runs the published v0.3.0-alpha.2 research preview or the `0.3.0a3.dev0` development checkout. The `holonomy` route is development-line functionality and is not present in the alpha.2 release artifact.
 
 ## Requirements
 
@@ -21,13 +21,13 @@ From the extracted project folder:
 python run_audit.py --version
 ```
 
-The output must identify version:
+The output must identify the source you intended to audit. The published release reports:
 
 ```text
 bsc-audit 0.3.0a2
 ```
 
-Record this value with every audit.
+The current development checkout reports `bsc-audit 0.3.0a3.dev0`. Record the exact value with every audit and do not attribute development-route output to alpha.2.
 
 ## 2. Zero-install route
 
@@ -78,8 +78,12 @@ bsc-audit --version
 | `observe` | finite states, relation, and queries | constancy of each query on each declared relation pair |
 | `atomic` | exact finite concentration record | consistency with a declared power-modulus record |
 | `defect` | exact rational defect path | affine propagation and understatement check |
+| `adapter` | hash-bound external-tool receipt | non-admissive receipt structure and consistency only |
+| `holonomy` | finite rational complexes and path relations | strict, chain-homotopy, and observed-derived equivalence certificates |
 
 Each command checks only the supplied finite representation. For example, `observe` does not prove that the declared relation exhausts a real instrument’s observational equivalence.
+
+The `holonomy` command additionally requires content-addressed semantic basis records. It verifies those byte bindings but does not validate their external interpretation. See [Exact Derived Holonomy](DERIVED_HOLONOMY.md).
 
 ## 5. Interpret structured output
 

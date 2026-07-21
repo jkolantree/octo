@@ -41,6 +41,7 @@ class NullDiscriminationTests(unittest.TestCase):
         cases = (
             ("atomic", "schema_atomic_missing_name.json"),
             ("complex", "schema_complex_missing_fields.json"),
+            ("holonomy", "schema_holonomy_missing_projection.json"),
             ("observe", "schema_observation_nonstring_state.json"),
         )
         for command, filename in cases:

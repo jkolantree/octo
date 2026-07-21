@@ -1,0 +1,140 @@
+{
+  "epistemic_status": {
+    "divergence_and_operator_contradiction": "analytic proof in companion note",
+    "jet_annihilation": "exact rational computation",
+    "prime_cutoff_table": "double-precision numerical corroboration"
+  },
+  "exact_jet_annihilation": [
+    {
+      "annihilating_derivative_order": 1,
+      "exact_result": [],
+      "maximum_jet_order": 0
+    },
+    {
+      "annihilating_derivative_order": 2,
+      "exact_result": [],
+      "maximum_jet_order": 1
+    },
+    {
+      "annihilating_derivative_order": 3,
+      "exact_result": [],
+      "maximum_jet_order": 2
+    },
+    {
+      "annihilating_derivative_order": 4,
+      "exact_result": [],
+      "maximum_jet_order": 3
+    },
+    {
+      "annihilating_derivative_order": 5,
+      "exact_result": [],
+      "maximum_jet_order": 4
+    },
+    {
+      "annihilating_derivative_order": 6,
+      "exact_result": [],
+      "maximum_jet_order": 5
+    },
+    {
+      "annihilating_derivative_order": 7,
+      "exact_result": [],
+      "maximum_jet_order": 6
+    },
+    {
+      "annihilating_derivative_order": 8,
+      "exact_result": [],
+      "maximum_jet_order": 7
+    },
+    {
+      "annihilating_derivative_order": 9,
+      "exact_result": [],
+      "maximum_jet_order": 8
+    }
+  ],
+  "lower_bound": "(log p)^(d+2) p^(-(1/2+eta))",
+  "prime_growth_experiment": [
+    {
+      "partial_lower_bounds": {
+        "d=0,eta=0.25": "1.9819231007784619e+01",
+        "d=0,eta=0.5": "8.7380677887202189e+00",
+        "d=1,eta=0.25": "6.7288874718812579e+01",
+        "d=1,eta=0.5": "2.7513879170017251e+01",
+        "d=2,eta=0.25": "2.4610407214766582e+02",
+        "d=2,eta=0.5": "9.6053245917313305e+01",
+        "d=4,eta=0.25": "3.6963217946581262e+03",
+        "d=4,eta=0.5": "1.3668049927817506e+03"
+      },
+      "prime_count": 25,
+      "prime_cutoff": 100
+    },
+    {
+      "partial_lower_bounds": {
+        "d=0,eta=0.25": "7.5848540051887952e+01",
+        "d=0,eta=0.5": "2.1613107496766798e+01",
+        "d=1,eta=0.25": "3.9992824281479199e+02",
+        "d=1,eta=0.5": "1.0253659918039135e+02",
+        "d=2,eta=0.25": "2.2449726545365907e+03",
+        "d=2,eta=0.5": "5.3897918029638436e+02",
+        "d=4,eta=0.25": "7.8268697678615965e+04",
+        "d=4,eta=0.5": "1.7375105540928627e+04"
+      },
+      "prime_count": 168,
+      "prime_cutoff": 1000
+    },
+    {
+      "partial_lower_bounds": {
+        "d=0,eta=0.25": "2.1764696102851670e+02",
+        "d=0,eta=0.5": "4.0002544101914580e+01",
+        "d=1,eta=0.25": "1.5661582258688843e+03",
+        "d=1,eta=0.5": "2.5178284250198158e+02",
+        "d=2,eta=0.25": "1.1897160941565075e+04",
+        "d=2,eta=0.5": "1.7583509804443811e+03",
+        "d=4,eta=0.25": "7.5127907708520594e+05",
+        "d=4,eta=0.5": "1.0035052073939161e+05"
+      },
+      "prime_count": 1229,
+      "prime_cutoff": 10000
+    },
+    {
+      "partial_lower_bounds": {
+        "d=0,eta=0.25": "5.4255222383885678e+02",
+        "d=0,eta=0.5": "6.3770802600475548e+01",
+        "d=1,eta=0.25": "4.9824514664980443e+03",
+        "d=1,eta=0.5": "4.9912000357775270e+02",
+        "d=2,eta=0.25": "4.7957223386694655e+04",
+        "d=2,eta=0.5": "4.3426326474177440e+03",
+        "d=4,eta=0.25": "4.8137676667504739e+06",
+        "d=4,eta=0.5": "3.8583941609792534e+05"
+      },
+      "prime_count": 9592,
+      "prime_cutoff": 100000
+    },
+    {
+      "partial_lower_bounds": {
+        "d=0,eta=0.25": "1.2487664717032026e+03",
+        "d=0,eta=0.5": "9.2890204432226767e+01",
+        "d=1,eta=0.25": "1.4027822799820260e+04",
+        "d=1,eta=0.5": "8.6891811378615205e+02",
+        "d=2,eta=0.25": "1.6411529143870543e+05",
+        "d=2,eta=0.5": "9.0516547147575766e+03",
+        "d=4,eta=0.25": "2.4115502546408705e+07",
+        "d=4,eta=0.5": "1.1556016386485707e+06"
+      },
+      "prime_count": 78498,
+      "prime_cutoff": 1000000
+    }
+  ],
+  "proof_dependency": "Euler's theorem that sum_p 1/p diverges",
+  "schema": "orthogonal-prime-block-obstruction/v1",
+  "scope": {
+    "not_ruled_out": [
+      "nonorthogonal interacting gluing",
+      "convergence confined to Im(z)>1/2",
+      "unbounded-order origin counterterms",
+      "nonsummable absolutely-continuous cancellation",
+      "weaker operator topologies"
+    ],
+    "ruled_out": "locally uniform S1-Cauchy orthogonal prime blocks with a uniformly bounded origin-jet order, on a domain meeting 0<Im(z)<=1/2",
+    "stronger_relative_resolvent_corollary": "for genuine self-adjoint relative resolvents, the resolvent power identity rules out even pointwise S1-Cauchy convergence at i*eta"
+  }
+}
