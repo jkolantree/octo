@@ -12,8 +12,12 @@ exact chain equations, hash verification, and evidence-to-gate bindings.
 | `observe` | `observation-v0.3.schema.json` |
 | `atomic` | `atomic-modulus-v0.3.schema.json` |
 | `defect` | `defect-v0.3.schema.json` |
+| `adapter` | `adapter-receipt-v0.1.schema.json` |
 
 No external JSON Schema package is required at runtime. Producers can use any
 Draft 2020-12 validator before invoking the engine, then rely on the engine for
 the exact semantic layer.
 
+The adapter-receipt format is an explicitly non-admissive preview. Passing its
+structural and hash checks does not satisfy a theorem gate; see
+[`docs/PROOF_CARRYING_ADAPTERS.md`](../docs/PROOF_CARRYING_ADAPTERS.md).

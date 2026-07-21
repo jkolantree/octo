@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import __version__
+from .adapters import audit_adapter_receipt
 from .atomic import audit_atomic_modulus
 from .bicomplex import audit_complex_document
 from .defect import audit_defect_composition
@@ -161,6 +162,7 @@ def _semantic_check_name(command_name: str) -> str:
         "observe": "finite_observation_descent",
         "atomic": "finite_atomic_modulus_record",
         "defect": "affine_upper_bound_propagation",
+        "adapter": "proof_carrying_adapter_receipt",
     }.get(command_name, "custom_auditor")
 
 
@@ -292,6 +294,7 @@ def main(argv: list[str] | None = None) -> int:
         ("observe", "audit finite observation/query descent"),
         ("atomic", "audit an off-origin concentration-modulus certificate"),
         ("defect", "audit compositional transport-defect bounds"),
+        ("adapter", "audit a non-admissive proof-carrying adapter receipt"),
     ):
         child = subparsers.add_parser(name, help=help_text)
         child.add_argument("path")
@@ -303,6 +306,7 @@ def main(argv: list[str] | None = None) -> int:
         "observe": lambda raw, _root: audit_observation_document(raw),
         "atomic": lambda raw, _root: audit_atomic_modulus(raw),
         "defect": lambda raw, _root: audit_defect_composition(raw),
+        "adapter": audit_adapter_receipt,
     }
     return command(args.path, auditors[args.command], args.command)
 
