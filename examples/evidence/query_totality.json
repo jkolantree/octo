@@ -1,0 +1,11 @@
+{
+  "format": "bsc-audit-evidence/0.3",
+  "id": "evidence:fixture:query-totality",
+  "method": "repository conformance fixture",
+  "result": "pass",
+  "scope": "The declared finite query fixture assigns a value to every declared state.",
+  "limitations": [
+    "This is a finite structural fact about an example, not evidence for a physical model."
+  ]
+}
+

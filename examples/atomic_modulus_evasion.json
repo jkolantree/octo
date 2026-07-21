@@ -1,0 +1,13 @@
+{
+  "modulus": {"constant": 1, "exponent": 1, "proof_id": "claim:unverified-concentration"},
+  "compacts": [
+    {
+      "name": "prime-length-neighborhood",
+      "distance_from_origin": 1,
+      "samples": [
+        {"epsilon": "1/10", "mass_upper": 1}
+      ]
+    }
+  ]
+}
+

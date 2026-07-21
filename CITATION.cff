@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use the checker, cite this software release. Cite the research note separately when relying on its mathematics."
+title: "BSC Audit Engine"
+type: software
+version: 0.3.0-alpha.1
+date-released: 2026-07-20
+authors:
+  - family-names: "Tree"
+    given-names: "J."
+license: Apache-2.0
+abstract: >-
+  A fail-closed structural checker for typed scientific claims,
+  certificate-interchange defects, observation descent, product-valued
+  hard gates, atomic-rigidity records, and compositional defect bounds.
+keywords:
+  - scientific audit
+  - certificate transport
+  - chain complexes
+  - observation quotients
+  - atomic rigidity
+  - arithmetic trace
+repository-code: "https://github.com/jkolantree/octo"

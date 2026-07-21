@@ -1,0 +1,9 @@
+{
+  "states": ["state_a", "state_b"],
+  "relation_kind": "relation",
+  "relation": [["state_a", "state_b"]],
+  "queries": {
+    "query_that_descends": {"state_a": "same", "state_b": "same"},
+    "query_that_fails": {"state_a": "left", "state_b": "right"}
+  }
+}

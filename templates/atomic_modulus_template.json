@@ -1,0 +1,17 @@
+{
+  "modulus": {
+    "constant": 2,
+    "exponent": 1,
+    "proof_id": "replace-with-uniform-proof-identifier"
+  },
+  "compacts": [
+    {
+      "name": "K1",
+      "distance_from_origin": "1/2",
+      "samples": [
+        {"epsilon": "1/4", "mass_upper": "1/2"},
+        {"epsilon": "1/8", "mass_upper": "1/4"}
+      ]
+    }
+  ]
+}

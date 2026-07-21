@@ -1,0 +1,24 @@
+include AUDIT_WORKSHEET.md
+include BSC_AUDIT_LLM_PACKET.md
+include CITATION.cff
+include CHANGELOG.md
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.md
+include GOVERNANCE.md
+include LICENSE
+include Makefile
+include RELEASE_NOTES_*.md
+include SECURITY.md
+include SHARE_THIS.md
+include START_HERE.html
+include START_HERE.md
+include run_audit.py
+include .zenodo.json
+recursive-include docs *.md *.css
+recursive-include examples *.json
+recursive-include research *.md
+recursive-include schemas *.json
+recursive-include schemas *.md
+recursive-include scripts *
+recursive-include templates *.json
+recursive-include tests *.py

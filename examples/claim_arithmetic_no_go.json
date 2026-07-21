@@ -1,0 +1,83 @@
+{
+  "manifest_version": "0.3.0",
+  "draft": false,
+  "claim": {
+    "id": "bsc:example:finite-prime-comb",
+    "title": "Finite exact prime comb",
+    "type": "conjecture",
+    "evidence_maturity": "structurally_checked",
+    "deployment_status": "retired",
+    "statement": "A finite pair of self-adjoint matrices exactly realizes every prime-power atom on all compactly supported smooth test functions.",
+    "scope": "Finite-dimensional matrix pairs, exact distributional equality, and no counterterm carrying off-origin atoms.",
+    "family": "arithmetic_trace"
+  },
+  "system": {
+    "domain": "finite-dimensional Hilbert space",
+    "boundary": "no off-origin singular counterterm",
+    "state_type": "self-adjoint matrix pair",
+    "local_kernel": "difference of unitary-flow traces"
+  },
+  "observation": {
+    "kernel_or_instrument": "distributional pairing with compactly supported smooth tests",
+    "legal_filtration": {
+      "available_at_decision": ["matrix spectra", "prime-power locations"],
+      "forbidden_future_fields": ["zeta-zero ordinates"]
+    }
+  },
+  "representation": {
+    "kind": "identity",
+    "preserved_queries": ["singular support", "distributional equality"],
+    "known_non_descending_queries": []
+  },
+  "target": {
+    "outcome": "the full prime-power atomic distribution",
+    "horizon": "all compactly supported smooth test functions",
+    "loss_or_score": "exact distributional equality"
+  },
+  "experiment": {
+    "baseline_model": "finite analytic exponential sum",
+    "candidate_operators": ["finite self-adjoint matrix pairs"],
+    "matched_null_library": [],
+    "search_budget": "none; a structural obstruction decides the model class"
+  },
+  "admission": {
+    "hard_gates": ["exact_distributional_equality"],
+    "gate_results": [
+      {
+        "id": "exact_distributional_equality",
+        "state": "fail",
+        "fatal": true,
+        "evidence": ["evidence:arithmetic:finite-comb-obstruction"]
+      }
+    ]
+  },
+  "demotion": {
+    "owner": "project maintainers",
+    "rules": [{"if": "the finite-comb obstruction applies", "then": "retire the exact finite-dimensional proposal"}],
+    "negative_result_destination": "negative-results/finite-comb"
+  },
+  "preservation": {
+    "known_failures": ["Finite analytic exponential sums have no atomic singular support away from the origin."]
+  },
+  "evidence": [
+    {
+      "id": "evidence:arithmetic:finite-comb-obstruction",
+      "kind": "proof",
+      "status": "verified",
+      "result": "fail",
+      "artifact": "evidence/finite_comb_obstruction.json",
+      "sha256": "sha256:effde95ac92c3ba7d8d77815a17ab0ca12eaa9742d1a69ac9488c2aeb1505a0d",
+      "verifies_gates": ["exact_distributional_equality"]
+    }
+  ],
+  "domain_checks": {
+    "arithmetic_trace": {
+      "model_dimension": "finite",
+      "target": "exact_prime_power_comb",
+      "uses_zero_ordinates": false,
+      "primary_gram_uses_zero_table": false,
+      "counterterm_singular_support": ["origin"],
+      "certified_obligations": []
+    }
+  }
+}

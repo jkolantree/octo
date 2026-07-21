@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a crash, malformed output, or incorrect program behavior.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include secrets, identifying data, or proprietary manifests. Use private security reporting for sensitive defects."
+  - type: input
+    id: version
+    attributes:
+      label: Engine and schema version
+      placeholder: "engine 0.3.0a1; manifest 0.3.0"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and exit code
+      description: Include the exact command and numeric exit code.
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Minimal sanitized input
+      description: Attach or paste the smallest artifact that reproduces the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Actual structured output
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: State the expected decision, finding, witness, and exit code.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "OS, Python version, install route"
+    validations:
+      required: true

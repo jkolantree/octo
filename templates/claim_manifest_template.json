@@ -1,0 +1,59 @@
+{
+  "manifest_version": "0.3.0",
+  "draft": true,
+  "claim": {
+    "id": "audit:replace-me",
+    "title": "Replace with a short title",
+    "type": "conjecture",
+    "evidence_maturity": "declared",
+    "deployment_status": "research_only",
+    "statement": "Replace with one exact falsifiable sentence.",
+    "scope": "Replace with the declared domain and exclusions."
+  },
+  "system": {
+    "domain": "replace-me",
+    "boundary": "replace-me",
+    "state_type": "replace-me",
+    "local_kernel": "replace-me"
+  },
+  "observation": {
+    "kernel_or_instrument": "replace-me",
+    "legal_filtration": {
+      "available_at_decision": [],
+      "forbidden_future_fields": []
+    }
+  },
+  "representation": {
+    "kind": "identity",
+    "preserved_queries": [],
+    "known_non_descending_queries": []
+  },
+  "target": {
+    "outcome": "replace-me",
+    "horizon": "replace-me",
+    "loss_or_score": "replace-me"
+  },
+  "experiment": {
+    "baseline_model": "replace-me",
+    "candidate_operators": [],
+    "matched_null_library": [],
+    "search_budget": "replace-me"
+  },
+  "admission": {
+    "hard_gates": ["primary_gate"],
+    "gate_results": [
+      {"id": "primary_gate", "state": "unrun", "fatal": true, "evidence": []}
+    ]
+  },
+  "demotion": {
+    "owner": "unassigned",
+    "rules": [
+      {"if": "a valid counterexample is found", "then": "retire or narrow the claim"}
+    ],
+    "negative_result_destination": "negative-results/"
+  },
+  "preservation": {
+    "known_failures": ["audit has not yet been mechanically executed"]
+  },
+  "evidence": []
+}

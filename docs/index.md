@@ -1,0 +1,37 @@
+# Documentation
+
+This index separates first use, reference material, governance, and release work. The project is a research preview; begin with the route matching your task.
+
+## Getting started
+
+- [Start Here](../START_HERE.md) - choose human, LLM-assisted, or programmer use
+- [Human Audit Worksheet](../AUDIT_WORKSHEET.md) - no-code claim audit
+- [Programmer Tutorial](PROGRAMMER_TUTORIAL.md) - install, commands, outputs, and preservation
+- [Example Catalog](../examples/README.md) - expected outcome and limitation of each fixture
+
+## Trust and interpretation
+
+- [Status Model](STATUS_MODEL.md) - research verdict, evidence maturity, deployment, gate, and CLI decision
+- [Threat Model](THREAT_MODEL.md) - false-pass, leakage, prompt injection, and evidence risks
+- [Manifest and Schema](SCHEMA.md) - versioned interchange contract
+- [Mathematics](MATHEMATICS.md) - exact definitions and theorem statements
+
+## Project operation
+
+- [Roadmap](ROADMAP.md)
+- [Sharing and Release Guide](SHARING_GUIDE.md)
+- [Contributing](../CONTRIBUTING.md)
+- [Governance](../GOVERNANCE.md)
+- [Security](../SECURITY.md)
+- [Code of Conduct](../CODE_OF_CONDUCT.md)
+- [Changelog](../CHANGELOG.md)
+
+## LLM use
+
+The [LLM Audit Packet](../BSC_AUDIT_LLM_PACKET.md) is a drafting protocol, not an executable verifier. Read its privacy, prompt-injection, and source-coverage rules before attaching material.
+
+## Release identity
+
+Release documentation names the project **BSC Audit Engine**, maintained under the project identity **J. Tree**. A citation file and archive metadata live at the repository root.
+
+BSC is offered as infrastructure for careful imagination. It permits ambition, but not free authority.

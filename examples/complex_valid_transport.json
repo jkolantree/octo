@@ -1,0 +1,14 @@
+{
+  "contexts": {
+    "fine": {"groups": {"1": 2, "0": 1}, "differentials": {"1": [[1, 0]]}},
+    "coarse": {"groups": {"1": 2, "0": 1}, "differentials": {"1": [[1, 0]]}}
+  },
+  "transports": {
+    "coarse_grain": {
+      "source": "fine",
+      "target": "coarse",
+      "maps": {"1": [[1, 0], [0, 1]], "0": [[1]]}
+    }
+  }
+}
+

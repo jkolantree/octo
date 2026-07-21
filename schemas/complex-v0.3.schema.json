@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jkolantree/bsc-audit-engine/schemas/complex-v0.3.schema.json",
+  "title": "BSC exact certificate-complex record",
+  "$defs": {
+    "scalar": {"oneOf": [{"type": "integer"}, {"type": "string", "pattern": "^-?[0-9]+(?:/[1-9][0-9]*)?$"}]},
+    "matrix": {"type": "array", "maxItems": 128, "items": {"type": "array", "maxItems": 128, "items": {"$ref": "#/$defs/scalar"}}},
+    "complex": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["groups", "differentials"],
+      "properties": {
+        "groups": {"type": "object", "minProperties": 1, "maxProperties": 128, "propertyNames": {"pattern": "^(0|[1-9][0-9]*)$"}, "additionalProperties": {"type": "integer", "minimum": 0, "maximum": 128}},
+        "differentials": {"type": "object", "maxProperties": 128, "propertyNames": {"pattern": "^(0|[1-9][0-9]*)$"}, "additionalProperties": {"$ref": "#/$defs/matrix"}}
+      }
+    },
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "target", "maps"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "target": {"type": "string", "minLength": 1},
+        "maps": {"type": "object", "maxProperties": 128, "propertyNames": {"pattern": "^(0|[1-9][0-9]*)$"}, "additionalProperties": {"$ref": "#/$defs/matrix"}}
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contexts", "transports"],
+  "properties": {
+    "contexts": {"type": "object", "minProperties": 1, "maxProperties": 128, "additionalProperties": {"$ref": "#/$defs/complex"}},
+    "transports": {"type": "object", "maxProperties": 128, "additionalProperties": {"$ref": "#/$defs/transport"}},
+    "squares": {
+      "type": "object",
+      "maxProperties": 128,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["left_first", "left_second", "right_first", "right_second"],
+        "properties": {
+          "left_first": {"type": "string"}, "left_second": {"type": "string"},
+          "right_first": {"type": "string"}, "right_second": {"type": "string"}
+        }
+      }
+    }
+  }
+}

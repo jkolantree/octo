@@ -1,0 +1,43 @@
+name: Scientific false block
+description: Report a gate applied outside its valid scope or based on incorrect logic.
+title: "[False block]: "
+labels: ["false-block", "scientific-integrity", "triage"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Engine and schema version
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: Frozen claim and scope
+    validations:
+      required: true
+  - type: textarea
+    id: finding
+    attributes:
+      label: Blocking finding and exit code
+    validations:
+      required: true
+  - type: textarea
+    id: argument
+    attributes:
+      label: Why the block is invalid
+      description: Give the mathematical counterexample, scope mismatch, or contract conflict.
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal sanitized reproducer
+    validations:
+      required: true
+  - type: textarea
+    id: repair
+    attributes:
+      label: Smallest proposed repair
+      description: Prefer a narrower activation rule or corrected theorem over removing the gate entirely.
+    validations:
+      required: true

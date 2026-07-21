@@ -1,0 +1,21 @@
+{
+  "title": "BSC Audit Engine: Fail-Closed Audit-Descent Kernel",
+  "description": "Version 0.3.0-alpha.1 is a public research preview of a strict structural checker for typed scientific claims. It validates rational certificate complexes, certificate-interchange defects, declared path squares, observation/query descent, product-valued hard gates, fatal dependency propagation, finite off-origin atomic-modulus records, arithmetic trace kill gates, evidence artifact hashes, and affine upper-bound propagation. A clear run means only that no implemented blocking condition fired on the declared input. It does not prove a scientific claim, validate an external proof, or establish an operator realization.",
+  "creators": [
+    {"name": "Tree, J."}
+  ],
+  "license": "Apache-2.0",
+  "upload_type": "software",
+  "version": "0.3.0-alpha.1",
+  "publication_date": "2026-07-20",
+  "keywords": [
+    "certificate transport",
+    "scientific audit",
+    "chain complexes",
+    "observation descent",
+    "atomic rigidity",
+    "arithmetic trace"
+  ],
+  "language": "eng",
+  "access_right": "open"
+}

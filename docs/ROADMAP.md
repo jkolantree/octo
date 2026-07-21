@@ -1,0 +1,71 @@
+# Roadmap
+
+The roadmap states proof and software obligations, not promised scientific discoveries. Work advances only when known-answer tests, counterexamples, and preservation artifacts exist.
+
+## v0.3.0-alpha.1 - public research preview
+
+- machine-readable manifest schema and compatibility checks;
+- structured JSON for valid and malformed input;
+- single-source engine version and `--version` command;
+- conservative decision vocabulary;
+- human, LLM, and programmer routes;
+- privacy, prompt-injection, governance, and preservation guidance;
+- positive, blocking, demotion, and malformed-input fixtures.
+
+Exit criterion: a clean outsider can run one passing and one failing audit, understand exactly what each establishes, and report a false pass without project-specific coaching.
+
+## v0.3 - rational dictionary and support certificates
+
+- rational spline enumeration;
+- inset-support verification;
+- mollifier metadata and normalization obligations;
+- finite-stage (C^k) seminorm certificate format;
+- convolution support and Minkowski-difference checks;
+- known-answer density approximations without claiming an LF-density proof from finite numerics.
+
+Exit criterion: every enumerated function has reproducible support, smoothness, and seminorm records, while the mathematical density theorem remains separately proved.
+
+## v0.4 - interval Gram engine
+
+- directed interval-backend adapter;
+- certified prime-power ledger;
+- explicit-formula pole and archimedean records;
+- Hermitian enclosure intersection;
+- exact symbolic nullspace and range gates;
+- Schur-complement certificates;
+- zero-table separation audit.
+
+Exit criterion: known finite matrices are enclosed reproducibly; inconsistent conjugate enclosures are rejected; no floating pseudoinverse is used at singular stages.
+
+## v0.5 - operator-stage court
+
+- self-adjointness evidence records;
+- relative-resolvent factorization records;
+- Schatten-bound certificates;
+- prime-ablation distributions;
+- singular-support audit for counterterms;
+- joint trace-norm tail moduli;
+- place/cutoff interchange defect.
+
+Exit criterion: the software can distinguish a finite spectral fit, an incomplete infinite-dimensional proposal, and a construction meeting every declared local obligation. No operator realization is promised.
+
+## v0.6 - independent replication and preservation
+
+- signed certificate bundles;
+- content-addressed artifact graph;
+- independent verifier adapters;
+- schema migration tests;
+- public negative-result and demotion ledger;
+- reproducible release and long-term archive packet.
+
+Exit criterion: an independent team can reproduce, contradict, migrate, and demote a frozen audit without the original author.
+
+## Deferred until earned
+
+- proof-assistant integrations;
+- certified interval backends;
+- large-scale empirical benchmark hosting;
+- governance claims beyond repository operation;
+- stable `1.0` interchange promises.
+
+A feature is retired or narrowed when it adds no reliable information beyond simpler validation, testing, or provenance methods.

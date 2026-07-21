@@ -1,0 +1,12 @@
+{
+  "format": "bsc-audit-evidence/0.3",
+  "id": "evidence:fixture:manifest-structure",
+  "method": "repository conformance fixture",
+  "result": "pass",
+  "scope": "The fixture record is present as stable JSON bytes.",
+  "limitations": [
+    "This record does not establish an external mathematical theorem.",
+    "The engine verifies this file's digest, not the truth of arbitrary prose inside it."
+  ]
+}
+

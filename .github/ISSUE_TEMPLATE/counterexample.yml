@@ -1,0 +1,32 @@
+name: Mathematical counterexample
+description: Submit a compact counterexample to a documented claim, gate, or theorem.
+title: "[Counterexample]: "
+labels: ["counterexample", "mathematics", "triage"]
+body:
+  - type: textarea
+    id: target
+    attributes:
+      label: Exact target statement
+      description: Quote or link to the versioned theorem, gate, or documentation claim.
+    validations:
+      required: true
+  - type: textarea
+    id: construction
+    attributes:
+      label: Counterexample construction
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Provide a proof or dependency-minimal code and exact output.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Consequence and surviving narrower statement
+      description: State exactly what is refuted and what may remain valid.
+    validations:
+      required: true

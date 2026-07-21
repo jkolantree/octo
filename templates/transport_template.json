@@ -1,0 +1,19 @@
+{
+  "contexts": {
+    "source": {
+      "groups": {"1": 2, "0": 1},
+      "differentials": {"1": [[1, 0]]}
+    },
+    "target": {
+      "groups": {"1": 2, "0": 1},
+      "differentials": {"1": [[1, 0]]}
+    }
+  },
+  "transports": {
+    "declared_change": {
+      "source": "source",
+      "target": "target",
+      "maps": {"1": [[1, 0], [0, 1]], "0": [[1]]}
+    }
+  }
+}
