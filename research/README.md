@@ -1,16 +1,18 @@
 # Research note
 
 `Audit_Descent_Calculus.pdf` states the mathematical motivation, definitions,
-and current proof obligations behind the executable kernel. The software is an
-audit instrument for declared finite records; the note is the place to inspect
-the broader mathematical claims.
+and current proof obligations behind the executable kernel. The corresponding
+editable source is `Audit_Descent_Calculus.docx`; both hashes are locked in
+`DIGESTS.sha256`. The software is an audit instrument for declared finite
+records; the note is the place to inspect the broader mathematical claims.
 
-The PDF has SHA-256 digest
-`5b6690d4771e5624f79e5e834e485be9c94a2ca12255d4ef7efa1dda59a3203e`.
-Release tooling verifies and republishes this file without modifying it.
+The release checker verifies both research-artifact digests. Neither the PDF
+nor its DOCX source is included in Python distributions or the Apache-2.0
+software release bundle.
 
 The Apache-2.0 repository license covers code, schemas, templates, and
-documentation created for the software. It does not grant a separate license
-for the research-note PDF. Contact the author before redistributing a modified
-version of that note.
-
+documentation created for the software. The paper and its editable source are
+separately licensed under Creative Commons Attribution 4.0 International; see
+`research/LICENSE`. The paper's Zenodo metadata is kept in
+`research/zenodo.json` so a software deposit cannot silently assign its license
+to the research artifacts.

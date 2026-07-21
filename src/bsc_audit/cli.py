@@ -15,8 +15,9 @@ from .findings import Finding, Severity, decision, exit_code
 from .gates import audit_gate_product
 from .manifest import lint_manifest
 from .observation import audit_observation_document
-from .plugins import run_plugins
+from .plugins import arithmetic_trace_findings, recovery_findings
 from .provenance import sha256_bytes, sha256_json
+from .schema_validation import ROUTE_SCHEMAS, validate_route_schema
 
 
 MAX_INPUT_BYTES = 8 * 1024 * 1024
@@ -24,8 +25,17 @@ MAX_JSON_DEPTH = 64
 MAX_CONTAINER_ITEMS = 100_000
 MAX_STRING_CHARS = 1_000_000
 MAX_INTEGER_DIGITS = 256
-Auditor = Callable[[dict[str, Any], Path | None], list[Finding]]
 DOMAIN_CHECKS = {"arithmetic_trace", "global_recovery"}
+
+
+@dataclass(frozen=True)
+class AuditResult:
+    findings: list[Finding]
+    checks_run: list[str]
+    checks_not_run: list[str]
+
+
+Auditor = Callable[[dict[str, Any], Path | None], list[Finding] | AuditResult]
 
 
 class InputError(ValueError):
@@ -137,43 +147,65 @@ def _emit(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False))
 
 
-def check_ledger(command_name: str, raw: dict[str, Any]) -> dict[str, list[str]]:
-    base = ["strict_json_parse"]
-    if command_name == "lint":
-        return {"run": base + ["claim_manifest_lint", "local_artifact_hashes"], "not_run": ["gate_product", "domain_plugins"]}
+def _manifest_check_order(command_name: str) -> list[str]:
+    checks = [f"schema_validation:{command_name}", "claim_manifest_lint", "local_artifact_hashes"]
     if command_name == "audit":
-        run = base + ["claim_manifest_lint", "local_artifact_hashes", "gate_product"]
-        if raw.get("dependency_graph"):
-            run.append("dependency_graph")
-        domain = raw.get("domain_checks", {})
-        active: set[str] = set()
-        if raw.get("claim", {}).get("family") == "arithmetic_trace":
-            active.add("arithmetic_trace")
-        if isinstance(domain, dict) and "global_recovery" in domain:
-            active.add("global_recovery")
-        run.extend(f"domain_plugin:{name}" for name in sorted(active))
-        return {"run": run, "not_run": [f"domain_plugin:{name}" for name in sorted(DOMAIN_CHECKS - active)]}
-    route = {
+        checks.extend(["gate_product", "dependency_graph"])
+        checks.extend(f"domain_plugin:{name}" for name in sorted(DOMAIN_CHECKS))
+    return checks
+
+
+def _semantic_check_name(command_name: str) -> str:
+    return {
         "complex": "exact_certificate_complex",
         "observe": "finite_observation_descent",
         "atomic": "finite_atomic_modulus_record",
         "defect": "affine_upper_bound_propagation",
     }.get(command_name, "custom_auditor")
-    return {"run": base + [route], "not_run": ["claim_manifest_lint", "gate_product", "domain_plugins"]}
 
 
-def render(path: str, findings: list[Finding], document: LoadedDocument, command_name: str) -> int:
+def _lint_stages(raw: dict[str, Any], artifact_root: Path | None) -> AuditResult:
+    executed: list[str] = []
+    findings = lint_manifest(raw, artifact_root, checks_run=executed)
+    order = _manifest_check_order("lint")
+    return AuditResult(findings, executed, [name for name in order if name not in executed])
+
+
+def _audit_stages(raw: dict[str, Any], artifact_root: Path | None) -> AuditResult:
+    executed: list[str] = []
+    findings = lint_manifest(raw, artifact_root, checks_run=executed)
+    order = _manifest_check_order("audit")
+    if any(finding.severity == Severity.ERROR for finding in findings):
+        return AuditResult(findings, executed, [name for name in order if name not in executed])
+
+    executed.append("gate_product")
+    findings.extend(audit_gate_product(raw, artifact_root))
+    if raw.get("dependency_graph"):
+        executed.append("dependency_graph")
+
+    claim = raw.get("claim", {})
+    domain = raw.get("domain_checks", {})
+    if isinstance(claim, dict) and claim.get("family") == "arithmetic_trace":
+        executed.append("domain_plugin:arithmetic_trace")
+        findings.extend(arithmetic_trace_findings(raw))
+    if isinstance(domain, dict) and "global_recovery" in domain:
+        executed.append("domain_plugin:global_recovery")
+        findings.extend(recovery_findings(raw))
+    return AuditResult(findings, executed, [name for name in order if name not in executed])
+
+
+def render(path: str, result: AuditResult, document: LoadedDocument) -> int:
     payload = {
         "engine_version": __version__,
         "output_version": "0.3.0",
         "input": _safe_label(path),
         "input_hashes": {"raw": document.raw_hash, "semantic": document.semantic_hash},
-        "checks": check_ledger(command_name, document.value),
-        "decision": decision(findings),
-        "findings": [finding.to_dict() for finding in findings],
+        "checks": {"run": ["strict_json_parse"] + result.checks_run, "not_run": result.checks_not_run},
+        "decision": decision(result.findings),
+        "findings": [finding.to_dict() for finding in result.findings],
     }
     _emit(payload)
-    return exit_code(findings)
+    return exit_code(result.findings)
 
 
 def _render_error(path: str, message: str, *, internal: bool = False) -> int:
@@ -208,17 +240,31 @@ def command(path: str, auditor: Auditor, command_name: str = "custom") -> int:
     except Exception as exc:  # pragma: no cover - last-resort input-boundary guard
         return _render_error(path, f"input loader failed unexpectedly ({type(exc).__name__})", internal=True)
     try:
-        findings = auditor(document.value, document.artifact_root)
-        return render(path, findings, document, command_name)
+        schema_check = f"schema_validation:{command_name}"
+        schema_findings = validate_route_schema(command_name, document.value)
+        if schema_findings:
+            remaining = _manifest_check_order(command_name) if command_name in {"lint", "audit"} else [schema_check, _semantic_check_name(command_name)]
+            result = AuditResult(schema_findings, [schema_check], [name for name in remaining if name != schema_check])
+        else:
+            outcome = auditor(document.value, document.artifact_root)
+            if isinstance(outcome, AuditResult):
+                result = AuditResult(
+                    outcome.findings,
+                    [schema_check] + outcome.checks_run,
+                    [name for name in outcome.checks_not_run if name != schema_check],
+                )
+            else:
+                result = AuditResult(outcome, ([schema_check] if command_name in ROUTE_SCHEMAS else []) + [_semantic_check_name(command_name)], ["claim_manifest_lint", "gate_product", "domain_plugins"])
+        return render(path, result, document)
     except Exception as exc:  # pragma: no cover - last-resort trust-boundary guard
         return _render_error(path, f"checker failed unexpectedly ({type(exc).__name__})", internal=True)
 
 
 def audit_claim(raw: dict[str, Any], artifact_root: Path | None = None) -> list[Finding]:
-    lint = lint_manifest(raw, artifact_root)
-    if any(finding.severity == Severity.ERROR for finding in lint):
-        return lint
-    return lint + audit_gate_product(raw, artifact_root) + run_plugins(raw)
+    schema = validate_route_schema("audit", raw)
+    if schema:
+        return schema
+    return _audit_stages(raw, artifact_root).findings
 
 
 class JsonArgumentParser(argparse.ArgumentParser):
@@ -251,8 +297,8 @@ def main(argv: list[str] | None = None) -> int:
         child.add_argument("path")
     args = parser.parse_args(argv)
     auditors: dict[str, Auditor] = {
-        "lint": lambda raw, root: lint_manifest(raw, root),
-        "audit": audit_claim,
+        "lint": _lint_stages,
+        "audit": _audit_stages,
         "complex": lambda raw, _root: audit_complex_document(raw),
         "observe": lambda raw, _root: audit_observation_document(raw),
         "atomic": lambda raw, _root: audit_atomic_modulus(raw),

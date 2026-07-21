@@ -14,6 +14,19 @@ The roadmap states proof and software obligations, not promised scientific disco
 
 Exit criterion: a clean outsider can run one passing and one failing audit, understand exactly what each establishes, and report a false pass without project-specific coaching.
 
+## v0.3.0-alpha.2 - false-pass hardening
+
+- derive each gate state from the complete verified bound-evidence set;
+- preserve referenced and omitted pass/fail conflicts as fatal regression fixtures;
+- record only checks that actually executed;
+- fail closed when a selected domain plugin lacks typed configuration;
+- enforce the released JSON Schema before semantic checking;
+- require passing, claim-bound support for theorem and evidence-maturity transitions;
+- build releases only from clean, exactly tagged Git trees with a pinned toolchain;
+- run the Null-Discrimination suite in CI.
+
+Exit criterion: every registered poisoned null is mechanically distinguished from its valid control, and a skipped check can never appear in `checks.run`.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;

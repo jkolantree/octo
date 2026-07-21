@@ -64,6 +64,7 @@ class ManifestTests(unittest.TestCase):
                     "artifact": "proof.json",
                     "sha256": sha256_bytes(artifacts["proof.json"]),
                     "verifies_gates": ["exact_identity"],
+                    "verifies_claims": ["bsc:test:claim"],
                 }
             ],
             "dependency_graph": {
@@ -173,6 +174,7 @@ class ManifestTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             raw = self.make_manifest(root)
+            raw["evidence"][0]["verifies_gates"] = []
             failure = b'{"counterexample":true}\n'
             (root / "failure.json").write_bytes(failure)
             raw["evidence"].append(

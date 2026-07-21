@@ -47,9 +47,11 @@ Each applicable fatal gate has one state:
 - `unrun` - no adequate result exists;
 - `pass` - the declared obligation passed with referenced evidence;
 - `fail` - a prospective failure condition fired;
-- `conflict` - passing and failing evidence coexist.
+- `conflict` - incompatible verified conclusions coexist, including a decisive result mixed with an inconclusive bound record.
 
 Admission requires every applicable fatal gate to be exactly `pass`. Conflict is preserved and blocked, never averaged.
+
+The checker derives this coordinate from the complete set of evidence records bound to the gate. A manifest cannot hide a bound failure by omitting its identifier from the gate record, and a submitted state that disagrees with the derived state is blocked.
 
 ## 5. CLI decision
 

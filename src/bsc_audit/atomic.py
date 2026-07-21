@@ -10,6 +10,7 @@ from .findings import Finding, Severity
 MAX_EXPONENT = 64
 MAX_COMPACTS = 1000
 MAX_SAMPLES_PER_COMPACT = 10000
+PROOF_PLACEHOLDERS = {"todo", "tbd", "draft", "placeholder", "replace-me", "replace me", "unassigned"}
 
 
 def audit_atomic_modulus(raw: dict[str, Any]) -> list[Finding]:
@@ -41,7 +42,7 @@ def audit_atomic_modulus(raw: dict[str, Any]) -> list[Finding]:
     if exponent > MAX_EXPONENT:
         findings.append(Finding(Severity.ERROR, "ATOMIC_EXPONENT_LIMIT", "modulus.exponent", f"executable records limit the integer exponent to {MAX_EXPONENT}"))
     proof_id = modulus.get("proof_id")
-    if not isinstance(proof_id, str) or not proof_id.strip():
+    if not isinstance(proof_id, str) or not proof_id.strip() or " ".join(proof_id.strip().lower().split()) in PROOF_PLACEHOLDERS:
         findings.append(Finding(Severity.BLOCKED, "ATOMIC_MODULUS_PROOF_MISSING", "modulus.proof_id", "finite samples do not prove a uniform concentration modulus; supply an external proof identifier"))
 
     compacts = raw.get("compacts")
