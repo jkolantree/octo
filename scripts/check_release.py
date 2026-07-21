@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from bsc_audit import __version__  # noqa: E402
+from check_research_packet import verify_packet  # noqa: E402
 
 
 def fail(message: str) -> None:
@@ -52,6 +53,10 @@ def load_strict_json(path: Path) -> object:
 def main() -> int:
     if len((ROOT / "LICENSE").read_text(encoding="utf-8").splitlines()) < 150:
         fail("LICENSE is not the complete Apache-2.0 text")
+
+    packet_failures = verify_packet()
+    if packet_failures:
+        fail(f"derived witnessed-descent packet failed verification: {packet_failures[0]}")
 
     for directory in ("examples", "templates", "schemas", "src/bsc_audit/schema_data"):
         for path in sorted((ROOT / directory).glob("*.json")):

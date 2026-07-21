@@ -6,13 +6,19 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 
 ### Added
 
+- an exact rational `holonomy` route for strict, derived, and observed-derived arbitrary path relations;
+- replayable chain-homotopy pass certificates, dual obstruction failures, and exact harmonic residuals;
+- lawful observation-projection, semantic-basis binding, edge-legality, and flattened-system resource gates;
+- four known-answer holonomy fixtures plus an exhaustive 153-case two-term comparison against induced homology;
+- a provenance-bounded derived-descent and spectral-obstruction research packet with a complete local digest ledger and a non-executing report checker;
+- explicit roadmap separation between atomic rigidity, absolute-continuity closure, and bounded-jet orthogonal-prime obligations;
 - an explicitly non-admissive proof-carrying adapter receipt schema;
 - structural, artifact-binding, result-consistency, replay, and assumption-policy checks for Lean 4, SMT-LIB 2, and interval receipts;
 - adversarial adapter tests that prevent receipts from silently acquiring theorem authority;
 - a fail-closed pseudonymous-publication scanner covering tracked text, DOCX XML and relationships, PDF metadata, archives, release artifacts, and Git commit authorship;
 - a machine-readable identity policy, release-date erratum, and preserved operational-branch tip ledger.
 
-This development interface records and rejects malformed proof claims. It does not yet execute theorem provers, solvers, or interval backends and cannot satisfy an admission gate.
+This development interface records and rejects malformed proof claims. It does not execute theorem provers or interval backends and cannot satisfy an admission gate. The exact rational linear solver is scoped only to the finite derived-holonomy system.
 
 ## 0.3.0-alpha.2 - 2026-07-21
 

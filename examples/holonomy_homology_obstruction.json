@@ -1,0 +1,24 @@
+{
+  "holonomy_version": "0.1.0",
+  "field": "Q",
+  "contexts": {
+    "H": {
+      "groups": {"0": 1},
+      "differentials": {},
+      "basis": {
+        "0": [{"label": "h0", "meaning": "persistent homology witness", "sha256": "sha256:46a29c0f6d8bdc4f96d1fe3362da007f67e01bef4916dc09da4ddb52e6b70341"}]
+      }
+    }
+  },
+  "transports": {
+    "identity": {"source": "H", "target": "H", "maps": {"0": [[1]]}},
+    "zero": {"source": "H", "target": "H", "maps": {"0": [[0]]}}
+  },
+  "relations": {
+    "visible_class": {
+      "left_path": ["identity"],
+      "right_path": ["zero"],
+      "required_equivalence": "derived"
+    }
+  }
+}

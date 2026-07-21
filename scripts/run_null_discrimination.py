@@ -11,20 +11,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = (
-    ("control", "examples/claim_valid.json", 0),
-    ("referenced-conflict", "examples/null_conflicting_referenced.json", 1),
-    ("omitted-bound-failure", "examples/null_omitted_bound_failure.json", 1),
-    ("failed-proof", "examples/null_failed_proof.json", 1),
-    ("missing-arithmetic-config", "examples/null_missing_arithmetic_config.json", 2),
+    ("control", "audit", "examples/claim_valid.json", 0),
+    ("referenced-conflict", "audit", "examples/null_conflicting_referenced.json", 1),
+    ("omitted-bound-failure", "audit", "examples/null_omitted_bound_failure.json", 1),
+    ("failed-proof", "audit", "examples/null_failed_proof.json", 1),
+    ("missing-arithmetic-config", "audit", "examples/null_missing_arithmetic_config.json", 2),
+    ("derived-contractible-control", "holonomy", "examples/holonomy_contractible_derived_pass.json", 0),
+    ("derived-homology-obstruction", "holonomy", "examples/holonomy_homology_obstruction.json", 1),
+    ("observed-derived-control", "holonomy", "examples/holonomy_observed_quotient_pass.json", 0),
+    ("illegal-edge-short-circuit", "holonomy", "examples/holonomy_non_chain_map.json", 1),
+    ("missing-observation-projection", "holonomy", "examples/schema_holonomy_missing_projection.json", 2),
 )
 
 
 def main() -> int:
     records: list[dict[str, object]] = []
     failed = False
-    for name, relative, expected in CASES:
+    for name, command, relative, expected in CASES:
         result = subprocess.run(
-            [sys.executable, "run_audit.py", "audit", relative],
+            [sys.executable, "run_audit.py", command, relative],
             cwd=ROOT,
             text=True,
             capture_output=True,
@@ -40,6 +45,7 @@ def main() -> int:
             {
                 "name": name,
                 "input": relative,
+                "command": command,
                 "expected_exit": expected,
                 "actual_exit": result.returncode,
                 "decision": payload.get("decision"),
