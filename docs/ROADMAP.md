@@ -51,6 +51,16 @@ Exit criterion: a submitted receipt can be checked as a finite provenance object
 
 Exit criterion: every supported path relation either produces a replayable exact certificate or fails before class construction, and a strict representative defect is never confused with a homology obstruction.
 
+## Post-alpha.3 - original generator recovery
+
+- preserve the alpha.3 missing-generator statement as the historical intake boundary;
+- bind the recovered archive and exact original script hashes in a separate recovery record;
+- execute only hard-coded trusted generator bytes in an isolated temporary directory;
+- regenerate all three reports and compare canonical LF bytes with their preserved fixtures;
+- reject generator tampering before subprocess execution.
+
+Exit criterion: all originally missing scripts match the previously preserved checksum record and deterministically regenerate every report, without enlarging the proof, authentication, or novelty claims.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;
