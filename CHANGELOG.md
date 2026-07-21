@@ -2,6 +2,16 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## Unreleased - 0.3.0a3.dev0
+
+### Added
+
+- an explicitly non-admissive proof-carrying adapter receipt schema;
+- structural, artifact-binding, result-consistency, replay, and assumption-policy checks for Lean 4, SMT-LIB 2, and interval receipts;
+- adversarial adapter tests that prevent receipts from silently acquiring theorem authority.
+
+This development interface records and rejects malformed proof claims. It does not yet execute theorem provers, solvers, or interval backends and cannot satisfy an admission gate.
+
 ## 0.3.0-alpha.2 - 2026-07-20
 
 ### Corrected false passes

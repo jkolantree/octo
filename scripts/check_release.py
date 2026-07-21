@@ -123,7 +123,11 @@ def main() -> int:
 
     citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
     public_version = __version__.replace("a", "-alpha.", 1)
-    if f"version: {public_version}" not in citation:
+    if ".dev" in __version__:
+        release_match = re.search(r"\*\*Current release:\*\* `v([^`]+)`", (ROOT / "README.md").read_text(encoding="utf-8"))
+        if not release_match or f"version: {release_match.group(1)}" not in citation:
+            fail("development builds must preserve citation metadata for the named current release")
+    elif f"version: {public_version}" not in citation:
         fail(f"CITATION.cff does not match package version {__version__}")
 
     print(f"release checks passed for {__version__}")

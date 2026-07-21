@@ -27,6 +27,17 @@ Exit criterion: a clean outsider can run one passing and one failing audit, unde
 
 Exit criterion: every registered poisoned null is mechanically distinguished from its valid control, and a skipped check can never appear in `checks.run`.
 
+## Post-alpha.2 - proof-carrying adapter groundwork
+
+- versioned, hash-bound receipt schema for Lean 4, SMT-LIB 2, and interval adapters;
+- explicit non-admission authority marker;
+- kind/result/certificate consistency checks;
+- independent-checker requirement for SMT and interval passes;
+- declared-versus-observed assumption policy;
+- regression tests for substitution, false pass, path escape, and authority escalation.
+
+Exit criterion: a submitted receipt can be checked as a finite provenance object, while no submitted field can promote a theorem before supervised adapter execution exists.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;
