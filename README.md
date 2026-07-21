@@ -37,6 +37,8 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 - **Example catalog:** [examples/README.md](examples/README.md)
 - **Mathematical definitions:** [docs/MATHEMATICS.md](docs/MATHEMATICS.md)
 - **Proof adapter boundary:** [docs/PROOF_CARRYING_ADAPTERS.md](docs/PROOF_CARRYING_ADAPTERS.md)
+- **Pseudonymous publication policy:** [PRIVACY.md](PRIVACY.md)
+- **Published corrections:** [ERRATA.md](ERRATA.md)
 
 ## Thirty-second example
 
@@ -90,4 +92,6 @@ Read [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) before relying on an audit and
 
 Compact counterexamples, false-pass reports, false-block reports, accessibility fixes, and better kill conditions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md). Changes to fatal gates follow [GOVERNANCE.md](GOVERNANCE.md).
 
-The software is maintained under the project identity **J. Tree** and distributed under Apache-2.0. The research note in `research/` is separately licensed under CC BY 4.0. See the license file in each scope.
+The software is maintained under the project identity **J. Tree** and distributed under Apache-2.0. The research note in `research/` is separately licensed under CC BY 4.0. The custom software release bundle and Python distributions exclude the research PDF and DOCX. GitHub's automatically generated tag source archives contain every tracked file, including those research artifacts; `research/LICENSE` governs them inside those archives. See the license file in each scope.
+
+Public attribution is deliberately pseudonymous. The fail-closed privacy gate permits only the declared project identities and GitHub-controlled bot identities; see [PRIVACY.md](PRIVACY.md).

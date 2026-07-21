@@ -16,6 +16,8 @@ This index separates first use, reference material, governance, and release work
 - [Manifest and Schema](SCHEMA.md) - versioned interchange contract
 - [Mathematics](MATHEMATICS.md) - exact definitions and theorem statements
 - [Proof-carrying Adapters](PROOF_CARRYING_ADAPTERS.md) - non-admissive Lean, SMT, and interval receipt boundary
+- [Pseudonymous publication policy](../PRIVACY.md) - identity allowlist and fail-closed privacy gate
+- [Errata](../ERRATA.md) - corrections that do not rewrite immutable releases
 
 ## Project operation
 
@@ -23,6 +25,7 @@ This index separates first use, reference material, governance, and release work
 - [Sharing and Release Guide](SHARING_GUIDE.md)
 - [Contributing](../CONTRIBUTING.md)
 - [Governance](../GOVERNANCE.md)
+- [Retired release-operation branches](OPERATIONS_ARCHIVE.md)
 - [Security](../SECURITY.md)
 - [Code of Conduct](../CODE_OF_CONDUCT.md)
 - [Changelog](../CHANGELOG.md)

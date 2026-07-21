@@ -58,6 +58,9 @@ def main() -> int:
             load_strict_json(path)
     for relative in (".zenodo.json", "research/zenodo.json", "toolchain.lock.json"):
         load_strict_json(ROOT / relative)
+    privacy_policy = load_strict_json(ROOT / "privacy-policy.json")
+    if not isinstance(privacy_policy, dict) or privacy_policy.get("policy_version") != "1.0.0":
+        fail("privacy policy is missing or has an unsupported version")
 
     for schema in sorted((ROOT / "schemas").glob("*.json")):
         packaged = ROOT / "src" / "bsc_audit" / "schema_data" / schema.name
@@ -104,6 +107,8 @@ def main() -> int:
         fail("software Zenodo metadata must declare Apache-2.0")
     if not isinstance(paper_zenodo, dict) or paper_zenodo.get("license") != "CC-BY-4.0":
         fail("paper Zenodo metadata must declare CC-BY-4.0")
+    if software_zenodo.get("publication_date") != "2026-07-21":
+        fail("software archive metadata must use the corrected public release date")
 
     toolchain = load_strict_json(ROOT / "toolchain.lock.json")
     if not isinstance(toolchain, dict):
@@ -122,6 +127,8 @@ def main() -> int:
                 fail(f"stale repository identifier in {path.relative_to(ROOT)}")
 
     citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+    if "date-released: 2026-07-21" not in citation:
+        fail("CITATION.cff must use the corrected public release date")
     public_version = __version__.replace("a", "-alpha.", 1)
     if ".dev" in __version__:
         release_match = re.search(r"\*\*Current release:\*\* `v([^`]+)`", (ROOT / "README.md").read_text(encoding="utf-8"))
