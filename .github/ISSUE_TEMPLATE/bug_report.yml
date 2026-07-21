@@ -10,7 +10,7 @@ body:
     id: version
     attributes:
       label: Engine and schema version
-      placeholder: "engine 0.3.0a1; manifest 0.3.0"
+      placeholder: "engine 0.3.0a2; manifest 0.3.0"
     validations:
       required: true
   - type: textarea

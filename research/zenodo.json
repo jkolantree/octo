@@ -1,0 +1,18 @@
+{
+  "title": "Audit Descent Calculus: Certificate Naturality, Observation Descent, Atomic Rigidity, and Executable Scientific Audit",
+  "description": "Foundational research note for the BSC Audit Engine. The paper distinguishes proved finite identities, structural obstructions, executable checks, and unresolved operator-construction obligations.",
+  "creators": [{"name": "Tree, J."}],
+  "license": "CC-BY-4.0",
+  "upload_type": "publication",
+  "publication_type": "workingpaper",
+  "publication_date": "2026-07-20",
+  "keywords": [
+    "certificate transport",
+    "observation descent",
+    "atomic rigidity",
+    "arithmetic trace",
+    "scientific audit"
+  ],
+  "language": "eng",
+  "access_right": "open"
+}

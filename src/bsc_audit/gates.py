@@ -17,35 +17,55 @@ def _bound_evidence_is_valid(
     references: object,
     records: dict[str, dict[str, Any]],
     verified_ids: set[str],
-) -> tuple[bool, dict[str, Any]]:
+) -> tuple[bool, str, dict[str, Any]]:
     if not isinstance(references, list) or not all(isinstance(value, str) for value in references):
-        return False, {"reason": "evidence references must be a list of identifiers"}
-    if state == "unrun":
-        return (not references), {"reason": "unrun gates cannot carry result evidence"}
-    if not references:
-        return False, {"reason": "a concluded gate requires evidence"}
-    missing = sorted(set(references) - set(records))
-    unverified = sorted(set(references) - verified_ids)
-    unbound = sorted(
+        return False, "unrun", {"reason": "evidence references must be a list of identifiers"}
+    duplicate_references = len(references) != len(set(references))
+    bound_ids = {
         evidence_id
-        for evidence_id in references
-        if evidence_id in records and gate_id not in records[evidence_id].get("verifies_gates", [])
-    )
-    expected_results = {"pass"} if state == "pass" else ({"fail"} if state == "fail" else {"pass", "fail"})
+        for evidence_id, record in records.items()
+        if gate_id in record.get("verifies_gates", [])
+    }
+    referenced_ids = set(references)
+    missing_references = sorted(bound_ids - referenced_ids)
+    extraneous_references = sorted(referenced_ids - bound_ids)
+    missing_records = sorted(referenced_ids - set(records))
+    unverified = sorted(bound_ids - verified_ids)
     observed_results = {
         records[evidence_id].get("result")
-        for evidence_id in references
-        if evidence_id in records and evidence_id in verified_ids
+        for evidence_id in bound_ids & verified_ids
+        if evidence_id in records
     }
-    result_mismatch = not expected_results.issubset(observed_results)
+    decisive = observed_results & {"pass", "fail"}
+    if not decisive:
+        computed_state = "unrun"
+    elif observed_results == {"pass"}:
+        computed_state = "pass"
+    elif observed_results == {"fail"}:
+        computed_state = "fail"
+    else:
+        computed_state = "conflict"
+    state_mismatch = state != computed_state
     witness = {
-        "missing": missing,
+        "computed_state": computed_state,
+        "bound_evidence": sorted(bound_ids),
+        "duplicate_references": duplicate_references,
+        "missing_references": missing_references,
+        "extraneous_references": extraneous_references,
+        "missing_records": missing_records,
         "unverified": unverified,
-        "unbound": unbound,
-        "expected_results": sorted(expected_results),
         "observed_results": sorted(value for value in observed_results if isinstance(value, str)),
+        "declared_state": state,
     }
-    return not (missing or unverified or unbound or result_mismatch), witness
+    valid = not (
+        duplicate_references
+        or missing_references
+        or extraneous_references
+        or missing_records
+        or unverified
+        or state_mismatch
+    )
+    return valid, computed_state, witness
 
 
 def audit_gate_product(raw: dict[str, Any], artifact_root: Path | None = None) -> list[Finding]:
@@ -75,6 +95,7 @@ def audit_gate_product(raw: dict[str, Any], artifact_root: Path | None = None) -
     by_id: dict[str, dict[str, Any]] = {}
     verified_results: set[str] = set()
     verified_failures: set[str] = set()
+    computed_states: dict[str, str] = {}
     for index, record in enumerate(gate_records):
         path = f"admission.gate_results.{index}"
         if not isinstance(record, dict):
@@ -91,7 +112,8 @@ def audit_gate_product(raw: dict[str, Any], artifact_root: Path | None = None) -
             continue
         if gate_id in declared_hard and record.get("fatal") is not True:
             findings.append(Finding(Severity.ERROR, "HARD_GATE_NOT_FATAL", path, "every declared hard gate must be marked fatal"))
-        valid_binding, witness = _bound_evidence_is_valid(gate_id, state, record.get("evidence", []), records, verified_ids)
+        valid_binding, computed_state, witness = _bound_evidence_is_valid(gate_id, state, record.get("evidence", []), records, verified_ids)
+        computed_states[gate_id] = computed_state
         if not valid_binding:
             findings.append(
                 Finding(
@@ -104,18 +126,18 @@ def audit_gate_product(raw: dict[str, Any], artifact_root: Path | None = None) -
             )
         else:
             verified_results.add(gate_id)
-        if state == "conflict":
+        if computed_state == "conflict":
             findings.append(
                 Finding(
                     Severity.BLOCKED,
                     "GATE_CONFLICT",
                     path,
-                    "this gate has verified passing and failing evidence; averaging is forbidden",
-                    witness=record.get("evidence", []),
+                    "this gate has incompatible or inconclusive verified evidence; averaging or omission is forbidden",
+                    witness=witness,
                     repair="resolve the conflicting certificates or restrict the claim scope",
                 )
             )
-        if record.get("fatal") is True and state == "fail" and valid_binding:
+        if record.get("fatal") is True and computed_state == "fail" and valid_binding:
             verified_failures.add(gate_id)
             findings.append(
                 Finding(
@@ -134,7 +156,7 @@ def audit_gate_product(raw: dict[str, Any], artifact_root: Path | None = None) -
         unresolved = sorted(
             gate_id
             for gate_id in declared_hard
-            if gate_id not in by_id or by_id[gate_id].get("state") != "pass" or gate_id not in verified_results
+            if gate_id not in by_id or computed_states.get(gate_id) != "pass" or gate_id not in verified_results
         )
         if unresolved:
             findings.append(Finding(Severity.BLOCKED, "ADMISSION_WITHOUT_FATAL_PASSES", "claim.deployment_status", "admission requires every hard-gate coordinate to have a verified pass", witness=unresolved))

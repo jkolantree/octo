@@ -5,14 +5,32 @@ from typing import Any
 from .findings import Finding, Severity
 
 
+TRACE_DIMENSIONS = {"finite", "infinite"}
+TRACE_TARGETS = {"exact_prime_power_comb", "finite_truncation", "distributional_prime_increment"}
+
+
 def arithmetic_trace_findings(raw: dict[str, Any]) -> list[Finding]:
     if raw.get("claim", {}).get("family") != "arithmetic_trace":
         return []
-    config = raw.get("domain_checks", {}).get("arithmetic_trace", {})
+    domain_checks = raw.get("domain_checks")
+    if not isinstance(domain_checks, dict) or "arithmetic_trace" not in domain_checks:
+        return [Finding(Severity.ERROR, "ARITHMETIC_TRACE_CONFIG_MISSING", "domain_checks.arithmetic_trace", "arithmetic-trace claims require a typed domain configuration")]
+    config = domain_checks.get("arithmetic_trace")
     if not isinstance(config, dict):
         return [Finding(Severity.ERROR, "ARITHMETIC_TRACE_TYPE", "domain_checks.arithmetic_trace", "arithmetic-trace checks must be an object")]
     findings: list[Finding] = []
-    if config.get("model_dimension") == "finite" and config.get("target") == "exact_prime_power_comb":
+    dimension = config.get("model_dimension")
+    target = config.get("target")
+    if dimension not in TRACE_DIMENSIONS:
+        findings.append(Finding(Severity.ERROR, "ARITHMETIC_TRACE_DIMENSION_UNSUPPORTED", "domain_checks.arithmetic_trace.model_dimension", f"model_dimension must be one of {sorted(TRACE_DIMENSIONS)}"))
+    if target not in TRACE_TARGETS:
+        findings.append(Finding(Severity.ERROR, "ARITHMETIC_TRACE_TARGET_UNSUPPORTED", "domain_checks.arithmetic_trace.target", f"target must be one of {sorted(TRACE_TARGETS)}"))
+    for field in ("uses_zero_ordinates", "primary_gram_uses_zero_table"):
+        if not isinstance(config.get(field), bool):
+            findings.append(Finding(Severity.ERROR, "ARITHMETIC_TRACE_FLAG_TYPE", f"domain_checks.arithmetic_trace.{field}", "arithmetic-trace control flags must be boolean"))
+    if any(finding.severity == Severity.ERROR for finding in findings):
+        return findings
+    if dimension == "finite" and target == "exact_prime_power_comb":
         findings.append(Finding(Severity.DEMOTION, "FINITE_PRIME_COMB_NO_GO", "domain_checks.arithmetic_trace.model_dimension", "a finite analytic exponential sum cannot equal the infinite prime-power delta comb on C_c^infinity", repair="move to an infinite-dimensional distributional trace construction or declare a finite truncation only"))
     if config.get("uses_zero_ordinates"):
         findings.append(Finding(Severity.ERROR, "ZERO_FITTED_OPERATOR", "domain_checks.arithmetic_trace.uses_zero_ordinates", "zeta-zero ordinates may not enter the operator definition"))
@@ -32,9 +50,9 @@ def arithmetic_trace_findings(raw: dict[str, Any]) -> list[Finding]:
         obligations = []
     certified = set(obligations)
     missing = sorted(required - certified)
-    if config.get("model_dimension") == "infinite" and missing:
+    if dimension == "infinite" and missing:
         findings.append(Finding(Severity.BLOCKED, "TRACE_CONSTRUCTION_INCOMPLETE", "domain_checks.arithmetic_trace.certified_obligations", "infinite-dimensional construction is missing required certificates", witness=missing))
-    if config.get("model_dimension") == "infinite" and not missing:
+    if dimension == "infinite" and not missing:
         bindings = config.get("obligation_evidence", {})
         evidence = {item.get("id"): item for item in raw.get("evidence", []) if isinstance(item, dict) and item.get("id")}
         if not isinstance(bindings, dict):

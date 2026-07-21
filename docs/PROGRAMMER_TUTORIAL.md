@@ -1,6 +1,6 @@
 # Programmer Tutorial
 
-This guide runs the v0.3.0-alpha.1 research preview from a source archive or editable installation.
+This guide runs the v0.3.0-alpha.2 research preview from a source archive or editable installation.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ python run_audit.py --version
 The output must identify version:
 
 ```text
-bsc-audit 0.3.0a1
+bsc-audit 0.3.0a2
 ```
 
 Record this value with every audit.
@@ -89,7 +89,7 @@ Example shape:
 
 ```json
 {
-  "engine_version": "0.3.0a1",
+  "engine_version": "0.3.0a2",
   "checks": {
     "run": ["strict_json_parse", "finite_observation_descent"],
     "not_run": ["claim_manifest_lint", "gate_product", "domain_plugins"]
@@ -142,7 +142,7 @@ python run_audit.py lint work/my_claim.json
 python run_audit.py audit work/my_claim.json
 ```
 
-The machine-readable contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The manifest version is `0.3.0`; it is independent of the engine’s PEP 440 version `0.3.0a1`.
+The machine-readable contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The manifest version is `0.3.0`; it is independent of the engine’s PEP 440 version `0.3.0a2`.
 
 ## 7. Evidence and hashes
 

@@ -1,6 +1,6 @@
 # BSC Audit Packet for Language Models
 
-**Protocol version:** `0.3.0-alpha.1`<br>
+**Protocol version:** `0.3.0-alpha.2`<br>
 **Output status:** draft until human review and, where applicable, actual mechanical execution
 
 ## Purpose

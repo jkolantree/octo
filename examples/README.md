@@ -1,6 +1,6 @@
 # Example Catalog
 
-Examples are known-answer fixtures for the checker. They are not evidence that the represented scientific claims are true. Run them from the repository root with engine `0.3.0a1`.
+Examples are known-answer fixtures for the checker. They are not evidence that the represented scientific claims are true. Run them from the repository root with engine `0.3.0a2`.
 
 | File | Command | Expected decision | Exit | Lesson |
 |---|---|---:|---:|---|
@@ -13,6 +13,13 @@ Examples are known-answer fixtures for the checker. They are not evidence that t
 | `atomic_modulus_evasion.json` | `atomic` | `demoted` | 1 | A sample exceeds the declared concentration bound. |
 | `defect_composition_valid.json` | `defect` | `no_blocking_findings` | 0 | The declared composite encloses the exactly propagated affine upper bound. |
 | `defect_composition_understated.json` | `defect` | `demoted` | 1 | The declared composite understates at least one propagated upper-bound coordinate. |
+| `null_conflicting_referenced.json` | `audit` | `blocked` | 1 | A declared pass cannot conceal referenced passing and failing evidence. |
+| `null_omitted_bound_failure.json` | `audit` | `blocked` | 1 | A gate record cannot omit a failure that is bound to that gate. |
+| `null_failed_proof.json` | `audit` | `blocked` | 1 | A failed formal-proof artifact cannot satisfy theorem support. |
+| `null_missing_arithmetic_config.json` | `audit` | `prohibited` | 2 | An arithmetic-trace claim cannot activate an empty domain plugin. |
+| `schema_atomic_missing_name.json` | `atomic` | `prohibited` | 2 | Runtime acceptance follows the released atomic schema. |
+| `schema_complex_missing_fields.json` | `complex` | `prohibited` | 2 | Runtime acceptance follows the released complex schema. |
+| `schema_observation_nonstring_state.json` | `observe` | `prohibited` | 2 | Runtime acceptance follows the released observation schema. |
 
 Example command:
 

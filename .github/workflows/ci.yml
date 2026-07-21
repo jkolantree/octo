@@ -3,6 +3,11 @@ name: exact-audit
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: exact-audit-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -21,6 +26,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python scripts/run_tests.py
+      - run: python scripts/run_null_discrimination.py
       - run: python scripts/check_release.py
       - run: python run_audit.py audit examples/claim_valid.json
       - run: python run_audit.py complex examples/complex_valid_transport.json
@@ -33,21 +39,21 @@ jobs:
           if python run_audit.py audit templates/claim_manifest_template.json; then exit 1; fi
 
   package-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
-          python-version: "3.12"
+          python-version: "3.12.13"
       - run: SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py
       - name: Reproducible distributions
         run: |
           mkdir /tmp/bsc-build-a /tmp/bsc-build-b
           SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py --outdir /tmp/bsc-build-a
           SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py --outdir /tmp/bsc-build-b
-          cmp /tmp/bsc-build-a/bsc_audit_engine-0.3.0a1-py3-none-any.whl /tmp/bsc-build-b/bsc_audit_engine-0.3.0a1-py3-none-any.whl
-          cmp /tmp/bsc-build-a/bsc_audit_engine-0.3.0a1.tar.gz /tmp/bsc-build-b/bsc_audit_engine-0.3.0a1.tar.gz
+          cmp /tmp/bsc-build-a/bsc_audit_engine-0.3.0a2-py3-none-any.whl /tmp/bsc-build-b/bsc_audit_engine-0.3.0a2-py3-none-any.whl
+          cmp /tmp/bsc-build-a/bsc_audit_engine-0.3.0a2.tar.gz /tmp/bsc-build-b/bsc_audit_engine-0.3.0a2.tar.gz
       - run: python -m pip install --force-reinstall dist/*.whl
       - run: bsc-audit --version
       - run: bsc-audit audit examples/claim_valid.json

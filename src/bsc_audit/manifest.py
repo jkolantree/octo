@@ -126,8 +126,15 @@ def evidence_index(raw: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return result
 
 
-def lint_manifest(raw: dict[str, Any], artifact_root: Path | None = None) -> list[Finding]:
+def lint_manifest(
+    raw: dict[str, Any],
+    artifact_root: Path | None = None,
+    *,
+    checks_run: list[str] | None = None,
+) -> list[Finding]:
     findings: list[Finding] = []
+    if checks_run is not None and "claim_manifest_lint" not in checks_run:
+        checks_run.append("claim_manifest_lint")
     for field in REQUIRED_TOP:
         if field not in raw:
             findings.append(Finding(Severity.ERROR, "MANIFEST_REQUIRED", field, "required top-level field is missing"))
@@ -244,6 +251,8 @@ def lint_manifest(raw: dict[str, Any], artifact_root: Path | None = None) -> lis
                 )
             )
 
+    if checks_run is not None and "local_artifact_hashes" not in checks_run:
+        checks_run.append("local_artifact_hashes")
     evidence = raw.get("evidence", [])
     if not isinstance(evidence, list):
         findings.append(Finding(Severity.ERROR, "EVIDENCE_TYPE", "evidence", "evidence must be a list"))
@@ -252,6 +261,9 @@ def lint_manifest(raw: dict[str, Any], artifact_root: Path | None = None) -> lis
     verified_ids: set[str] = set()
     independently_replicated_ids: set[str] = set()
     proof_ids: set[str] = set()
+    verified_pass_ids: set[str] = set()
+    empirical_pass_ids: set[str] = set()
+    empirical_kinds = {"dataset", "statistical_certificate", "experimental_record", "independent_replication"}
     for index, item in enumerate(evidence):
         path = f"evidence.{index}"
         if not isinstance(item, dict):
@@ -277,6 +289,12 @@ def lint_manifest(raw: dict[str, Any], artifact_root: Path | None = None) -> lis
             findings.append(Finding(Severity.ERROR, "EVIDENCE_GATE_BINDING_TYPE", f"{path}.verifies_gates", "gate bindings must be a list of identifiers"))
         elif any(value not in set(hard_gates) for value in bindings):
             findings.append(Finding(Severity.ERROR, "EVIDENCE_GATE_UNDECLARED", f"{path}.verifies_gates", "evidence binds to an undeclared hard gate"))
+        claim_bindings = item.get("verifies_claims", [])
+        if not isinstance(claim_bindings, list) or not all(isinstance(value, str) and ID_PATTERN.fullmatch(value) for value in claim_bindings):
+            findings.append(Finding(Severity.ERROR, "EVIDENCE_CLAIM_BINDING_TYPE", f"{path}.verifies_claims", "claim bindings must be a list of identifiers"))
+            claim_bindings = []
+        elif any(value != claim.get("id") for value in claim_bindings):
+            findings.append(Finding(Severity.ERROR, "EVIDENCE_CLAIM_UNDECLARED", f"{path}.verifies_claims", "evidence binds to a claim other than the manifest claim"))
 
         has_artifact = "artifact" in item
         has_hash = "sha256" in item
@@ -305,8 +323,12 @@ def lint_manifest(raw: dict[str, Any], artifact_root: Path | None = None) -> lis
                 ok, reason, actual = verify_local_artifact(artifact_root, item.get("artifact"), item.get("sha256"))
             if ok:
                 verified_ids.add(evidence_id)
-                if kind in PROOF_KINDS:
+                if result == "pass":
+                    verified_pass_ids.add(evidence_id)
+                if kind in PROOF_KINDS and result == "pass" and claim.get("id") in claim_bindings:
                     proof_ids.add(evidence_id)
+                if kind in empirical_kinds and result == "pass":
+                    empirical_pass_ids.add(evidence_id)
                 if kind == "independent_replication" and result == "pass":
                     independently_replicated_ids.add(evidence_id)
             else:
@@ -321,12 +343,14 @@ def lint_manifest(raw: dict[str, Any], artifact_root: Path | None = None) -> lis
                     )
                 )
 
-    if maturity in {"structurally_checked", "empirically_passed", "externally_replicated"} and not verified_ids:
-        findings.append(Finding(Severity.BLOCKED, "EVIDENCE_MATURITY_UNSUPPORTED", "claim.evidence_maturity", "artifact-backed maturity requires at least one locally verified artifact"))
+    if maturity in {"structurally_checked", "empirically_passed", "externally_replicated"} and not verified_pass_ids:
+        findings.append(Finding(Severity.BLOCKED, "EVIDENCE_MATURITY_UNSUPPORTED", "claim.evidence_maturity", "artifact-backed maturity requires at least one locally verified passing artifact"))
+    if maturity in {"empirically_passed", "externally_replicated"} and not empirical_pass_ids:
+        findings.append(Finding(Severity.BLOCKED, "EMPIRICAL_EVIDENCE_MISSING", "claim.evidence_maturity", "empirical maturity requires verified passing data, statistical, experimental, or replication evidence"))
     if maturity == "externally_replicated" and not independently_replicated_ids:
         findings.append(Finding(Severity.BLOCKED, "REPLICATION_EVIDENCE_MISSING", "evidence", "independent maturity requires a verified independent-replication artifact"))
-    if claim.get("type") == "theorem" and not proof_ids:
-        findings.append(Finding(Severity.BLOCKED, "THEOREM_CERTIFICATE_MISSING", "evidence", "a theorem requires a locally verified proof or exact certificate"))
+    if claim.get("type") in {"theorem", "theorem_schema"} and not proof_ids:
+        findings.append(Finding(Severity.BLOCKED, "THEOREM_CERTIFICATE_MISSING", "evidence", "a theorem requires a locally verified passing proof or exact certificate bound to this claim"))
 
     if not any(f.severity in {Severity.ERROR, Severity.BLOCKED, Severity.DEMOTION} for f in findings):
         findings.append(Finding(Severity.INFO, "MANIFEST_STRUCTURALLY_VALID", "$", "manifest structure and declared local artifact bindings are valid; scientific truth has not been inferred"))

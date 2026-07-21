@@ -58,7 +58,7 @@ Sensitive vulnerability reports follow [SECURITY.md](../SECURITY.md). Scientific
 
 The CLI must return structured errors for declared input failures. An internal failure exits separately and never produces a pass.
 
-## Non-goals for v0.3.0-alpha.1
+## Non-goals for v0.3.0-alpha.2
 
 The engine does not provide:
 

@@ -31,7 +31,10 @@ from bsc_audit import __version__  # noqa: E402
 PUBLIC_VERSION = __version__.replace("a", "-alpha.", 1)
 SOURCE_DATE_EPOCH = int(os.environ.get("SOURCE_DATE_EPOCH", "1784505600"))
 ZIP_TIME = time.gmtime(max(SOURCE_DATE_EPOCH, 315532800))[:6]
-EXCLUDED_PARTS = {".git", ".venv", "__pycache__", "build", "dist", "release"}
+EXCLUDED_TRACKED_FILES = {
+    "research/Audit_Descent_Calculus.docx",
+    "research/Audit_Descent_Calculus.pdf",
+}
 
 
 def run(command: list[str], *, expected: int = 0, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
@@ -66,15 +69,40 @@ def zip_tree(destination: Path, paths: list[Path], base: Path) -> None:
             archive.writestr(info, data)
 
 
+def repository_identity() -> tuple[str, str, str]:
+    status = run(["git", "status", "--porcelain", "--untracked-files=all"]).stdout.strip()
+    if status:
+        raise SystemExit("release builds require a clean Git worktree")
+    commit = run(["git", "rev-parse", "HEAD"]).stdout.strip()
+    tree = run(["git", "rev-parse", "HEAD^{tree}"]).stdout.strip()
+    expected_tag = f"v{PUBLIC_VERSION}"
+    tags = set(run(["git", "tag", "--points-at", "HEAD"]).stdout.split())
+    if expected_tag not in tags:
+        raise SystemExit(f"release commit must carry exact immutable tag {expected_tag}")
+    return commit, tree, expected_tag
+
+
 def source_files() -> list[Path]:
-    return [
-        path
-        for path in ROOT.rglob("*")
-        if path.is_file()
-        and not any(part in EXCLUDED_PARTS or part.endswith(".egg-info") for part in path.relative_to(ROOT).parts)
-        and path.relative_to(ROOT).as_posix() != "research/Audit_Descent_Calculus.pdf"
-        and path.suffix not in {".pyc"}
-    ]
+    tracked = run(["git", "ls-files", "-z"]).stdout.split("\0")
+    paths = [ROOT / relative for relative in tracked if relative and relative not in EXCLUDED_TRACKED_FILES]
+    missing = [path for path in paths if not path.is_file()]
+    if missing:
+        raise SystemExit(f"tracked release source is missing: {missing[0].relative_to(ROOT)}")
+    return paths
+
+
+def toolchain_lock() -> dict[str, object]:
+    lock_path = ROOT / "toolchain.lock.json"
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    actual_python = sys.version.split()[0]
+    actual_setuptools = distribution_version("setuptools")
+    if lock.get("release_python") != actual_python:
+        raise SystemExit(f"release Python {actual_python} does not match toolchain lock {lock.get('release_python')}")
+    if lock.get("setuptools") != actual_setuptools:
+        raise SystemExit(f"setuptools {actual_setuptools} does not match toolchain lock {lock.get('setuptools')}")
+    if lock.get("source_date_epoch") != SOURCE_DATE_EPOCH:
+        raise SystemExit("SOURCE_DATE_EPOCH does not match toolchain.lock.json")
+    return lock
 
 
 def conformance_bundle(destination: Path) -> None:
@@ -117,7 +145,7 @@ def conformance_bundle(destination: Path) -> None:
         zip_tree(destination, [path for path in base.rglob("*") if path.is_file()], base.parent)
 
 
-def sbom(destination: Path, artifacts: list[Path]) -> None:
+def sbom(destination: Path, wheel: Path) -> None:
     created = datetime.fromtimestamp(SOURCE_DATE_EPOCH, tz=timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     namespace_hash = hashlib.sha256(f"bsc-audit-engine:{PUBLIC_VERSION}".encode()).hexdigest()
     write_json(
@@ -127,7 +155,7 @@ def sbom(destination: Path, artifacts: list[Path]) -> None:
             "dataLicense": "CC0-1.0",
             "SPDXID": "SPDXRef-DOCUMENT",
             "name": f"bsc-audit-engine-{PUBLIC_VERSION}",
-            "documentNamespace": f"https://github.com/jkolantree/bsc-audit-engine/releases/{PUBLIC_VERSION}/sbom-{namespace_hash}",
+            "documentNamespace": f"https://github.com/jkolantree/octo/releases/{PUBLIC_VERSION}/sbom-{namespace_hash}",
             "creationInfo": {"created": created, "creators": ["Tool: bsc-audit-engine/scripts/build_release.py"]},
             "packages": [
                 {
@@ -139,8 +167,14 @@ def sbom(destination: Path, artifacts: list[Path]) -> None:
                     "licenseConcluded": "Apache-2.0",
                     "licenseDeclared": "Apache-2.0",
                     "copyrightText": "Copyright J. Tree",
-                    "externalRefs": [],
-                    "checksums": [{"algorithm": "SHA256", "checksumValue": sha256(path)} for path in artifacts],
+                    "externalRefs": [
+                        {
+                            "referenceCategory": "PACKAGE-MANAGER",
+                            "referenceType": "purl",
+                            "referenceLocator": f"pkg:pypi/bsc-audit-engine@{__version__}",
+                        }
+                    ],
+                    "checksums": [{"algorithm": "SHA256", "checksumValue": sha256(wheel)}],
                 }
             ],
         },
@@ -150,13 +184,13 @@ def sbom(destination: Path, artifacts: list[Path]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "release")
-    parser.add_argument("--paper", type=Path, help="optional research-note PDF copied unchanged into the release")
-    parser.add_argument("--commit", help="published source commit SHA; defaults to the local Git HEAD")
     args = parser.parse_args()
     output = args.output.resolve()
-    output.mkdir(parents=True, exist_ok=True)
-    if any(output.iterdir()):
+    commit, tree, tag = repository_identity()
+    lock = toolchain_lock()
+    if output.exists() and any(output.iterdir()):
         raise SystemExit(f"release output directory must be empty: {output}")
+    output.mkdir(parents=True, exist_ok=True)
 
     run([sys.executable, "scripts/run_tests.py"])
     run([sys.executable, "scripts/check_release.py"])
@@ -183,37 +217,33 @@ def main() -> int:
     zip_tree(source_zip, source_files(), ROOT)
     conformance = output / f"bsc-audit-conformance-{PUBLIC_VERSION}.zip"
     conformance_bundle(conformance)
-    if args.paper:
-        if not args.paper.is_file() or args.paper.suffix.lower() != ".pdf":
-            raise SystemExit("--paper must name an existing PDF")
-        shutil.copyfile(args.paper, output / "Audit_Descent_Calculus.pdf")
-
     artifacts = sorted(path for path in output.iterdir() if path.is_file() and path.name not in {"SHA256SUMS", "RELEASE_MANIFEST.json", "SBOM.spdx.json"})
     sbom_path = output / "SBOM.spdx.json"
-    sbom(sbom_path, artifacts)
+    wheel = next(path for path in artifacts if path.suffix == ".whl")
+    sbom(sbom_path, wheel)
     artifacts.append(sbom_path)
-
-    if args.commit:
-        commit = args.commit
-    else:
-        try:
-            commit = run(["git", "rev-parse", "HEAD"]).stdout.strip()
-        except SystemExit:
-            commit = "unavailable"
     manifest = {
         "release": f"v{PUBLIC_VERSION}",
         "engine_version": __version__,
         "manifest_version": "0.3.0",
         "commit": commit,
+        "git_tree": tree,
+        "git_tag": tag,
+        "source_exclusions": sorted(EXCLUDED_TRACKED_FILES),
         "source_date_epoch": SOURCE_DATE_EPOCH,
         "toolchain": {
-            "python": sys.version.split()[0],
-            "setuptools": distribution_version("setuptools"),
+            "python": lock["release_python"],
+            "setuptools": lock["setuptools"],
+            "lock_sha256": sha256(ROOT / "toolchain.lock.json"),
+            "container_digest": lock.get("container_digest"),
         },
         "verification": {
             "source_tests": "pass",
             "release_integrity_checks": "pass",
             "reproducible_distributions": "pass",
+            "clean_git_tree": "pass",
+            "exact_release_tag": "pass",
+            "tracked_source_archive": "pass",
             "artifact_signatures": "not_performed",
         },
         "artifacts": [{"name": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)} for path in sorted(artifacts)],
