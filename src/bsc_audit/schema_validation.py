@@ -16,6 +16,7 @@ ROUTE_SCHEMAS = {
     "observe": "observation-v0.3.schema.json",
     "atomic": "atomic-modulus-v0.3.schema.json",
     "defect": "defect-v0.3.schema.json",
+    "adapter": "adapter-receipt-v0.1.schema.json",
 }
 
 

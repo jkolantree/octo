@@ -15,6 +15,7 @@ This index separates first use, reference material, governance, and release work
 - [Threat Model](THREAT_MODEL.md) - false-pass, leakage, prompt injection, and evidence risks
 - [Manifest and Schema](SCHEMA.md) - versioned interchange contract
 - [Mathematics](MATHEMATICS.md) - exact definitions and theorem statements
+- [Proof-carrying Adapters](PROOF_CARRYING_ADAPTERS.md) - non-admissive Lean, SMT, and interval receipt boundary
 
 ## Project operation
 

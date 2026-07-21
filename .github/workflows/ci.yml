@@ -53,8 +53,11 @@ jobs:
           mkdir /tmp/bsc-build-a /tmp/bsc-build-b
           SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py --outdir /tmp/bsc-build-a
           SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py --outdir /tmp/bsc-build-b
-          cmp /tmp/bsc-build-a/bsc_audit_engine-0.3.0a2-py3-none-any.whl /tmp/bsc-build-b/bsc_audit_engine-0.3.0a2-py3-none-any.whl
-          cmp /tmp/bsc-build-a/bsc_audit_engine-0.3.0a2.tar.gz /tmp/bsc-build-b/bsc_audit_engine-0.3.0a2.tar.gz
+          for artifact in /tmp/bsc-build-a/*; do
+            name="${artifact##*/}"
+            test -f "/tmp/bsc-build-b/$name"
+            cmp "$artifact" "/tmp/bsc-build-b/$name"
+          done
       - run: python -m pip install --force-reinstall dist/*.whl
       - run: bsc-audit --version
       - run: bsc-audit audit examples/claim_valid.json
