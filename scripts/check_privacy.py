@@ -45,6 +45,7 @@ TEXT_SUFFIXES = {
     ".css",
     ".html",
     ".in",
+    ".js",
     ".json",
     ".lock",
     ".md",

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "bsc-audit-engine"
 dynamic = ["version"]
-description = "Certificate-producing audit engine for typed scientific claims"
+description = "A fail-closed research-preview engine for exact structural audits, adversarial null discrimination, and non-admissive proof-adapter receipts."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -25,7 +25,7 @@ dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/jkolantree/octo"
-Documentation = "https://github.com/jkolantree/octo/blob/main/docs/index.md"
+Documentation = "https://jkolantree.github.io/octo/"
 Issues = "https://github.com/jkolantree/octo/issues"
 Changelog = "https://github.com/jkolantree/octo/blob/main/CHANGELOG.md"
 
