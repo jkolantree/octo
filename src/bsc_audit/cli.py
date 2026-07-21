@@ -14,6 +14,7 @@ from .bicomplex import audit_complex_document
 from .defect import audit_defect_composition
 from .findings import Finding, Severity, decision, exit_code
 from .gates import audit_gate_product
+from .holonomy import audit_holonomy_document
 from .manifest import lint_manifest
 from .observation import audit_observation_document
 from .plugins import arithmetic_trace_findings, recovery_findings
@@ -163,6 +164,7 @@ def _semantic_check_name(command_name: str) -> str:
         "atomic": "finite_atomic_modulus_record",
         "defect": "affine_upper_bound_propagation",
         "adapter": "proof_carrying_adapter_receipt",
+        "holonomy": "exact_derived_holonomy",
     }.get(command_name, "custom_auditor")
 
 
@@ -295,6 +297,7 @@ def main(argv: list[str] | None = None) -> int:
         ("atomic", "audit an off-origin concentration-modulus certificate"),
         ("defect", "audit compositional transport-defect bounds"),
         ("adapter", "audit a non-admissive proof-carrying adapter receipt"),
+        ("holonomy", "audit strict, derived, and observed-derived path holonomy"),
     ):
         child = subparsers.add_parser(name, help=help_text)
         child.add_argument("path")
@@ -307,6 +310,7 @@ def main(argv: list[str] | None = None) -> int:
         "atomic": lambda raw, _root: audit_atomic_modulus(raw),
         "defect": lambda raw, _root: audit_defect_composition(raw),
         "adapter": audit_adapter_receipt,
+        "holonomy": lambda raw, _root: audit_holonomy_document(raw),
     }
     return command(args.path, auditors[args.command], args.command)
 

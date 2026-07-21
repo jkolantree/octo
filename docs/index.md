@@ -15,9 +15,12 @@ This index separates first use, reference material, governance, and release work
 - [Threat Model](THREAT_MODEL.md) - false-pass, leakage, prompt injection, and evidence risks
 - [Manifest and Schema](SCHEMA.md) - versioned interchange contract
 - [Mathematics](MATHEMATICS.md) - exact definitions and theorem statements
+- [Exact Derived Holonomy](DERIVED_HOLONOMY.md) - strict, homotopy, and observation-reduced path comparison
+- [Spectral Obstruction and Limit Gates](SPECTRAL_OBSTRUCTIONS.md) - shifted-ladder and bounded-jet prime-block boundaries
 - [Proof-carrying Adapters](PROOF_CARRYING_ADAPTERS.md) - non-admissive Lean, SMT, and interval receipt boundary
 - [Pseudonymous publication policy](../PRIVACY.md) - identity allowlist and fail-closed privacy gate
 - [Errata](../ERRATA.md) - corrections that do not rewrite immutable releases
+- [Derived witnessed-descent packet](../research/derived-witnessed-descent/README.md) - preserved notes, reports, provenance, and reproduction limits
 
 ## Project operation
 

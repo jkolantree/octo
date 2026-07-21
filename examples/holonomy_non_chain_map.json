@@ -1,0 +1,25 @@
+{
+  "holonomy_version": "0.1.0",
+  "field": "Q",
+  "contexts": {
+    "C": {
+      "groups": {"0": 1, "1": 1},
+      "differentials": {"1": [[1]]},
+      "basis": {
+        "0": [{"label": "c0", "meaning": "contractible degree-zero witness", "sha256": "sha256:e1646fff1118f720d3084cb8412bc862fd88842ec0b5643b479dc8ec7af81308"}],
+        "1": [{"label": "c1", "meaning": "contractible degree-one witness", "sha256": "sha256:eaf1032a7a3cf3bac80dc18a8983d4131e27793912af41990dc770ee044c6604"}]
+      }
+    }
+  },
+  "transports": {
+    "illegal": {"source": "C", "target": "C", "maps": {"0": [[1]], "1": [[0]]}},
+    "zero": {"source": "C", "target": "C", "maps": {"0": [[0]], "1": [[0]]}}
+  },
+  "relations": {
+    "blocked_class": {
+      "left_path": ["illegal"],
+      "right_path": ["zero"],
+      "required_equivalence": "derived"
+    }
+  }
+}

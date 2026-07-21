@@ -38,6 +38,19 @@ Exit criterion: every registered poisoned null is mechanically distinguished fro
 
 Exit criterion: a submitted receipt can be checked as a finite provenance object, while no submitted field can promote a theorem before supervised adapter execution exists.
 
+## v0.3.0-alpha.3 - exact derived witnessed descent
+
+- exact rational homotopy solver with replayed primal and dual certificates;
+- arbitrary-length presented path relations without weakening strict `complex` squares;
+- strict, derived, and observed-derived equivalence levels;
+- lawful chain-map and degreewise-surjective observation projections;
+- content-addressed semantic basis records;
+- exact harmonic residual and resource ceilings for flattened systems;
+- preserved strict mismatch, homology obstruction, quotient, illegal-edge, and 153-case fixtures;
+- provenance-bounded research packet with explicit missing-generator and non-kernel-verification status.
+
+Exit criterion: every supported path relation either produces a replayable exact certificate or fails before class construction, and a strict representative defect is never confused with a homology obstruction.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;
@@ -68,10 +81,14 @@ Exit criterion: known finite matrices are enclosed reproducibly; inconsistent co
 - Schatten-bound certificates;
 - prime-ablation distributions;
 - singular-support audit for counterterms;
+- separate `atomic_rigidity` and `ac_counterterm_closure` obligations;
+- typed orthogonality, prime trace-law, bounded-jet, spectral-domain, and convergence declarations;
 - joint trace-norm tail moduli;
 - place/cutoff interchange defect.
 
 Exit criterion: the software can distinguish a finite spectral fit, an incomplete infinite-dimensional proposal, and a construction meeting every declared local obligation. No operator realization is promised.
+
+Candidate construction work should either use nonorthogonal interacting prime gluing with an exact naturality-defect ledger, or begin in `Im(z) > 1/2` and treat continuation and determinant normalization as separately certified stages. The bounded-jet orthogonal-prime obstruction must remain a fail-closed gate within its frozen hypotheses, not a universal no-go outside them.
 
 ## v0.6 - independent replication and preservation
 

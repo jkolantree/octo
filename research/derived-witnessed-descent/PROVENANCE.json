@@ -1,0 +1,30 @@
+{
+  "packet_version": "1.0.0",
+  "ingestion_base_commit": "483d78f1c05d8ff3d61669471827e315e32271d4",
+  "reviewer": "J. Tree",
+  "license": "CC-BY-4.0",
+  "source_authentication": "co-delivered unsigned material; origin not independently authenticated",
+  "imports": [
+    {"path": "Derived_Witnessed_Descent_and_Atomic_Spectral_Complexity.md", "sha256": "a2bc92f94d3b53eecc379432c0eab9d7992797078ed1fb408b37ed3768795300", "status": "paper_proof_requires_review"},
+    {"path": "Formal_Verification_and_Prime_Block_Obstruction.md", "sha256": "ba27ed31bc3c5c2f45a559acd2bbaaacfaf1968e61a63750943dfc1899953211", "status": "constructive_proof_not_kernel_verified"},
+    {"path": "verification/derived_holonomy_report.json", "sha256": "5c7908809e6b96b45ab88d622f890284e9900aea46b13b63bb16da95c1372417", "status": "exact_report_generator_missing"},
+    {"path": "verification/prime_block_obstruction_report.json", "sha256": "b3eee91fa1ce5454741adba7c1c038b969eee6232aa6e01c9e562d1c3d5e4054", "status": "mixed_exact_and_numerical_report_generator_missing"},
+    {"path": "verification/shifted_ladder_report.json", "sha256": "d3b73d22536d0db325aedde452ab087f32594f7d07b58676baf2d0b7781a7428", "status": "mixed_exact_and_numerical_report_generator_missing"},
+    {"path": "verification/SOURCE_README.md", "sha256": "c1bb28af8df5a844897dc54f1447d0fc8f2cfb35cffd636965d4965aeb92754b", "status": "source_context"},
+    {"path": "verification/SOURCE_SHA256SUMS.partial.sha256", "sha256": "18463941d880de5a94dd7d7c90d520204d0c9c8d24c1cbc56cf6af5facccfb1c", "status": "partial_unsigned_ledger"}
+  ],
+  "checks_run": [
+    "source_to-staging_default-stream_sha256_equality",
+    "destination_regular-file_check",
+    "destination_alternate-stream_absence",
+    "strict_json_parse",
+    "default-stream_privacy_scan"
+  ],
+  "checks_not_run": [
+    "missing_generator_execution",
+    "independent_report_regeneration",
+    "proof_assistant_kernel_verification",
+    "historical_novelty_review",
+    "external_source_authentication"
+  ]
+}

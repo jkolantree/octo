@@ -20,3 +20,10 @@ separately licensed under Creative Commons Attribution 4.0 International; see
 `research/LICENSE`. The paper's Zenodo metadata is kept in
 `research/zenodo.json` so a software deposit cannot silently assign its license
 to the research artifacts.
+
+The [derived witnessed-descent packet](derived-witnessed-descent/README.md)
+preserves two additional research notes and three reports under the same CC BY
+4.0 research scope. Its complete local digest ledger, source-partial ledger,
+errata, and provenance record explicitly distinguish imported bytes, exact
+finite checks, numerical corroboration, constructive proofs, and checks that
+could not run because the original generators were not supplied.

@@ -1,0 +1,43 @@
+{
+  "holonomy_version": "0.1.0",
+  "field": "Q",
+  "contexts": {
+    "C": {
+      "groups": {"0": 1},
+      "differentials": {},
+      "basis": {
+        "0": [{"label": "source", "meaning": "persistent homology witness", "sha256": "sha256:46a29c0f6d8bdc4f96d1fe3362da007f67e01bef4916dc09da4ddb52e6b70341"}]
+      }
+    },
+    "D": {
+      "groups": {"0": 2},
+      "differentials": {},
+      "basis": {
+        "0": [
+          {"label": "null", "meaning": "discarded null witness", "sha256": "sha256:9ef68cdcd901043ef0ca461b272f3d274adf8019641e27873dfc36c4db2ff91b"},
+          {"label": "observed", "meaning": "observed quotient witness", "sha256": "sha256:3316594ea9d92d542b6588e62d102984c9bd465945648a6ccfac0edb033b54fe"}
+        ]
+      }
+    },
+    "O": {
+      "groups": {"0": 1},
+      "differentials": {},
+      "basis": {
+        "0": [{"label": "observed", "meaning": "observed quotient witness", "sha256": "sha256:3316594ea9d92d542b6588e62d102984c9bd465945648a6ccfac0edb033b54fe"}]
+      }
+    }
+  },
+  "transports": {
+    "left": {"source": "C", "target": "D", "maps": {"0": [[1], [0]]}},
+    "right": {"source": "C", "target": "D", "maps": {"0": [[0], [0]]}},
+    "observe": {"source": "D", "target": "O", "maps": {"0": [[0, 1]]}}
+  },
+  "relations": {
+    "null_direction": {
+      "left_path": ["left"],
+      "right_path": ["right"],
+      "required_equivalence": "observed_derived",
+      "observation_projection": "observe"
+    }
+  }
+}
