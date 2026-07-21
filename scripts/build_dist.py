@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import json
 import os
 import shutil
 import tarfile
@@ -51,7 +52,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--outdir", type=Path, default=ROOT / "dist")
     args = parser.parse_args()
+    lock = json.loads((ROOT / "toolchain.lock.json").read_text(encoding="utf-8"))
+    if setuptools.__version__ != lock.get("setuptools"):
+        raise SystemExit(f"setuptools {setuptools.__version__} does not match toolchain lock {lock.get('setuptools')}")
     output = args.outdir.resolve()
+    if output.exists() and any(output.iterdir()):
+        raise SystemExit(f"distribution output directory must be empty: {output}")
+    for target in (ROOT / "build", ROOT / "src" / "bsc_audit_engine.egg-info"):
+        if target.exists():
+            shutil.rmtree(target)
     output.mkdir(parents=True, exist_ok=True)
     os.chdir(ROOT)
     wheel = build_meta.build_wheel(str(output))

@@ -1,0 +1,103 @@
+{
+  "manifest_version": "0.3.0",
+  "draft": false,
+  "claim": {
+    "id": "bsc:regression:missing-arithmetic-config",
+    "title": "Missing arithmetic configuration regression",
+    "type": "diagnostic",
+    "evidence_maturity": "structurally_checked",
+    "deployment_status": "admitted",
+    "statement": "The three declared conformance artifacts are present, hash-matched, and bound to the three declared gates.",
+    "scope": "Repository fixture integrity only; no external mathematical or empirical conclusion.",
+    "family": "arithmetic_trace"
+  },
+  "system": {
+    "domain": "finite repository fixture",
+    "boundary": "the declared JSON documents only",
+    "state_type": "typed records",
+    "local_kernel": "SHA-256 artifact binding"
+  },
+  "observation": {
+    "kernel_or_instrument": "strict JSON parser and semantic linter",
+    "legal_filtration": {
+      "available_at_decision": ["manifest bytes", "local evidence bytes"],
+      "forbidden_future_fields": ["external truth not encoded in the fixture"]
+    }
+  },
+  "representation": {
+    "kind": "identity",
+    "preserved_queries": ["artifact presence", "artifact digest", "gate binding"],
+    "known_non_descending_queries": ["external scientific truth"]
+  },
+  "target": {
+    "outcome": "structural fixture consistency",
+    "horizon": "this repository release",
+    "loss_or_score": "exact equality of identifiers and SHA-256 digests"
+  },
+  "experiment": {
+    "baseline_model": "strict rejection of missing or mismatched artifacts",
+    "candidate_operators": [],
+    "matched_null_library": ["tests/test_manifest.py"],
+    "search_budget": "none"
+  },
+  "admission": {
+    "hard_gates": ["manifest_structure", "query_totality", "boundary_accounting"],
+    "gate_results": [
+      {"id": "manifest_structure", "state": "pass", "fatal": true, "evidence": ["evidence:fixture:manifest-structure"]},
+      {"id": "query_totality", "state": "pass", "fatal": true, "evidence": ["evidence:fixture:query-totality"]},
+      {"id": "boundary_accounting", "state": "pass", "fatal": true, "evidence": ["evidence:fixture:boundary-accounting"]}
+    ]
+  },
+  "demotion": {
+    "owner": "project maintainers",
+    "rules": [
+      {"if": "an artifact is missing or its digest changes", "then": "block the fixture"},
+      {"if": "a gate binding is inconsistent", "then": "block the fixture"}
+    ],
+    "negative_result_destination": "tests/regressions"
+  },
+  "preservation": {
+    "known_failures": [
+      "Digest agreement does not validate arbitrary prose inside an evidence artifact.",
+      "The fixture makes no claim about an external physical or mathematical system."
+    ]
+  },
+  "evidence": [
+    {
+      "id": "evidence:fixture:manifest-structure",
+      "kind": "exact_certificate",
+      "status": "verified",
+      "result": "pass",
+      "artifact": "evidence/manifest_structure.json",
+      "sha256": "sha256:5143877d819cc72e180c96f27cbd25f33dd6bf394dfc5c88b7f6385f8b2ccee3",
+      "verifies_gates": ["manifest_structure"]
+    },
+    {
+      "id": "evidence:fixture:query-totality",
+      "kind": "exact_certificate",
+      "status": "verified",
+      "result": "pass",
+      "artifact": "evidence/query_totality.json",
+      "sha256": "sha256:77922df640cf3593bd9a4f004286fcacc17189bac7812c17b246a72b019734b0",
+      "verifies_gates": ["query_totality"]
+    },
+    {
+      "id": "evidence:fixture:boundary-accounting",
+      "kind": "audit_report",
+      "status": "verified",
+      "result": "pass",
+      "artifact": "evidence/boundary_accounting.json",
+      "sha256": "sha256:50c802ea2ac54da185af42961867d16b82e318d1760622de85680b80d40b5b45",
+      "verifies_gates": ["boundary_accounting"]
+    }
+  ],
+  "dependency_graph": {
+    "root": "bsc:regression:missing-arithmetic-config",
+    "nodes": ["manifest_structure", "query_totality", "boundary_accounting", "bsc:regression:missing-arithmetic-config"],
+    "edges": [
+      {"source": "manifest_structure", "target": "bsc:regression:missing-arithmetic-config"},
+      {"source": "query_totality", "target": "bsc:regression:missing-arithmetic-config"},
+      {"source": "boundary_accounting", "target": "bsc:regression:missing-arithmetic-config"}
+    ]
+  }
+}

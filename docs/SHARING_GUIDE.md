@@ -1,6 +1,6 @@
 # Sharing and Release Guide
 
-The v0.3.0-alpha.1 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
+The v0.3.0-alpha.2 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
 
 ## Two public surfaces
 
@@ -9,21 +9,22 @@ The v0.3.0-alpha.1 release is a research preview. Every public description shoul
 
 ## GitHub release contents
 
-Create tag `v0.3.0-alpha.1` and attach:
+Create tag `v0.3.0-alpha.2` and attach:
 
-- `bsc-audit-engine-0.3.0-alpha.1.zip`;
+- `bsc-audit-engine-0.3.0-alpha.2.zip`;
 - `BSC_AUDIT_LLM_PACKET.md`;
-- the versioned foundations paper, if released;
 - `SHA256SUMS`;
 - a machine-readable source archive or the automatically generated GitHub source archive.
 
+Do not place the research PDF or its DOCX source inside the Apache-2.0 software bundle. Archive them as a separate CC BY 4.0 publication using `research/zenodo.json`.
+
 Do not manually zip a working directory containing caches or untracked files. Build from the tagged tree. Preserve the prior `v0.2.1` tag rather than moving it.
 
-Replace these placeholders before publishing:
+Permanent release links:
 
 ```text
-https://github.com/<OWNER>/<REPOSITORY>/releases/tag/v0.3.0-alpha.1
-https://raw.githubusercontent.com/<OWNER>/<REPOSITORY>/v0.3.0-alpha.1/BSC_AUDIT_LLM_PACKET.md
+https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.2
+https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.2/BSC_AUDIT_LLM_PACKET.md
 ```
 
 ## Zenodo records

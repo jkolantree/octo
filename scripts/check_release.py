@@ -7,6 +7,7 @@ import json
 import hashlib
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 
@@ -29,20 +30,39 @@ def strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return value
 
 
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def load_strict_json(path: Path) -> object:
+    try:
+        return json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=strict_object,
+            parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)),
+        )
+    except (json.JSONDecodeError, ValueError) as exc:
+        fail(f"{path.relative_to(ROOT)} is not strict JSON: {exc}")
+
+
 def main() -> int:
     if len((ROOT / "LICENSE").read_text(encoding="utf-8").splitlines()) < 150:
         fail("LICENSE is not the complete Apache-2.0 text")
 
-    for directory in ("examples", "templates", "schemas"):
+    for directory in ("examples", "templates", "schemas", "src/bsc_audit/schema_data"):
         for path in sorted((ROOT / directory).glob("*.json")):
-            try:
-                json.loads(
-                    path.read_text(encoding="utf-8"),
-                    object_pairs_hook=strict_object,
-                    parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)),
-                )
-            except (json.JSONDecodeError, ValueError) as exc:
-                fail(f"{path.relative_to(ROOT)} is not strict JSON: {exc}")
+            load_strict_json(path)
+    for relative in (".zenodo.json", "research/zenodo.json", "toolchain.lock.json"):
+        load_strict_json(ROOT / relative)
+
+    for schema in sorted((ROOT / "schemas").glob("*.json")):
+        packaged = ROOT / "src" / "bsc_audit" / "schema_data" / schema.name
+        if not packaged.is_file() or schema.read_bytes() != packaged.read_bytes():
+            fail(f"packaged schema differs from {schema.relative_to(ROOT)}")
 
     for markdown in sorted(path for path in ROOT.rglob("*.md") if not any(part in {"build", "dist", "release"} or part.endswith(".egg-info") for part in path.relative_to(ROOT).parts)):
         for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", markdown.read_text(encoding="utf-8")):
@@ -60,10 +80,46 @@ def main() -> int:
     if "focus-visible" not in (ROOT / "docs" / "starter.css").read_text(encoding="utf-8"):
         fail("starter stylesheet lacks visible keyboard focus")
 
-    paper = ROOT / "research" / "Audit_Descent_Calculus.pdf"
-    paper_hash = hashlib.sha256(paper.read_bytes()).hexdigest() if paper.is_file() else "missing"
-    if paper_hash != "5b6690d4771e5624f79e5e834e485be9c94a2ca12255d4ef7efa1dda59a3203e":
-        fail("research-note PDF is missing or differs from its declared release digest")
+    digest_lines = (ROOT / "research" / "DIGESTS.sha256").read_text(encoding="utf-8").splitlines()
+    declared_digests: dict[str, str] = {}
+    for line in digest_lines:
+        match = re.fullmatch(r"([0-9a-f]{64})  ([A-Za-z0-9_.-]+)", line)
+        if not match or match.group(2) in declared_digests:
+            fail("research/DIGESTS.sha256 is malformed or contains duplicate names")
+        declared_digests[match.group(2)] = match.group(1)
+    expected_research = {"Audit_Descent_Calculus.pdf", "Audit_Descent_Calculus.docx"}
+    if set(declared_digests) != expected_research:
+        fail("research digest ledger must name exactly the PDF and DOCX source")
+    for filename, expected in declared_digests.items():
+        path = ROOT / "research" / filename
+        if not path.is_file() or sha256(path) != expected:
+            fail(f"research artifact is missing or differs from its declared digest: {filename}")
+
+    research_license = (ROOT / "research" / "LICENSE").read_text(encoding="utf-8")
+    if "CC-BY-4.0" not in research_license or "Creative Commons Attribution 4.0" not in research_license:
+        fail("research paper must carry an explicit CC-BY-4.0 grant")
+    software_zenodo = load_strict_json(ROOT / ".zenodo.json")
+    paper_zenodo = load_strict_json(ROOT / "research" / "zenodo.json")
+    if not isinstance(software_zenodo, dict) or software_zenodo.get("license") != "Apache-2.0":
+        fail("software Zenodo metadata must declare Apache-2.0")
+    if not isinstance(paper_zenodo, dict) or paper_zenodo.get("license") != "CC-BY-4.0":
+        fail("paper Zenodo metadata must declare CC-BY-4.0")
+
+    toolchain = load_strict_json(ROOT / "toolchain.lock.json")
+    if not isinstance(toolchain, dict):
+        fail("toolchain lock must be an object")
+    if toolchain.get("release_python") != "3.12.13" or toolchain.get("setuptools") != "82.0.1":
+        fail("release Python and setuptools must remain patch-pinned")
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    if project.get("build-system", {}).get("requires") != ["setuptools==82.0.1"]:
+        fail("pyproject build backend must exactly match the toolchain lock")
+
+    stale_identifier = "jkolantree/" + "bsc-audit-engine"
+    text_suffixes = {".json", ".md", ".py", ".toml", ".yml", ".yaml", ".cff"}
+    for path in ROOT.rglob("*"):
+        if path.is_file() and path.suffix in text_suffixes and not any(part in {"build", "dist", "release"} for part in path.relative_to(ROOT).parts):
+            if stale_identifier in path.read_text(encoding="utf-8"):
+                fail(f"stale repository identifier in {path.relative_to(ROOT)}")
 
     citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
     public_version = __version__.replace("a", "-alpha.", 1)

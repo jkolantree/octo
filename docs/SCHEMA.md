@@ -58,5 +58,6 @@ Pre-1.0 schema versions may change incompatibly. A release must state the schema
 | Engine release | Manifest schema |
 |---|---|
 | `0.3.0a1` | `0.3.0` |
+| `0.3.0a2` | `0.3.0` |
 
 Consumers must reject an unknown major or minor schema unless an explicit migration is applied.

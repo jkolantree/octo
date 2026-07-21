@@ -2,7 +2,7 @@
 
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
-**Current release:** `v0.3.0-alpha.1`<br>
+**Current release:** `v0.3.0-alpha.2`<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
 BSC is offered as infrastructure for careful imagination. It permits ambition, but not free authority.
@@ -87,4 +87,4 @@ Read [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) before relying on an audit and
 
 Compact counterexamples, false-pass reports, false-block reports, accessibility fixes, and better kill conditions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md). Changes to fatal gates follow [GOVERNANCE.md](GOVERNANCE.md).
 
-The software is maintained under the project identity **J. Tree** and distributed under Apache-2.0. See `LICENSE` for the governing license text.
+The software is maintained under the project identity **J. Tree** and distributed under Apache-2.0. The research note in `research/` is separately licensed under CC BY 4.0. See the license file in each scope.

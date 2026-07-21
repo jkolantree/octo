@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bsc-audit:schema:output:v0.3",
+  "title": "BSC audit CLI output 0.3.0",
+  "type": "object",
+  "required": ["engine_version", "output_version", "checks", "decision", "findings"],
+  "properties": {
+    "engine_version": {"type": "string"},
+    "output_version": {"const": "0.3.0"},
+    "input": {"type": "string"},
+    "input_hashes": {
+      "type": "object",
+      "required": ["raw", "semantic"],
+      "properties": {
+        "raw": {"$ref": "#/$defs/sha256"},
+        "semantic": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "checks": {
+      "type": "object",
+      "required": ["run", "not_run"],
+      "properties": {
+        "run": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "not_run": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "enum": ["prohibited", "demoted", "blocked", "no_blocking_findings_with_warnings", "no_blocking_findings", "internal_error"]
+    },
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "finding": {
+      "type": "object",
+      "required": ["severity", "code", "path", "message"],
+      "properties": {
+        "severity": {"enum": ["ERROR", "BLOCKED", "WARNING", "INFO", "DEMOTION"]},
+        "code": {"type": "string"},
+        "path": {"type": "string"},
+        "message": {"type": "string"},
+        "witness": {},
+        "repair": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}
