@@ -97,7 +97,7 @@ jobs:
           set -euo pipefail
           python scripts/build_release.py
           test "$(python -c 'import json; print(json.load(open("release/RELEASE_MANIFEST.json"))["commit"])')" = "$RELEASE_COMMIT"
-          sha256sum --check release/SHA256SUMS
+          (cd release && sha256sum --check SHA256SUMS)
 
       - name: Publish the prerelease
         shell: bash
