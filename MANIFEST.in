@@ -18,6 +18,7 @@ include START_HERE.md
 include run_audit.py
 include toolchain.lock.json
 include .zenodo.json
+include .github/workflows/pages.yml
 recursive-include docs *.md *.css
 recursive-include examples *.json
 recursive-include pages *
