@@ -160,6 +160,26 @@ This operation is associative with identity `(1,0,0)`. The second coordinate is 
 
 Fatal failure is not generally an algebraic operator ideal: two operators can separately fail a drift gate while their sum passes it. Fatality therefore lives in an acyclic claim-dependency graph. Gate state is product-valued (`unrun`, `pass`, `fail`, `conflict`), while epistemic and deployment status remain independent coordinates. A failed or conflicting fatal gate blocks every dependent promoted claim. Soft scores may rank only the surviving product fiber.
 
-## 9. Status
+## 9. Exact derived path comparison
+
+For bounded finite-dimensional chain complexes over `Q`, two chain maps induce the same map on homology exactly when their difference is chain-null-homotopic. With the homological grading convention used by the engine, the degreewise equation is:
+
+```text
+f_n - g_n = dD_(n+1) h_n + h_(n-1) dC_n.
+```
+
+After deterministic vectorization this becomes `A h = omega`. Exact row reduction is complete over `Q`:
+
+- a solution `h` is a pass certificate;
+- an annihilator `y` with `y^T A = 0` and `y^T omega != 0` is a failure certificate;
+- the normal equations give an exact residual with `A^T r = 0` and `eta_squared = r^T r`.
+
+This squared residual is coordinate-dependent: the current engine uses the Euclidean norm in the declared bases and does not claim invariance under arbitrary basis rescaling.
+
+An observation-reduced comparison applies the same theorem after an explicitly supplied surjective chain map. Chain-map legality is checked before either derived class is constructed. Semantic basis hashes bind the finite algebra to declared meanings but do not make those meanings intrinsic or externally true.
+
+This theorem depends on the field and finite-dimensional splitting hypotheses. The implementation does not claim the same equivalence over arbitrary rings. See [Exact Derived Holonomy](DERIVED_HOLONOMY.md) for the executable contract.
+
+## 10. Status
 
 The algebraic identities above are proved. Their use as a universal scientific ontology is not claimed. The proposed originality lies in the audit assembly, certificate semantics, and executable witness formats; historical priority requires independent review.

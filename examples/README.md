@@ -1,6 +1,6 @@
 # Example Catalog
 
-Examples are known-answer fixtures for the checker. They are not evidence that the represented scientific claims are true. Run them from the repository root with engine `0.3.0a2`.
+Examples are known-answer fixtures for the checker. They are not evidence that the represented scientific claims are true. Run them from the repository root with the current checkout. The `holonomy` fixtures require engine `0.3.0a3`; the published alpha.2 examples remain preserved.
 
 | File | Command | Expected decision | Exit | Lesson |
 |---|---|---:|---:|---|
@@ -8,6 +8,10 @@ Examples are known-answer fixtures for the checker. They are not evidence that t
 | `claim_arithmetic_no_go.json` | `audit` | `demoted` | 1 | A finite-dimensional exact prime-comb claim triggers both its prospective fatal gate and the scoped no-go rule. |
 | `complex_valid_transport.json` | `complex` | `no_blocking_findings` | 0 | The supplied finite differentials and transport commute exactly. |
 | `complex_broken_transport.json` | `complex` | `blocked` | 1 | A nonzero certificate-interchange column gives a finite witness. |
+| `holonomy_contractible_derived_pass.json` | `holonomy` | `no_blocking_findings_with_warnings` | 0 | Strict identity-versus-zero fails on a contractible complex, while an exact homotopy certifies derived equality. |
+| `holonomy_homology_obstruction.json` | `holonomy` | `blocked` | 1 | A dual rational vector certifies that the strict defect survives on homology. |
+| `holonomy_observed_quotient_pass.json` | `holonomy` | `no_blocking_findings_with_warnings` | 0 | A lawful surjective observation projection kills the declared null direction while preserving the pre-observation obstruction. |
+| `holonomy_non_chain_map.json` | `holonomy` | `blocked` | 1 | A non-chain-map edge blocks construction of a derived class. |
 | `observation_failure.json` | `observe` | `blocked` | 1 | A query distinguishes a pair joined by the declared observation relation. |
 | `atomic_modulus_valid.json` | `atomic` | `no_blocking_findings` | 0 | Finite records are consistent with the declared modulus; the external uniform proof is not inferred. |
 | `atomic_modulus_evasion.json` | `atomic` | `demoted` | 1 | A sample exceeds the declared concentration bound. |
@@ -19,6 +23,7 @@ Examples are known-answer fixtures for the checker. They are not evidence that t
 | `null_missing_arithmetic_config.json` | `audit` | `prohibited` | 2 | An arithmetic-trace claim cannot activate an empty domain plugin. |
 | `schema_atomic_missing_name.json` | `atomic` | `prohibited` | 2 | Runtime acceptance follows the released atomic schema. |
 | `schema_complex_missing_fields.json` | `complex` | `prohibited` | 2 | Runtime acceptance follows the released complex schema. |
+| `schema_holonomy_missing_projection.json` | `holonomy` | `prohibited` | 2 | An observed-derived relation cannot omit its projection. |
 | `schema_observation_nonstring_state.json` | `observe` | `prohibited` | 2 | Runtime acceptance follows the released observation schema. |
 
 Example command:

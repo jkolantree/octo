@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.docx binary
+*.pdf binary
+research/derived-witnessed-descent/Derived_Witnessed_Descent_and_Atomic_Spectral_Complexity.md whitespace=-trailing-space
+research/derived-witnessed-descent/Formal_Verification_and_Prime_Block_Obstruction.md whitespace=-trailing-space

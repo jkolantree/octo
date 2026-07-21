@@ -28,6 +28,10 @@ The project aims to preserve:
 10. **Limit evasion:** finite admissibility is used to hide a forbidden singularity or unbounded defect in a limit.
 11. **Plugin bypass:** a relevant domain check is omitted because its activation fields were absent or mislabeled.
 12. **Status inflation:** `structurally_checked` is presented as `proven`, `externally_replicated`, or safe to deploy.
+13. **Equivalence-level confusion:** a strict representative defect is reported as a homology obstruction, or an observed-derived pass is promoted as unobserved equality.
+14. **Semantic padding:** an ungrounded direct-sum basis changes homology while retaining the appearance of the original certificate model.
+15. **Unlawful quotient:** a non-chain-map or nonsurjective projection is used to erase a path defect.
+16. **Report promotion:** a preserved numerical or exact finite report is presented as independently regenerated or as a universal theorem.
 
 ## LLM-specific threats
 
@@ -55,10 +59,12 @@ Sensitive vulnerability reports follow [SECURITY.md](../SECURITY.md). Scientific
 - unexpected internal exceptions misread as a passing audit;
 - terminal or log injection through untrusted strings;
 - unpinned build and release dependencies.
+- flattened exact systems whose dimensions or intermediate rational growth exhaust resources;
+- filesystem alternate streams, reparse points, or cloud transport metadata that are invisible to ordinary content hashes.
 
 The CLI must return structured errors for declared input failures. An internal failure exits separately and never produces a pass.
 
-## Non-goals for v0.3.0-alpha.2
+## Non-goals for the current development line
 
 The engine does not provide:
 
@@ -69,6 +75,10 @@ The engine does not provide:
 - certified interval arithmetic;
 - a complete scientific ontology;
 - construction of the unresolved infinite-dimensional arithmetic operator;
+- derived-holonomy equivalence over arbitrary rings;
+- proof that a semantic-basis meaning string faithfully represents the external world;
+- independent regeneration of preserved reports whose original generators are absent;
+- Lean, Coq, Isabelle, or other kernel verification of the new research notes;
 - protection for secrets uploaded to external services;
 - resistance to arbitrary local-code execution by a user who runs untrusted programs outside the checker.
 

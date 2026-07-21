@@ -20,9 +20,8 @@ include toolchain.lock.json
 include .zenodo.json
 recursive-include docs *.md *.css
 recursive-include examples *.json
-recursive-include research *.md
+recursive-include research *.md *.json *.sha256
 include research/LICENSE
-include research/zenodo.json
 exclude research/Audit_Descent_Calculus.pdf
 exclude research/Audit_Descent_Calculus.docx
 recursive-include schemas *.json
