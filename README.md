@@ -3,6 +3,7 @@
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
 **Current release:** `v0.3.0-alpha.2`<br>
+**Development line:** `0.3.0a3.dev0`<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
 BSC is offered as infrastructure for careful imagination. It permits ambition, but not free authority.
@@ -21,6 +22,7 @@ The engine checks a narrow set of declared structural obligations. Current route
 - finite atomic-modulus record checks;
 - exact propagation of declared affine upper bounds;
 - scoped arithmetic-trace and local/global recovery gates;
+- non-admissive, hash-bound Lean/SMT/interval adapter receipts;
 - canonical JSON hashing.
 
 The engine does **not** determine whether an arbitrary theory is true, reconstruct an arbitrary proof, validate an external evidence identifier, certify empirical replication, or grant moral, legal, clinical, or deployment permission. A `no_blocking_findings` result means only that the checks actually run found no blocking condition.
@@ -34,6 +36,7 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 - **Documentation map:** [docs/index.md](docs/index.md)
 - **Example catalog:** [examples/README.md](examples/README.md)
 - **Mathematical definitions:** [docs/MATHEMATICS.md](docs/MATHEMATICS.md)
+- **Proof adapter boundary:** [docs/PROOF_CARRYING_ADAPTERS.md](docs/PROOF_CARRYING_ADAPTERS.md)
 
 ## Thirty-second example
 
