@@ -1,0 +1,112 @@
+name: one-shot-v0.3.0-alpha.2-release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/one-shot-alpha2-release.yml
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: one-shot-v0.3.0-alpha.2-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'jkolantree/octo'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      RELEASE_COMMIT: fa61f02d555a1c1a4db0b07ccb23c794ca4e8e84
+      RELEASE_TAG: v0.3.0-alpha.2
+      SOURCE_DATE_EPOCH: "1784505600"
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out the frozen release commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: fa61f02d555a1c1a4db0b07ccb23c794ca4e8e84
+          fetch-depth: 0
+
+      - name: Verify the release identity and clean tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "jkolantree/octo"
+          test "$RELEASE_COMMIT" = "fa61f02d555a1c1a4db0b07ccb23c794ca4e8e84"
+          test "$RELEASE_TAG" = "v0.3.0-alpha.2"
+          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          if git rev-parse --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            echo "Refusing to overwrite existing tag $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+      - name: Create and push the annotated immutable tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$RELEASE_TAG" "$RELEASE_COMMIT" -m "BSC Audit Engine v0.3.0-alpha.2"
+          test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$RELEASE_COMMIT"
+          git push origin "refs/tags/$RELEASE_TAG"
+
+      - name: Wait for the tagged exact-audit workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run exact-audit.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref "$RELEASE_TAG"
+          run_id=""
+          for attempt in $(seq 1 30); do
+            run_id="$(gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow exact-audit.yml \
+              --event workflow_dispatch \
+              --limit 20 \
+              --json databaseId,headSha \
+              --jq ".[] | select(.headSha == \"$RELEASE_COMMIT\") | .databaseId" \
+              | head -n 1)"
+            if test -n "$run_id"; then
+              break
+            fi
+            sleep 2
+          done
+          test -n "$run_id"
+          gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
+
+      - name: Install the locked release toolchain
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: "3.12.13"
+      - shell: bash
+        run: python -m pip install --disable-pip-version-check "setuptools==82.0.1"
+
+      - name: Build certificate-bearing release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_release.py
+          test "$(python -c 'import json; print(json.load(open("release/RELEASE_MANIFEST.json"))["commit"])')" = "$RELEASE_COMMIT"
+          sha256sum --check release/SHA256SUMS
+
+      - name: Publish the prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Refusing to replace existing GitHub Release $RELEASE_TAG" >&2
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "BSC Audit Engine v0.3.0-alpha.2" \
+            --notes-file RELEASE_NOTES_v0.3.0-alpha.2.md \
+            --prerelease
