@@ -42,32 +42,35 @@ jobs:
           test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
           test -z "$(git status --porcelain --untracked-files=all)"
           if git rev-parse --verify --quiet "refs/tags/$RELEASE_TAG"; then
-            echo "Refusing to overwrite existing tag $RELEASE_TAG" >&2
-            exit 1
+            test "$(git cat-file -t "refs/tags/$RELEASE_TAG")" = "tag"
+            test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$RELEASE_COMMIT"
           fi
 
       - name: Create and push the annotated immutable tag
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$RELEASE_TAG" "$RELEASE_COMMIT" -m "BSC Audit Engine v0.3.0-alpha.2"
+          if ! git rev-parse --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$RELEASE_TAG" "$RELEASE_COMMIT" -m "BSC Audit Engine v0.3.0-alpha.2"
+            git push origin "refs/tags/$RELEASE_TAG"
+          fi
+          test "$(git cat-file -t "refs/tags/$RELEASE_TAG")" = "tag"
           test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$RELEASE_COMMIT"
-          git push origin "refs/tags/$RELEASE_TAG"
 
       - name: Wait for the tagged exact-audit workflow
         shell: bash
         run: |
           set -euo pipefail
-          gh workflow run exact-audit.yml \
+          gh workflow run ci.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref "$RELEASE_TAG"
           run_id=""
           for attempt in $(seq 1 30); do
             run_id="$(gh run list \
               --repo "$GITHUB_REPOSITORY" \
-              --workflow exact-audit.yml \
+              --workflow ci.yml \
               --event workflow_dispatch \
               --limit 20 \
               --json databaseId,headSha \
