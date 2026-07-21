@@ -34,6 +34,8 @@ jobs:
           PRIVACY_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python scripts/check_privacy.py --protected-history "$PRIVACY_COMMIT"
       - run: python scripts/check_release.py
+      - run: python scripts/build_publication_assets.py --check
+      - run: python scripts/check_pages.py
       - run: python run_audit.py audit examples/claim_valid.json
       - run: python run_audit.py complex examples/complex_valid_transport.json
       - run: python run_audit.py atomic examples/atomic_modulus_valid.json
@@ -55,6 +57,8 @@ jobs:
         with:
           python-version: "3.12.13"
       - run: python -m pip install --disable-pip-version-check "setuptools==82.0.1"
+      - run: python scripts/build_publication_assets.py --check
+      - run: python scripts/check_pages.py
       - run: SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py
       - name: Fail-closed source, artifact, and commit-identity scan
         env:

@@ -2,6 +2,22 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.4 - 2026-07-21
+
+### Added
+
+- the exact original generators for all three derived-descent research reports, recovered with hashes matching the checksum record preserved in alpha.3;
+- a separate recovery record that preserves the alpha.3 intake boundary while binding the later archive, scripts, reports, and replay result;
+- fail-closed, hash-gated generator execution in an isolated temporary directory with report regeneration checked on every release-integrity run;
+- adversarial coverage proving modified generator bytes are rejected before execution.
+- an accessible, local-only GitHub Pages packet builder with paste and attachment routes, four audit depths, model-specific starter instructions, integrity-gated protocol loading, and beginner-first output ordering;
+- deterministic copy/paste, upload, system-prompt, schema, example, complete-source, manifest, and checksum release assets generated from the canonical protocol;
+- a pinned, least-privilege GitHub Pages deployment workflow and fail-closed page checks covering content drift, CSP, keyboard structure, narrow layouts, reduced motion, and forbidden network or persistence capabilities.
+
+### Verification boundary
+
+On Windows, the unchanged scripts write CRLF through Python text mode while calculating their printed SHA-256 over the LF serialization. The checker accepts only CRLF-to-LF canonicalization, then requires exact report bytes and the preserved SHA-256. Recovery does not authenticate the archive's external origin, perform proof-assistant kernel verification, or resolve historical novelty. The browser builder does not upload data or run the Python checker; an LLM response remains a draft until its evidence and any machine-readable claims are independently checked.
+
 ## 0.3.0-alpha.3 - 2026-07-21
 
 ### Added

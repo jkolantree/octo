@@ -1,0 +1,45 @@
+{
+  "archive_sha256": "76e2fb455db5f7b95f8e64156d6eddd02e08177ebde253840a0695a6650d4a5e",
+  "embedded_checksum_ledger": {
+    "path": "verification/generators/SCRIPT_SHA256SUMS",
+    "sha256": "dcdd4894234c30c61c0a8dc46622efd50f4a5f077283553f7c01d0e52e11358d"
+  },
+  "generators": [
+    {
+      "path": "verification/generators/derived_holonomy_exact.py",
+      "report_path": "verification/derived_holonomy_report.json",
+      "report_sha256": "5c7908809e6b96b45ab88d622f890284e9900aea46b13b63bb16da95c1372417",
+      "sha256": "2a04f2d58072b11b2ae0e77222f58909d23fc95a94232c3fb4d8659de15a9f5d",
+      "status": "exact_source_recovered_and_replayed"
+    },
+    {
+      "path": "verification/generators/shifted_ladder_reproduce.py",
+      "report_path": "verification/shifted_ladder_report.json",
+      "report_sha256": "d3b73d22536d0db325aedde452ab087f32594f7d07b58676baf2d0b7781a7428",
+      "sha256": "47c33defbf2af60b15cc892cc3eadfa763a233e9575577e4398276e0458e45d3",
+      "status": "exact_source_recovered_and_replayed"
+    },
+    {
+      "path": "verification/generators/prime_block_obstruction.py",
+      "report_path": "verification/prime_block_obstruction_report.json",
+      "report_sha256": "b3eee91fa1ce5454741adba7c1c038b969eee6232aa6e01c9e562d1c3d5e4054",
+      "sha256": "91f46a5d0e83bd2e45b012b2e0d7b4647fd07b44ebac7f66da27e7385e11eb84",
+      "status": "exact_source_recovered_and_replayed"
+    }
+  ],
+  "prior_release": {
+    "commit_sha": "182d71578a523d372e71d03ce75ee2631560c75d",
+    "status": "published_without_generators",
+    "tag": "v0.3.0-alpha.3"
+  },
+  "schema": "bsc-research-generator-recovery/v1",
+  "source_authentication": "user-supplied archive; origin not independently authenticated",
+  "verification": {
+    "archive_safety": "pass_flat_regular_files_no_path_traversal_or_name_collision",
+    "embedded_checksum_ledger": "pass",
+    "isolated_replay": "pass",
+    "python_syntax": "pass",
+    "report_comparison": "exact_after_crlf_to_lf_canonicalization",
+    "static_import_scope": "standard_library_only"
+  }
+}

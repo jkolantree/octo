@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from bsc_audit import __version__  # noqa: E402
+from check_pages import verify_pages  # noqa: E402
 from check_research_packet import verify_packet  # noqa: E402
 
 
@@ -58,6 +59,10 @@ def main() -> int:
     if packet_failures:
         fail(f"derived witnessed-descent packet failed verification: {packet_failures[0]}")
 
+    page_failures = verify_pages()
+    if page_failures:
+        fail(f"GitHub Pages packet builder failed verification: {page_failures[0]}")
+
     for directory in ("examples", "templates", "schemas", "src/bsc_audit/schema_data"):
         for path in sorted((ROOT / directory).glob("*.json")):
             load_strict_json(path)
@@ -73,6 +78,10 @@ def main() -> int:
             fail(f"packaged schema differs from {schema.relative_to(ROOT)}")
 
     for markdown in sorted(path for path in ROOT.rglob("*.md") if not any(part in {"build", "dist", "release"} or part.endswith(".egg-info") for part in path.relative_to(ROOT).parts)):
+        if markdown == ROOT / "pages" / "protocol" / "BSC_AUDIT_LLM_PACKET.md":
+            # This is an exact, hash-checked mirror of the root packet. Its
+            # relative links intentionally retain the canonical root context.
+            continue
         for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", markdown.read_text(encoding="utf-8")):
             target = target.split("#", 1)[0]
             if not target or re.match(r"^[a-z][a-z0-9+.-]*:", target, re.IGNORECASE):
@@ -125,7 +134,7 @@ def main() -> int:
         fail("pyproject build backend must exactly match the toolchain lock")
 
     stale_identifier = "jkolantree/" + "bsc-audit-engine"
-    text_suffixes = {".json", ".md", ".py", ".toml", ".yml", ".yaml", ".cff"}
+    text_suffixes = {".css", ".html", ".js", ".json", ".md", ".py", ".toml", ".txt", ".yml", ".yaml", ".cff"}
     for path in ROOT.rglob("*"):
         if path.is_file() and path.suffix in text_suffixes and not any(part in {"build", "dist", "release"} for part in path.relative_to(ROOT).parts):
             if stale_identifier in path.read_text(encoding="utf-8"):

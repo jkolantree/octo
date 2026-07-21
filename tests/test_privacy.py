@@ -14,6 +14,7 @@ from scripts.check_privacy import (
     scan_docx,
     scan_history,
     scan_pdf_bytes,
+    scan_path,
     scan_protected_history,
     scan_text,
     scan_zip,
@@ -51,6 +52,12 @@ class PrivacyTests(unittest.TestCase):
         findings = scan_text("fixture", payload, self.policy)
         self.assertIn("LOCAL_PATH_PRESENT", self.codes(findings))
         self.assertIn("PRIVATE_KEY", self.codes(findings))
+
+    def test_javascript_is_scanned_as_utf8_text(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "app.js"
+            path.write_text("const contact = 'person" + "@" + "example.com';\n", encoding="utf-8")
+            self.assertIn("EMAIL_NOT_ALLOWLISTED", self.codes(scan_path(path, self.policy)))
 
     def test_pdf_requires_generic_metadata_and_no_dates(self) -> None:
         clean = b"/Author (J. Tree) /Creator (BSC publication pipeline) /Producer (BSC publication pipeline)"

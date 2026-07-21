@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from bsc_audit import __version__  # noqa: E402
+from build_publication_assets import write_release_assets  # noqa: E402
 
 
 PUBLIC_VERSION = __version__.replace("a", "-alpha.", 1)
@@ -216,8 +217,10 @@ def main() -> int:
 
     source_zip = output / f"bsc-audit-engine-{PUBLIC_VERSION}.zip"
     zip_tree(source_zip, source_files(), ROOT)
+    shutil.copyfile(source_zip, output / "bsc-audit-complete.zip")
     conformance = output / f"bsc-audit-conformance-{PUBLIC_VERSION}.zip"
     conformance_bundle(conformance)
+    write_release_assets(output)
     artifacts = sorted(path for path in output.iterdir() if path.is_file() and path.name not in {"SHA256SUMS", "RELEASE_MANIFEST.json", "SBOM.spdx.json"})
     sbom_path = output / "SBOM.spdx.json"
     wheel = next(path for path in artifacts if path.suffix == ".whl")
@@ -241,6 +244,8 @@ def main() -> int:
         "verification": {
             "source_tests": "pass",
             "release_integrity_checks": "pass",
+            "pages_integrity": "pass",
+            "publication_assets": "pass",
             "privacy_scan": "pass",
             "reproducible_distributions": "pass",
             "clean_git_tree": "pass",

@@ -23,7 +23,8 @@ to the research artifacts.
 
 The [derived witnessed-descent packet](derived-witnessed-descent/README.md)
 preserves two additional research notes and three reports under the same CC BY
-4.0 research scope. Its complete local digest ledger, source-partial ledger,
-errata, and provenance record explicitly distinguish imported bytes, exact
-finite checks, numerical corroboration, constructive proofs, and checks that
-could not run because the original generators were not supplied.
+4.0 research scope. Its complete local digest ledger, preserved intake record,
+post-alpha.3 recovery record, exact original generators, and fail-closed replay
+checker distinguish imported bytes, regenerated finite evidence, numerical
+corroboration, constructive proofs, and checks that still require external or
+kernel verification.
