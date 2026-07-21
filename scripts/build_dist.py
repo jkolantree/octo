@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import os
+import shutil
 import tarfile
 import tempfile
 from pathlib import Path
@@ -43,7 +44,7 @@ def normalize_sdist(path: Path) -> None:
                                 output.addfile(info, source)
                         else:
                             output.addfile(info)
-        replacement.replace(path)
+        shutil.copyfile(replacement, path)
 
 
 def main() -> int:
