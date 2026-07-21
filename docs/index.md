@@ -4,6 +4,7 @@ This index separates first use, reference material, governance, and release work
 
 ## Getting started
 
+- [Local browser packet builder](https://jkolantree.github.io/octo/) - paste or attach material locally, then copy or download a versioned LLM packet
 - [Start Here](../START_HERE.md) - choose human, LLM-assisted, or programmer use
 - [Human Audit Worksheet](../AUDIT_WORKSHEET.md) - no-code claim audit
 - [Programmer Tutorial](PROGRAMMER_TUTORIAL.md) - install, commands, outputs, and preservation
@@ -36,6 +37,8 @@ This index separates first use, reference material, governance, and release work
 ## LLM use
 
 The [LLM Audit Packet](../BSC_AUDIT_LLM_PACKET.md) is a drafting protocol, not an executable verifier. Read its privacy, prompt-injection, and source-coverage rules before attaching material.
+
+The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. Its committed protocol copy and checksum metadata are mechanically generated and checked for drift.
 
 ## Release identity
 
