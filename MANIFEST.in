@@ -17,6 +17,7 @@ include .zenodo.json
 recursive-include docs *.md *.css
 recursive-include examples *.json
 recursive-include research *.md
+exclude research/Audit_Descent_Calculus.pdf
 recursive-include schemas *.json
 recursive-include schemas *.md
 recursive-include scripts *
