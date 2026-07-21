@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools==82.0.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -37,3 +37,6 @@ where = ["src"]
 
 [tool.setuptools.dynamic]
 version = {attr = "bsc_audit.__version__"}
+
+[tool.setuptools.package-data]
+bsc_audit = ["schema_data/*.json"]

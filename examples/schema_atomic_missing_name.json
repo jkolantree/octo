@@ -1,0 +1,6 @@
+{
+  "modulus": {"constant": 1, "exponent": 1, "proof_id": "proof:fixture"},
+  "compacts": [
+    {"distance_from_origin": 1, "samples": [{"epsilon": 1, "mass_upper": 0}]}
+  ]
+}

@@ -13,13 +13,19 @@ include SHARE_THIS.md
 include START_HERE.html
 include START_HERE.md
 include run_audit.py
+include toolchain.lock.json
 include .zenodo.json
 recursive-include docs *.md *.css
 recursive-include examples *.json
 recursive-include research *.md
+include research/LICENSE
+include research/zenodo.json
 exclude research/Audit_Descent_Calculus.pdf
+exclude research/Audit_Descent_Calculus.docx
 recursive-include schemas *.json
 recursive-include schemas *.md
 recursive-include scripts *
 recursive-include templates *.json
 recursive-include tests *.py
+global-exclude __pycache__
+global-exclude *.py[cod]

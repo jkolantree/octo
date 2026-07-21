@@ -1,7 +1,8 @@
-.PHONY: help test check audit build clean
+.PHONY: help test null-check check audit build clean
 
 help:
 	@echo "test   Run the complete source test suite"
+	@echo "null-check  Run the adversarial Null-Discrimination suite"
 	@echo "check  Run release-integrity checks"
 	@echo "audit  Run the worked positive and negative examples"
 	@echo "build  Build wheel and source distribution"
@@ -9,7 +10,10 @@ help:
 test:
 	python scripts/run_tests.py
 
-check: test
+null-check:
+	python scripts/run_null_discrimination.py
+
+check: test null-check
 	python scripts/check_release.py
 
 audit:

@@ -2,6 +2,27 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.2 - 2026-07-20
+
+### Corrected false passes
+
+- gate state is derived from the complete set of evidence bound to the gate;
+- referenced conflicts and omitted bound failures can no longer clear admission;
+- failed or inconclusive proof artifacts cannot satisfy theorem support;
+- arithmetic-trace claims without typed plugin configuration fail closed;
+- `checks.run` is populated from actual execution rather than planned routing;
+- the released JSON Schema is enforced before semantic checking.
+
+### Release and provenance
+
+- added a registered Null-Discrimination suite and preserved poisoned fixtures;
+- pinned release Python and setuptools versions in `toolchain.lock.json`;
+- release builds now require a clean, exactly tagged Git tree and record both commit and tree SHA;
+- corrected repository identifiers and separated software and research-note licensing;
+- added an explicit CC BY 4.0 license for the research note.
+
+Outputs from `0.3.0a1` that relied on gate conflicts, omitted bound evidence, failed proof records, missing arithmetic configuration, or schema-invalid input are not valid evidence of an alpha.2 clear result.
+
 ## 0.3.0-alpha.1 - 2026-07-20
 
 ### Added
