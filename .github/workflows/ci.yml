@@ -62,5 +62,5 @@ jobs:
         run: |
           mkdir -p /tmp/bsc-sdist
           tar -xzf dist/*.tar.gz -C /tmp/bsc-sdist
-          cd /tmp/bsc-sdist/bsc-audit-engine-*
+          cd /tmp/bsc-sdist/bsc_audit_engine-*
           python scripts/run_tests.py
