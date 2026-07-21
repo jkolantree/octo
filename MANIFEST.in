@@ -21,6 +21,8 @@ include .zenodo.json
 recursive-include docs *.md *.css
 recursive-include examples *.json
 recursive-include research *.md *.json *.sha256
+recursive-include research *.py
+recursive-include research SCRIPT_SHA256SUMS
 include research/LICENSE
 exclude research/Audit_Descent_Calculus.pdf
 exclude research/Audit_Descent_Calculus.docx

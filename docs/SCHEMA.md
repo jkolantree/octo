@@ -60,6 +60,7 @@ Pre-1.0 schema versions may change incompatibly. A release must state the schema
 | `0.3.0a1` | `0.3.0` |
 | `0.3.0a2` | `0.3.0` |
 | `0.3.0a3` | `0.3.0`; derived holonomy `0.1.0` |
+| `0.3.0a4.dev0` | `0.3.0`; derived holonomy `0.1.0`; research recovery `v1` |
 
 The independent derived-holonomy route is governed by
 [`derived-holonomy-v0.1.schema.json`](../schemas/derived-holonomy-v0.1.schema.json).

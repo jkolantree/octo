@@ -3,6 +3,7 @@
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
 **Current release:** `v0.3.0-alpha.3`<br>
+**Development version:** `0.3.0a4.dev0`<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
 BSC is offered as infrastructure for careful imagination. It permits ambition, but not free authority.

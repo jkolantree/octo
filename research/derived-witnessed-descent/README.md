@@ -21,23 +21,29 @@ See [Derived holonomy](../../docs/DERIVED_HOLONOMY.md), the [schema](../../schem
 | Artifact | Classification |
 |---|---|
 | Derived-holonomy engine tests and emitted certificates | Independently executable exact checks in this repository |
-| Imported derived-holonomy report | Exact mechanical record; internally checked, but its original generator was not supplied |
-| Imported shifted-ladder report | Exact finite identity claims plus high-precision numerical corroboration; original generator not supplied |
-| Imported prime-block report | Exact finite jet records plus double-precision cutoff corroboration; original generator not supplied |
+| Imported derived-holonomy report | Exact mechanical record; original generator recovered, hash-bound, and replayed |
+| Imported shifted-ladder report | Exact finite identity claims plus high-precision numerical corroboration; original generator recovered, hash-bound, and replayed |
+| Imported prime-block report | Exact finite jet records plus double-precision cutoff corroboration; original generator recovered, hash-bound, and replayed |
 | Universal mathematical statements in the notes | Constructive paper proofs requiring mathematical review |
 | Lean, Coq, or Isabelle certification | Not performed |
 | Historical novelty | Unresolved |
 
-The supplied partial checksum record names three generator scripts that were not present. Therefore the imported reports are preserved as non-admissive research fixtures, not represented as independently regenerated evidence. The repository checker validates their hashes, strict JSON shape, and selected internal invariants without executing or reconstructing absent code.
+The three originally missing generator scripts were recovered after `v0.3.0-alpha.3` from a user-supplied archive. Their bytes match the hashes in the previously preserved partial checksum record; no reconstruction was used. The alpha.3 intake claim remains historically correct and unchanged in `PROVENANCE.json`. The later recovery, archive digest, exact script hashes, and replay result are recorded separately in `RECOVERY.json`.
+
+Run `python scripts/check_research_packet.py` from the repository root. Before execution, the checker requires each generator to match a hard-coded trusted SHA-256 and requires both checksum ledgers to agree. It copies only those trusted scripts to a temporary directory, runs Python in isolated mode with a timeout, and compares each generated report with the preserved report. Python text-mode output uses CRLF on Windows, while the scripts calculate their printed digest over the LF JSON payload; the checker permits only that CRLF-to-LF canonicalization and then requires exact byte equality and the recorded report SHA-256.
+
+Generator replay strengthens the finite computational evidence but does not promote the imported notes to proof-assistant-kernel verification, authenticate the archive's external origin, establish historical novelty, or enlarge the mathematical scope of the scripts.
 
 The later [constructive proof and obstruction note](Formal_Verification_and_Prime_Block_Obstruction.md) supersedes the earlier note's conditional status for the bounded-jet orthogonal-prime-block theorem. It does not construct a prime-local self-adjoint operator, prove the Riemann hypothesis, or settle the stated escape routes.
 
 ## Integrity and provenance
 
 - `DIGESTS.sha256` is the authoritative complete ledger for this directory, excluding the ledger itself.
-- `PROVENANCE.json` records intake status and checks without host paths, source URLs, timestamps, or personal identifiers.
+- `PROVENANCE.json` preserves the alpha.3 intake status without rewriting history.
+- `RECOVERY.json` records the post-alpha.3 recovery and verification boundary without host paths, source URLs, timestamps, or personal identifiers.
 - `verification/SOURCE_SHA256SUMS.partial.sha256` is preserved only as the supplied partial record.
-- `verification/SOURCE_README.md` is preserved for context; its reproduction commands cannot be completed because the named generators are absent.
+- `verification/SOURCE_README.md` is preserved byte-for-byte as source context; its original staging paths differ from this repository layout.
+- `verification/generators/` contains the exact recovered scripts and their exact embedded checksum ledger.
 - `ERRATA.md` records non-destructive clarifications.
 
 The research material is governed by [CC BY 4.0](../LICENSE). Code, schemas, tests, and software documentation remain Apache-2.0.
