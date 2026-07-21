@@ -13,6 +13,13 @@ from build_publication_assets import ROOT, sha256_bytes, site_outputs, write_sit
 
 
 PAGES = ROOT / "pages"
+EXPECTED_ACTION_PINS = [
+    "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+    "actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38",
+    "actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b",
+    "actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b",
+    "actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e",
+]
 
 
 class PageParser(HTMLParser):
@@ -63,6 +70,11 @@ def verify_pages() -> list[str]:
         failures.append("Pages directory contents do not exactly match the reviewed static surface")
     if any(path.is_symlink() for path in PAGES.rglob("*")):
         failures.append("Pages surface contains a symbolic link")
+
+    workflow = (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
+    observed_pins = re.findall(r"^\s*uses:\s*([^\s#]+)", workflow, re.MULTILINE)
+    if observed_pins != EXPECTED_ACTION_PINS:
+        failures.append("Pages workflow actions differ from the reviewed immutable pins")
 
     parser = PageParser()
     html = (PAGES / "index.html").read_text(encoding="utf-8")
@@ -132,6 +144,7 @@ def main() -> int:
             "generated_protocol_drift",
             "protocol_sha256_binding",
             "static_surface_allowlist",
+            "workflow_action_pins",
             "form_label_and_heading_contract",
             "content_security_policy",
             "browser_capability_allowlist",
