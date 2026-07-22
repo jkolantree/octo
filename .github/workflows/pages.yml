@@ -8,6 +8,8 @@ on:
       - "BSC_AUDIT_LLM_PACKET.md"
       - "scripts/build_publication_assets.py"
       - "scripts/check_pages.py"
+      - "tests/return_desk_runtime.test.cjs"
+      - "toolchain.lock.json"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -27,6 +29,13 @@ jobs:
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: "3.12"
+      - name: Set up exact Return Desk Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.23.1"
+          package-manager-cache: false
+      - name: Verify Return Desk runtime semantics
+        run: node --test tests/return_desk_runtime.test.cjs
       - name: Verify generated protocol and accessibility contract
         run: |
           python scripts/build_publication_assets.py --check

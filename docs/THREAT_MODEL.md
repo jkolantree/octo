@@ -44,7 +44,7 @@ The project aims to preserve:
 - same-model repetition mistaken for independent review.
 - ChatGPT Code Interpreter or Data Analysis presented as if the versioned BSC Python checker ran;
 - an unsupported `Python passed`, `Lean verified it`, or `all tests passed` statement promoted without a bound execution record;
-- public metadata implying that an unpublished Custom GPT, GPT Action, or hosted checker API exists.
+- public metadata that confuses the validated live alpha.7 GPT with an unpublished development package, GPT Action, or hosted checker API.
 
 The LLM packet treats target material as untrusted evidence, requires a coverage ledger, and forbids claims of execution without actual output. Users must still review generated artifacts.
 
@@ -52,11 +52,32 @@ The LLM packet treats target material as untrusted evidence, requires a coverage
 
 The three entry points do not share one privacy or execution boundary:
 
-1. The public Custom GPT package prepares a direct ChatGPT audit experience, but the GPT is **UNPUBLISHED** until an authenticated human completes setup and Preview evaluation. Uploads are processed through ChatGPT under the user's applicable settings and terms. The first package contains no Action, hosted API, account, analytics, or cloud storage.
-2. The browser Packet Builder constructs a versioned packet in browser memory without sending the target to an LLM. Sending its output to any model is a separate action governed by that service.
+1. The link-shared alpha.7 Custom GPT completed its authenticated setup and 27-case Preview gate. The alpha.8 development package is not installed in that live GPT. Uploads are processed through ChatGPT under the user's applicable settings and terms. Neither package contains an Action, hosted API, account, analytics, or cloud storage.
+2. The browser Packet Builder's page code constructs a versioned packet without a target-data network request or intentional persistence. The alpha.8 Return Desk likewise parses returned JSON and hashes user-selected artifacts without such a request. Browser and operating-system history, crash recovery, swap, extensions, accessibility services, clipboard, and downloaded files remain outside the page's control. Sending a packet to a model is a separate action governed by that service.
 3. The repository and Python engine run versioned finite checks locally or in the operator's selected environment. A GPT response or ChatGPT tool result is not BSC Python output unless the correct checker actually ran and its result is bound to the inputs.
 
 For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
+
+## Returned-output threats
+
+The alpha.8 Return Desk treats returned model output and every submitted receipt as untrusted. Its registered threats include:
+
+- duplicate JSON keys, trailing data, resource abuse, and permissive-schema substitution;
+- stale protocol or return-schema bindings;
+- unsafe basenames, case or Unicode-normalized filename collisions, and ambiguous local file selection;
+- missing bytes, placeholder hashes, local hash mismatches, and undeclared attached artifacts;
+- duplicate declarations of identical artifact bytes under different IDs, roles, or filenames;
+- strengthened summaries, omitted gates or obligations, and claimless evidence used to float a gate pass;
+- request, report, receipt, or unrelated files relabeled as substantive evidence;
+- globally valid but unrelated execution output reused for a different claim or input;
+- evidence marked verified without a bound checking or producing activity;
+- blank tool identities, `file_read_only` promotion, unsupported execution, and input/output/receipt scope mismatch;
+- one receipt artifact or receipt ID relabeled across records, activities, claims, or gates;
+- `proven`, `strongly_supported`, or `refuted` retained despite unavailable source bytes or inadequate direct evidence;
+- receipt-only proof, missing-source refutation, and deployment overreach; and
+- stale asynchronous browser hashing restoring files after the user selected Clear.
+
+The Desk reduces these structural false-pass risks. It cannot authenticate the external origin of locally hash-matched bytes or prove that the event described by a receipt actually occurred.
 
 ## Privacy and confidentiality threats
 
@@ -93,9 +114,8 @@ The engine does not provide:
 - independent regeneration of preserved reports whose original generators are absent;
 - Lean, Coq, Isabelle, or other kernel verification of the new research notes;
 - protection for secrets uploaded to external services;
-- a published Custom GPT or public GPT URL before the authenticated human handoff is completed;
+- automatic publication or validation of a future Custom GPT update without its authenticated human handoff and complete Preview gate;
 - a GPT Action, hosted BSC checker API, account system, analytics service, or cloud-storage service;
-- the planned Audit Return Desk inspection and receipt layer;
 - resistance to arbitrary local-code execution by a user who runs untrusted programs outside the checker.
 
 ## Required reporting discipline
@@ -114,4 +134,4 @@ Every audit report should disclose:
 
 The strongest defense against overclaiming is a small, reproducible audit that another person can make fail.
 
-The Audit Return Desk is the next planned trust-layer priority for checking returned model output and receipts. It is not implemented in this development line.
+The alpha.8 Audit Return Desk is implemented in the development line but is not part of the current alpha.7 release or public Pages deployment until merged. A consistent result remains explicitly non-admissive.

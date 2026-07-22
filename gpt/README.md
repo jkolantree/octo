@@ -1,6 +1,6 @@
 # BSC public Custom GPT package
 
-Deterministic, repository-backed setup package for BSC `0.3.0-alpha.7`. The Custom GPT itself is **UNPUBLISHED** until an authenticated human completes the editor and Preview steps.
+Deterministic, repository-backed setup package for BSC `0.3.0-alpha.8.dev0`. The Custom GPT itself is **UNPUBLISHED** until an authenticated human completes the editor and Preview steps.
 
 ## Build and validate
 
@@ -24,4 +24,4 @@ Use `GPT_SETUP_AND_PUBLISHING.md`. Paste `GPT_INSTRUCTIONS.md`, upload the five 
 
 This package adds no Action, API, account, analytics, or cloud storage. The GPT is an interpretive audit interface. It does not imply that the BSC Python checker or an external proof tool ran. Uploads to ChatGPT are not local-only.
 
-The next trust-layer priority after this package is the Audit Return Desk; it is not implemented here.
+This alpha.8 package emits the draft audit-return envelope consumed by the repository's non-admissive Audit Return Desk. The GPT does not run that browser or Python inspection itself.

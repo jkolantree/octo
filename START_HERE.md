@@ -8,7 +8,7 @@ It is not a truth machine. It cannot turn a plausible idea into a theorem, valid
 
 ### One-page local builder
 
-Open the [accessible GitHub Pages packet builder](https://jkolantree.github.io/octo/), paste or attach material, choose an audit depth, then copy or download the generated packet. Target material stays in the browser while the packet is built. The page does not call an LLM or run the Python checker; sharing the result with a model is a separate action governed by that service's privacy terms.
+Open the [accessible GitHub Pages module](https://jkolantree.github.io/octo/), paste or attach material, choose an audit depth, then copy or download the generated packet. The page code makes no target-data network request and does not intentionally persist target material; browser and operating-system behavior remains outside its control. The alpha.8 development source also adds an Audit Return Desk for bringing back `audit_return.json` plus declared artifacts and checking their internal bindings locally after the change is merged and deployed. The page does not call an LLM or run the Python checker; sharing the packet with a model is a separate action governed by that service's privacy terms. A Return Desk `consistent` result is not a truth, proof, execution, citation, or deployment certificate.
 
 ### Human route
 

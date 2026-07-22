@@ -5,7 +5,7 @@ import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, BinaryIO, Callable
 
 from . import __version__
 from .adapters import audit_adapter_receipt
@@ -19,6 +19,7 @@ from .manifest import lint_manifest
 from .observation import audit_observation_document
 from .plugins import arithmetic_trace_findings, recovery_findings
 from .provenance import sha256_bytes, sha256_json
+from .return_desk import audit_return_document
 from .schema_validation import ROUTE_SCHEMAS, validate_route_schema
 
 
@@ -72,6 +73,10 @@ def _reject_constant(value: str) -> None:
 def _enforce_resource_limits(value: Any) -> None:
     item_count = 0
 
+    def enforce_unicode_scalars(text: str) -> None:
+        if any(0xD800 <= ord(character) <= 0xDFFF for character in text):
+            raise InputError("JSON text contains an unpaired UTF-16 surrogate")
+
     def visit(item: Any, depth: int) -> None:
         nonlocal item_count
         if depth > MAX_JSON_DEPTH:
@@ -81,6 +86,7 @@ def _enforce_resource_limits(value: Any) -> None:
             if item_count > MAX_CONTAINER_ITEMS:
                 raise InputError(f"JSON container entries exceed {MAX_CONTAINER_ITEMS}")
             for key, nested in item.items():
+                enforce_unicode_scalars(key)
                 if len(key) > MAX_STRING_CHARS:
                     raise InputError("JSON object key is too long")
                 visit(nested, depth + 1)
@@ -91,6 +97,7 @@ def _enforce_resource_limits(value: Any) -> None:
             for nested in item:
                 visit(nested, depth + 1)
         elif isinstance(item, str):
+            enforce_unicode_scalars(item)
             if len(item) > MAX_STRING_CHARS:
                 raise InputError(f"JSON string exceeds {MAX_STRING_CHARS} characters")
         elif isinstance(item, bool) or item is None:
@@ -107,6 +114,18 @@ def _enforce_resource_limits(value: Any) -> None:
     visit(value, 0)
 
 
+def _read_stream_bounded(stream: BinaryIO, max_bytes: int) -> bytes:
+    payload = bytearray()
+    while True:
+        remaining = max_bytes - len(payload)
+        chunk = stream.read(min(1024 * 1024, remaining + 1))
+        if not chunk:
+            return bytes(payload)
+        payload.extend(chunk)
+        if len(payload) > max_bytes:
+            raise InputError(f"input exceeds the {max_bytes}-byte limit")
+
+
 def load_document(path: str) -> LoadedDocument:
     source = Path(path)
     try:
@@ -118,11 +137,10 @@ def load_document(path: str) -> LoadedDocument:
     if size > MAX_INPUT_BYTES:
         raise InputError(f"input exceeds the {MAX_INPUT_BYTES}-byte limit")
     try:
-        raw_bytes = source.read_bytes()
+        with source.open("rb") as stream:
+            raw_bytes = _read_stream_bounded(stream, MAX_INPUT_BYTES)
     except OSError as exc:
         raise InputError("input file could not be read") from exc
-    if len(raw_bytes) > MAX_INPUT_BYTES:
-        raise InputError(f"input exceeds the {MAX_INPUT_BYTES}-byte limit")
     try:
         text = raw_bytes.decode("utf-8")
     except UnicodeDecodeError as exc:
@@ -165,6 +183,7 @@ def _semantic_check_name(command_name: str) -> str:
         "defect": "affine_upper_bound_propagation",
         "adapter": "proof_carrying_adapter_receipt",
         "holonomy": "exact_derived_holonomy",
+        "return-desk": "non_admissive_audit_return_inspection",
     }.get(command_name, "custom_auditor")
 
 
@@ -298,6 +317,7 @@ def main(argv: list[str] | None = None) -> int:
         ("defect", "audit compositional transport-defect bounds"),
         ("adapter", "audit a non-admissive proof-carrying adapter receipt"),
         ("holonomy", "audit strict, derived, and observed-derived path holonomy"),
+        ("return-desk", "inspect a non-admissive audit-return envelope and its local byte bindings"),
     ):
         child = subparsers.add_parser(name, help=help_text)
         child.add_argument("path")
@@ -311,6 +331,7 @@ def main(argv: list[str] | None = None) -> int:
         "defect": lambda raw, _root: audit_defect_composition(raw),
         "adapter": audit_adapter_receipt,
         "holonomy": lambda raw, _root: audit_holonomy_document(raw),
+        "return-desk": audit_return_document,
     }
     return command(args.path, auditors[args.command], args.command)
 

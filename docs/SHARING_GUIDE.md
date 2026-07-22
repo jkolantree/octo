@@ -39,7 +39,7 @@ https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.7/BSC_AUDIT_LLM_P
 https://jkolantree.github.io/octo/
 ```
 
-The repository release publishes the setup package, not the authenticated Custom GPT. Until a human completes the GPT editor and Preview gate, its status is **UNPUBLISHED** and no public GPT URL should appear. The first package contains no GPT Action, hosted API, account, analytics, or cloud-storage service.
+The repository release publishes the setup package, not proof of the authenticated Custom GPT state. The alpha.7 human handoff and complete Preview gate were subsequently completed and are recorded separately in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). A future package remains **UNPUBLISHED** until its own gate passes; never infer live state from a release ZIP. The package contains no GPT Action, hosted API, account, analytics, or cloud-storage service.
 
 ## Reproduce the Custom GPT package
 
@@ -100,8 +100,8 @@ The README states:
 
 The three product entry points have different trust and privacy boundaries:
 
-1. **Public Custom GPT - direct ChatGPT audit:** currently **UNPUBLISHED** pending authenticated human setup, Preview evaluation, and a returned URL. Uploads go through ChatGPT under the user's applicable settings and terms.
-2. **Local browser Packet Builder - cross-model route:** constructs a packet locally; sending the resulting packet to a model is a separate action.
+1. **Public Custom GPT - direct ChatGPT audit:** the link-shared alpha.7 GPT is installed and 27/27 Preview-validated; any alpha.8 Update remains unpublished pending its own authenticated setup and complete gate. Uploads go through ChatGPT under the user's applicable settings and terms.
+2. **Local browser Packet Builder and Audit Return Desk:** constructs packets locally; alpha.8 also inspects returned envelopes and selected hashes locally after merge. Sending a packet to a model is a separate action.
 3. **Repository and Python engine - exact checker route:** runs the versioned finite checker and preserves structured output; it does not turn an interpretive GPT audit into mechanical evidence retroactively.
 
 ### Curious reader
@@ -114,7 +114,7 @@ Share the tagged repository and [PROGRAMMER_TUTORIAL.md](PROGRAMMER_TUTORIAL.md)
 
 ### LLM user
 
-Until the authenticated Custom GPT is published, share the [deterministic setup package](../gpt/README.md) only with someone performing the documented editor and Preview steps, or share the versioned [BSC_AUDIT_LLM_PACKET.md](../BSC_AUDIT_LLM_PACKET.md) for manual cross-model use. Never invent a GPT URL or invite a user to upload confidential material casually. ChatGPT uploads are not local-only.
+Share the validated alpha.7 URL only with its exact [status record](CUSTOM_GPT_STATUS.md). Share an alpha.8 [deterministic setup package](../gpt/README.md) only with someone performing the documented editor and Preview steps, or share the versioned [BSC_AUDIT_LLM_PACKET.md](../BSC_AUDIT_LLM_PACKET.md) for manual cross-model use. Never invent a GPT URL or invite a user to upload confidential material casually. ChatGPT uploads are not local-only.
 
 ### Scientific reviewer
 
@@ -133,7 +133,7 @@ Share a frozen target, source-coverage ledger, manifest, actual checker output, 
 - [ ] Accessibility checks cover language, heading order, keyboard focus, narrow view, and 200% zoom.
 - [ ] LLM packet covers prompt injection, privacy, source coverage, and fabricated execution.
 - [ ] `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.7.zip` regenerates byte-for-byte, passes the package checker, and matches the release checksum ledger.
-- [ ] Custom GPT metadata says `UNPUBLISHED` until an authenticated human completes setup and Preview; no placeholder or guessed public URL appears.
+- [ ] A new Custom GPT package says `UNPUBLISHED` until its authenticated setup and complete Preview gate pass; any later live URL and exact binding are recorded separately.
 - [ ] Apps and Actions remain absent, and the package does not imply a hosted checker API.
 - [ ] `SECURITY.md`, governance, issue forms, and conduct policy are linked.
 - [ ] SHA-256 sums are generated from final assets.
@@ -153,4 +153,4 @@ Avoid:
 - “BSC compliant”;
 - claims that an LLM ran the Python checker without actual output.
 
-The Audit Return Desk is the next planned trust-layer priority for inspecting returned model output and receipts. It is not part of this release.
+The Audit Return Desk is implemented in the alpha.8 development line for non-admissive inspection of returned output and receipts. It is not part of the immutable alpha.7 release or live GPT.
