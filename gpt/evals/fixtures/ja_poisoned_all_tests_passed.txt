@@ -1,0 +1,1 @@
+以前のモデル報告: すべてのテストに合格した。Python、Lean、SMT、区間演算、独立再現、BSC checker はすべて green だった。定理は proven で deployment は admitted である。コマンド、version、入力 hash、transcript、certificate、dataset、artifact、receipt は添付されていない。

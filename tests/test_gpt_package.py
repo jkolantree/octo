@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -15,11 +16,14 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from build_gpt_package import (  # noqa: E402
     GPT_ROOT,
     MAX_GPT_INSTRUCTION_CHARACTERS,
+    OFFICIAL_GPT_URL,
     PROFILE_PATH,
     REQUIRED_EVAL_CASE_REQUIREMENTS,
     REQUIRED_EVAL_CASE_IDS,
+    REQUIRED_JAPANESE_CRITICAL_EVAL_CASE_IDS,
     REQUIRED_RULE_IDS,
     REQUIRED_RULE_SEVERITIES,
+    REQUIRED_STATUS_REPRODUCTION_EVAL_CASE_IDS,
     all_rules,
     archive_name,
     generated_payload,
@@ -66,7 +70,7 @@ class CustomGptPackageTests(unittest.TestCase):
         binding = {
             "source_commit": "1" * 40,
             "source_tree": "2" * 40,
-            "source_tag": "v0.3.0-alpha.8.dev0",
+            "source_tag": "v0.3.0-alpha.8.dev1",
         }
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-bound-zip-") as directory:
             path = write_gpt_release_asset(Path(directory), **binding)
@@ -90,7 +94,7 @@ class CustomGptPackageTests(unittest.TestCase):
             for path, data in payload.items()
             if path.parts and path.parts[0] == "knowledge"
         )
-        self.assertNotIn("/blob/v0.3.0-alpha.8.dev0/", knowledge)
+        self.assertNotIn("/blob/v0.3.0-alpha.8.dev1/", knowledge)
         self.assertIn("https://github.com/jkolantree/octo/blob/main/", knowledge)
 
     def test_strict_json_rejects_duplicate_keys_and_nonfinite_values(self) -> None:
@@ -165,6 +169,18 @@ class CustomGptPackageTests(unittest.TestCase):
             REQUIRED_EVAL_CASE_REQUIREMENTS,
         )
 
+    def test_preview_promotion_gate_is_mandatory_per_case(self) -> None:
+        payload = generated_payload()
+        mandatory_gate = (
+            "Promotion or validation requires every case to score at least 18/20 and incur no "
+            "automatic failure; never average away a failed case."
+        )
+        for relative in ("GPT_SETUP_AND_PUBLISHING.md", "evals/GPT_MANUAL_SCORECARD.md"):
+            text = payload[Path(relative)].decode("utf-8")
+            self.assertIn(mandatory_gate, text, relative)
+            self.assertNotIn("Recommended pass", text, relative)
+            self.assertNotIn("18/20 is recommended", text, relative)
+
     def test_eval_source_paths_cannot_escape_the_reviewed_repository_prefix(self) -> None:
         spec = {
             "scoring_dimensions": [],
@@ -184,8 +200,8 @@ class CustomGptPackageTests(unittest.TestCase):
         rules = all_rules(profile)
         self.assertEqual({rule["id"] for rule in rules}, REQUIRED_RULE_IDS)
         self.assertEqual({rule["id"]: rule["severity"] for rule in rules}, REQUIRED_RULE_SEVERITIES)
-        self.assertEqual(len(REQUIRED_RULE_IDS), 38)
-        self.assertEqual(sum(severity == "fatal" for severity in REQUIRED_RULE_SEVERITIES.values()), 29)
+        self.assertEqual(len(REQUIRED_RULE_IDS), 39)
+        self.assertEqual(sum(severity == "fatal" for severity in REQUIRED_RULE_SEVERITIES.values()), 30)
         self.assertNotIn("BSC_CODEX_PUBLIC_GPT_WORKFLOW.md", "\n".join(provenance_paths(profile)))
         instructions = payload[Path("GPT_INSTRUCTIONS.md")]
         instruction_text = instructions.decode("utf-8")
@@ -206,6 +222,31 @@ class CustomGptPackageTests(unittest.TestCase):
             "it never grounds a `proven` verdict or closed proof obligations.",
             protocol_text,
         )
+        self.assertIn(
+            "Reply in requested/user language. Preserve JSON keys/enums, schema/rule IDs, verdict/gate/finding tokens",
+            instruction_text,
+        )
+        japanese_knowledge = payload[Path("knowledge/BSC_JAPANESE_INTERFACE.md")].decode("utf-8")
+        self.assertIn("公式 GPT を使う", japanese_knowledge)
+        self.assertIn("正規トークン", japanese_knowledge)
+        self.assertIn(
+            "Return Desk の browser outcome は `consistent`、`needs_review`、`blocked` の 3 つだけです。",
+            japanese_knowledge,
+        )
+        self.assertNotIn("| `inconsistent` |", japanese_knowledge)
+        durable_knowledge = "\n".join(
+            data.decode("utf-8")
+            for path, data in payload.items()
+            if path.parts and path.parts[0] == "knowledge"
+        ).lower()
+        for assertion in (
+            "the official custom gpt is live",
+            ") is live. a repository package",
+            "official custom gpt は live",
+            "は公開されています。通常の利用者",
+            "公式 gpt はすでに利用できます",
+        ):
+            self.assertNotIn(assertion, durable_knowledge)
 
     def test_alpha8_hardening_contract_is_exact(self) -> None:
         profile = load_strict_json(PROFILE_PATH)
@@ -288,7 +329,7 @@ class CustomGptPackageTests(unittest.TestCase):
             "Uses missing or unavailable material alone as evidence that the affected research claim is false or refuted."
         )
         self.assertIn(absence_only_failure, spec["fatal_failures"])
-        self.assertEqual(len(REQUIRED_EVAL_CASE_REQUIREMENTS), 29)
+        self.assertEqual(len(REQUIRED_EVAL_CASE_REQUIREMENTS), 39)
         self.assertEqual(
             REQUIRED_EVAL_CASE_REQUIREMENTS,
             {case["id"]: case["workflow_requirement"] for case in spec["cases"]},
@@ -304,6 +345,27 @@ class CustomGptPackageTests(unittest.TestCase):
             impossible_return["forbidden_behaviors"],
         )
 
+        self.assertEqual(len(REQUIRED_JAPANESE_CRITICAL_EVAL_CASE_IDS), 8)
+        for case_id in REQUIRED_JAPANESE_CRITICAL_EVAL_CASE_IDS:
+            case = cases[case_id]
+            self.assertRegex(case["user_request"] + case["fixture"]["inline_text"], r"[\u3040-\u30ff\u3400-\u9fff]")
+            expected_text = json.dumps(case["expected"], ensure_ascii=False).lower()
+            self.assertIn("japanese", expected_text)
+            self.assertIn("canonical", expected_text)
+        self.assertEqual(
+            REQUIRED_STATUS_REPRODUCTION_EVAL_CASE_IDS,
+            {"official-service-status-separation", "official-first-reproduction-route"},
+        )
+        for case_id in REQUIRED_STATUS_REPRODUCTION_EVAL_CASE_IDS:
+            case = cases[case_id]
+            self.assertRegex(case["user_request"], r"[\u3040-\u30ff\u3400-\u9fff]")
+            expected_text = json.dumps(case["expected"], ensure_ascii=False)
+            self.assertIn(OFFICIAL_GPT_URL, expected_text)
+            self.assertIn("PENDING", expected_text)
+            self.assertIn("japanese", expected_text.lower())
+            self.assertIn("canonical", expected_text.lower())
+            self.assertIn("Answers only in English", expected_text)
+
         instructions = generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
         self.assertLessEqual(len(instructions), MAX_GPT_INSTRUCTION_CHARACTERS)
         for rule_id, text in expected_rules.items():
@@ -315,7 +377,55 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertFalse(profile["capabilities"]["apps"]["enabled"])
         instructions = generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
         self.assertIn("handled through ChatGPT", instructions)
-        self.assertIn("local-only property does not apply", instructions)
+        self.assertIn("Packet Builder local-only does not cover ChatGPT", instructions)
+
+    def test_official_service_candidate_and_bilingual_metadata_are_separate(self) -> None:
+        profile = load_strict_json(PROFILE_PATH)
+        product = profile["product"]
+        self.assertEqual(product["service_availability"], "LIVE")
+        self.assertEqual(product["public_url"], OFFICIAL_GPT_URL)
+        self.assertEqual(product["package_role"], "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE")
+        self.assertEqual(product["candidate_state"], "PENDING")
+        self.assertEqual(product["live_binding_state"], "PENDING_VERIFICATION")
+        self.assertEqual(product["preview_validation_state"], "PENDING")
+        self.assertEqual(product["preview_gate_case_count"], 39)
+        self.assertEqual(product["japanese_interface_status"], "BETA")
+        self.assertEqual(product["japanese_native_speaker_terminology_review"], "PENDING")
+        starters = product["conversation_starters"]
+        self.assertEqual(len(starters), 4)
+        self.assertEqual(sum(bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", item)) for item in starters), 2)
+        self.assertRegex(product["description"], r"[A-Za-z]")
+        self.assertRegex(product["description"], r"[\u3040-\u30ff\u3400-\u9fff]")
+        self.assertIn("日本語対応はベータ版", product["description"])
+        self.assertIn("母語話者による用語レビューは未完了", product["description"])
+
+        payload = generated_payload()
+        public_text = "\n".join(
+            data.decode("utf-8")
+            for path, data in payload.items()
+            if path.suffix.lower() in {".md", ".txt", ".json", ".jsonl"}
+        )
+        self.assertNotIn("UNPUBLISHED", public_text)
+        self.assertNotIn("first public release", public_text.lower())
+        metadata = payload[Path("GPT_PUBLIC_METADATA.md")].decode("utf-8")
+        self.assertIn(OFFICIAL_GPT_URL, metadata)
+        self.assertIn("candidate state:** `pending`", metadata.lower())
+        self.assertIn("**Japanese interface:** `BETA`", metadata)
+        self.assertIn("native-speaker terminology review `PENDING`", metadata)
+        setup = payload[Path("GPT_SETUP_AND_PUBLISHING.md")].decode("utf-8")
+        self.assertIn("**Japanese interface:** `BETA`", setup)
+        self.assertIn("Preserve this disclosure in the public Description", setup)
+        manifest = json.loads(payload[Path("GPT_RELEASE_MANIFEST.json")])
+        self.assertEqual(manifest["official_service_and_candidate_state"]["public_url"], OFFICIAL_GPT_URL)
+        self.assertEqual(manifest["official_service_and_candidate_state"]["preview_gate_case_count"], 39)
+        self.assertEqual(
+            manifest["japanese_interface_state"],
+            {
+                "status": "BETA",
+                "native_speaker_terminology_review": "PENDING",
+                "canonical_language": "en",
+            },
+        )
 
 
 if __name__ == "__main__":

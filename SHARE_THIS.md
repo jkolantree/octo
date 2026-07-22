@@ -1,10 +1,15 @@
 # Public Sharing Copy
 
-Use the final tagged repository URL in place of `<RELEASE_URL>`.
+Lead with the existing official GPT for a direct audit, the Pages module for a local packet/return workflow, and the tagged repository as its reproducible source and optional fork/update path.
+
+- **Official GPT:** https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
+- **Local Pages:** https://jkolantree.github.io/octo/
+- **Japanese Pages:** candidate pending public deployment; planned URL `https://jkolantree.github.io/octo/ja.html` must not be shared as live until its smoke check passes
+- **Exact current status:** https://github.com/jkolantree/octo/blob/main/docs/CUSTOM_GPT_STATUS.md
 
 ## Short description
 
-BSC Audit Engine is experimental open-source software for making mathematical and scientific claims easier to test, challenge, reproduce, and demote. It checks selected finite structural obligations and returns concrete witnesses when possible. It does not certify arbitrary truth or authorize deployment.
+BSC Audit Engine is experimental open-source software for making mathematical and scientific claims easier to test, challenge, reproduce, and demote. Try the official BSC Claim Auditor, use the local browser workflow, or inspect and reproduce the exact open-source configuration. It does not certify arbitrary truth or authorize deployment.
 
 ## GitHub or forum post
 
@@ -14,7 +19,7 @@ An open-source claim-audit tool that preserves counterexamples and hard failure 
 
 ### Body
 
-I’m releasing an early research preview of BSC Audit Engine.
+BSC Audit Engine is an open-source research-preview system for structured claim audits.
 
 The basic idea is simple: freeze one claim, type its objects and observation process, state the ordinary baseline, pre-register independent hard gates, and preserve the result when something fails.
 
@@ -33,17 +38,19 @@ It is not a truth machine or automated peer reviewer. A no-blocking result means
 
 There are three routes:
 
-1. a human worksheet with no code;
-2. an LLM packet that produces a draft audit while treating the target as untrusted evidence;
-3. a deterministic local checker for supported JSON artifacts.
+1. the official link-shared Custom GPT for direct research-preview audits;
+2. a deployed English browser Packet Builder and Audit Return Desk, with a Japanese candidate pending public deployment;
+3. a deterministic Python checker and reproducible GPT package for supported artifacts and independent forks.
 
 The most useful contribution is often a compact counterexample, false-pass report, false-block report, or better kill condition. Negative results are preserved as release artifacts.
 
-Start here: `<RELEASE_URL>`
+Start with the official GPT: https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
+
+Current validation status: https://github.com/jkolantree/octo/blob/main/docs/CUSTOM_GPT_STATUS.md
 
 ## Short post
 
-I released an experimental open-source audit engine for scientific and mathematical claims. It freezes scope, separates observation from inference, preserves fatal gates, and returns finite witnesses for the checks it supports. Human, LLM-assisted, and local Python routes are included. It is not a truth certificate. `<RELEASE_URL>`
+The official BSC Claim Auditor is live as an experimental open-source research preview. It freezes scope, separates observation from inference, preserves fatal gates, and pairs a Custom GPT with local browser and exact Python routes. The complete alpha.8 Preview gate is still pending, so it is not a truth certificate or deployment authority. https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
 
 ## Direct message
 

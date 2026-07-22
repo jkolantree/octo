@@ -71,7 +71,13 @@ def main() -> int:
     for directory in ("examples", "templates", "schemas", "src/bsc_audit/schema_data"):
         for path in sorted((ROOT / directory).glob("*.json")):
             load_strict_json(path)
-    for relative in (".zenodo.json", "research/zenodo.json", "toolchain.lock.json"):
+    for relative in (
+        ".zenodo.json",
+        "docs/PUBLICATION_STATUS.json",
+        "docs/ja/TRANSLATION_MANIFEST.json",
+        "research/zenodo.json",
+        "toolchain.lock.json",
+    ):
         load_strict_json(ROOT / relative)
     privacy_policy = load_strict_json(ROOT / "privacy-policy.json")
     if not isinstance(privacy_policy, dict) or privacy_policy.get("policy_version") != "1.0.0":
@@ -172,9 +178,12 @@ def main() -> int:
         fail("CITATION.cff must use the corrected public release date")
     public_version = __version__.replace("a", "-alpha.", 1)
     if ".dev" in __version__:
-        release_match = re.search(r"\*\*Current release:\*\* `v([^`]+)`", (ROOT / "README.md").read_text(encoding="utf-8"))
+        release_match = re.search(
+            r"\*\*Current GitHub release:\*\* `v([^`]+)`",
+            (ROOT / "README.md").read_text(encoding="utf-8"),
+        )
         if not release_match or f"version: {release_match.group(1)}" not in citation:
-            fail("development builds must preserve citation metadata for the named current release")
+            fail("development builds must preserve citation metadata for the named current GitHub release")
     elif f"version: {public_version}" not in citation:
         fail(f"CITATION.cff does not match package version {__version__}")
 

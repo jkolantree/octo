@@ -38,6 +38,7 @@ jobs:
       - run: python scripts/build_gpt_package.py --check
       - run: python scripts/check_gpt_package.py
       - run: python scripts/check_pages.py
+      - run: python scripts/check_localization.py
       - run: python run_audit.py audit examples/claim_valid.json
       - run: python run_audit.py complex examples/complex_valid_transport.json
       - run: python run_audit.py atomic examples/atomic_modulus_valid.json
@@ -68,6 +69,7 @@ jobs:
       - run: python scripts/build_gpt_package.py --check
       - run: python scripts/check_gpt_package.py
       - run: python scripts/check_pages.py
+      - run: python scripts/check_localization.py
       - run: SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py
       - name: Fail-closed source, artifact, and commit-identity scan
         env:

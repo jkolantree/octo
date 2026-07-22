@@ -24,7 +24,7 @@ function execution(activity, status) {
     activity,
     status,
     tool: ran ? "BSC Custom GPT" : null,
-    version: ran ? "0.3.0-alpha.8.dev0" : null,
+    version: ran ? "0.3.0-alpha.8.dev1" : null,
     input_artifact_ids: ran ? ["artifact.request", "artifact.source"] : [],
     output_artifact_ids: ran ? ["artifact.report", "artifact.evidence"] : [],
     receipt_ids: [],
@@ -37,7 +37,7 @@ function validRecord() {
     return_version: "0.1.0",
     authority: "non_admissive_return_inspection",
     draft: true,
-    protocol: { version: "0.3.0-alpha.8.dev0", sha256: HASHES.protocol },
+    protocol: { version: "0.3.0-alpha.8.dev1", sha256: HASHES.protocol },
     bindings: { request_artifact_id: "artifact.request", report_artifact_id: "artifact.report" },
     audit_depth: "standard",
     primary_claim_id: "claim.main",
@@ -135,7 +135,7 @@ function bindEffectiveBscRun(record) {
   Object.assign(run, {
     status: "ran",
     tool: "bsc-audit",
-    version: "0.3.0a8.dev0",
+    version: "0.3.0a8.dev1",
     input_artifact_ids: ["artifact.request", "artifact.source"],
     output_artifact_ids: ["artifact.bsc-output"],
     receipt_ids: ["receipt.bsc"],
@@ -751,4 +751,102 @@ test("browser runtime discriminates every canonical Return Desk fixture", () => 
     });
     assert.equal(result.outcome, outcome, `${filename}: ${JSON.stringify(result.findings)}`);
   }
+});
+
+function packetBuilderHarness() {
+  const vm = require("node:vm");
+  const source = fs.readFileSync(path.join(ROOT, "pages", "app.js"), "utf8");
+  const boundary = source.indexOf("async function copyText");
+  assert.ok(boundary > 0, "packet-builder test boundary is missing");
+  const sandbox = {
+    TextDecoder,
+    TextEncoder,
+    crypto: crypto.webcrypto,
+    document: { querySelector: () => ({ value: "standard" }) },
+    window: {
+      BSC_AUDIT_PROFILE: {
+        audit_depths: [{ id: "standard", instruction: "Inspect the supplied target.", label: "Standard", machine_record_required: false }],
+        output_sections: [{ order: 1, title: "Scope and source coverage" }],
+      },
+      BSC_PAGE_LOCALE: {
+        code: "en",
+        report_language: "en",
+        strings: {
+          target_file_read_error: "The selected target filename is unsafe, overlong, or ambiguous.",
+          target_filename_collision: "The target filename {name} collides with another selected filename under portable Unicode and case comparison.",
+          target_filename_unsafe: "The target filename {name} is unsafe or exceeds 240 Unicode code points.",
+          target_required: "Paste material or attach at least one target file first.",
+        },
+      },
+      BSC_PROTOCOL: { sha256: "0".repeat(64), version: "test-protocol" },
+    },
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(`${source.slice(0, boundary)}
+    Object.assign(elements, { material: { value: "" } });
+    Object.assign(state, { files: [], protocol: "", protocolReady: true });
+    this.packetBuilderTestApi = Object.freeze({
+      buildPacket,
+      targetFilenameRecord,
+      validateTargetFilenames,
+      configure(material, protocol, files = []) {
+        elements.material.value = material;
+        state.protocol = protocol;
+        state.files = files;
+      },
+    });`, sandbox);
+  return sandbox.packetBuilderTestApi;
+}
+
+test("packet builder hashes and embeds exact pasted text and verified protocol text", async () => {
+  const api = packetBuilderHarness();
+  const material = "\n \u3000Claim: whitespace is part of this target.\n\t";
+  const protocol = "EXACT PROTOCOL BYTES\n\n";
+  api.configure(material, protocol);
+  const packet = await api.buildPacket();
+  const digest = crypto.createHash("sha256").update(Buffer.from(material, "utf8")).digest("hex");
+  assert.ok(packet.includes(`UTF-8 text SHA-256: ${digest}`));
+  assert.ok(packet.includes(`Characters (Unicode code points): ${Array.from(material).length}\n\n${material}\n`));
+  const delimiter = "===== VERSIONED AUDIT PROTOCOL AND TARGET DELIMITER =====\n";
+  const protocolOffset = packet.indexOf(delimiter);
+  assert.ok(protocolOffset >= 0);
+  assert.ok(packet.slice(protocolOffset + delimiter.length).startsWith(`${protocol}\n`));
+
+  api.configure(" \u3000\n\t", protocol);
+  await assert.rejects(api.buildPacket(), /Paste material or attach at least one target file first/);
+
+  const whitespaceOnly = " \u3000\n\t";
+  api.configure(whitespaceOnly, protocol, [{ embedded: false, name: "companion.bin", sha256: null, size: 1, type: "application/octet-stream" }]);
+  const packetWithCompanion = await api.buildPacket();
+  const whitespaceDigest = crypto.createHash("sha256").update(Buffer.from(whitespaceOnly, "utf8")).digest("hex");
+  assert.ok(packetWithCompanion.includes(`UTF-8 text SHA-256: ${whitespaceDigest}`));
+  assert.ok(packetWithCompanion.includes(`Characters (Unicode code points): ${Array.from(whitespaceOnly).length}\n\n${whitespaceOnly}\n`));
+});
+
+test("packet builder preserves safe filenames and rejects unsafe, overlong, or colliding names", () => {
+  const api = packetBuilderHarness();
+  const safeName = "資料-😀.txt";
+  const safe = api.targetFilenameRecord(safeName);
+  assert.equal(safe.error, null);
+  assert.equal(safe.name, safeName);
+
+  const decomposedHangul = api.targetFilenameRecord("가.txt");
+  const composedHangul = api.targetFilenameRecord("가.txt");
+  assert.equal(decomposedHangul.error, null);
+  assert.equal(composedHangul.error, null);
+  assert.equal(decomposedHangul.key, composedHangul.key);
+  assert.notEqual(decomposedHangul.name, composedHangul.name);
+  assert.equal(api.targetFilenameRecord("A.txt").key, api.targetFilenameRecord("a.txt").key);
+
+  for (const name of ["", ".", "..", "CON.txt", "bad/name.txt", "trailing. ", "bidi\u202E.txt", "Ä.txt", `${"x".repeat(241)}.txt`]) {
+    assert.notEqual(api.targetFilenameRecord(name).error, null, name);
+  }
+
+  api.configure("target", "protocol\n", [{ name: "A.txt" }]);
+  assert.throws(() => api.validateTargetFilenames([{ name: "a.txt" }]), /"a\.txt" collides/);
+  api.configure("target", "protocol\n", [{ name: "가.txt" }]);
+  assert.throws(() => api.validateTargetFilenames([{ name: "가.txt" }]), /"가\.txt" collides/);
+  api.configure("target", "protocol\n", []);
+  assert.throws(() => api.validateTargetFilenames([{ name: "bad\u202E.txt" }]), /"bad\\u\{202e\}\.txt" is unsafe/);
+  assert.doesNotThrow(() => api.validateTargetFilenames([{ name: safeName }]));
 });

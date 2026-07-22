@@ -1,6 +1,6 @@
 # BSC Audit Packet for Language Models
 
-**Protocol version:** `0.3.0-alpha.8.dev0`<br>
+**Protocol version:** `0.3.0-alpha.8.dev1`<br>
 **Output status:** draft until human review and, where applicable, actual mechanical execution
 
 ## Purpose
@@ -21,6 +21,12 @@ State one requested depth at the beginning of the audit. The canonical depths ar
 - `formal-mathematical` - prioritize definitions, types, quantifiers, hypotheses, exact proof obligations, certificate-replay boundaries, and explicit unresolved lemmas.
 
 If no depth is requested, use `standard`. The `adversarial` and `formal-mathematical` depths require the draft machine-readable audit record described below. The `quick` and `standard` depths include it only when the user requests it.
+
+## Language and canonical tokens
+
+Write human-readable explanations in the language requested by the user; otherwise follow the user's language. Preserve machine-facing material exactly: JSON keys and enum values, schema and rule identifiers, verdict and gate tokens, finding codes, paths, hashes, commands, filenames, artifact IDs, and quoted source text. A translated explanation may accompany a canonical token, but it must not replace or redefine it.
+
+Do not normalize, transliterate, or translate bytes before hashing. Label any translation of quoted material as a translation and retain the original quotation when it is material to the audit. The canonical English protocol and machine vocabulary control if a translated guide diverges.
 
 ## Security and privacy boundary
 

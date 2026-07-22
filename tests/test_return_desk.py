@@ -72,7 +72,7 @@ class AuditReturnDeskTests(unittest.TestCase):
         run.update(
             status="ran",
             tool="bsc-audit",
-            version="0.3.0a8.dev0",
+            version="0.3.0a8.dev1",
             input_artifact_ids=["artifact:request", "artifact:source"],
             output_artifact_ids=["artifact:bsc-output"],
             receipt_ids=["receipt:bsc"],
@@ -92,7 +92,7 @@ class AuditReturnDeskTests(unittest.TestCase):
     def test_return_fixtures_bind_the_exact_current_protocol(self):
         protocol = (ROOT / "BSC_AUDIT_LLM_PACKET.md").read_bytes()
         self.assertEqual(EXPECTED_PROTOCOL_SHA256, f"sha256:{hashlib.sha256(protocol).hexdigest()}")
-        self.assertEqual(EXPECTED_PROTOCOL_VERSION, "0.3.0-alpha.8.dev0")
+        self.assertEqual(EXPECTED_PROTOCOL_VERSION, "0.3.0-alpha.8.dev1")
         for path in sorted((ROOT / "examples").glob("audit_return_*.json")):
             with self.subTest(path=path.name):
                 record = json.loads(path.read_text(encoding="utf-8"))

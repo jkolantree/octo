@@ -63,6 +63,7 @@ Run:
 
 ```bash
 python scripts/run_tests.py
+python scripts/check_localization.py
 python scripts/check_privacy.py --protected-history HEAD
 git diff --check
 ```
@@ -73,6 +74,10 @@ local machine path, credential, or unapproved document author in an issue,
 fixture, archive, publication property, or commit identity.
 
 Do not weaken a fatal gate into a score. Do not delete a negative result because a preferred model fails it. Do not silently change prior output semantics.
+
+Public documentation is a product and evidence surface, not a development diary. Lead with the working official entry point, then explain exact reproduction, evaluation, updates, and forks as open-source capabilities. Report live-service availability, observed configuration identity, Preview validation, source/Pages deployment, and immutable releases as separate facts. Retain material limitations, failed gates, counterexamples, and provenance; omit transient editor clicks, abandoned wording, and internal deliberation unless they are necessary to reproduce or interpret a preserved result.
+
+Japanese human-facing documentation may translate explanations, but it must preserve canonical JSON keys and enums, schema and rule IDs, verdict and gate tokens, finding codes, paths, hashes, commands, filenames, artifact IDs, and quoted source text. Do not normalize, transliterate, or translate bytes before hashing. The canonical English protocol and machine vocabulary control if a translation diverges.
 
 When `START_HERE.md` changes, regenerate its offline page with Pandoc and inspect it at keyboard-only, narrow viewport, dark mode, print preview, and 200% zoom:
 

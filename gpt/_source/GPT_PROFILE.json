@@ -1,44 +1,51 @@
 {
   "profile_schema": "bsc-custom-gpt-profile/v1",
   "product": {
-    "profile_version": "0.1.1",
-    "canonical_protocol_version": "0.3.0-alpha.8.dev0",
-    "publication_status": "UNPUBLISHED",
-    "public_url": null,
+    "profile_version": "0.2.0",
+    "canonical_protocol_version": "0.3.0-alpha.8.dev1",
+    "service_availability": "LIVE",
+    "public_url": "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor",
+    "package_role": "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
+    "candidate_state": "PENDING",
+    "live_binding_state": "PENDING_VERIFICATION",
+    "preview_validation_state": "PENDING",
+    "preview_gate_case_count": 39,
+    "japanese_interface_status": "BETA",
+    "japanese_native_speaker_terminology_review": "PENDING",
     "name": "BSC Claim Auditor",
-    "description": "Reconstructs scientific and technical claims, separates evidence from assumptions, records what actually ran, and shows what remains unresolved. Research preview; not a proof engine or certification system.",
+    "description": "Audits scientific and technical claims, separates evidence, assumptions, and execution, and shows what remains unresolved. 科学・技術上の主張を監査し、証拠・仮定・実行・未解決点を分けて示します。日本語対応はベータ版で、母語話者による用語レビューは未完了です。Research preview; not a proof or certification system.",
     "category_recommendation": "Education",
     "conversation_starters": [
       "Audit the attached paper at standard depth and tell me what survives.",
       "Test this claim adversarially and show the smallest decisive counterexample or next test.",
-      "Reconstruct this mathematical argument, separate assumptions from deductions, and identify every open proof obligation.",
-      "Inspect these sources and calculations, then give me an execution ledger that distinguishes what ran from what was only described."
+      "添付した数学的議論を再構成し、仮定と帰結を分け、未解決の証明義務を日本語で示してください。",
+      "この主張を敵対的深度（adversarial）で検証し、最小の反例または次の決定的なテストを日本語で示してください。"
     ],
-    "required_human_publication_step": "Create or update the GPT in the authenticated ChatGPT editor, upload the generated Knowledge files in the declared order, run the Preview evaluation set, choose link sharing or GPT Store publication, and return the resulting public GPT URL."
+    "candidate_update_step": "The official GPT already exists. For an authorized update, load this exact candidate in the authenticated editor, upload all generated Knowledge files in order, run and preserve the complete Preview gate, and verify the saved live binding. For an independent reproduction or fork, create a separate GPT and do not imply official status."
   },
   "audit_depths": [
     {
       "id": "quick",
       "label": "Quick",
-      "builder_instruction": "Audit the main claim and decisive evidence or failure. Preserve coverage, execution honesty, and every fatal gate.",
+      "builder_instruction": "Audit the main claim and decisive evidence/failure; preserve coverage, execution honesty, and fatal gates.",
       "machine_record_required": false
     },
     {
       "id": "standard",
       "label": "Standard",
-      "builder_instruction": "Reconstruct material claims and dependencies, weigh evidence, run a focused destruction pass, and list repairs and obligations.",
+      "builder_instruction": "Reconstruct material claims/dependencies, weigh evidence, attack likely failures, and list repairs/obligations.",
       "machine_record_required": false
     },
     {
       "id": "adversarial",
       "label": "Adversarial",
-      "builder_instruction": "Intensify counterexamples, boundary attacks, leakage, quotient loss, path dependence, null mismatch, conflicts, and paired mutations.",
+      "builder_instruction": "Intensify counterexample, boundary, leakage, quotient, path, null, conflict, and paired-mutation attacks.",
       "machine_record_required": true
     },
     {
       "id": "formal-mathematical",
       "label": "Formal / Mathematical",
-      "builder_instruction": "Freeze exact objects, quantifiers, hypotheses, and conclusions; reconstruct proof steps; expose certificate and formal-tool boundaries.",
+      "builder_instruction": "Freeze exact objects/quantifiers/hypotheses/conclusions; reconstruct proof steps and expose certificate/formal-tool boundaries.",
       "machine_record_required": true
     }
   ],
@@ -59,7 +66,7 @@
     },
     "actions": {
       "enabled": false,
-      "instruction": "No GPT Action is included in the first public release."
+      "instruction": "The official configuration includes no GPT Action."
     },
     "canvas": {
       "enabled": false,
@@ -399,6 +406,14 @@
           ]
         },
         {
+          "id": "response_language_and_canonical_tokens",
+          "severity": "fatal",
+          "text": "Reply in requested/user language. Preserve JSON keys/enums, schema/rule IDs, verdict/gate/finding tokens, paths/hashes/commands/filenames/artifact IDs and material quotes exactly; label translations.",
+          "provenance": [
+            "BSC_AUDIT_LLM_PACKET.md#language-and-canonical-tokens"
+          ]
+        },
+        {
           "id": "custom_gpt_privacy_boundary",
           "severity": "fatal",
           "text": "State Custom GPT uploads are handled through ChatGPT under applicable terms/settings, not local-only; warn against unauthorized sensitive/restricted uploads.",
@@ -536,6 +551,11 @@
       "order": 5,
       "path": "gpt/knowledge/BSC_WORKED_EXAMPLES.md",
       "purpose": "Known-answer and adversarial examples without redefining the protocol"
+    },
+    {
+      "order": 6,
+      "path": "gpt/knowledge/BSC_JAPANESE_INTERFACE.md",
+      "purpose": "Japanese interface and canonical-token glossary; translated explanations never redefine the protocol"
     }
   ],
   "limitations": [
@@ -547,10 +567,15 @@
     "Uploading material to this Custom GPT sends it through ChatGPT under the user's applicable terms and settings; it is not a local-only workflow.",
     "Sensitive, proprietary, identifying, medical, legal, classified, export-controlled, or otherwise restricted material should not be uploaded without appropriate authorization and review.",
     "Hashes establish byte identity and may still identify low-entropy private material; they do not establish anonymity or truth.",
+    "Japanese support is beta and pending native-speaker terminology review; the canonical English protocol and machine tokens control any conflict.",
     "The output is not scientific, clinical, legal, policy, safety, or deployment certification.",
-    "No GPT Action is included in this release, and no server-side BSC verification API is implied."
+    "The official configuration includes no GPT Action, and no server-side BSC verification API is implied."
   ],
   "official_references": [
+    {
+      "title": "Official BSC Claim Auditor",
+      "url": "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor"
+    },
     {
       "title": "Creating and editing GPTs",
       "url": "https://help.openai.com/en/articles/8554397-creating-a-gpt"
