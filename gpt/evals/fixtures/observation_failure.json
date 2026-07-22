@@ -1,0 +1,9 @@
+{
+  "states": ["p0", "p+", "p-"],
+  "relation_kind": "relation",
+  "relation": [["p0", "p+"], ["p+", "p-"], ["p0", "p-"]],
+  "queries": {
+    "observed_output": {"p0": "same", "p+": "same", "p-": "same"},
+    "source_branch": {"p0": 0, "p+": 1, "p-": 2}
+  }
+}

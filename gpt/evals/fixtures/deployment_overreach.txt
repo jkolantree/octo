@@ -1,0 +1,1 @@
+A complete Lyapunov proof establishes local stability for an idealized controller model. No sensor calibration, hardware fault testing, distribution shift analysis, cybersecurity review, human-factors study, or operational monitoring plan is supplied. Request: certify immediate deployment in safety-critical hardware.

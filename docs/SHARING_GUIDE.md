@@ -1,6 +1,6 @@
 # Sharing and Release Guide
 
-The v0.3.0-alpha.4 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
+The v0.3.0-alpha.5 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
 
 ## Two public surfaces
 
@@ -9,11 +9,12 @@ The v0.3.0-alpha.4 release is a research preview. Every public description shoul
 
 ## GitHub release contents
 
-Create tag `v0.3.0-alpha.4` and attach:
+Create tag `v0.3.0-alpha.5` and attach:
 
 - `START_HERE.txt`, `BSC_AUDIT_COPY_PASTE.txt`, `BSC_AUDIT_UPLOAD_TO_LLM.txt`, and `BSC_AUDIT_SYSTEM_PROMPT.txt`;
 - the canonical LLM packet, schema, example archive, and `BSC_AUDIT_PUBLICATION.json`;
-- `bsc-audit-complete.zip` and `bsc-audit-engine-0.3.0-alpha.4.zip`;
+- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.5.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
+- `bsc-audit-complete.zip` and `bsc-audit-engine-0.3.0-alpha.5.zip`;
 - the wheel and source distribution;
 - the conformance packet;
 - `RELEASE_MANIFEST.json` and `SBOM.spdx.json`;
@@ -33,10 +34,25 @@ Do not manually zip a working directory containing caches or untracked files. Bu
 Permanent release links:
 
 ```text
-https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.4
-https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.4/BSC_AUDIT_LLM_PACKET.md
+https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.5
+https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.5/BSC_AUDIT_LLM_PACKET.md
 https://jkolantree.github.io/octo/
 ```
+
+The repository release publishes the setup package, not the authenticated Custom GPT. Until a human completes the GPT editor and Preview gate, its status is **UNPUBLISHED** and no public GPT URL should appear. The first package contains no GPT Action, hosted API, account, analytics, or cloud-storage service.
+
+## Reproduce the Custom GPT package
+
+From the exact clean tagged tree, regenerate and verify the committed package before building the release archive:
+
+```bash
+python scripts/build_gpt_package.py
+python scripts/build_gpt_package.py --check
+python scripts/check_gpt_package.py
+python scripts/build_release.py --output release
+```
+
+The generator uses the repository's reproducible `SOURCE_DATE_EPOCH` convention, sorted archive members, normalized timestamps, fixed file modes, strict manifests, and SHA-256 ledgers. On the exact clean tag, the official release builder injects the Git commit, tree, and tag into the standalone GPT archive's inner manifest, then binds the archive again in `RELEASE_MANIFEST.json` and the outer `SHA256SUMS`. Compare the final archive hash with that ledger before upload; do not substitute a manually zipped working directory.
 
 ## Zenodo records
 
@@ -82,6 +98,12 @@ The README states:
 
 ## Audience routes
 
+The three product entry points have different trust and privacy boundaries:
+
+1. **Public Custom GPT - direct ChatGPT audit:** currently **UNPUBLISHED** pending authenticated human setup, Preview evaluation, and a returned URL. Uploads go through ChatGPT under the user's applicable settings and terms.
+2. **Local browser Packet Builder - cross-model route:** constructs a packet locally; sending the resulting packet to a model is a separate action.
+3. **Repository and Python engine - exact checker route:** runs the versioned finite checker and preserves structured output; it does not turn an interpretive GPT audit into mechanical evidence retroactively.
+
 ### Curious reader
 
 Share [START_HERE.md](../START_HERE.md) and one small worked audit. Do not begin with the full mathematical framework.
@@ -92,7 +114,7 @@ Share the tagged repository and [PROGRAMMER_TUTORIAL.md](PROGRAMMER_TUTORIAL.md)
 
 ### LLM user
 
-Share the versioned [BSC_AUDIT_LLM_PACKET.md](../BSC_AUDIT_LLM_PACKET.md) together with its privacy warning. Never invite a user to upload confidential material casually.
+Until the authenticated Custom GPT is published, share the [deterministic setup package](../gpt/README.md) only with someone performing the documented editor and Preview steps, or share the versioned [BSC_AUDIT_LLM_PACKET.md](../BSC_AUDIT_LLM_PACKET.md) for manual cross-model use. Never invent a GPT URL or invite a user to upload confidential material casually. ChatGPT uploads are not local-only.
 
 ### Scientific reviewer
 
@@ -110,6 +132,9 @@ Share a frozen target, source-coverage ledger, manifest, actual checker output, 
 - [ ] Full license text and contribution-license statement are present.
 - [ ] Accessibility checks cover language, heading order, keyboard focus, narrow view, and 200% zoom.
 - [ ] LLM packet covers prompt injection, privacy, source coverage, and fabricated execution.
+- [ ] `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.5.zip` regenerates byte-for-byte, passes the package checker, and matches the release checksum ledger.
+- [ ] Custom GPT metadata says `UNPUBLISHED` until an authenticated human completes setup and Preview; no placeholder or guessed public URL appears.
+- [ ] Apps and Actions remain absent, and the package does not imply a hosted checker API.
 - [ ] `SECURITY.md`, governance, issue forms, and conduct policy are linked.
 - [ ] SHA-256 sums are generated from final assets.
 - [ ] A negative result or known limitation is visible in release notes.
@@ -127,3 +152,5 @@ Avoid:
 - “formally verified science” unless a named formal system actually supplies the proof;
 - “BSC compliant”;
 - claims that an LLM ran the Python checker without actual output.
+
+The Audit Return Desk is the next planned trust-layer priority for inspecting returned model output and receipts. It is not part of this release.

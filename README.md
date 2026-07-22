@@ -2,7 +2,7 @@
 
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
-**Current release:** `v0.3.0-alpha.4`<br>
+**Current release:** `v0.3.0-alpha.5`<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
 BSC is offered as infrastructure for careful imagination. It permits ambition, but not free authority.
@@ -30,11 +30,15 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 
 ## Choose an entry point
 
-- **One-page local packet builder:** [open the accessible GitHub Pages module](https://jkolantree.github.io/octo/)
+1. **Public Custom GPT - direct ChatGPT audit:** **UNPUBLISHED.** The deterministic [Custom GPT package](gpt/README.md) is ready for an authenticated human to configure and test, but the repository does not claim a live GPT or public URL. Uploads go through ChatGPT under the user's applicable settings and terms. The first package has no Action, hosted API, account, analytics, or cloud-storage integration.
+2. **Local browser Packet Builder - cross-model route:** [open the accessible GitHub Pages module](https://jkolantree.github.io/octo/) to construct a versioned packet locally, then send it to an LLM you choose as a separate action. The builder does not upload the target, call an LLM, or run Python.
+3. **Repository and Python engine - exact checker route:** use [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and preserved command output. This is the only route here that runs the BSC checker.
+
+Supporting routes:
+
 - **First visit:** [START_HERE.md](START_HERE.md) or the accessible offline [START_HERE.html](START_HERE.html)
 - **Human-only audit:** [AUDIT_WORKSHEET.md](AUDIT_WORKSHEET.md)
-- **LLM-assisted draft:** [BSC_AUDIT_LLM_PACKET.md](BSC_AUDIT_LLM_PACKET.md)
-- **Programmer route:** [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md)
+- **Manual LLM packet:** [BSC_AUDIT_LLM_PACKET.md](BSC_AUDIT_LLM_PACKET.md)
 - **Documentation map:** [docs/index.md](docs/index.md)
 - **Example catalog:** [examples/README.md](examples/README.md)
 - **Mathematical definitions:** [docs/MATHEMATICS.md](docs/MATHEMATICS.md)
@@ -45,7 +49,9 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 - **Pseudonymous publication policy:** [PRIVACY.md](PRIVACY.md)
 - **Published corrections:** [ERRATA.md](ERRATA.md)
 
-The Pages module reads pasted and attached material only inside your browser, verifies the versioned audit protocol before enabling output, and prepares a packet for an LLM you choose. It does not upload target material, call an LLM, or run the Python checker. Do not put sensitive material into any third-party model without separate authorization.
+The Pages module reads pasted and attached material only inside your browser, verifies the versioned audit protocol before enabling output, and prepares a packet for an LLM you choose. Sending that packet or uploading directly to a Custom GPT crosses into the selected model service and is not local-only. Do not put sensitive material into any third-party model without separate authorization.
+
+The Audit Return Desk is the next planned trust-layer priority for inspecting returned model output and receipts. It is not implemented in this release.
 
 ## Thirty-second example
 
@@ -82,14 +88,15 @@ For an installed command, create a virtual environment and run `python -m pip in
 
 ## Status model
 
-Four coordinates are deliberately separate:
+Five status coordinates are deliberately separate:
 
 1. **Research verdict:** `proven`, `strongly_supported`, `plausible_but_unresolved`, `refuted`, `ill_posed`, or `outside_current_knowledge`. This is assigned through human scientific review, not inferred from JSON parsing.
 2. **Evidence maturity:** `declared`, `structurally_checked`, `empirically_passed`, or `externally_replicated`.
-3. **Deployment status:** `research_only`, `sandboxed`, `candidate`, `admitted`, or `retired`.
-4. **Gate state:** `unrun`, `pass`, `fail`, or `conflict`.
+3. **Execution status:** `not_run`, `ran`, `reported_but_unverified`, or `not_applicable`, recorded separately for model reasoning, web and citation checks, ChatGPT tools, BSC Python, external proof tools, and empirical tests.
+4. **Deployment status:** `research_only`, `sandboxed`, `candidate`, `admitted`, or `retired`.
+5. **Gate state:** `unrun`, `pass`, `fail`, or `conflict`.
 
-CLI decisions are `no_blocking_findings`, `no_blocking_findings_with_warnings`, `blocked`, `demoted`, `prohibited`, or the exceptional `internal_error`. See [docs/STATUS_MODEL.md](docs/STATUS_MODEL.md).
+The separate BSC CLI decision is `no_blocking_findings`, `no_blocking_findings_with_warnings`, `blocked`, `demoted`, `prohibited`, or the exceptional `internal_error`. See [docs/STATUS_MODEL.md](docs/STATUS_MODEL.md).
 
 Admission is conjunctive: every applicable fatal gate must pass. An aggregate score cannot rescue an unrun, failed, or conflicting fatal gate.
 
@@ -97,7 +104,7 @@ Admission is conjunctive: every applicable fatal gate must pass. An aggregate sc
 
 - Inputs are user declarations. The checker does not know that a claim, citation, proof identifier, hash target, calibration record, or experiment is honest merely because it is syntactically present.
 - Exact arithmetic applies only to the finite objects actually supplied to the relevant command.
-- LLM-produced reports and manifests are drafts. Target documents are untrusted data and may contain prompt injection.
+- LLM-produced reports and manifests are drafts. Target documents are untrusted data and may contain prompt injection. ChatGPT Code Interpreter or Data Analysis output is not a versioned BSC Python result unless that checker actually ran and its output is preserved.
 - Domain plugins activate only when their required typed fields are present. Output should say which checks ran and which did not.
 - Negative results, conflicts, and fired demotions are preserved rather than averaged or silently overwritten.
 

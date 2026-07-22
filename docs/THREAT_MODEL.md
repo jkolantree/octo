@@ -12,7 +12,7 @@ The project aims to preserve:
 - evidence provenance and legal filtration;
 - reproducible negative results and demotions;
 - deterministic exact arithmetic for supported finite objects;
-- an honest record of checks run and not run.
+- an honest record separating model reasoning, web and citation checking, ChatGPT tools, versioned BSC Python, external proof tools, empirical tests, and proposed-only computations.
 
 ## Primary scientific threats
 
@@ -42,8 +42,21 @@ The project aims to preserve:
 - confident conversion of analogy into implication;
 - output-schema drift that produces plausible but invalid artifacts;
 - same-model repetition mistaken for independent review.
+- ChatGPT Code Interpreter or Data Analysis presented as if the versioned BSC Python checker ran;
+- an unsupported `Python passed`, `Lean verified it`, or `all tests passed` statement promoted without a bound execution record;
+- public metadata implying that an unpublished Custom GPT, GPT Action, or hosted checker API exists.
 
 The LLM packet treats target material as untrusted evidence, requires a coverage ledger, and forbids claims of execution without actual output. Users must still review generated artifacts.
+
+## Product-surface boundaries
+
+The three entry points do not share one privacy or execution boundary:
+
+1. The public Custom GPT package prepares a direct ChatGPT audit experience, but the GPT is **UNPUBLISHED** until an authenticated human completes setup and Preview evaluation. Uploads are processed through ChatGPT under the user's applicable settings and terms. The first package contains no Action, hosted API, account, analytics, or cloud storage.
+2. The browser Packet Builder constructs a versioned packet in browser memory without sending the target to an LLM. Sending its output to any model is a separate action governed by that service.
+3. The repository and Python engine run versioned finite checks locally or in the operator's selected environment. A GPT response or ChatGPT tool result is not BSC Python output unless the correct checker actually ran and its result is bound to the inputs.
+
+For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
 
 ## Privacy and confidentiality threats
 
@@ -80,6 +93,9 @@ The engine does not provide:
 - independent regeneration of preserved reports whose original generators are absent;
 - Lean, Coq, Isabelle, or other kernel verification of the new research notes;
 - protection for secrets uploaded to external services;
+- a published Custom GPT or public GPT URL before the authenticated human handoff is completed;
+- a GPT Action, hosted BSC checker API, account system, analytics service, or cloud-storage service;
+- the planned Audit Return Desk inspection and receipt layer;
 - resistance to arbitrary local-code execution by a user who runs untrusted programs outside the checker.
 
 ## Required reporting discipline
@@ -88,7 +104,7 @@ Every audit report should disclose:
 
 - engine and schema version;
 - input hash;
-- checks run and not run;
+- a per-activity execution ledger with status, scope, tool version, and receipt or an explicit statement that no receipt exists;
 - source files and coverage;
 - unresolved external evidence;
 - findings and witnesses;
@@ -97,3 +113,5 @@ Every audit report should disclose:
 - next demotion or review condition.
 
 The strongest defense against overclaiming is a small, reproducible audit that another person can make fail.
+
+The Audit Return Desk is the next planned trust-layer priority for checking returned model output and receipts. It is not implemented in this development line.
