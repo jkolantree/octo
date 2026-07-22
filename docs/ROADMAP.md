@@ -64,6 +64,16 @@ Exit criterion: every supported path relation either produces a replayable exact
 
 Exit criterion: all originally missing scripts match the previously preserved checksum record and deterministically regenerate every report, without enlarging the proof, authentication, or novelty claims; a first-time user can also prepare a version-bound audit packet without installing software or transmitting target material from the project page.
 
+## v0.3.0-alpha.6 - Builder-bounded Custom GPT controller
+
+- render the controlling Instructions deterministically from the normative profile in no more than 8,000 characters;
+- preserve all 29 fatal and nine required rule texts verbatim, plus the canonical depth IDs and ten-section output order;
+- bind the compact controller to the normative profile hash and fail generation if future changes exceed the Builder limit;
+- correct setup documentation to report complete-file character and UTF-8 byte counts;
+- preserve the five-file Knowledge, evaluation, privacy, execution, and no-Action boundaries from alpha.5.
+
+Exit criterion: the repository-generated controller fits the actual Builder field without moving behavioral gates into nondeterministically retrieved Knowledge or weakening any reviewed rule.
+
 ## v0.3.0-alpha.5 - repository-backed public Custom GPT package
 
 - derive concise GPT instructions and modest Knowledge files from version-bound canonical repository sources;
@@ -79,7 +89,7 @@ Exit criterion: a nonexpert can reproduce the package, identify exactly what to 
 
 ## Next trust-layer priority - Audit Return Desk
 
-After the public GPT package, the next priority is a fail-closed inspection and receipt layer for returned model output. It should validate coverage, execution disclosures, structured artifacts, and version bindings without treating fluent model output as checker evidence. The Audit Return Desk is not implemented in `v0.3.0-alpha.5`.
+After the public GPT package, the next priority is a fail-closed inspection and receipt layer for returned model output. It should validate coverage, execution disclosures, structured artifacts, and version bindings without treating fluent model output as checker evidence. The Audit Return Desk is not implemented in `v0.3.0-alpha.6`.
 
 ## v0.3 - rational dictionary and support certificates
 

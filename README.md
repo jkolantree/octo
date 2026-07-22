@@ -2,7 +2,7 @@
 
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
-**Current release:** `v0.3.0-alpha.5`<br>
+**Current release:** `v0.3.0-alpha.6`<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
 BSC is offered as infrastructure for careful imagination. It permits ambition, but not free authority.
@@ -30,7 +30,7 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 
 ## Choose an entry point
 
-1. **Public Custom GPT - direct ChatGPT audit:** **UNPUBLISHED.** The deterministic [Custom GPT package](gpt/README.md) is ready for an authenticated human to configure and test, but the repository does not claim a live GPT or public URL. Uploads go through ChatGPT under the user's applicable settings and terms. The first package has no Action, hosted API, account, analytics, or cloud-storage integration.
+1. **Public Custom GPT - direct ChatGPT audit:** a [link-shared candidate](docs/CUSTOM_GPT_STATUS.md) exists, but the deterministic alpha.6 [Custom GPT package](gpt/README.md) remains **UNPUBLISHED** as a fully Preview-validated configuration. Uploads go through ChatGPT under the user's applicable settings and terms. The package has no Action, hosted API, account, analytics, or cloud-storage integration.
 2. **Local browser Packet Builder - cross-model route:** [open the accessible GitHub Pages module](https://jkolantree.github.io/octo/) to construct a versioned packet locally, then send it to an LLM you choose as a separate action. The builder does not upload the target, call an LLM, or run Python.
 3. **Repository and Python engine - exact checker route:** use [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and preserved command output. This is the only route here that runs the BSC checker.
 

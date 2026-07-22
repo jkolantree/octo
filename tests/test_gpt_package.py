@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from build_gpt_package import (  # noqa: E402
     GPT_ROOT,
+    MAX_GPT_INSTRUCTION_CHARACTERS,
     PROFILE_PATH,
     REQUIRED_EVAL_CASE_REQUIREMENTS,
     REQUIRED_EVAL_CASE_IDS,
@@ -65,7 +66,7 @@ class CustomGptPackageTests(unittest.TestCase):
         binding = {
             "source_commit": "1" * 40,
             "source_tree": "2" * 40,
-            "source_tag": "v0.3.0-alpha.5",
+            "source_tag": "v0.3.0-alpha.6",
         }
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-bound-zip-") as directory:
             path = write_gpt_release_asset(Path(directory), **binding)
@@ -150,10 +151,14 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertEqual(sum(severity == "fatal" for severity in REQUIRED_RULE_SEVERITIES.values()), 29)
         self.assertNotIn("BSC_CODEX_PUBLIC_GPT_WORKFLOW.md", "\n".join(provenance_paths(profile)))
         instructions = payload[Path("GPT_INSTRUCTIONS.md")]
-        self.assertLessEqual(len(instructions.decode("utf-8")), 10_000)
-        self.assertIn(f"Normative profile SHA-256: {hashlib.sha256(PROFILE_PATH.read_bytes()).hexdigest()}".encode(), instructions)
+        instruction_text = instructions.decode("utf-8")
+        self.assertLessEqual(len(instruction_text), MAX_GPT_INSTRUCTION_CHARACTERS)
+        self.assertIn(f"Profile SHA-256: {hashlib.sha256(PROFILE_PATH.read_bytes()).hexdigest()}".encode(), instructions)
         self.assertTrue(instructions.startswith(b"BSC_CUSTOM_GPT_INSTRUCTIONS_BEGIN\n"))
         self.assertTrue(instructions.endswith(b"BSC_CUSTOM_GPT_INSTRUCTIONS_END\n"))
+        for rule in rules:
+            marker = "F" if rule["severity"] == "fatal" else "R"
+            self.assertEqual(instruction_text.count(f"{marker} {rule['id']}: {rule['text']}"), 1)
 
     def test_profile_disables_actions_and_preserves_upload_privacy_boundary(self) -> None:
         profile = load_strict_json(PROFILE_PATH)
