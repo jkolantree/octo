@@ -64,6 +64,15 @@ Exit criterion: every supported path relation either produces a replayable exact
 
 Exit criterion: all originally missing scripts match the previously preserved checksum record and deterministically regenerate every report, without enlarging the proof, authentication, or novelty claims; a first-time user can also prepare a version-bound audit packet without installing software or transmitting target material from the project page.
 
+## v0.3.0-alpha.7 - fail-closed truncated-proof repair
+
+- prohibit an auditor-generated completion from promoting a missing or truncated submitted proof to `proven` or closing its proof obligations;
+- bind that rule through the canonical protocol, compact controller, case-level forbidden behaviors, automatic failures, and regression tests;
+- generate one exact depth-explicit `preview_prompt` per case and require it in the fresh-conversation Preview procedure;
+- preserve the failed alpha.6 full-run result and withhold the live Update until the corrected 27-case gate passes.
+
+Exit criterion: the corrected exact alpha.7 package fits the Builder limit and every depth-explicit Preview case scores at least 18/20 with no automatic failure, including `truncated-proof` remaining unresolved when its decisive source material is absent.
+
 ## v0.3.0-alpha.6 - Builder-bounded Custom GPT controller
 
 - render the controlling Instructions deterministically from the normative profile in no more than 8,000 characters;
@@ -89,7 +98,7 @@ Exit criterion: a nonexpert can reproduce the package, identify exactly what to 
 
 ## Next trust-layer priority - Audit Return Desk
 
-After the public GPT package, the next priority is a fail-closed inspection and receipt layer for returned model output. It should validate coverage, execution disclosures, structured artifacts, and version bindings without treating fluent model output as checker evidence. The Audit Return Desk is not implemented in `v0.3.0-alpha.6`.
+After the public GPT package, the next priority is a fail-closed inspection and receipt layer for returned model output. It should validate coverage, execution disclosures, structured artifacts, and version bindings without treating fluent model output as checker evidence. The Audit Return Desk is not implemented in `v0.3.0-alpha.7`.
 
 ## v0.3 - rational dictionary and support certificates
 

@@ -4,7 +4,7 @@ This index separates first use, reference material, governance, and release work
 
 ## Getting started
 
-1. **Public Custom GPT - direct ChatGPT audit:** a [link-shared candidate exists](CUSTOM_GPT_STATUS.md), but the alpha.6 package remains **UNPUBLISHED** as a fully Preview-validated configuration. Follow [setup, Preview evaluation, and sharing](../gpt/GPT_SETUP_AND_PUBLISHING.md). Uploads are handled through ChatGPT, and this release includes no Action or hosted API.
+1. **Public Custom GPT - direct ChatGPT audit:** a [link-shared candidate exists](CUSTOM_GPT_STATUS.md), but the alpha.7 package remains **UNPUBLISHED** as a fully Preview-validated configuration. Follow [setup, Preview evaluation, and sharing](../gpt/GPT_SETUP_AND_PUBLISHING.md). Uploads are handled through ChatGPT, and this release includes no Action or hosted API.
 2. **Local browser Packet Builder - cross-model route:** [paste or attach material locally](https://jkolantree.github.io/octo/), then copy or download the versioned packet and separately choose an LLM.
 3. **Repository and Python engine - exact checker route:** follow the [Programmer Tutorial](PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and command output.
 
@@ -45,7 +45,7 @@ The [LLM Audit Packet](../BSC_AUDIT_LLM_PACKET.md) is a drafting protocol, not a
 
 The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. Its committed protocol copy and checksum metadata are mechanically generated and checked for drift.
 
-The repository also contains a deterministic [Custom GPT setup package](../gpt/README.md). A link-shared candidate has been observed, but the alpha.6 configuration remains **UNPUBLISHED** until the complete Preview gate and exact package replacement are complete. Direct uploads are processed through ChatGPT and do not inherit the Packet Builder's local-only construction boundary. The package includes no GPT Action, hosted checker API, account system, or cloud-storage service.
+The repository also contains a deterministic [Custom GPT setup package](../gpt/README.md). A link-shared candidate has been observed, but the alpha.7 configuration remains **UNPUBLISHED** until the corrected complete Preview gate and exact package replacement are complete. Direct uploads are processed through ChatGPT and do not inherit the Packet Builder's local-only construction boundary. The package includes no GPT Action, hosted checker API, account system, or cloud-storage service.
 
 The next trust-layer priority is the Audit Return Desk for inspecting returned model output and receipts. It is planned, not implemented.
 

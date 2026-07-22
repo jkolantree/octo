@@ -66,7 +66,7 @@ class CustomGptPackageTests(unittest.TestCase):
         binding = {
             "source_commit": "1" * 40,
             "source_tree": "2" * 40,
-            "source_tag": "v0.3.0-alpha.6",
+            "source_tag": "v0.3.0-alpha.7",
         }
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-bound-zip-") as directory:
             path = write_gpt_release_asset(Path(directory), **binding)
@@ -118,7 +118,30 @@ class CustomGptPackageTests(unittest.TestCase):
         ]
         self.assertTrue(records)
         self.assertTrue(all(len(record.get("scoring_criteria", [])) == 10 for record in records))
+        self.assertTrue(
+            all(
+                record.get("preview_prompt")
+                == f"Run this audit at {record['audit_depth']} depth.\n\n{record['user_request']}"
+                for record in records
+            )
+        )
         self.assertTrue(REQUIRED_EVAL_CASE_IDS <= {record["id"] for record in records})
+        by_id = {record["id"]: record for record in records}
+        truncated = by_id["truncated-proof"]
+        self.assertEqual(truncated["expected"]["research_verdict_any_of"], ["plausible_but_unresolved"])
+        self.assertIn(
+            "Marks the audited theorem proven from an auditor-generated completion.",
+            truncated["expected"]["forbidden_behaviors"],
+        )
+        self.assertIn(
+            "Says no proof obligation remains after supplying its own completion.",
+            truncated["expected"]["forbidden_behaviors"],
+        )
+        eval_spec = load_strict_json(ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json")
+        self.assertIn(
+            "Uses a model-generated completion of missing or truncated submitted proof material to mark the affected claim proven or its proof obligations closed.",
+            eval_spec["fatal_failures"],
+        )
         self.assertEqual(
             {
                 record["id"]: record["workflow_requirement"]
@@ -159,6 +182,16 @@ class CustomGptPackageTests(unittest.TestCase):
         for rule in rules:
             marker = "F" if rule["severity"] == "fatal" else "R"
             self.assertEqual(instruction_text.count(f"{marker} {rule['id']}: {rule['text']}"), 1)
+        self.assertIn(
+            "A model-completed missing/truncated proof is only a repair, never grounds for proven or closed obligations.",
+            instruction_text,
+        )
+        protocol_text = payload[Path("knowledge/BSC_PROTOCOL.md")].decode("utf-8")
+        self.assertIn(
+            "A model-completed missing or truncated proof is only a proposed repair; "
+            "it never grounds a `proven` verdict or closed proof obligations.",
+            protocol_text,
+        )
 
     def test_profile_disables_actions_and_preserves_upload_privacy_boundary(self) -> None:
         profile = load_strict_json(PROFILE_PATH)

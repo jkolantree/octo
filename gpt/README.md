@@ -1,6 +1,6 @@
 # BSC public Custom GPT package
 
-Deterministic, repository-backed setup package for BSC `0.3.0-alpha.6`. The Custom GPT itself is **UNPUBLISHED** until an authenticated human completes the editor and Preview steps.
+Deterministic, repository-backed setup package for BSC `0.3.0-alpha.7`. The Custom GPT itself is **UNPUBLISHED** until an authenticated human completes the editor and Preview steps.
 
 ## Build and validate
 

@@ -2,6 +2,19 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.7 - 2026-07-21
+
+### Corrected
+
+- closed a fail-closed loophole found by the complete alpha.6 Builder Preview run: an auditor-generated completion of a missing or truncated submitted proof is now only a proposed repair and cannot ground a `proven` verdict or close the affected proof obligations;
+- strengthened the canonical protocol, compact controller, truncated-proof case oracle, dedicated automatic-failure list, and regression tests around that boundary;
+- generated and validated an exact `preview_prompt` for every evaluation case so the intended audit depth is explicit instead of relying on the controller default;
+- updated the setup and human-readable evaluation expectations to require the exact fixture and depth-explicit generated prompt in every fresh Preview conversation.
+
+### Preserved negative result and publication boundary
+
+The full 27-case alpha.6 draft evaluation was preserved rather than promoted. Twenty-six cases scored 19-20 without an automatic failure; `truncated-proof` scored 18/20 but incurred an automatic failure after the model reconstructed the omitted induction step, marked the theorem `proven`, and closed its proof obligations despite missing Part II and appendices. The live GPT was not updated. Alpha.7 remains **UNPUBLISHED** as a fully validated live configuration until its exact package is installed and all 27 depth-explicit cases pass with at least 18/20 and no automatic failure.
+
 ## 0.3.0-alpha.6 - 2026-07-21
 
 ### Corrected
