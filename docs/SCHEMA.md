@@ -63,6 +63,7 @@ Pre-1.0 schema versions may change incompatibly. A release must state the schema
 | `0.3.0a4` | `0.3.0`; derived holonomy `0.1.0`; research recovery `v1` |
 | `0.3.0a5` | `0.3.0`; derived holonomy `0.1.0`; research recovery `v1`; Custom GPT release manifest `bsc-custom-gpt-release-manifest-v1` |
 | `0.3.0a6` | `0.3.0`; derived holonomy `0.1.0`; research recovery `v1`; Custom GPT release manifest `bsc-custom-gpt-release-manifest-v1` |
+| `0.3.0a7` | `0.3.0`; derived holonomy `0.1.0`; research recovery `v1`; Custom GPT release manifest `bsc-custom-gpt-release-manifest-v1` |
 
 The independent derived-holonomy route is governed by
 [`derived-holonomy-v0.1.schema.json`](../schemas/derived-holonomy-v0.1.schema.json).
@@ -70,4 +71,4 @@ It does not alter the strict square semantics of `complex-v0.3`.
 
 Consumers must reject an unknown major or minor schema unless an explicit migration is applied.
 
-The `v0.3.0-alpha.6` Custom GPT package does not enlarge the claim-manifest schema or the Python checker's authority. It prepares an interpretive ChatGPT interface and deterministic evaluation artifacts, including a controller that is mechanically bounded to the Builder's 8,000-character limit. The package remains **UNPUBLISHED** as a fully Preview-validated GPT configuration; uploads go through ChatGPT, no GPT Action or hosted BSC API is included, and the planned Audit Return Desk is not implemented.
+The `v0.3.0-alpha.7` Custom GPT package does not enlarge the claim-manifest schema or the Python checker's authority. It prepares an interpretive ChatGPT interface and deterministic evaluation artifacts, including a controller that is mechanically bounded to the Builder's 8,000-character limit and exact depth-explicit Preview prompts. The package remains **UNPUBLISHED** as a fully Preview-validated GPT configuration until the corrected complete gate passes; uploads go through ChatGPT, no GPT Action or hosted BSC API is included, and the planned Audit Return Desk is not implemented.

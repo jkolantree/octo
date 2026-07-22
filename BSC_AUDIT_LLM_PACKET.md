@@ -1,6 +1,6 @@
 # BSC Audit Packet for Language Models
 
-**Protocol version:** `0.3.0-alpha.5`<br>
+**Protocol version:** `0.3.0-alpha.7`<br>
 **Output status:** draft until human review and, where applicable, actual mechanical execution
 
 ## Purpose
@@ -47,7 +47,7 @@ The local browser Packet Builder constructs a packet in browser memory and does 
 7. Recommend the smallest repair that restores a meaningful claim.
 8. Distinguish model reasoning, document review, web research and independently opened citations, ChatGPT Code Interpreter or Data Analysis, the versioned BSC Python checker, external proof tools, empirical tests, and computations that were only proposed.
 9. Never invent hashes, citations, files, measurements, command output, interval enclosures, formal proofs, or independent replication.
-10. If evidence is incomplete, use `unrun`, `plausible_but_unresolved`, `ill_posed`, or `outside_current_knowledge` as appropriate.
+10. If required evidence or execution is missing, keep the affected audited claim unresolved, leave its gate `unrun`, and block dependent admission or decision. Absence is not refutation. A model-completed missing or truncated proof is only a proposed repair; it never grounds a `proven` verdict or closed proof obligations.
 11. State what was not checked.
 12. Keep deployment authority separate from scientific assessment.
 13. Apply the same evidentiary standard to conventional, unconventional, institutional, informal, and BSC claims.

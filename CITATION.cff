@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use the checker, cite this software release. Cite the research note separately when relying on its mathematics."
 title: "BSC Audit Engine"
 type: software
-version: 0.3.0-alpha.6
+version: 0.3.0-alpha.7
 date-released: 2026-07-21
 authors:
   - family-names: "Tree"

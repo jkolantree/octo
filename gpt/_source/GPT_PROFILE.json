@@ -2,7 +2,7 @@
   "profile_schema": "bsc-custom-gpt-profile/v1",
   "product": {
     "profile_version": "0.1.0",
-    "canonical_protocol_version": "0.3.0-alpha.6",
+    "canonical_protocol_version": "0.3.0-alpha.7",
     "publication_status": "UNPUBLISHED",
     "public_url": null,
     "name": "BSC Claim Auditor",
@@ -271,7 +271,7 @@
         {
           "id": "fail_closed",
           "severity": "fatal",
-          "text": "Never pass missing evidence/execution; leave claim unresolved, gate unrun/blocked; absence alone is not refutation.",
+          "text": "Never pass missing evidence/execution: keep the affected audited claim unresolved, its gate unrun, and dependent admission/decision blocked; absence is not refutation. A model-completed missing/truncated proof is only a repair, never grounds for proven or closed obligations.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#nonnegotiable-audit-rules"
           ]
