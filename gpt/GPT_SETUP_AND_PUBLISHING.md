@@ -6,13 +6,13 @@
 
 1. On ChatGPT web, open `https://chatgpt.com/gpts`, select **Create**, then use the direct configuration view.
 2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.
-3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the declared body counts remain 8320 characters and 8322 UTF-8 bytes before pasting.
+3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7987 characters and 7987 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
 4. Upload these Knowledge files in this exact order:
-   1. `BSC_PROTOCOL.md` — 19608 bytes — SHA-256 `ac03a1dfd04305377c75724ec5e42b9a7ef8bc8147b6c4dd3701872a04b2f9d2` — Canonical normative protocol
-   2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 7249 bytes — SHA-256 `ced650484684ccb1ea6ffa96c8afcf0013ef0a0d63a49cca7f6ac3fa30af9ad6` — Research, evidence, gate, execution, deployment, and CLI status boundaries
-   3. `BSC_EXECUTION_AND_RECEIPTS.md` — 13289 bytes — SHA-256 `bfdeb6a332bd5b5873ae7cdc611c239a5ee4af97f420a827c880027d64a8c3f7` — Execution ledger and proof-adapter trust boundaries
-   4. `BSC_SUPPORTED_CHECKS.md` — 27532 bytes — SHA-256 `dc771d1dd6d9b119a2ee402f4305dfe29b5c45885654a2b5430f48877349c313` — Implemented Python routes, schemas, findings, and limitations
-   5. `BSC_WORKED_EXAMPLES.md` — 29214 bytes — SHA-256 `5141dd962f29a522af5f2ae7654c2ac0a47a365e3b79c18d79d244cb687e6547` — Known-answer and adversarial examples without redefining the protocol
+   1. `BSC_PROTOCOL.md` — 19608 bytes — SHA-256 `c7e8528fc4b11b935e28bd47ae7f9644cdfe1a66eddac6fba83aa1d9eed3dd7a` — Canonical normative protocol
+   2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 7249 bytes — SHA-256 `ff572f7e218966ac71b9786ee4e8185800d3c7af6811fa2d5ccc4cd1aec37a2d` — Research, evidence, gate, execution, deployment, and CLI status boundaries
+   3. `BSC_EXECUTION_AND_RECEIPTS.md` — 13289 bytes — SHA-256 `92ff94a05eecd011c78f5ec18bd7b3a6675220ad83a165fb2370afaf724a3577` — Execution ledger and proof-adapter trust boundaries
+   4. `BSC_SUPPORTED_CHECKS.md` — 27586 bytes — SHA-256 `e616d7c283ecc7f17a4264e6d29be0faaabe9b56658d06d6e959d3c89c2662e2` — Implemented Python routes, schemas, findings, and limitations
+   5. `BSC_WORKED_EXAMPLES.md` — 29214 bytes — SHA-256 `a9b5c11075952721480daa4b295d27a9f524d34cf2216b440c351ff03b396d3a` — Known-answer and adversarial examples without redefining the protocol
 5. Enable **Web search** and **Code Interpreter & Data Analysis**. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.
 6. Copy the four prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.
 7. Test in Preview before creating or sharing. Knowledge hashes verify the files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.

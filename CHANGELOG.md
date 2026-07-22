@@ -2,6 +2,20 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.6 - 2026-07-21
+
+### Corrected
+
+- replaced the alpha.5 Custom GPT controller, which exceeded the observed 8,000-character Builder field, with a deterministic 7,987-character rendering;
+- preserved all 29 fatal and nine required normative rule texts verbatim while retaining the exact four audit-depth IDs, ten-section output order, Knowledge boundary, and execution/privacy controls;
+- embedded the normative profile SHA-256 in the controller and made generation fail closed if the character cap is exceeded;
+- corrected the Builder handoff to verify whole-file characters and UTF-8 bytes instead of an unpasteable body-count wrapper;
+- added regression checks for the actual Builder limit and exact rendered rule text.
+
+### Publication boundary
+
+This release repairs the repository package; it does not assert that a live GPT has completed all 27 Preview evaluations. A link-shared alpha.5 configuration was inspected during handoff, but an incomplete Preview gate cannot be promoted to a verified alpha.6 publication. The five Knowledge files must be replaced with the alpha.6 package, the controller must be updated, and the complete fresh-conversation evaluation set must pass before the repository records the GPT as published.
+
 ## 0.3.0-alpha.5 - 2026-07-21
 
 ### Added

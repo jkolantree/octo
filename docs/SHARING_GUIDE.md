@@ -1,6 +1,6 @@
 # Sharing and Release Guide
 
-The v0.3.0-alpha.5 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
+The v0.3.0-alpha.6 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
 
 ## Two public surfaces
 
@@ -9,12 +9,12 @@ The v0.3.0-alpha.5 release is a research preview. Every public description shoul
 
 ## GitHub release contents
 
-Create tag `v0.3.0-alpha.5` and attach:
+Create tag `v0.3.0-alpha.6` and attach:
 
 - `START_HERE.txt`, `BSC_AUDIT_COPY_PASTE.txt`, `BSC_AUDIT_UPLOAD_TO_LLM.txt`, and `BSC_AUDIT_SYSTEM_PROMPT.txt`;
 - the canonical LLM packet, schema, example archive, and `BSC_AUDIT_PUBLICATION.json`;
-- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.5.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
-- `bsc-audit-complete.zip` and `bsc-audit-engine-0.3.0-alpha.5.zip`;
+- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.6.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
+- `bsc-audit-complete.zip` and `bsc-audit-engine-0.3.0-alpha.6.zip`;
 - the wheel and source distribution;
 - the conformance packet;
 - `RELEASE_MANIFEST.json` and `SBOM.spdx.json`;
@@ -34,8 +34,8 @@ Do not manually zip a working directory containing caches or untracked files. Bu
 Permanent release links:
 
 ```text
-https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.5
-https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.5/BSC_AUDIT_LLM_PACKET.md
+https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.6
+https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.6/BSC_AUDIT_LLM_PACKET.md
 https://jkolantree.github.io/octo/
 ```
 
@@ -132,7 +132,7 @@ Share a frozen target, source-coverage ledger, manifest, actual checker output, 
 - [ ] Full license text and contribution-license statement are present.
 - [ ] Accessibility checks cover language, heading order, keyboard focus, narrow view, and 200% zoom.
 - [ ] LLM packet covers prompt injection, privacy, source coverage, and fabricated execution.
-- [ ] `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.5.zip` regenerates byte-for-byte, passes the package checker, and matches the release checksum ledger.
+- [ ] `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.6.zip` regenerates byte-for-byte, passes the package checker, and matches the release checksum ledger.
 - [ ] Custom GPT metadata says `UNPUBLISHED` until an authenticated human completes setup and Preview; no placeholder or guessed public URL appears.
 - [ ] Apps and Actions remain absent, and the package does not imply a hosted checker API.
 - [ ] `SECURITY.md`, governance, issue forms, and conduct policy are linked.
