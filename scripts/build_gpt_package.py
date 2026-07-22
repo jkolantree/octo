@@ -46,7 +46,7 @@ KNOWLEDGE_SOURCES: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "knowledge/BSC_SUPPORTED_CHECKS.md": (
         "BSC Supported Checks",
         "Implemented finite Python routes, schemas, mathematical scope, and explicit non-goals.",
-        ("README.md", "schemas/README.md", "docs/MATHEMATICS.md", "docs/DERIVED_HOLONOMY.md"),
+        ("README.md", "schemas/README.md", "schemas/audit-return-v0.1.schema.json", "docs/MATHEMATICS.md", "docs/DERIVED_HOLONOMY.md"),
     ),
     "knowledge/BSC_WORKED_EXAMPLES.md": (
         "BSC Worked and Adversarial Examples",
@@ -154,6 +154,15 @@ REQUIRED_EVAL_CASE_REQUIREMENTS = {
     "outside-implemented-checker-domain": "claim outside the implemented checker domain",
     "deployment-from-mathematical-result": "deployment request based on a mathematically valid but operationally insufficient result",
     "bsc-self-audit-overclaim": "self-audit of a BSC claim or project document",
+    "clean-structural-control": "known-answer control for poisoned gate mutations",
+    "omitted-bound-failure": "poisoned false pass created by omitting bound failure evidence",
+    "failed-proof-artifact": "formal-proof evidence whose recorded result is failure",
+    "missing-domain-plugin-configuration": "relevant checker domain omitted or mislabeled",
+    "nonadmissive-adapter-receipt": "submitted external-tool receipt without supervised execution authority",
+    "observation-query-descent-failure": "finite supported object with an exact distinguishing witness",
+    "exact-quotient-without-test": "ill-typed or incomplete exact representation declaration",
+    "return-envelope-positive-control": "formal audit requiring separate byte-bound report and return artifacts",
+    "return-envelope-impossible-binding": "required machine return when exact file and hash binding is unavailable",
 }
 
 REQUIRED_EVAL_CASE_IDS = set(REQUIRED_EVAL_CASE_REQUIREMENTS)
@@ -332,7 +341,7 @@ def official_references(profile: dict[str, Any]) -> list[dict[str, str]]:
 
 def rewrite_relative_links(markdown: str, source_relative: str) -> str:
     source = ROOT / source_relative
-    tag = f"v{public_version()}"
+    source_ref = "main" if ".dev" in engine_version() else f"v{public_version()}"
 
     def replace(match: re.Match[str]) -> str:
         label, raw_target = match.group(1), match.group(2)
@@ -343,7 +352,7 @@ def rewrite_relative_links(markdown: str, source_relative: str) -> str:
             resolved = (source.parent / target).resolve().relative_to(ROOT.resolve()).as_posix()
         except ValueError:
             return match.group(0)
-        url = f"https://github.com/jkolantree/octo/blob/{tag}/{resolved}"
+        url = f"https://github.com/jkolantree/octo/blob/{source_ref}/{resolved}"
         if marker:
             url += f"#{anchor}"
         return f"[{label}]({url})"
@@ -715,7 +724,7 @@ def render_readme(profile: dict[str, Any]) -> bytes:
         "",
         "This package adds no Action, API, account, analytics, or cloud storage. The GPT is an interpretive audit interface. It does not imply that the BSC Python checker or an external proof tool ran. Uploads to ChatGPT are not local-only.",
         "",
-        "The next trust-layer priority after this package is the Audit Return Desk; it is not implemented here.",
+        "This alpha.8 package emits the draft audit-return envelope consumed by the repository's non-admissive Audit Return Desk. The GPT does not run that browser or Python inspection itself.",
     ]
     return ("\n".join(lines).rstrip() + "\n").encode("utf-8")
 

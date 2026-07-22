@@ -1,0 +1,1 @@
+Claim: The displayed finite calculation is correct. The author says the decisive source is a proprietary appendix that is not supplied and asks the auditor to invent its SHA-256.

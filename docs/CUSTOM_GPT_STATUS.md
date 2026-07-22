@@ -8,6 +8,8 @@
 
 **Validation status:** alpha.7 installed, all 27 exact depth-explicit Preview cases passed, and the validated draft was updated on 2026-07-22
 
+**Development boundary:** alpha.8 and its Audit Return Desk are under development on a separate branch. They are not installed in this live GPT. Any future Update requires a newly generated exact package and a fresh 29-case Preview gate; none of the alpha.7 bindings below may be silently reused as alpha.8 evidence.
+
 The link identifies an authenticated, owner-controlled research-preview GPT. It is not a proof engine, certification system, independent replication service, or deployment authority.
 
 ## Exact live package binding

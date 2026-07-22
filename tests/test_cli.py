@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from bsc_audit import __version__
-from bsc_audit.cli import InputError, _enforce_resource_limits, command, main
+from bsc_audit.cli import InputError, _enforce_resource_limits, _read_stream_bounded, command, main
 from bsc_audit.findings import Finding, Severity
 
 
@@ -125,6 +125,21 @@ class CliTests(unittest.TestCase):
             cursor = cursor["nested"]
         with self.assertRaises(InputError):
             _enforce_resource_limits(value)
+
+    def test_input_stream_read_is_bounded_even_if_the_file_grows_after_stat(self):
+        class GuardedBytesIO(io.BytesIO):
+            def read(self, size=-1):
+                self.assert_bounded(size)
+                return super().read(size)
+
+            @staticmethod
+            def assert_bounded(size):
+                if size < 0:
+                    raise AssertionError("unbounded read")
+
+        with self.assertRaises(InputError):
+            _read_stream_bounded(GuardedBytesIO(b"1234"), 3)
+        self.assertEqual(_read_stream_bounded(GuardedBytesIO(b"1234"), 4), b"1234")
 
 
 if __name__ == "__main__":

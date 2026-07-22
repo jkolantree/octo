@@ -1,8 +1,8 @@
 # Programmer Tutorial
 
-This guide covers release `v0.3.0-alpha.7`; the `holonomy` route first appeared in alpha.3. Preserve the exact engine version with every output.
+The current public release is `v0.3.0-alpha.7`; this guide also identifies the unreleased `0.3.0-alpha.8` development routes. The `holonomy` route first appeared in alpha.3. Preserve the exact engine version with every output.
 
-This is the repository and Python exact-checker route. It is distinct from the currently **UNPUBLISHED** [direct ChatGPT Custom GPT](../gpt/README.md) and the [local browser Packet Builder](https://jkolantree.github.io/octo/) used to prepare packets for multiple models. ChatGPT uploads are not local-only, ChatGPT tools are not automatically BSC Python, and this release provides no GPT Action or hosted checker API.
+This is the repository and Python exact-checker route. It is distinct from the validated live alpha.7 [Custom GPT](CUSTOM_GPT_STATUS.md) and the [local browser Pages module](https://jkolantree.github.io/octo/). Alpha.8 adds a browser and Python Audit Return Desk but is not installed in the live GPT or publicly deployed until merged. ChatGPT uploads are not local-only, ChatGPT tools are not automatically BSC Python, and neither line provides a GPT Action or hosted checker API.
 
 ## Requirements
 
@@ -26,7 +26,7 @@ python run_audit.py --version
 The output must identify the source you intended to audit. The current development checkout reports:
 
 ```text
-bsc-audit 0.3.0a7
+bsc-audit 0.3.0a8.dev0
 ```
 
 The published alpha.3 release reports:
@@ -44,6 +44,9 @@ Run a fixture directly:
 ```bash
 python run_audit.py audit examples/claim_valid.json
 python run_audit.py observe examples/observation_failure.json
+python run_audit.py return-desk examples/audit_return_valid.json
+python run_audit.py return-desk examples/audit_return_missing_artifact.json
+python run_audit.py return-desk examples/audit_return_poisoned_summary.json
 ```
 
 The second command is expected to return a blocking witness and exit code `1`.
@@ -88,6 +91,7 @@ bsc-audit --version
 | `defect` | exact rational defect path | affine propagation and understatement check |
 | `adapter` | hash-bound external-tool receipt | non-admissive receipt structure and consistency only |
 | `holonomy` | finite rational complexes and path relations | strict, chain-homotopy, and observed-derived equivalence certificates |
+| `return-desk` | draft `audit_return.json` plus sibling artifacts | non-admissive protocol, projection, reference, execution, receipt, and local-byte consistency |
 
 Each command checks only the supplied finite representation. For example, `observe` does not prove that the declared relation exhausts a real instrument’s observational equivalence.
 
@@ -101,7 +105,7 @@ Example shape:
 
 ```json
 {
-  "engine_version": "0.3.0a7",
+  "engine_version": "0.3.0a8.dev0",
   "checks": {
     "run": ["strict_json_parse", "finite_observation_descent"],
     "not_run": ["claim_manifest_lint", "gate_product", "domain_plugins"]
@@ -154,7 +158,7 @@ python run_audit.py lint work/my_claim.json
 python run_audit.py audit work/my_claim.json
 ```
 
-The machine-readable contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The manifest version is `0.3.0`; it is independent of the engine's PEP 440 version `0.3.0a7`.
+The claim-manifest contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The separate returned-audit contract is [schemas/audit-return-v0.1.schema.json](../schemas/audit-return-v0.1.schema.json). Their schema versions are independent of the development engine's PEP 440 version `0.3.0a8.dev0`.
 
 ## 7. Evidence and hashes
 
@@ -192,7 +196,7 @@ Treat generated JSON as untrusted source code:
 
 Never report checker execution from simulated output. If ChatGPT Code Interpreter or Data Analysis ran, record that as ChatGPT tool execution. Record a BSC Python run only when the correct versioned checker actually executed and its output is preserved with the relevant input.
 
-The Custom GPT editor setup is an authenticated human step and has not been claimed complete by the repository release. The Audit Return Desk planned to inspect returned model output and receipts is the next trust-layer priority; it is not implemented here.
+The live alpha.7 Custom GPT completed its authenticated human setup and Preview gate. A future alpha.8 Update still requires a fresh complete gate. The alpha.8 [Audit Return Desk](AUDIT_RETURN_DESK.md) inspects returned output and receipts for internal consistency only; it does not turn them into admissible evidence or certify that an external execution occurred.
 
 ## 9. Add a domain gate
 

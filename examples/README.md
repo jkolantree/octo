@@ -34,6 +34,21 @@ python run_audit.py observe examples/observation_failure.json
 
 A nonzero exit is expected for blocking and demotion fixtures. CI should test the expected decision and exit code rather than treating every nonzero example as an installation failure.
 
+## Audit Return Desk controls
+
+These alpha.8 development fixtures exercise the closed, explicitly non-admissive return envelope. Run each with `python run_audit.py return-desk FILE`.
+
+| File | Expected decision | Exit | Lesson |
+|---|---:|---:|---|
+| `audit_return_valid.json` | `no_blocking_findings` | 0 | The projections, ledgers, references, and locally available hashes are internally consistent; this is not a truth or proof certificate. |
+| `audit_return_missing_artifact.json` | `no_blocking_findings_with_warnings` | 0 | Missing local bytes remain review-needed and do not become a fabricated mismatch. |
+| `audit_return_poisoned_summary.json` | `blocked` | 1 | A summary cannot strengthen the detailed primary verdict. |
+| `audit_return_omitted_bound_failure.json` | `blocked` | 1 | Gate projection cannot conceal evidence that binds itself to the gate. |
+| `audit_return_unreceipted_execution.json` | `blocked` | 1 | A claimed BSC run needs exact inputs, output, version, and a verified compatible receipt. |
+| `audit_return_missing_source_promotion.json` | `blocked` | 1 | Missing source material cannot be promoted to `proven`. |
+| `audit_return_deployment_overreach.json` | `blocked` | 1 | A non-admissive return cannot grant deployment admission. |
+| `audit_return_receipt_only_promotion.json` | `blocked` | 1 | A receipt alone cannot prove a claim or carry passing substantive evidence. |
+
 ## Interpretation rules
 
 - `no_blocking_findings` means only that the relevant command found no blocking condition in the supplied object.

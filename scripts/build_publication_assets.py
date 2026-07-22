@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL = ROOT / "BSC_AUDIT_LLM_PACKET.md"
 SCHEMA = ROOT / "schemas" / "claim-manifest-v0.3.schema.json"
+RETURN_SCHEMA = ROOT / "schemas" / "audit-return-v0.1.schema.json"
 GPT_PROFILE = ROOT / "gpt" / "_source" / "GPT_PROFILE.json"
 SOURCE_DATE_EPOCH = int(os.environ.get("SOURCE_DATE_EPOCH", "1784505600"))
 ZIP_TIME = time.gmtime(max(SOURCE_DATE_EPOCH, 315532800))[:6]
@@ -53,6 +54,8 @@ def publication_header(purpose: str) -> str:
 
 def site_outputs() -> dict[Path, bytes]:
     protocol = protocol_bytes()
+    return_schema = RETURN_SCHEMA.read_bytes()
+    return_schema_value = json.loads(return_schema)
     profile_bytes = GPT_PROFILE.read_bytes()
     profile = json.loads(profile_bytes)
     metadata = (
@@ -74,6 +77,13 @@ def site_outputs() -> dict[Path, bytes]:
             {
                 "version": public_version(),
                 "profile_sha256": sha256_bytes(profile_bytes),
+                "return_contract": {
+                    "authority": return_schema_value["properties"]["authority"]["const"],
+                    "execution_activities": return_schema_value["$defs"]["activity"]["enum"],
+                    "schema_sha256": sha256_bytes(return_schema),
+                    "schema_source": return_schema.decode("utf-8"),
+                    "version": return_schema_value["properties"]["return_version"]["const"],
+                },
                 "audit_depths": [
                     {
                         "id": item["id"],

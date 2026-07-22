@@ -51,6 +51,30 @@ class NullDiscriminationTests(unittest.TestCase):
                 self.assertEqual(payload["decision"], "prohibited")
                 self.assertIn("SCHEMA_VALIDATION", {finding["code"] for finding in payload["findings"]})
 
+    def test_audit_return_controls_and_poisoned_mutations_are_distinguished(self):
+        control_status, control = self.invoke("return-desk", ROOT / "examples" / "audit_return_valid.json")
+        self.assertEqual(control_status, 0)
+        self.assertEqual(control["decision"], "no_blocking_findings")
+
+        cases = (
+            ("audit_return_poisoned_summary.json", "RETURN_SUMMARY_VERDICT_MISMATCH"),
+            ("audit_return_omitted_bound_failure.json", "RETURN_CONCEALED_GATE_FAILURE"),
+            ("audit_return_unreceipted_execution.json", "RETURN_EXECUTION_RECORD_INADEQUATE"),
+            ("audit_return_missing_source_promotion.json", "RETURN_PROVEN_WITH_SOURCE_GAP"),
+            ("audit_return_deployment_overreach.json", "RETURN_DEPLOYMENT_AUTHORITY_MISSING"),
+            ("audit_return_receipt_only_promotion.json", "RETURN_RECEIPT_ONLY_PROMOTION"),
+        )
+        for filename, required_code in cases:
+            with self.subTest(filename=filename):
+                status, payload = self.invoke("return-desk", ROOT / "examples" / filename)
+                self.assertEqual(status, 1)
+                self.assertIn(required_code, {finding["code"] for finding in payload["findings"]})
+
+        review_status, review = self.invoke("return-desk", ROOT / "examples" / "audit_return_missing_artifact.json")
+        self.assertEqual(review_status, 0)
+        self.assertEqual(review["decision"], "no_blocking_findings_with_warnings")
+        self.assertIn("RETURN_ARTIFACT_UNAVAILABLE", {finding["code"] for finding in review["findings"]})
+
     def test_execution_ledger_records_a_semantic_short_circuit(self):
         raw = json.loads((ROOT / "examples" / "claim_valid.json").read_text(encoding="utf-8"))
         raw["representation"] = {"kind": "exact_quotient"}

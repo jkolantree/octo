@@ -3,6 +3,7 @@
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
 **Current release:** `v0.3.0-alpha.7`<br>
+**Development line:** `0.3.0-alpha.8.dev0` (unreleased; not installed in the live GPT)<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
 BSC is offered as infrastructure for careful imagination. It permits ambition, but not free authority.
@@ -24,14 +25,15 @@ The engine checks a narrow set of declared structural obligations. Current route
 - exact propagation of declared affine upper bounds;
 - scoped arithmetic-trace and local/global recovery gates;
 - non-admissive, hash-bound Lean/SMT/interval adapter receipts;
+- non-admissive inspection of returned audit envelopes, ledgers, projections, receipts, and local artifact hashes;
 - canonical JSON hashing.
 
 The engine does **not** determine whether an arbitrary theory is true, reconstruct an arbitrary proof, validate an external evidence identifier, certify empirical replication, or grant moral, legal, clinical, or deployment permission. A `no_blocking_findings` result means only that the checks actually run found no blocking condition.
 
 ## Choose an entry point
 
-1. **Public Custom GPT - direct ChatGPT audit:** a [link-shared candidate](docs/CUSTOM_GPT_STATUS.md) exists, but the deterministic alpha.7 [Custom GPT package](gpt/README.md) remains **UNPUBLISHED** as a fully Preview-validated configuration. Uploads go through ChatGPT under the user's applicable settings and terms. The package has no Action, hosted API, account, analytics, or cloud-storage integration.
-2. **Local browser Packet Builder - cross-model route:** [open the accessible GitHub Pages module](https://jkolantree.github.io/octo/) to construct a versioned packet locally, then send it to an LLM you choose as a separate action. The builder does not upload the target, call an LLM, or run Python.
+1. **Public Custom GPT - direct ChatGPT audit:** the link-shared alpha.7 [BSC Claim Auditor](docs/CUSTOM_GPT_STATUS.md) is installed and 27/27 Preview-validated. Uploads go through ChatGPT under the user's applicable settings and terms. The GPT has no Action, hosted API, account, analytics, or cloud-storage integration. The alpha.8 development package is not installed there.
+2. **Local browser Packet Builder and Audit Return Desk:** [open the accessible GitHub Pages module](https://jkolantree.github.io/octo/) to construct a versioned packet locally. The alpha.8 source also inspects returned `audit_return.json` drafts and selected artifact bytes locally. Neither function uploads the target, calls an LLM, or runs Python; the new Return Desk is not deployed on the public Pages site until this development line is merged and deployed.
 3. **Repository and Python engine - exact checker route:** use [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and preserved command output. This is the only route here that runs the BSC checker.
 
 Supporting routes:
@@ -46,12 +48,13 @@ Supporting routes:
 - **Spectral obstruction boundary:** [docs/SPECTRAL_OBSTRUCTIONS.md](docs/SPECTRAL_OBSTRUCTIONS.md)
 - **New research packet:** [research/derived-witnessed-descent/README.md](research/derived-witnessed-descent/README.md)
 - **Proof adapter boundary:** [docs/PROOF_CARRYING_ADAPTERS.md](docs/PROOF_CARRYING_ADAPTERS.md)
+- **Audit Return Desk:** [docs/AUDIT_RETURN_DESK.md](docs/AUDIT_RETURN_DESK.md)
 - **Pseudonymous publication policy:** [PRIVACY.md](PRIVACY.md)
 - **Published corrections:** [ERRATA.md](ERRATA.md)
 
-The Pages module reads pasted and attached material only inside your browser, verifies the versioned audit protocol before enabling output, and prepares a packet for an LLM you choose. Sending that packet or uploading directly to a Custom GPT crosses into the selected model service and is not local-only. Do not put sensitive material into any third-party model without separate authorization.
+The Pages module's code makes no target-data network request, intentionally persists nothing, verifies the versioned audit protocol before enabling output, and prepares a packet for an LLM you choose. Browser, operating-system, extension, clipboard, and download behavior remains outside the page's control. Sending that packet or uploading directly to a Custom GPT crosses into the selected model service and is not local-only. Do not put sensitive material into any third-party model without separate authorization.
 
-The Audit Return Desk is the next planned trust-layer priority for inspecting returned model output and receipts. It is not implemented in this release.
+The alpha.8 Return Desk checks a closed return schema, bidirectional references, summary projections, fatal-gate derivation, execution disclosures, receipt limits, and available local artifact hashes. A consistent result is not a finding of truth, proof, source authenticity, independent execution, or deployment permission.
 
 ## Thirty-second example
 
@@ -78,6 +81,15 @@ python run_audit.py holonomy examples/holonomy_contractible_derived_pass.json
 
 The output preserves the strict defect as a warning and emits an exact chain homotopy. It checks only the supplied finite rational complexes and semantic bindings.
 
+Inspect a returned audit envelope and any artifact files placed beside it:
+
+```bash
+python run_audit.py return-desk examples/audit_return_valid.json
+python run_audit.py return-desk examples/audit_return_poisoned_summary.json
+```
+
+The first fixture is internally consistent and explicitly non-admissive. The second is blocked because its summary conceals the underlying claim verdict. Neither result decides whether the represented research claim is true.
+
 Run the tests from a source checkout on every supported platform:
 
 ```bash
@@ -92,7 +104,7 @@ Five status coordinates are deliberately separate:
 
 1. **Research verdict:** `proven`, `strongly_supported`, `plausible_but_unresolved`, `refuted`, `ill_posed`, or `outside_current_knowledge`. This is assigned through human scientific review, not inferred from JSON parsing.
 2. **Evidence maturity:** `declared`, `structurally_checked`, `empirically_passed`, or `externally_replicated`.
-3. **Execution status:** `not_run`, `ran`, `reported_but_unverified`, or `not_applicable`, recorded separately for model reasoning, web and citation checks, ChatGPT tools, BSC Python, external proof tools, and empirical tests.
+3. **Execution status:** `not_run`, `file_read_only`, `ran`, `reported_but_unverified`, or `not_applicable`, recorded separately for model reasoning, web and citation checks, ChatGPT tools, BSC Python, external proof tools, and empirical tests. `file_read_only` never establishes that a calculation or verifier ran.
 4. **Deployment status:** `research_only`, `sandboxed`, `candidate`, `admitted`, or `retired`.
 5. **Gate state:** `unrun`, `pass`, `fail`, or `conflict`.
 

@@ -1,10 +1,11 @@
 {
   "format": "bsc-toolchain-lock-v1",
   "release_python": "3.12.13",
+  "return_desk_node": "22.23.1",
   "build_backend": "setuptools.build_meta",
   "setuptools": "82.0.1",
   "source_date_epoch": 1784505600,
   "runner": "ubuntu-24.04",
   "container_digest": null,
-  "container_note": "No release container is asserted in 0.3.0-alpha.7; the exact Python and build backend versions are mandatory."
+  "container_note": "No release container is asserted for the 0.3.0-alpha.8 development package; the exact Python, Node, and build backend versions are mandatory."
 }

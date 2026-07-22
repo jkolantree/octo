@@ -3,16 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Build a versioned BSC scientific audit packet locally in your browser.">
+  <meta name="description" content="Build a versioned BSC scientific audit packet and inspect structured audit returns locally in your browser.">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>BSC Audit Packet Builder</title>
+  <title>BSC Audit Packet Builder and Return Desk</title>
   <link rel="stylesheet" href="styles.css">
   <script src="protocol/meta.js" defer></script>
   <script src="profile.js" defer></script>
+  <script src="return-desk-core.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#builder">Skip to the packet builder</a>
+  <nav class="skip-nav" aria-label="Skip links">
+    <a class="skip-link" href="#builder">Skip to the packet builder</a>
+    <a class="skip-link skip-link-secondary" href="#return-desk">Skip to the Audit Return Desk</a>
+  </nav>
 
   <header class="hero">
     <div class="shell hero-grid">
@@ -21,7 +25,7 @@
         <h1>Turn material into a rigorous audit packet.</h1>
         <p class="lede">Paste a claim or attach a file. This page combines it with the versioned BSC protocol for the language model you choose.</p>
         <div class="trust-line" role="note">
-          <strong>Local by design.</strong> Your pasted text and files stay in this browser. There is no account, upload endpoint, analytics script, or third-party library.
+          <strong>Browser-local page code.</strong> This page does not transmit target material or intentionally persist it. There is no account, upload endpoint, analytics script, or third-party library. Browser, operating-system, extension, clipboard, and downloaded-file behavior remains outside this page's control.
         </div>
       </div>
       <div class="protocol-card" aria-labelledby="protocol-heading">
@@ -47,14 +51,14 @@
           <label for="material"><span class="step-number">1</span> Paste the claim, paper excerpt, equation, or argument</label>
           <button class="button button-quiet" type="button" id="practice-example">Use a practice example</button>
         </div>
-        <textarea id="material" rows="12" maxlength="500000" spellcheck="true" placeholder="Paste material here. Treat confidential or identifying material with care."></textarea>
-        <p class="hint"><span id="character-count">0</span> characters. Pasted text is held only in this page's memory.</p>
+        <textarea id="material" rows="12" maxlength="500000" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-describedby="material-hint" placeholder="Paste material here. Treat confidential or identifying material with care."></textarea>
+        <p class="hint" id="material-hint"><span id="character-count">0</span> characters. Page code does not transmit or intentionally persist this text; browser and operating-system features remain outside its control.</p>
       </div>
 
       <div class="field-group">
         <label class="file-label" for="target-files"><span class="step-number">2</span> Or attach target files</label>
-        <input id="target-files" type="file" multiple>
-        <p class="hint">Small text files are embedded locally. PDFs, images, office files, and large files remain companion attachments; the packet records their names, sizes, and local SHA-256 when feasible.</p>
+        <input id="target-files" type="file" multiple aria-describedby="target-files-hint">
+        <p class="hint" id="target-files-hint">Small text files are embedded locally. PDFs, images, office files, and large files remain companion attachments; the packet records their names, sizes, and local SHA-256 when feasible.</p>
         <ul id="file-list" class="file-list" aria-live="polite"></ul>
       </div>
 
@@ -121,6 +125,55 @@
     </aside>
   </main>
 
+  <section id="return-desk" class="desk-section" aria-labelledby="return-desk-heading">
+    <div class="shell desk-layout">
+      <div class="desk-intro">
+        <p class="step-label">Local consistency inspection</p>
+        <h2 id="return-desk-heading">Audit Return Desk</h2>
+        <p>Bring back a structured <code>audit_return.json</code> and the files it declares. The Desk checks strict JSON, version bindings, source and evidence references, fatal-gate projections, execution disclosures, and local SHA-256 matches.</p>
+        <div class="trust-line" role="note">
+          <strong>Consistency is not truth.</strong> A <em>consistent</em> result is not proof, citation verification, checker execution, scientific correctness, admissibility, or deployment approval.
+        </div>
+      </div>
+
+      <div class="builder-card desk-card">
+        <div class="field-group desk-first-field">
+          <label for="return-json"><span class="step-number">1</span> Paste the structured audit return</label>
+          <textarea id="return-json" rows="14" maxlength="2000000" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-describedby="return-json-hint" placeholder="Paste the complete audit_return.json object. Prose without the versioned envelope can only receive needs_review."></textarea>
+          <p class="hint" id="return-json-hint">Strict parsing rejects duplicate keys, trailing data, non-object JSON, and UTF-8 input above 8 MiB. Page code does not transmit or intentionally persist this text.</p>
+        </div>
+
+        <div class="field-group">
+          <label for="return-json-file"><span class="step-number">2</span> Or load audit_return.json</label>
+          <input id="return-json-file" type="file" accept="application/json,.json" aria-describedby="return-json-file-hint">
+          <p class="hint" id="return-json-file-hint">Loading a JSON file replaces the pasted return in this page. This page code does not upload it.</p>
+        </div>
+
+        <div class="field-group">
+          <label for="return-artifacts"><span class="step-number">3</span> Attach the request, report, and declared artifacts</label>
+          <input id="return-artifacts" type="file" multiple aria-describedby="return-artifacts-hint">
+          <p class="hint" id="return-artifacts-hint">The Desk hashes up to 32 readable files locally, at most 64 MiB per file and 256 MiB total, then matches exact filenames and SHA-256 values. Larger or additional declared artifacts remain review-needed. Browser file paths are never collected.</p>
+          <ul id="return-file-list" class="file-list" aria-live="polite"></ul>
+        </div>
+
+        <div class="action-panel">
+          <button class="button button-primary" type="button" id="inspect-return" disabled>Inspect return locally</button>
+          <button class="button button-secondary" type="button" id="download-return-result" disabled>Download inspection result</button>
+          <button class="button button-quiet" type="button" id="clear-return">Clear local return</button>
+        </div>
+        <p id="return-status" class="status" role="status" aria-live="polite">Add a versioned audit return to begin.</p>
+        <p class="hint">Downloaded inspection JSON contains no attached file bytes, but may contain filenames, identifiers, and SHA-256 values. Hashes do not anonymize private material.</p>
+
+        <div id="return-result" class="return-result" tabindex="-1" aria-labelledby="return-result-heading" hidden>
+          <h3 id="return-result-heading">Inspection result</h3>
+          <p id="return-outcome" class="outcome-badge"></p>
+          <p id="return-summary"></p>
+          <ul id="return-findings" class="finding-list"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="demo-section" aria-labelledby="demo-heading">
     <div class="shell">
       <div class="section-heading demo-heading-row">
@@ -148,7 +201,7 @@
         <h2 id="limits-heading">A careful packet is not a truth certificate.</h2>
       </div>
       <div>
-        <p>The builder assembles instructions. It does not run the Python checker, verify citations, authenticate evidence, execute theorem provers, or decide whether a scientific theory is true.</p>
+        <p>The builder assembles instructions. The Return Desk performs local structural and hash-consistency checks. Neither runs the BSC Python checker, verifies citation meaning, authenticates evidence, executes theorem provers, or decides whether a scientific theory is true.</p>
         <p>Do not upload secrets, identifying records, controlled information, or material you are not allowed to share. Prefer a local approved workflow for sensitive targets.</p>
       </div>
     </div>

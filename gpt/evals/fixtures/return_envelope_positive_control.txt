@@ -1,0 +1,1 @@
+Claim: For every integer n >= 1, 1+3+...+(2n-1)=n^2. Supplied proof: the n=1 base case holds; assuming the sum through n is n^2, adding 2n+1 gives (n+1)^2. END OF COMPLETE SOURCE.
