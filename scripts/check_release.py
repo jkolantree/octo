@@ -71,6 +71,15 @@ def main() -> int:
     for directory in ("examples", "templates", "schemas", "src/bsc_audit/schema_data"):
         for path in sorted((ROOT / directory).glob("*.json")):
             load_strict_json(path)
+
+    source_manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8").splitlines()
+    for required_line in (
+        "include README.ja.md",
+        "include START_HERE.ja.md",
+        "recursive-include docs *.md *.css *.json",
+    ):
+        if source_manifest.count(required_line) != 1:
+            fail(f"source distribution manifest must contain exactly once: {required_line}")
     for relative in (
         ".zenodo.json",
         "docs/PUBLICATION_STATUS.json",
