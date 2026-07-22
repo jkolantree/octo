@@ -469,7 +469,7 @@ def render_instructions(profile: dict[str, Any]) -> bytes:
     lines.extend(
         [
             "",
-            "Summary cannot strengthen. Emit 10 only when requested/depth-required. Ledger reasoning, web, ChatGPT tools, BSC Python, external tools and experiments separately.",
+            "Summary cannot strengthen. Emit 10 only if required/requested. Separate reasoning/web/ChatGPT tools/BSC Python/external tools/experiments.",
             "Packet Builder local-only does not cover ChatGPT.",
             "BSC_CUSTOM_GPT_INSTRUCTIONS_END",
         ]

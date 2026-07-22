@@ -45,7 +45,7 @@
     {
       "id": "formal-mathematical",
       "label": "Formal / Mathematical",
-      "builder_instruction": "Freeze exact objects/quantifiers/hypotheses/conclusions; reconstruct proof steps and expose certificate/formal-tool boundaries.",
+      "builder_instruction": "Visible reply: exact objects/quantifiers/hypotheses/conclusion and each proof step/obligation; expose certificate/formal-tool boundaries.",
       "machine_record_required": true
     }
   ],
@@ -141,7 +141,7 @@
         {
           "id": "source_coverage_first",
           "severity": "fatal",
-          "text": "Inventory each target/Knowledge/web source separately by stable ID; give full/partial/unreadable/missing/truncated, scope, omissions, access mode, code read/run.",
+          "text": "Visible ledger row per target/Knowledge/used web page: stable ID/title+URL/DOI; query, access mode, opened state, coverage, scope, omissions, code read/run.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#source-coverage-requirement"
           ]
@@ -188,7 +188,7 @@
         {
           "id": "no_category_leakage",
           "severity": "fatal",
-          "text": "Keep arguments informal unless formally checked; analogies stay suggestive. Never equate correlation/mechanism, finite/global, equality/causation, math/deployment, or ethics/theorem.",
+          "text": "Keep informal arguments/analogies informal unless formally checked. Never equate correlation/mechanism, finite/global, equality/causation, math/deployment, ethics/theorem.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#nonnegotiable-audit-rules",
             "BSC_AUDIT_LLM_PACKET.md#2-build-the-type-ledger"
@@ -261,7 +261,7 @@
         {
           "id": "separate_status_axes",
           "severity": "fatal",
-          "text": "Keep verdict/maturity/execution/deployment/gate/CLI separate; infer none from another/confidence.",
+          "text": "Visible reply, not artifacts: state verdict/maturity/execution/deployment/gate/CLI separately; infer none from another/confidence.",
           "provenance": [
             "docs/STATUS_MODEL.md#separation-rule"
           ]
@@ -278,7 +278,7 @@
         {
           "id": "fail_closed",
           "severity": "fatal",
-          "text": "Missing evidence/execution never passes/refutes: affected claim unresolved, gate unrun, admission/decision blocked. Model-completed missing/truncated proof is repair only, never proven/closed.",
+          "text": "Missing evidence/execution neither passes nor refutes; claim unresolved, gate unrun, decision blocked. Completing missing/truncated proof is repair, never proof/closure. A supplied exact-implementation countertrace refutes its literal universal claim; replay stays unrun.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#nonnegotiable-audit-rules"
           ]
@@ -336,7 +336,7 @@
         {
           "id": "execution_ledger",
           "severity": "fatal",
-          "text": "Log web/citation access; ChatGPT Code Interpreter/Data Analysis; versioned BSC Python; Lean/SMT/interval/adapter/empirical runs; proposals, unrun checks, and execution-bound claims.",
+          "text": "Log web/citation access; ChatGPT Data Analysis; versioned BSC Python; Lean/SMT/interval/adapter/empirical runs; proposals, unrun checks, execution-bound claims.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#execution-ledger"
           ]
@@ -361,7 +361,7 @@
         {
           "id": "citations_must_be_checked",
           "severity": "fatal",
-          "text": "Verify citations only after opening/checking; else mark unverifiable from available material.",
+          "text": "Search cards/snippets are discovery, not evidence; every used result must be individually opened+ledgered.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#source-coverage-requirement"
           ]
@@ -399,7 +399,7 @@
         {
           "id": "public_research_preview",
           "severity": "fatal",
-          "text": "Make output beginner-first but technically inspectable. Label it a human-review research-preview draft; admit possible GPT source/proof/counterexample/evidence errors.",
+          "text": "Beginner-first yet inspectable; label a human-review research-preview draft; admit possible GPT source/proof/counterexample/evidence errors.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#purpose",
             "BSC_AUDIT_LLM_PACKET.md#required-human-readable-output"
@@ -408,7 +408,7 @@
         {
           "id": "response_language_and_canonical_tokens",
           "severity": "fatal",
-          "text": "Reply in requested/user language. Preserve JSON keys/enums, schema/rule IDs, verdict/gate/finding tokens, paths/hashes/commands/filenames/artifact IDs and material quotes exactly; label translations.",
+          "text": "Reply in requested language. Preserve JSON keys/enums, IDs, tokens, paths, hashes, commands, filenames, artifact IDs, and material quotes exactly; label translations.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#language-and-canonical-tokens"
           ]
@@ -416,7 +416,7 @@
         {
           "id": "custom_gpt_privacy_boundary",
           "severity": "fatal",
-          "text": "State Custom GPT uploads are handled through ChatGPT under applicable terms/settings, not local-only; warn against unauthorized sensitive/restricted uploads.",
+          "text": "State GPT uploads are handled through ChatGPT under terms/settings, not local-only; warn against unauthorized sensitive/restricted uploads.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#security-and-privacy-boundary"
           ]

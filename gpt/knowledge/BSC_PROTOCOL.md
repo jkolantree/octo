@@ -8,7 +8,7 @@
 
 ## Bound canonical sources
 
-- `BSC_AUDIT_LLM_PACKET.md` — SHA-256 `60f71efb6cb95acfa4715fd1489ed0eafeb652c91074fda422472196d8363bcd`
+- `BSC_AUDIT_LLM_PACKET.md` — SHA-256 `d6d7d15663fca6e148cac59f9f08ee196eb80ef2145e95f06d3839aacd98a3bd`
 
 Source hashes bind the pre-upload repository bytes. They do not prove that ChatGPT preserves an identical internal index.
 
@@ -36,7 +36,7 @@ State one requested depth at the beginning of the audit. The canonical depths ar
 - `quick` - lead with the verdict and the most consequential findings; apply every fatal gate, but compress lower-priority detail;
 - `standard` - apply the complete protocol with a prioritized human report;
 - `adversarial` - apply the complete protocol, intensify counterexample searches, and identify the smallest target mutation that breaks each surviving claim;
-- `formal-mathematical` - prioritize definitions, types, quantifiers, hypotheses, exact proof obligations, certificate-replay boundaries, and explicit unresolved lemmas.
+- `formal-mathematical` - put exact definitions, types, quantifiers, hypotheses, each proof step or obligation, certificate-replay boundaries, and unresolved lemmas in the visible report.
 
 If no depth is requested, use `standard`. The `adversarial` and `formal-mathematical` depths require the draft machine-readable audit record described below. The `quick` and `standard` depths include it only when the user requests it.
 
@@ -71,7 +71,7 @@ The browser Packet Builder's page code makes no target-data network request and 
 7. Recommend the smallest repair that restores a meaningful claim.
 8. Distinguish model reasoning, document review, web research and independently opened citations, ChatGPT Code Interpreter or Data Analysis, the versioned BSC Python checker, external proof tools, empirical tests, and computations that were only proposed.
 9. Never invent hashes, citations, files, measurements, command output, interval enclosures, formal proofs, or independent replication.
-10. If required evidence or execution is missing, keep the affected audited claim unresolved, leave its gate `unrun`, and block dependent admission or decision. Absence is not refutation. A model-completed missing or truncated proof is only a proposed repair; it never grounds a `proven` verdict or closed proof obligations.
+10. If required evidence or execution is missing, keep the affected audited claim unresolved, leave its gate `unrun`, and block dependent admission or decision. Absence is not refutation. A model-completed missing or truncated proof is only a proposed repair; it never grounds a `proven` verdict or closed proof obligations. A supplied countertrace explicitly declared to come from the exact implementation under audit can refute that literal universal implementation claim as supplied evidence; record its provenance and keep independent replay `unrun`.
 11. State what was not checked.
 12. Keep deployment authority separate from scientific assessment.
 13. Apply the same evidentiary standard to conventional, unconventional, institutional, informal, and BSC claims.
@@ -89,6 +89,8 @@ Before judging claims, create a source-coverage ledger containing:
 - material skipped, truncated, inaccessible, OCR-damaged, or unreadable;
 - whether outside sources or web search were used;
 - whether code was read, executed, or neither.
+
+The visible response itself must contain this ledger; a generated report or return-envelope artifact does not substitute for it. Search cards and snippets are discovery aids, not evidence or source access. Log a search query as `web_research`, but do not treat its cards as sources. Before relying on any result, open its individual page and give that page its own source-ledger row with stable title and URL or DOI, exact query, access mode, opened state, coverage, inspected scope, and omissions. Unopened results remain `unverifiable` and cannot support a factual attribution, claim, or gate.
 
 Cite the source location beside every decisive factual attribution. If page or line locations are unavailable, cite the nearest section, heading, function, or object name. Do not claim full-document review after sampling.
 
@@ -139,6 +141,8 @@ Also assign:
 - `conflict`
 
 Research verdict, evidence maturity, execution status, deployment status, gate state, and any BSC CLI decision are independent coordinates. Do not translate LLM confidence into any of them, and never infer one coordinate from another.
+
+State the applicable coordinates explicitly in the visible response. Merely saying that they were kept separate, or placing them only in a generated artifact, is insufficient.
 
 ## Execution ledger
 
