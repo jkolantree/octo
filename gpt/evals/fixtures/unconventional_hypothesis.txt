@@ -1,0 +1,1 @@
+Hypothesis: the density of live cells in this explicitly defined cellular automaton converges to 1/pi from every finite nonempty seed. A table for ten seeds and twenty time steps is supplied and is numerically close to 1/pi. No convergence proof, error bound, or larger experiment is supplied.

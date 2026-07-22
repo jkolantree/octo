@@ -1,0 +1,1 @@
+Main report: The causal effect is established by the preregistered analysis and full dataset in companion file decisive_appendix.csv. Only this main report is available; decisive_appendix.csv is missing.

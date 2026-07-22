@@ -64,6 +64,23 @@ Exit criterion: every supported path relation either produces a replayable exact
 
 Exit criterion: all originally missing scripts match the previously preserved checksum record and deterministically regenerate every report, without enlarging the proof, authentication, or novelty claims; a first-time user can also prepare a version-bound audit packet without installing software or transmitting target material from the project page.
 
+## v0.3.0-alpha.5 - repository-backed public Custom GPT package
+
+- derive concise GPT instructions and modest Knowledge files from version-bound canonical repository sources;
+- publish copy-ready metadata, conversation starters, authenticated-human setup instructions, and an explicit `UNPUBLISHED` marker instead of guessing a GPT URL;
+- preserve separate research, evidence, execution, deployment, fatal-gate, and CLI coordinates;
+- distinguish model reasoning, web and citation checking, ChatGPT tools, versioned BSC Python execution, external proof tools, empirical tests, and proposed-only computations;
+- include known-answer and adversarial Preview fixtures, including poisoned prompt-injection and unsupported `all tests passed` claims;
+- generate and validate `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.5.zip` reproducibly with source and artifact hashes;
+- keep Custom GPT uploads outside the Packet Builder's local-only boundary;
+- add no GPT Action, hosted checker API, account, analytics, or cloud-storage surface.
+
+Exit criterion: a nonexpert can reproduce the package, identify exactly what to paste and upload, run the Preview gate, and distinguish an interpretive ChatGPT audit from actual BSC Python or external proof execution. The repository release does not establish that the authenticated Custom GPT was created or published; the human editor step and returned public URL remain separate.
+
+## Next trust-layer priority - Audit Return Desk
+
+After the public GPT package, the next priority is a fail-closed inspection and receipt layer for returned model output. It should validate coverage, execution disclosures, structured artifacts, and version bindings without treating fluent model output as checker evidence. The Audit Return Desk is not implemented in `v0.3.0-alpha.5`.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;
