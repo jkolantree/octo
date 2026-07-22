@@ -15,11 +15,11 @@ Test this claim adversarially and show the smallest decisive counterexample or n
 ## Starter 3
 
 ```text
-Reconstruct this mathematical argument, separate assumptions from deductions, and identify every open proof obligation.
+添付した数学的議論を再構成し、仮定と帰結を分け、未解決の証明義務を日本語で示してください。
 ```
 
 ## Starter 4
 
 ```text
-Inspect these sources and calculations, then give me an execution ledger that distinguishes what ran from what was only described.
+この主張を敵対的深度（adversarial）で検証し、最小の反例または次の決定的なテストを日本語で示してください。
 ```

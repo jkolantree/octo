@@ -2,7 +2,7 @@
 
 The current public release is `v0.3.0-alpha.7`; this guide also identifies the unreleased `0.3.0-alpha.8` development routes. The `holonomy` route first appeared in alpha.3. Preserve the exact engine version with every output.
 
-This is the repository and Python exact-checker route. It is distinct from the validated live alpha.7 [Custom GPT](CUSTOM_GPT_STATUS.md) and the [local browser Pages module](https://jkolantree.github.io/octo/). Alpha.8 adds a browser and Python Audit Return Desk but is not installed in the live GPT or publicly deployed until merged. ChatGPT uploads are not local-only, ChatGPT tools are not automatically BSC Python, and neither line provides a GPT Action or hosted checker API.
+This is the repository and Python exact-checker route. It is distinct from the official live [Custom GPT](CUSTOM_GPT_STATUS.md) and the [local browser Pages module](https://jkolantree.github.io/octo/). The repository GPT package is reproducible source and an update candidate; its existence does not prove that its exact bytes are installed or Preview-validated in the live service. ChatGPT uploads are not local-only, ChatGPT tools are not automatically BSC Python, and neither surface provides a GPT Action or hosted checker API.
 
 ## Requirements
 
@@ -26,7 +26,7 @@ python run_audit.py --version
 The output must identify the source you intended to audit. The current development checkout reports:
 
 ```text
-bsc-audit 0.3.0a8.dev0
+bsc-audit 0.3.0a8.dev1
 ```
 
 The published alpha.3 release reports:
@@ -105,7 +105,7 @@ Example shape:
 
 ```json
 {
-  "engine_version": "0.3.0a8.dev0",
+  "engine_version": "0.3.0a8.dev1",
   "checks": {
     "run": ["strict_json_parse", "finite_observation_descent"],
     "not_run": ["claim_manifest_lint", "gate_product", "domain_plugins"]
@@ -158,7 +158,7 @@ python run_audit.py lint work/my_claim.json
 python run_audit.py audit work/my_claim.json
 ```
 
-The claim-manifest contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The separate returned-audit contract is [schemas/audit-return-v0.1.schema.json](../schemas/audit-return-v0.1.schema.json). Their schema versions are independent of the development engine's PEP 440 version `0.3.0a8.dev0`.
+The claim-manifest contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The separate returned-audit contract is [schemas/audit-return-v0.1.schema.json](../schemas/audit-return-v0.1.schema.json). Their schema versions are independent of the development engine's PEP 440 version `0.3.0a8.dev1`.
 
 ## 7. Evidence and hashes
 
@@ -196,7 +196,7 @@ Treat generated JSON as untrusted source code:
 
 Never report checker execution from simulated output. If ChatGPT Code Interpreter or Data Analysis ran, record that as ChatGPT tool execution. Record a BSC Python run only when the correct versioned checker actually executed and its output is preserved with the relevant input.
 
-The live alpha.7 Custom GPT completed its authenticated human setup and Preview gate. A future alpha.8 Update still requires a fresh complete gate. The alpha.8 [Audit Return Desk](AUDIT_RETURN_DESK.md) inspects returned output and receipts for internal consistency only; it does not turn them into admissible evidence or certify that an external execution occurred.
+The official Custom GPT is live. Each candidate update still requires exact saved-configuration binding and a fresh complete Preview gate before that candidate is recorded as validated. The [Audit Return Desk](AUDIT_RETURN_DESK.md) inspects returned output and receipts for internal consistency only; it does not turn them into admissible evidence or certify that an external execution occurred.
 
 ## 9. Add a domain gate
 

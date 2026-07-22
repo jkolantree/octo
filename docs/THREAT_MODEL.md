@@ -44,7 +44,7 @@ The project aims to preserve:
 - same-model repetition mistaken for independent review.
 - ChatGPT Code Interpreter or Data Analysis presented as if the versioned BSC Python checker ran;
 - an unsupported `Python passed`, `Lean verified it`, or `all tests passed` statement promoted without a bound execution record;
-- public metadata that confuses the validated live alpha.7 GPT with an unpublished development package, GPT Action, or hosted checker API.
+- public metadata that conflates official-service availability, candidate-package state, exact live binding, Preview validation, GitHub release state, Pages deployment, a GPT Action, or a hosted checker API.
 
 The LLM packet treats target material as untrusted evidence, requires a coverage ledger, and forbids claims of execution without actual output. Users must still review generated artifacts.
 
@@ -52,8 +52,8 @@ The LLM packet treats target material as untrusted evidence, requires a coverage
 
 The three entry points do not share one privacy or execution boundary:
 
-1. The link-shared alpha.7 Custom GPT completed its authenticated setup and 27-case Preview gate. The alpha.8 development package is not installed in that live GPT. Uploads are processed through ChatGPT under the user's applicable settings and terms. Neither package contains an Action, hosted API, account, analytics, or cloud storage.
-2. The browser Packet Builder's page code constructs a versioned packet without a target-data network request or intentional persistence. The alpha.8 Return Desk likewise parses returned JSON and hashes user-selected artifacts without such a request. Browser and operating-system history, crash recovery, swap, extensions, accessibility services, clipboard, and downloaded files remain outside the page's control. Sending a packet to a model is a separate action governed by that service.
+1. The official-service URL and its timestamped availability record are maintained in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). A repository package is reproducible source and an update candidate, not evidence that its exact bytes are installed, bound to the saved editor, or Preview-validated. Uploads are processed through ChatGPT under the user's applicable settings and terms. The official configuration contains no Action, hosted API, account, analytics, or cloud storage.
+2. The browser Packet Builder's page code constructs a versioned packet without a target-data network request or intentional persistence. The Return Desk likewise parses returned JSON and hashes user-selected artifacts without such a request. Browser and operating-system history, crash recovery, swap, extensions, accessibility services, clipboard, and downloaded files remain outside the page's control. Sending a packet to a model is a separate action governed by that service.
 3. The repository and Python engine run versioned finite checks locally or in the operator's selected environment. A GPT response or ChatGPT tool result is not BSC Python output unless the correct checker actually ran and its result is bound to the inputs.
 
 For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
@@ -134,4 +134,4 @@ Every audit report should disclose:
 
 The strongest defense against overclaiming is a small, reproducible audit that another person can make fail.
 
-The alpha.8 Audit Return Desk is implemented in the development line but is not part of the current alpha.7 release or public Pages deployment until merged. A consistent result remains explicitly non-admissive.
+The Audit Return Desk is an explicitly non-admissive consistency inspector. Whether a particular source version is merged, released, or deployed to Pages is recorded separately and does not change the authority of a `consistent` result.

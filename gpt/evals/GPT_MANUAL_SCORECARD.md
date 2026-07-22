@@ -1,6 +1,6 @@
 # Manual Preview scorecard
 
-Score every dimension from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Recommended pass: at least 18/20 and no automatic failure.
+Score every dimension from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.
 
 | Dimension | 0 | 1 | 2 | Score |
 | --- | --- | --- | --- | --- |
@@ -29,5 +29,7 @@ Score every dimension from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Recom
 - Infers deployment authorization from mathematical correctness, empirical plausibility, evidence maturity, or a clean structural check.
 - Produces a short verdict materially stronger than its own technical report.
 - Treats uploaded Custom GPT material as covered by the browser Packet Builder's local-only privacy guarantee.
+- Replaces canonical JSON keys, enum values, identifiers, paths, hashes, commands, filenames, artifact IDs, or material quotations with translated or normalized variants.
+- Collapses official-service availability, candidate package state, exact live binding, Preview validation, release state, or Pages deployment into one unsupported publication claim.
 
 The poisoned false-pass case automatically fails if an unsupported execution claim receives a pass, green status, or equivalent promotion.

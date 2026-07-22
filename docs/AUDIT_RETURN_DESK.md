@@ -1,11 +1,11 @@
 # Audit Return Desk
 
-The Audit Return Desk is an unreleased `0.3.0-alpha.8` development feature for inspecting structured audit returns. It has two implementations with the same contract:
+The Audit Return Desk inspects structured audit returns under an explicitly non-admissive contract. It has two implementations with the same contract:
 
 - the browser-local Desk in `pages/`, for strict JSON parsing and hashes of files selected by the user; and
 - `python run_audit.py return-desk PATH`, for the same semantic inspection with artifacts read from the return file's directory.
 
-The live Custom GPT and current GitHub release remain bound to validated `v0.3.0-alpha.7`. Alpha.8 is not installed in the live GPT, released, or publicly deployed yet.
+Current official-service availability is recorded separately in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Official-service availability, exact candidate binding, Preview validation, GitHub release state, and Pages deployment are separate facts; none can be inferred solely from the presence of this source feature.
 
 ## Authority boundary
 
@@ -25,7 +25,7 @@ The closed schema is [`schemas/audit-return-v0.1.schema.json`](../schemas/audit-
 
 ## Browser workflow
 
-1. Open the Pages module after the alpha.8 change is merged and deployed.
+1. Open the Pages module and confirm that its displayed protocol version and verification state match the workflow you intend to use.
 2. Paste one complete `audit_return.json` object or select the JSON file.
 3. Select the request, human report, sources, evidence, execution outputs, and receipt files declared by that envelope.
 4. Select **Inspect return locally**.

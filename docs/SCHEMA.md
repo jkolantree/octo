@@ -64,7 +64,7 @@ Pre-1.0 schema versions may change incompatibly. A release must state the schema
 | `0.3.0a5` | `0.3.0`; derived holonomy `0.1.0`; research recovery `v1`; Custom GPT release manifest `bsc-custom-gpt-release-manifest-v1` |
 | `0.3.0a6` | `0.3.0`; derived holonomy `0.1.0`; research recovery `v1`; Custom GPT release manifest `bsc-custom-gpt-release-manifest-v1` |
 | `0.3.0a7` | `0.3.0`; derived holonomy `0.1.0`; research recovery `v1`; Custom GPT release manifest `bsc-custom-gpt-release-manifest-v1` |
-| `0.3.0a8.dev0` (development) | prior formats plus non-admissive audit return `0.1.0` |
+| `0.3.0a8.dev1` (development) | prior formats plus non-admissive audit return `0.1.0` |
 
 The independent derived-holonomy route is governed by
 [`derived-holonomy-v0.1.schema.json`](../schemas/derived-holonomy-v0.1.schema.json).

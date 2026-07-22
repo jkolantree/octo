@@ -1,6 +1,18 @@
-# Copy-ready public metadata
+# Official BSC Claim Auditor metadata
 
-**Publication status:** `UNPUBLISHED` — this repository does not assert a public GPT URL.
+**Official GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) — `LIVE`
+
+**Repository package role:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE`
+
+**Candidate state:** `PENDING`
+
+**Live binding:** `PENDING_VERIFICATION`
+
+**Preview validation:** `PENDING` — 39 fresh-conversation cases required
+
+**Japanese interface:** `BETA` — native-speaker terminology review `PENDING`; canonical English protocol and machine tokens control conflicts
+
+The official GPT is available now. This repository package is its reproducible source and update candidate; candidate presence alone does not prove that its exact bytes are installed or Preview-validated in the live service.
 
 ## Name
 
@@ -8,7 +20,7 @@ BSC Claim Auditor
 
 ## Description
 
-Reconstructs scientific and technical claims, separates evidence from assumptions, records what actually ran, and shows what remains unresolved. Research preview; not a proof engine or certification system.
+Audits scientific and technical claims, separates evidence, assumptions, and execution, and shows what remains unresolved. 科学・技術上の主張を監査し、証拠・仮定・実行・未解決点を分けて示します。日本語対応はベータ版で、母語話者による用語レビューは未完了です。Research preview; not a proof or certification system.
 
 ## Category recommendation
 
@@ -23,11 +35,11 @@ Reconstructs scientific and technical claims, separates evidence from assumption
 - **Image Generation:** `disabled`
 - **Apps:** `disabled`
 - **Actions:** `disabled`
-  - No GPT Action is included in the first public release.
+  - The official configuration includes no GPT Action.
 - **Canvas:** `disabled; optional`
 
-Do not add Apps, Actions, analytics, accounts, cloud storage, or a hosted BSC API for this release.
+The official configuration has no Apps, Actions, analytics, account system, cloud storage, or hosted BSC API.
 
 ## Public positioning
 
-> Reconstructs scientific and technical claims, separates evidence from assumptions, records what actually ran, and shows what remains unresolved. Research preview; not a proof engine or certification system.
+> Audits scientific and technical claims, separates evidence, assumptions, and execution, and shows what remains unresolved. 科学・技術上の主張を監査し、証拠・仮定・実行・未解決点を分けて示します。日本語対応はベータ版で、母語話者による用語レビューは未完了です。Research preview; not a proof or certification system.

@@ -1,6 +1,12 @@
-# BSC public Custom GPT package
+# BSC Claim Auditor reproducible package
 
-Deterministic, repository-backed setup package for BSC `0.3.0-alpha.8.dev0`. The Custom GPT itself is **UNPUBLISHED** until an authenticated human completes the editor and Preview steps.
+The official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is `LIVE`. This directory is the deterministic, repository-backed BSC `0.3.0-alpha.8.dev1` source and update candidate used to inspect, reproduce, verify, or fork its configuration.
+
+Candidate state is `PENDING`; live binding is `PENDING_VERIFICATION`; Preview validation is `PENDING`. These states do not change merely because the official service exists or candidate files were generated.
+
+## Use the official GPT
+
+Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor). You do not need to build a GPT to use the official service.
 
 ## Build and validate
 
@@ -16,9 +22,9 @@ Release builds generate a downloadable archive. Verify its files against `SHA256
 
 Generated files must not be edited by hand. Canonical GPT-specific behavior lives in `_source/GPT_PROFILE.json`; evaluation inputs live in `_source/GPT_EVAL_SPEC.json`; the full protocol remains `../BSC_AUDIT_LLM_PACKET.md`.
 
-## Human handoff
+## Reproduce, verify, fork, or update
 
-Use `GPT_SETUP_AND_PUBLISHING.md`. Paste `GPT_INSTRUCTIONS.md`, upload the five Knowledge files in order, run every Preview evaluation, and only then choose link sharing or GPT Store publication.
+Use `GPT_SETUP_AND_PUBLISHING.md`. Paste `GPT_INSTRUCTIONS.md`, upload all six Knowledge files in order, and run all 39 Preview evaluations. Creating a separate GPT is optional and produces a fork; updating the official GPT requires owner authorization and separate saved-binding evidence.
 
 ## Boundaries
 

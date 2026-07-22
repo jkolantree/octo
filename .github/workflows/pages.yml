@@ -22,6 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      protocol_meta_sha256: ${{ steps.pages-metadata.outputs.sha256 }}
+      protocol_version: ${{ steps.pages-metadata.outputs.version }}
     steps:
       - name: Check out exact source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -36,10 +39,20 @@ jobs:
           package-manager-cache: false
       - name: Verify Return Desk runtime semantics
         run: node --test tests/return_desk_runtime.test.cjs
-      - name: Verify generated protocol and accessibility contract
+      - name: Verify generated protocol, localization, and accessibility contract
         run: |
           python scripts/build_publication_assets.py --check
           python scripts/check_pages.py
+          python scripts/check_localization.py
+      - name: Bind expected deployed Pages metadata
+        id: pages-metadata
+        shell: bash
+        run: |
+          protocol_meta_sha256="$(sha256sum pages/protocol/meta.js | cut -d ' ' -f 1)"
+          protocol_version="$(sed -n 's/.*"version":"\([^"]*\)".*/\1/p' pages/protocol/meta.js)"
+          test -n "${protocol_meta_sha256}" && test -n "${protocol_version}"
+          printf 'sha256=%s\n' "${protocol_meta_sha256}" >> "$GITHUB_OUTPUT"
+          printf 'version=%s\n' "${protocol_version}" >> "$GITHUB_OUTPUT"
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Upload static site
@@ -60,3 +73,19 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+      - name: Verify deployed English, Japanese, and protocol routes
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          EXPECTED_META_SHA256: ${{ needs.build.outputs.protocol_meta_sha256 }}
+          EXPECTED_VERSION: ${{ needs.build.outputs.protocol_version }}
+        run: |
+          set -euo pipefail
+          base="${PAGE_URL%/}/"
+          curl --fail --silent --show-error --location --retry 12 --retry-all-errors --retry-delay 5 --connect-timeout 10 --max-time 30 "${base}" -o /tmp/bsc-index.html
+          curl --fail --silent --show-error --location --retry 12 --retry-all-errors --retry-delay 5 --connect-timeout 10 --max-time 30 "${base}ja.html" -o /tmp/bsc-ja.html
+          curl --fail --silent --show-error --location --retry 12 --retry-all-errors --retry-delay 5 --connect-timeout 10 --max-time 30 "${base}protocol/meta.js" -o /tmp/bsc-protocol-meta.js
+          grep -F '<html lang="en">' /tmp/bsc-index.html
+          grep -F '<html lang="ja">' /tmp/bsc-ja.html
+          grep -F "\"version\":\"${EXPECTED_VERSION}\"" /tmp/bsc-protocol-meta.js
+          echo "${EXPECTED_META_SHA256}  /tmp/bsc-protocol-meta.js" | sha256sum --check --strict
