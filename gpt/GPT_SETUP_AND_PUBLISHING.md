@@ -16,9 +16,9 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
 
 1. For an independent reproduction or fork, open `https://chatgpt.com/gpts` and select **Create**. For an authorized update of the official GPT, open its existing editor and use **Edit/Configure**. A fork must not imply official status.
 2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.
-3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7997 characters and 7997 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
+3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7992 characters and 7992 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
 4. Upload these Knowledge files in this exact order:
-   1. `BSC_PROTOCOL.md` — 23220 bytes — SHA-256 `ad97712b30cfa9d475d6946bf68b7675bb3797c7f307f8b8a83aa2b632a28564` — Canonical normative protocol
+   1. `BSC_PROTOCOL.md` — 24242 bytes — SHA-256 `bbbaa0686d8ceaf80e53135c166f6feda8c9a084a47b59046d183e8a00c20e1f` — Canonical normative protocol
    2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 8333 bytes — SHA-256 `1f5e2aa91356ec8cbdb8a79283ba7fe438dd935e07929e9273821b9f71e691ba` — Research, evidence, gate, execution, deployment, and CLI status boundaries
    3. `BSC_EXECUTION_AND_RECEIPTS.md` — 15532 bytes — SHA-256 `4771d4b0e2f30056580cc1c7f9895ba44fed0462f8390397f1d72b48f87c09b9` — Execution ledger and proof-adapter trust boundaries
    4. `BSC_SUPPORTED_CHECKS.md` — 40612 bytes — SHA-256 `bfa3db12be91814a4b963135b664af8e45e0430b68a3026ef3c45a7c86b23ca0` — Implemented Python routes, schemas, findings, and limitations

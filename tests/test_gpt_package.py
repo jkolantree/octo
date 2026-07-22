@@ -213,7 +213,7 @@ class CustomGptPackageTests(unittest.TestCase):
             marker = "F" if rule["severity"] == "fatal" else "R"
             self.assertEqual(instruction_text.count(f"{marker} {rule['id']}: {rule['text']}"), 1)
         self.assertIn(
-            "Model-completed missing/truncated proof is repair only, never proven/closed.",
+            "Completing missing/truncated proof is repair, never proof/closure.",
             instruction_text,
         )
         protocol_text = payload[Path("knowledge/BSC_PROTOCOL.md")].decode("utf-8")
@@ -223,7 +223,7 @@ class CustomGptPackageTests(unittest.TestCase):
             protocol_text,
         )
         self.assertIn(
-            "Reply in requested/user language. Preserve JSON keys/enums, schema/rule IDs, verdict/gate/finding tokens",
+            "Reply in requested language. Preserve JSON keys/enums, IDs, tokens, paths, hashes, commands, filenames",
             instruction_text,
         )
         japanese_knowledge = payload[Path("knowledge/BSC_JAPANESE_INTERFACE.md")].decode("utf-8")
@@ -253,8 +253,8 @@ class CustomGptPackageTests(unittest.TestCase):
         rules = {rule["id"]: rule["text"] for rule in all_rules(profile)}
         expected_rules = {
             "source_coverage_first": (
-                "Inventory each target/Knowledge/web source separately by stable ID; give "
-                "full/partial/unreadable/missing/truncated, scope, omissions, access mode, code read/run."
+                "Visible ledger row per target/Knowledge/used web page: stable ID/title+URL/DOI; query, access "
+                "mode, opened state, coverage, scope, omissions, code read/run."
             ),
             "research_verdict_vocabulary": (
                 "Use only proven/strongly_supported/plausible_but_unresolved/refuted/ill_posed/"
@@ -262,12 +262,17 @@ class CustomGptPackageTests(unittest.TestCase):
                 "counterevidence; proven=complete dependency-closed proof/certificate; otherwise unresolved."
             ),
             "fail_closed": (
-                "Missing evidence/execution never passes/refutes: affected claim unresolved, gate unrun, "
-                "admission/decision blocked. Model-completed missing/truncated proof is repair only, never proven/closed."
+                "Missing evidence/execution neither passes nor refutes; claim unresolved, gate unrun, decision "
+                "blocked. Completing missing/truncated proof is repair, never proof/closure. A supplied exact-"
+                "implementation countertrace refutes its literal universal claim; replay stays unrun."
             ),
             "execution_label_precision": (
                 "Label ChatGPT runs exactly: file-read is not math verification. Claim BSC Python only for "
                 "executed version+inputs; adapter fields are not supervised runs."
+            ),
+            "citations_must_be_checked": (
+                "Search cards/snippets are discovery, not evidence; every used result must be individually "
+                "opened+ledgered."
             ),
             "draft_machine_records": (
                 "At required depth, emit separate audit_report.md + schema-valid audit_return.json with exact "

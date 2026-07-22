@@ -2,9 +2,9 @@
   "bsc_version": "0.3.0-alpha.8.dev1",
   "canonical_sources": [
     {
-      "bytes": 22561,
+      "bytes": 23583,
       "path": "BSC_AUDIT_LLM_PACKET.md",
-      "sha256": "60f71efb6cb95acfa4715fd1489ed0eafeb652c91074fda422472196d8363bcd"
+      "sha256": "d6d7d15663fca6e148cac59f9f08ee196eb80ef2145e95f06d3839aacd98a3bd"
     },
     {
       "bytes": 5764,
@@ -102,9 +102,9 @@
       "sha256": "d8668213861f9300756d01a84455814955e66b045ab9d72df0cba904d6b68295"
     },
     {
-      "bytes": 25247,
+      "bytes": 25267,
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "7d230b46d284de2d0aaf31786c3bca1b2e3b4e2a0befb801d5aef6472e182ba1"
+      "sha256": "f3f16853f520b651e5bce887d59ef6913303f4ba24fffab420e52f4bf274c171"
     },
     {
       "bytes": 2066,
@@ -117,9 +117,9 @@
       "sha256": "25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799"
     },
     {
-      "bytes": 69430,
+      "bytes": 69405,
       "path": "scripts/build_gpt_package.py",
-      "sha256": "a5fd6c9ebaa3512d72a1b79bc092201e4452aa567091d082067a83a835812c06"
+      "sha256": "ba25d4bb45e890aff10e11a2d9320903e89f70c6748d1b9b00fea8e8dc3ec35b"
     }
   ],
   "capability_declarations": {
@@ -156,9 +156,9 @@
       "sha256": "f7fa99696fbde41edba2670e21db0cab923646718de3b251262a2100254cc2cf"
     },
     {
-      "bytes": 7997,
+      "bytes": 7992,
       "path": "GPT_INSTRUCTIONS.md",
-      "sha256": "e94b1f91bcc008a1f342eb21a1d481d1aefd153c8d0f7d0adba5ed21c1429906"
+      "sha256": "e9fa5cfec366529c34e9851759928a2af27fbbf0fa33da75bc6a9fa45b3e1a62"
     },
     {
       "bytes": 2451,
@@ -168,7 +168,7 @@
     {
       "bytes": 6567,
       "path": "GPT_SETUP_AND_PUBLISHING.md",
-      "sha256": "d73fa35cde1b72595191e04a75fd8f3a66662a0d884b3002d16048921b6c7f11"
+      "sha256": "91648da60751476cef6ab8f5be7e75168f81b2d1638f10f46ced8777848243be"
     },
     {
       "bytes": 2130,
@@ -396,9 +396,9 @@
       "sha256": "e17e51318066d30d9c892e58a5b7d99da1aabdb23986f63ec239a707710a9a1a"
     },
     {
-      "bytes": 23220,
+      "bytes": 24242,
       "path": "knowledge/BSC_PROTOCOL.md",
-      "sha256": "ad97712b30cfa9d475d6946bf68b7675bb3797c7f307f8b8a83aa2b632a28564"
+      "sha256": "bbbaa0686d8ceaf80e53135c166f6feda8c9a084a47b59046d183e8a00c20e1f"
     },
     {
       "bytes": 8333,
@@ -418,7 +418,7 @@
   ],
   "generator": {
     "path": "scripts/build_gpt_package.py",
-    "sha256": "a5fd6c9ebaa3512d72a1b79bc092201e4452aa567091d082067a83a835812c06",
+    "sha256": "ba25d4bb45e890aff10e11a2d9320903e89f70c6748d1b9b00fea8e8dc3ec35b",
     "version": "bsc-custom-gpt-generator-v1"
   },
   "japanese_interface_state": {
