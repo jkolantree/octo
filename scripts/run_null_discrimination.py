@@ -21,6 +21,14 @@ CASES = (
     ("observed-derived-control", "holonomy", "examples/holonomy_observed_quotient_pass.json", 0),
     ("illegal-edge-short-circuit", "holonomy", "examples/holonomy_non_chain_map.json", 1),
     ("missing-observation-projection", "holonomy", "examples/schema_holonomy_missing_projection.json", 2),
+    ("audit-return-control", "return-desk", "examples/audit_return_valid.json", 0),
+    ("audit-return-summary-strengthening", "return-desk", "examples/audit_return_poisoned_summary.json", 1),
+    ("audit-return-omitted-bound-failure", "return-desk", "examples/audit_return_omitted_bound_failure.json", 1),
+    ("audit-return-unreceipted-execution", "return-desk", "examples/audit_return_unreceipted_execution.json", 1),
+    ("audit-return-missing-source-promotion", "return-desk", "examples/audit_return_missing_source_promotion.json", 1),
+    ("audit-return-deployment-overreach", "return-desk", "examples/audit_return_deployment_overreach.json", 1),
+    ("audit-return-receipt-only-promotion", "return-desk", "examples/audit_return_receipt_only_promotion.json", 1),
+    ("audit-return-missing-artifact-review", "return-desk", "examples/audit_return_missing_artifact.json", 0),
 )
 
 

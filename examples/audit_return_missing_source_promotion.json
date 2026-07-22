@@ -1,0 +1,207 @@
+{
+  "return_version": "0.1.0",
+  "authority": "non_admissive_return_inspection",
+  "draft": true,
+  "protocol": {
+    "version": "0.3.0-alpha.8.dev0",
+    "sha256": "sha256:13fdeff40bdd82b46f5b6af5fc409b09d584e2c6d035e8cd7a6f557216cd045b"
+  },
+  "bindings": {
+    "request_artifact_id": "artifact:request",
+    "report_artifact_id": "artifact:report"
+  },
+  "audit_depth": "standard",
+  "primary_claim_id": "claim:fixture",
+  "claims": [
+    {
+      "id": "claim:fixture",
+      "statement": "The supplied finite fixture is internally consistent under the declared structural check.",
+      "research_verdict": "proven",
+      "depends_on": [],
+      "source_ids": [
+        "source:fixture"
+      ],
+      "evidence_ids": [
+        "evidence:structural-check"
+      ],
+      "fatal_gate_ids": [
+        "gate:structural-consistency"
+      ]
+    }
+  ],
+  "summary_projection": {
+    "primary_claim_id": "claim:fixture",
+    "research_verdict": "proven",
+    "admission": "pass",
+    "deployment_status": "research_only",
+    "fatal_gate_ids": [
+      "gate:structural-consistency"
+    ],
+    "unresolved_obligation_ids": []
+  },
+  "sources": [
+    {
+      "id": "source:fixture",
+      "label": "Finite atomic-modulus control fixture",
+      "kind": "data",
+      "coverage_state": "missing",
+      "access_mode": "unavailable",
+      "inspected_scope": [],
+      "omissions": [
+        "the expected source bytes were not supplied"
+      ],
+      "artifact_id": null
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "artifact:request",
+      "filename": "claim_valid.json",
+      "role": "request",
+      "media_type": "application/json",
+      "sha256": "sha256:cd8ffa1c7911ad77db7130c7fc12925e69465b513dfeab99916ca0a3c598ee4d"
+    },
+    {
+      "id": "artifact:report",
+      "filename": "complex_valid_transport.json",
+      "role": "report",
+      "media_type": "application/json",
+      "sha256": "sha256:422802ad1466c0022a1e8054a2f250940c5b33123fda50ca86bfe52ec420d68f"
+    },
+    {
+      "id": "artifact:source",
+      "filename": "atomic_modulus_valid.json",
+      "role": "source",
+      "media_type": "application/json",
+      "sha256": "sha256:7c2834c494be89a74b2ebebcf3bdc206a9971217d011df3abc11927c79495da3"
+    },
+    {
+      "id": "artifact:evidence",
+      "filename": "defect_composition_valid.json",
+      "role": "evidence",
+      "media_type": "application/json",
+      "sha256": "sha256:24cbcfd906adbe78122260df368670c3be4fed2b1097fcfd8a14876e1cc0efe9"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence:structural-check",
+      "kind": "calculation",
+      "status": "verified",
+      "result": "pass",
+      "claim_ids": [
+        "claim:fixture"
+      ],
+      "gate_ids": [
+        "gate:structural-consistency"
+      ],
+      "artifact_ids": [
+        "artifact:evidence"
+      ],
+      "execution_activities": [
+        "model_reasoning"
+      ],
+      "receipt_ids": []
+    }
+  ],
+  "fatal_gates": [
+    {
+      "id": "gate:structural-consistency",
+      "state": "pass",
+      "evidence_ids": [
+        "evidence:structural-check"
+      ],
+      "obligation_ids": []
+    }
+  ],
+  "execution": [
+    {
+      "activity": "model_reasoning",
+      "status": "ran",
+      "tool": "BSC Custom GPT",
+      "version": "0.3.0-alpha.8.dev0",
+      "input_artifact_ids": [
+        "artifact:request",
+        "artifact:source"
+      ],
+      "output_artifact_ids": [
+        "artifact:report",
+        "artifact:evidence"
+      ],
+      "receipt_ids": [],
+      "notes": "The supplied material was inspected as untrusted evidence."
+    },
+    {
+      "activity": "web_research",
+      "status": "not_run",
+      "tool": null,
+      "version": null,
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "receipt_ids": [],
+      "notes": "No web research was needed for this finite control."
+    },
+    {
+      "activity": "independent_source_check",
+      "status": "not_run",
+      "tool": null,
+      "version": null,
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "receipt_ids": [],
+      "notes": "No external citation was independently opened."
+    },
+    {
+      "activity": "chatgpt_data_analysis",
+      "status": "not_run",
+      "tool": null,
+      "version": null,
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "receipt_ids": [],
+      "notes": "ChatGPT Data Analysis did not run."
+    },
+    {
+      "activity": "bsc_python_checker",
+      "status": "not_run",
+      "tool": null,
+      "version": null,
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "receipt_ids": [],
+      "notes": "The versioned BSC Python checker did not run in the model session."
+    },
+    {
+      "activity": "external_proof_tool",
+      "status": "not_run",
+      "tool": null,
+      "version": null,
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "receipt_ids": [],
+      "notes": "No external proof tool ran."
+    },
+    {
+      "activity": "empirical_test",
+      "status": "not_applicable",
+      "tool": null,
+      "version": null,
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "receipt_ids": [],
+      "notes": "No empirical claim is tested by this structural fixture."
+    },
+    {
+      "activity": "proposed_computation",
+      "status": "not_run",
+      "tool": null,
+      "version": null,
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "receipt_ids": [],
+      "notes": "No additional computation was proposed."
+    }
+  ],
+  "receipts": [],
+  "unresolved_obligations": []
+}

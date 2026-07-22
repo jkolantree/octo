@@ -1,3 +1,4 @@
+import io
 import os
 import tempfile
 import unittest
@@ -5,6 +6,7 @@ from pathlib import Path
 
 from bsc_audit.provenance import (
     ZERO_SHA256,
+    _sha256_stream_bounded,
     canonical_json,
     resolve_local_artifact,
     sha256_bytes,
@@ -86,6 +88,15 @@ class ProvenanceTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertEqual(reason, "artifact_too_large")
         self.assertIsNone(actual)
+
+    def test_streaming_size_limit_remains_authoritative_after_stat(self):
+        actual, exceeded = _sha256_stream_bounded(io.BytesIO(b"1234"), 3)
+        self.assertTrue(exceeded)
+        self.assertIsNone(actual)
+
+        actual, exceeded = _sha256_stream_bounded(io.BytesIO(b"1234"), 4)
+        self.assertFalse(exceeded)
+        self.assertEqual(actual, sha256_bytes(b"1234"))
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ ROUTE_SCHEMAS = {
     "defect": "defect-v0.3.schema.json",
     "adapter": "adapter-receipt-v0.1.schema.json",
     "holonomy": "derived-holonomy-v0.1.schema.json",
+    "return-desk": "audit-return-v0.1.schema.json",
 }
 
 
@@ -89,9 +90,9 @@ def _validate(value: Any, schema: Any, root: dict[str, Any], path: str) -> list[
         if not any(_type_matches(value, item) for item in alternatives):
             violations.append(SchemaViolation(path, f"expected type {alternatives}, found {type(value).__name__}"))
             return violations
-    if "const" in schema and value != schema["const"]:
+    if "const" in schema and _json_key(value) != _json_key(schema["const"]):
         violations.append(SchemaViolation(path, f"expected constant value {schema['const']!r}"))
-    if "enum" in schema and value not in schema["enum"]:
+    if "enum" in schema and not any(_json_key(value) == _json_key(member) for member in schema["enum"]):
         violations.append(SchemaViolation(path, f"value is not one of {schema['enum']!r}"))
 
     if isinstance(value, str):

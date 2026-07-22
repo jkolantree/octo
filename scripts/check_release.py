@@ -132,14 +132,36 @@ def main() -> int:
     toolchain = load_strict_json(ROOT / "toolchain.lock.json")
     if not isinstance(toolchain, dict):
         fail("toolchain lock must be an object")
-    if toolchain.get("release_python") != "3.12.13" or toolchain.get("setuptools") != "82.0.1":
-        fail("release Python and setuptools must remain patch-pinned")
+    if (
+        toolchain.get("release_python") != "3.12.13"
+        or toolchain.get("return_desk_node") != "22.23.1"
+        or toolchain.get("setuptools") != "82.0.1"
+    ):
+        fail("release Python, Return Desk Node, and setuptools must remain patch-pinned")
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     if project.get("build-system", {}).get("requires") != ["setuptools==82.0.1"]:
         fail("pyproject build backend must exactly match the toolchain lock")
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    if "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0" not in ci:
+        fail("CI must use the reviewed immutable setup-node v7.0.0 pin")
+    if ci.count('node-version: "22.23.1"') != 1 or "package-manager-cache: false" not in ci:
+        fail("CI Return Desk Node configuration differs from the toolchain lock")
+    if ci.count("node --test tests/return_desk_runtime.test.cjs") != 2:
+        fail("CI must run the Return Desk runtime suite from source and the source distribution")
+    pages_workflow = (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
+    if "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0" not in pages_workflow:
+        fail("Pages must use the reviewed immutable setup-node v7.0.0 pin")
+    if pages_workflow.count('node-version: "22.23.1"') != 1 or pages_workflow.count("package-manager-cache: false") != 1:
+        fail("Pages Return Desk Node configuration differs from the toolchain lock")
+    if pages_workflow.count("node --test tests/return_desk_runtime.test.cjs") != 1:
+        fail("Pages must run the Return Desk runtime suite before deployment")
+    release_builder = (ROOT / "scripts" / "build_release.py").read_text(encoding="utf-8")
+    for token in ('require_node(lock)', '[node, "--test", "tests/return_desk_runtime.test.cjs"]', '"return_desk_runtime": "pass"'):
+        if token not in release_builder:
+            fail(f"release builder is missing the exact Return Desk runtime gate: {token}")
 
     stale_identifier = "jkolantree/" + "bsc-audit-engine"
-    text_suffixes = {".css", ".html", ".js", ".json", ".jsonl", ".md", ".py", ".toml", ".txt", ".yml", ".yaml", ".cff"}
+    text_suffixes = {".cjs", ".css", ".html", ".js", ".json", ".jsonl", ".md", ".mjs", ".py", ".toml", ".ts", ".txt", ".yml", ".yaml", ".cff"}
     for path in ROOT.rglob("*"):
         if path.is_file() and path.suffix in text_suffixes and not any(part in {"build", "dist", "release"} for part in path.relative_to(ROOT).parts):
             if stale_identifier in path.read_text(encoding="utf-8"):

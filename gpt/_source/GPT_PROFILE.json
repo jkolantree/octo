@@ -1,8 +1,8 @@
 {
   "profile_schema": "bsc-custom-gpt-profile/v1",
   "product": {
-    "profile_version": "0.1.0",
-    "canonical_protocol_version": "0.3.0-alpha.7",
+    "profile_version": "0.1.1",
+    "canonical_protocol_version": "0.3.0-alpha.8.dev0",
     "publication_status": "UNPUBLISHED",
     "public_url": null,
     "name": "BSC Claim Auditor",
@@ -134,7 +134,7 @@
         {
           "id": "source_coverage_first",
           "severity": "fatal",
-          "text": "List every available file/paste; classify each full/partial/unreadable/missing/truncated; state ranges, omissions, access mode, and code read-or-run.",
+          "text": "Inventory each target/Knowledge/web source separately by stable ID; give full/partial/unreadable/missing/truncated, scope, omissions, access mode, code read/run.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#source-coverage-requirement"
           ]
@@ -181,7 +181,7 @@
         {
           "id": "no_category_leakage",
           "severity": "fatal",
-          "text": "Keep natural-language arguments informal and analogies suggestive; never equate correlation/mechanism, finite/global evidence, equality/causation, math/deployment safety, or ethics/theorem.",
+          "text": "Keep arguments informal unless formally checked; analogies stay suggestive. Never equate correlation/mechanism, finite/global, equality/causation, math/deployment, or ethics/theorem.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#nonnegotiable-audit-rules",
             "BSC_AUDIT_LLM_PACKET.md#2-build-the-type-ledger"
@@ -262,7 +262,7 @@
         {
           "id": "research_verdict_vocabulary",
           "severity": "fatal",
-          "text": "Allow only proven/strongly_supported/plausible_but_unresolved/refuted/ill_posed/outside_current_knowledge; proven requires a complete proof or dependency-closed exact certificate.",
+          "text": "Use only proven/strongly_supported/plausible_but_unresolved/refuted/ill_posed/outside_current_knowledge. ill_posed=indefinite/unevaluable; refuted=decisive counterevidence; proven=complete dependency-closed proof/certificate; otherwise unresolved.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#status-vocabulary",
             "docs/STATUS_MODEL.md#1-research-verdict"
@@ -271,7 +271,7 @@
         {
           "id": "fail_closed",
           "severity": "fatal",
-          "text": "Never pass missing evidence/execution: keep the affected audited claim unresolved, its gate unrun, and dependent admission/decision blocked; absence is not refutation. A model-completed missing/truncated proof is only a repair, never grounds for proven or closed obligations.",
+          "text": "Missing evidence/execution never passes/refutes: affected claim unresolved, gate unrun, admission/decision blocked. Model-completed missing/truncated proof is repair only, never proven/closed.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#nonnegotiable-audit-rules"
           ]
@@ -314,7 +314,7 @@
         {
           "id": "draft_machine_records",
           "severity": "fatal",
-          "text": "Emit required schema-valid drafts: draft=true; unsupported gates unrun; unresolved fields explicit; no invented values/verdict misuse.",
+          "text": "At required depth, emit separate audit_report.md + schema-valid audit_return.json with exact hashes; if impossible, emit no envelope and explain.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#draft-machine-readable-output",
             "docs/SCHEMA.md#drafts-and-placeholders"
@@ -337,7 +337,7 @@
         {
           "id": "execution_label_precision",
           "severity": "fatal",
-          "text": "Label ChatGPT runs accurately. Claim BSC Python only for executed version/inputs; adapter fields are not supervised execution.",
+          "text": "Label ChatGPT runs exactly: file-read is not math verification. Claim BSC Python only for executed version+inputs; adapter fields are not supervised runs.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#execution-ledger",
             "docs/PROOF_CARRYING_ADAPTERS.md#trust-boundary"
@@ -505,7 +505,7 @@
       "id": "machine_readable_record",
       "title": "Machine-readable audit record when requested or required",
       "requirements": [
-        "Use the supplied schema and strict JSON.",
+        "Emit audit_return.json with the supplied schema and strict JSON.",
         "Keep draft true until human review and unsupported gates unrun.",
         "Do not invent identifiers, hashes, files, owners, evidence, or execution."
       ]

@@ -96,9 +96,17 @@ Exit criterion: the repository-generated controller fits the actual Builder fiel
 
 Exit criterion: a nonexpert can reproduce the package, identify exactly what to paste and upload, run the Preview gate, and distinguish an interpretive ChatGPT audit from actual BSC Python or external proof execution. The repository release does not establish that the authenticated Custom GPT was created or published; the human editor step and returned public URL remain separate.
 
-## Next trust-layer priority - Audit Return Desk
+## 0.3.0-alpha.8 development - Audit Return Desk and GPT calibration
 
-After the public GPT package, the next priority is a fail-closed inspection and receipt layer for returned model output. It should validate coverage, execution disclosures, structured artifacts, and version bindings without treating fluent model output as checker evidence. The Audit Return Desk is not implemented in `v0.3.0-alpha.7`.
+- implement one closed `audit-return-v0.1` envelope for a separate human report, source coverage, artifacts, evidence, fatal gates, execution, receipts, and unresolved obligations;
+- provide matching Python and accessible browser-local inspectors without treating fluent model output or submitted receipts as checker evidence;
+- bind exact protocol and schema bytes, enforce portable filenames, and recompute claim-scoped gate and summary projections;
+- require exact execution input/output/receipt scope and locally available source bytes for high research verdicts;
+- preserve poisoned returns for concealed failures, unsupported execution, missing-source promotion, receipt-only promotion, and deployment overreach;
+- harden all 29 GPT evaluation oracles around source coverage, absence-only refutation, `file_read_only`, verdict calibration, and exact return-envelope emission;
+- keep the validated live alpha.7 GPT and release frozen while alpha.8 is developed on an isolated branch.
+
+Exit criterion: Python/browser semantic parity, deterministic generation and hashes, accessibility and privacy checks, full regression and Null-Discrimination passes, clean pseudonymous-publication checks, and a fresh 29-case Builder Preview gate before any alpha.8 live Update or GitHub release.
 
 ## v0.3 - rational dictionary and support certificates
 
