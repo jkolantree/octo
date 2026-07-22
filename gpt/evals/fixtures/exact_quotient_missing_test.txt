@@ -1,0 +1,1 @@
+Manifest fragment: representation.kind is exact_quotient. No equivalence_test, relation, projection, or proof that the relation is an equivalence is supplied. The author says numerical closeness makes the quotient exact.

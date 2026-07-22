@@ -20,7 +20,8 @@ include toolchain.lock.json
 include .zenodo.json
 include .github/workflows/pages.yml
 recursive-include docs *.md *.css
-recursive-include examples *.json
+recursive-include examples *.json *.md
+recursive-include gpt *
 recursive-include pages *
 recursive-include research *.md *.json *.sha256
 recursive-include research *.py

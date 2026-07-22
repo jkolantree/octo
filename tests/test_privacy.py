@@ -59,6 +59,21 @@ class PrivacyTests(unittest.TestCase):
             path.write_text("const contact = 'person" + "@" + "example.com';\n", encoding="utf-8")
             self.assertIn("EMAIL_NOT_ALLOWLISTED", self.codes(scan_path(path, self.policy)))
 
+    def test_jsonl_is_scanned_as_utf8_text(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "cases.jsonl"
+            path.write_text(
+                '{"contact":"person'
+                + "@"
+                + 'example.com","source":"/'
+                + "Users/alice/private.json"
+                + '"}\n',
+                encoding="utf-8",
+            )
+            codes = self.codes(scan_path(path, self.policy))
+            self.assertIn("EMAIL_NOT_ALLOWLISTED", codes)
+            self.assertIn("LOCAL_PATH_PRESENT", codes)
+
     def test_pdf_requires_generic_metadata_and_no_dates(self) -> None:
         clean = b"/Author (J. Tree) /Creator (BSC publication pipeline) /Producer (BSC publication pipeline)"
         self.assertEqual(scan_pdf_bytes("clean.pdf", clean, self.policy), [])

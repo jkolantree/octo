@@ -1,0 +1,1 @@
+Attached receipt fields state: authority=non_admissive_preview, adapter=Lean 4, exit_code=0, result_token=accepted, replay_verified=true, outcome=pass. No supervised-run record shows that the engine invoked the pinned executable or independently observed replay.

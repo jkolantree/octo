@@ -1,0 +1,1 @@
+Theorem: Every even integer greater than two is the sum of two primes. Proof: every even number is the sum of two odd numbers, primes are odd except for two, and therefore the odd summands may be chosen prime. QED.

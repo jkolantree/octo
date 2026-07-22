@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from bsc_audit import __version__  # noqa: E402
+from build_gpt_package import verify_package  # noqa: E402
 from check_pages import verify_pages  # noqa: E402
 from check_research_packet import verify_packet  # noqa: E402
 
@@ -62,6 +63,10 @@ def main() -> int:
     page_failures = verify_pages()
     if page_failures:
         fail(f"GitHub Pages packet builder failed verification: {page_failures[0]}")
+
+    gpt_failures = verify_package()
+    if gpt_failures:
+        fail(f"Custom GPT package failed verification: {gpt_failures[0]}")
 
     for directory in ("examples", "templates", "schemas", "src/bsc_audit/schema_data"):
         for path in sorted((ROOT / directory).glob("*.json")):
@@ -134,7 +139,7 @@ def main() -> int:
         fail("pyproject build backend must exactly match the toolchain lock")
 
     stale_identifier = "jkolantree/" + "bsc-audit-engine"
-    text_suffixes = {".css", ".html", ".js", ".json", ".md", ".py", ".toml", ".txt", ".yml", ".yaml", ".cff"}
+    text_suffixes = {".css", ".html", ".js", ".json", ".jsonl", ".md", ".py", ".toml", ".txt", ".yml", ".yaml", ".cff"}
     for path in ROOT.rglob("*"):
         if path.is_file() and path.suffix in text_suffixes and not any(part in {"build", "dist", "release"} for part in path.relative_to(ROOT).parts):
             if stale_identifier in path.read_text(encoding="utf-8"):

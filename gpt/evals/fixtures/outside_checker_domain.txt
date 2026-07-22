@@ -1,0 +1,1 @@
+Claim: every smooth solution of this newly proposed nonlinear three-dimensional PDE remains globally regular for all time. No reduction to a supported BSC finite schema, proof, or numerical certificate is supplied.

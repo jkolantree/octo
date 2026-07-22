@@ -61,6 +61,7 @@ def verify_pages() -> list[str]:
         "README.md",
         "app.js",
         "index.html",
+        "profile.js",
         "protocol/BSC_AUDIT_LLM_PACKET.md",
         "protocol/meta.js",
         "styles.css",
@@ -92,7 +93,7 @@ def verify_pages() -> list[str]:
     }
     if not controls_requiring_labels <= set(parser.labels):
         failures.append("packet builder contains an unlabeled form control")
-    if parser.scripts != ["protocol/meta.js", "app.js"] or parser.stylesheets != ["styles.css"]:
+    if parser.scripts != ["protocol/meta.js", "profile.js", "app.js"] or parser.stylesheets != ["styles.css"]:
         failures.append("packet builder loads an unexpected script or stylesheet")
     required_csp = {"default-src 'self'", "script-src 'self'", "connect-src 'self'", "object-src 'none'", "form-action 'none'"}
     if not parser.csp or not required_csp <= {item.strip() for item in parser.csp.split(";") if item.strip()}:
@@ -121,6 +122,8 @@ def verify_pages() -> list[str]:
     for token in ("crypto.subtle.digest", "navigator.clipboard", "textContent", "replaceChildren"):
         if token not in javascript:
             failures.append(f"packet builder expected safe browser behavior is missing: {token}")
+    if "window.BSC_AUDIT_PROFILE.audit_depths" not in javascript or "window.BSC_AUDIT_PROFILE.output_sections" not in javascript:
+        failures.append("packet builder depth and output order must come from the canonical GPT profile")
 
     css = (PAGES / "styles.css").read_text(encoding="utf-8")
     for token in (":focus-visible", "prefers-reduced-motion", "forced-colors", "@media (max-width: 560px)"):
@@ -133,6 +136,11 @@ def verify_pages() -> list[str]:
     match = re.search(r'"sha256":"([0-9a-f]{64})"', metadata_text)
     if not match or match.group(1) != sha256_bytes(protocol):
         failures.append("packet builder metadata does not bind the exact protocol bytes")
+    profile_text = expected[Path("profile.js")].decode("utf-8")
+    profile_match = re.search(r'"profile_sha256":"([0-9a-f]{64})"', profile_text)
+    profile_source = ROOT / "gpt" / "_source" / "GPT_PROFILE.json"
+    if not profile_match or profile_match.group(1) != sha256_bytes(profile_source.read_bytes()):
+        failures.append("packet builder metadata does not bind the exact GPT profile bytes")
     return sorted(set(failures))
 
 
