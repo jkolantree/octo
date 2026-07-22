@@ -2,6 +2,25 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.5 - 2026-07-21
+
+### Added
+
+- a deterministic, repository-backed Custom GPT setup package with strong controlling Instructions and five ordered Knowledge files generated from canonical project sources;
+- 27 serious Preview evaluation cases spanning known controls, paired mutations, prompt injection, missing execution, contradictory evidence, and a poisoned false-pass claim that must never be promoted to green;
+- fail-closed package checks for manifest structure, byte hashes, stale generated assets, source-to-output coverage, JSONL validity, and forbidden Action or API declarations;
+- shared canonical audit depths and response ordering across the Custom GPT and the local-only Pages Packet Builder.
+
+### Publication, privacy, and execution boundary
+
+This release publishes repository artifacts for configuring and evaluating a Custom GPT; it does not claim that a GPT has been created, shared, or listed. The package includes no GPT Action, server-side BSC API, account integration, analytics, or cloud-storage component. Material uploaded to ChatGPT is processed under the user's applicable ChatGPT terms and settings and is not covered by the Pages Packet Builder's local-only guarantee.
+
+The GPT produces interpretive research-preview drafts. ChatGPT Code Interpreter or Data Analysis, when used, is ChatGPT tool execution and is not a BSC Python result. A BSC Python result exists only when the versioned checker actually runs against identified inputs. Lean, SMT, interval, empirical, or other external-tool claims require separately identified supervised execution and admissible evidence; submitted receipts alone remain non-admissive.
+
+### Known limitations and next trust layer
+
+The GPT can misunderstand or incompletely inspect sources, miss counterexamples, formalize claims incorrectly, and overlook evidence. Manifests and hashes establish repository byte identity and detect stale generated assets; they do not prove truth, anonymity, byte-identical ChatGPT indexing, independent replication, deployment safety, or successful Preview behavior. Human Builder setup and all 27 Preview evaluations remain required before sharing. The next trust-layer priority is the Audit Return Desk, which is not implemented in this release.
+
 ## 0.3.0-alpha.4 - 2026-07-21
 
 ### Added

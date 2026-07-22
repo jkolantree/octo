@@ -47,6 +47,7 @@ TEXT_SUFFIXES = {
     ".in",
     ".js",
     ".json",
+    ".jsonl",
     ".lock",
     ".md",
     ".py",

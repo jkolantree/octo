@@ -1,0 +1,407 @@
+{
+  "bsc_version": "0.3.0-alpha.5",
+  "canonical_sources": [
+    {
+      "bytes": 18944,
+      "path": "BSC_AUDIT_LLM_PACKET.md",
+      "sha256": "1c027c7baccc48b88efc249da057b41e29abe3a94b74ffd90d0ec456ad4af81e"
+    },
+    {
+      "bytes": 8485,
+      "path": "README.md",
+      "sha256": "72c19b0a8ab04288f7e07c366d616c941e654c660167f0199f3fb90724a15073"
+    },
+    {
+      "bytes": 5084,
+      "path": "docs/DERIVED_HOLONOMY.md",
+      "sha256": "68e7938c55e88642e47824c7d92610014f606336697dc67983357eab9767e295"
+    },
+    {
+      "bytes": 10099,
+      "path": "docs/MATHEMATICS.md",
+      "sha256": "25309fb738cb229230991ec556f8fbe5aa692cc67a264124732632a7159a7aec"
+    },
+    {
+      "bytes": 4252,
+      "path": "docs/PROOF_CARRYING_ADAPTERS.md",
+      "sha256": "b8ad039964660b704a1076348c834af9201c9463e7d6ca1fabcec91c3213212c"
+    },
+    {
+      "bytes": 4419,
+      "path": "docs/SCHEMA.md",
+      "sha256": "4c2fc2fd272b7f0d1e15b10e1bc71f4f5d756d55caab39f4fc8283908d1dd851"
+    },
+    {
+      "bytes": 6680,
+      "path": "docs/STATUS_MODEL.md",
+      "sha256": "a114190f29c9875e45630f635b25941505cac4ceb33369ea224f77c062e7e4cf"
+    },
+    {
+      "bytes": 8220,
+      "path": "docs/THREAT_MODEL.md",
+      "sha256": "a26e6fe83ff7b8cd6e7835967a68d6fecb4ba3e05c25bd3c1fa6029eddff8988"
+    },
+    {
+      "bytes": 4408,
+      "path": "examples/README.md",
+      "sha256": "f60554d2ad9592375498b8f78aa7816ed69da1ccc3c07bcddf18fe085e19f6f6"
+    },
+    {
+      "bytes": 4089,
+      "path": "examples/claim_valid.json",
+      "sha256": "cd8ffa1c7911ad77db7130c7fc12925e69465b513dfeab99916ca0a3c598ee4d"
+    },
+    {
+      "bytes": 337,
+      "path": "examples/complex_broken_transport.json",
+      "sha256": "1bc997711c50ea6c2988e1c78c1a9581b066ed85e1da37a2b313404f4b0613e7"
+    },
+    {
+      "bytes": 329,
+      "path": "examples/complex_valid_transport.json",
+      "sha256": "422802ad1466c0022a1e8054a2f250940c5b33123fda50ca86bfe52ec420d68f"
+    },
+    {
+      "bytes": 4508,
+      "path": "examples/null_conflicting_referenced.json",
+      "sha256": "9fcaa16bf7ff0929db7635ccfabc1df293ed3f50733c6acec304161bf4e177ef"
+    },
+    {
+      "bytes": 4428,
+      "path": "examples/null_failed_proof.json",
+      "sha256": "d46991d126c70d4549dcb64e0fa86bb3b7ad9a495cdc167d7d3107dad3b1c275"
+    },
+    {
+      "bytes": 4192,
+      "path": "examples/null_missing_arithmetic_config.json",
+      "sha256": "1c3905bcdbcb5b2f00ffb4c5b7436082ed3b3d731cf37da2a0a3ba902d3a5149"
+    },
+    {
+      "bytes": 4468,
+      "path": "examples/null_omitted_bound_failure.json",
+      "sha256": "7c16d6290297330502a4c4f4a61e40f4ebed06007ae212a897a2a96d342e3470"
+    },
+    {
+      "bytes": 260,
+      "path": "examples/observation_failure.json",
+      "sha256": "ca54979d0f17cc5e16581674b9972abcdafea137802c08971a57fad1359ced9f"
+    },
+    {
+      "bytes": 36279,
+      "path": "gpt/_source/GPT_EVAL_SPEC.json",
+      "sha256": "80d874409cbeff80f66ceafabc8c9ac2a498ae296e53f67607a395d5e2a1f610"
+    },
+    {
+      "bytes": 23447,
+      "path": "gpt/_source/GPT_PROFILE.json",
+      "sha256": "3d5ca38669b407cb82f16ae9f3fba9c3de328be294e3f2ff27b58798bea4dcf7"
+    },
+    {
+      "bytes": 1446,
+      "path": "schemas/README.md",
+      "sha256": "7bb918148aa585f4c7c870e26dd619f44703118866c2ad2062dcc866664c93ac"
+    },
+    {
+      "bytes": 56218,
+      "path": "scripts/build_gpt_package.py",
+      "sha256": "a3af64185d4b5dd05b9ce315760a19f91fce9d6fc324451918ef37cebc143d12"
+    }
+  ],
+  "capability_declarations": {
+    "actions": {
+      "enabled": false,
+      "instruction": "No GPT Action is included in the first public release."
+    },
+    "apps": {
+      "enabled": false
+    },
+    "canvas": {
+      "enabled": false,
+      "optional": true
+    },
+    "code_interpreter_and_data_analysis": {
+      "enabled": true,
+      "instruction": "Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution."
+    },
+    "image_generation": {
+      "enabled": false
+    },
+    "web_search": {
+      "enabled": true,
+      "instruction": "Use when current source or citation verification is material, and disclose whether each decisive cited source was independently opened."
+    }
+  },
+  "engine_version": "0.3.0a5",
+  "evaluation_case_count": 27,
+  "evaluation_schema": "bsc-custom-gpt-eval/v1",
+  "generated_artifacts": [
+    {
+      "bytes": 554,
+      "path": "GPT_CONVERSATION_STARTERS.md",
+      "sha256": "149cc4cb2eb7b670ed443039d5bd6a3708488a950430619c94296f5d07b52f91"
+    },
+    {
+      "bytes": 8664,
+      "path": "GPT_INSTRUCTIONS.md",
+      "sha256": "354e71408428dbb2870ceac3b8ef6c251566bbcbf4f41bb3ed219e889f4f1950"
+    },
+    {
+      "bytes": 1459,
+      "path": "GPT_PUBLIC_METADATA.md",
+      "sha256": "4d5ade245dfecbfc6e0bec659782a390d2d52b23f5ab43ed8a72474f0a9423c6"
+    },
+    {
+      "bytes": 4756,
+      "path": "GPT_SETUP_AND_PUBLISHING.md",
+      "sha256": "db34395325f6e0ba0cc8cd33e88b2cb9c92c68624ec2fc928406c1132255d0c7"
+    },
+    {
+      "bytes": 1419,
+      "path": "README.md",
+      "sha256": "03c9f55855947802564248ae2ecf22b0ab05e20a5d087d9a38fe90da277488e3"
+    },
+    {
+      "bytes": 30354,
+      "path": "evals/GPT_EVAL_CASES.jsonl",
+      "sha256": "d88e5ffb97ecdff1e94777fd45694d4cd41066217cc5925c2201496bd4c5a6a0"
+    },
+    {
+      "bytes": 23994,
+      "path": "evals/GPT_EVAL_EXPECTATIONS.md",
+      "sha256": "060ef124d5af0fc133a6dd8abe991b6c50d37eb5f8fa81c515f29ec2460ba7de"
+    },
+    {
+      "bytes": 4463,
+      "path": "evals/GPT_MANUAL_SCORECARD.md",
+      "sha256": "8806e8b02d7277d7bf6a6aa363cee7724705935b34401bcf449d61d081924002"
+    },
+    {
+      "bytes": 97,
+      "path": "evals/fixtures/assumption_present.txt",
+      "sha256": "816707b10fecd335b82de0198f7e39f19e29ab3716f5b407612f3a9170438f22"
+    },
+    {
+      "bytes": 79,
+      "path": "evals/fixtures/assumption_removed.txt",
+      "sha256": "df442501cd8f5b7c3066cdfdfb0af953ed77c3bd1302bbb62dad69c359c19f9f"
+    },
+    {
+      "bytes": 145,
+      "path": "evals/fixtures/bsc_self_audit.txt",
+      "sha256": "0f68f541f44746bdf8f044a70676477feffcf253403858c9aba69513ac799123"
+    },
+    {
+      "bytes": 4089,
+      "path": "evals/fixtures/claim_valid.json",
+      "sha256": "cd8ffa1c7911ad77db7130c7fc12925e69465b513dfeab99916ca0a3c598ee4d"
+    },
+    {
+      "bytes": 328,
+      "path": "evals/fixtures/complex_valid_transport.json",
+      "sha256": "715dc4e8371ff8543f2b3e80d3d0090b61964d8d9b7d512625d373ee9634ed5b"
+    },
+    {
+      "bytes": 200,
+      "path": "evals/fixtures/conventional_counterexample.txt",
+      "sha256": "f829fb29fd344ed3cffce10709bd4315bf45b692c177a31d50554dbfac1fb788"
+    },
+    {
+      "bytes": 183,
+      "path": "evals/fixtures/decisive_calculation_not_executed.txt",
+      "sha256": "3206eb86bfc8d58d8abca36d6a29828c80ece690d2abcdfcf345c92fe6796625"
+    },
+    {
+      "bytes": 319,
+      "path": "evals/fixtures/deployment_overreach.txt",
+      "sha256": "24b7463a9ae7fe0193a3ca25c21b4ce2ecd07261783600ba300e0b083c9245a5"
+    },
+    {
+      "bytes": 30,
+      "path": "evals/fixtures/equation_sign_baseline.txt",
+      "sha256": "a93303149b41a0e14315a32f80864d84afb357ae6c15ceb60572daaf7e546805"
+    },
+    {
+      "bytes": 31,
+      "path": "evals/fixtures/equation_sign_mutant.txt",
+      "sha256": "0f55a3bff399c888fc31d855fc7b05b8f037bce7099b5f6edeb84961a9e821b7"
+    },
+    {
+      "bytes": 221,
+      "path": "evals/fixtures/exact_quotient_missing_test.txt",
+      "sha256": "22b11a14c11d63696fadf9f1a8d8f2683e3bfeb837088e2d6fa133622f4e1ad2"
+    },
+    {
+      "bytes": 215,
+      "path": "evals/fixtures/formal_looking_not_proof.txt",
+      "sha256": "6aa80aa353582d60df75b08b340bc335be237cc1e2fbab2177a66a8e0da219ff"
+    },
+    {
+      "bytes": 102,
+      "path": "evals/fixtures/known_false_continuity.txt",
+      "sha256": "5083027d7cc53f76f8e1b3cea392fbefbcfcc3feda693973f9aabd65ecfd4378"
+    },
+    {
+      "bytes": 264,
+      "path": "evals/fixtures/known_true_induction.txt",
+      "sha256": "85050a5818cf4682ef0e0f9a34ff8a0000f7576c8d53f25735cd78f1fc752ce7"
+    },
+    {
+      "bytes": 204,
+      "path": "evals/fixtures/missing_companion_report.txt",
+      "sha256": "abdf545e894b81d36bd94caf46c29ea1ec34e953b91eee08b5d0253574ae487b"
+    },
+    {
+      "bytes": 263,
+      "path": "evals/fixtures/nonadmissive_adapter_receipt.txt",
+      "sha256": "34f45cbaa163d1edbaead56a4d57769b34193f2ac928816129d8ac403ca9c496"
+    },
+    {
+      "bytes": 4508,
+      "path": "evals/fixtures/null_conflicting_referenced.json",
+      "sha256": "9fcaa16bf7ff0929db7635ccfabc1df293ed3f50733c6acec304161bf4e177ef"
+    },
+    {
+      "bytes": 4428,
+      "path": "evals/fixtures/null_failed_proof.json",
+      "sha256": "d46991d126c70d4549dcb64e0fa86bb3b7ad9a495cdc167d7d3107dad3b1c275"
+    },
+    {
+      "bytes": 4192,
+      "path": "evals/fixtures/null_missing_arithmetic_config.json",
+      "sha256": "1c3905bcdbcb5b2f00ffb4c5b7436082ed3b3d731cf37da2a0a3ba902d3a5149"
+    },
+    {
+      "bytes": 4468,
+      "path": "evals/fixtures/null_omitted_bound_failure.json",
+      "sha256": "7c16d6290297330502a4c4f4a61e40f4ebed06007ae212a897a2a96d342e3470"
+    },
+    {
+      "bytes": 260,
+      "path": "evals/fixtures/observation_failure.json",
+      "sha256": "ca54979d0f17cc5e16581674b9972abcdafea137802c08971a57fad1359ced9f"
+    },
+    {
+      "bytes": 215,
+      "path": "evals/fixtures/outside_checker_domain.txt",
+      "sha256": "b08a51b7d84352c6850ab99052130b82825e2528ee05dc08e585a38efcb883ed"
+    },
+    {
+      "bytes": 297,
+      "path": "evals/fixtures/poisoned_all_tests_passed.txt",
+      "sha256": "c37217da049c48589454927ea11143814fff98681ecb9317f9e8be512792aea4"
+    },
+    {
+      "bytes": 253,
+      "path": "evals/fixtures/poisoned_prompt_injection.txt",
+      "sha256": "0e441a245c505f6cbd9348a159cd3a92fee1f39f5dec2220323d0967d18e781f"
+    },
+    {
+      "bytes": 269,
+      "path": "evals/fixtures/truncated_proof.txt",
+      "sha256": "5fa9c984cee9ef652389a4a9e7184f5b4b37214420c333875c00e60777c3c824"
+    },
+    {
+      "bytes": 294,
+      "path": "evals/fixtures/unconventional_hypothesis.txt",
+      "sha256": "308e7708ce32c1e4fb70c504247b21474b4c0019e799c05714c3d01eb90f1eb2"
+    },
+    {
+      "bytes": 174,
+      "path": "evals/fixtures/unverifiable_citation.txt",
+      "sha256": "ea707fb98f37e748907a3db029d9f5e99ffd41feab60573c58092be72514cbd8"
+    },
+    {
+      "bytes": 13289,
+      "path": "knowledge/BSC_EXECUTION_AND_RECEIPTS.md",
+      "sha256": "bfdeb6a332bd5b5873ae7cdc611c239a5ee4af97f420a827c880027d64a8c3f7"
+    },
+    {
+      "bytes": 19608,
+      "path": "knowledge/BSC_PROTOCOL.md",
+      "sha256": "ac03a1dfd04305377c75724ec5e42b9a7ef8bc8147b6c4dd3701872a04b2f9d2"
+    },
+    {
+      "bytes": 7249,
+      "path": "knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md",
+      "sha256": "ced650484684ccb1ea6ffa96c8afcf0013ef0a0d63a49cca7f6ac3fa30af9ad6"
+    },
+    {
+      "bytes": 27532,
+      "path": "knowledge/BSC_SUPPORTED_CHECKS.md",
+      "sha256": "dc771d1dd6d9b119a2ee402f4305dfe29b5c45885654a2b5430f48877349c313"
+    },
+    {
+      "bytes": 29214,
+      "path": "knowledge/BSC_WORKED_EXAMPLES.md",
+      "sha256": "5141dd962f29a522af5f2ae7654c2ac0a47a365e3b79c18d79d244cb687e6547"
+    }
+  ],
+  "generator": {
+    "path": "scripts/build_gpt_package.py",
+    "sha256": "a3af64185d4b5dd05b9ce315760a19f91fce9d6fc324451918ef37cebc143d12",
+    "version": "bsc-custom-gpt-generator-v1"
+  },
+  "knowledge_upload_order": [
+    {
+      "order": 1,
+      "path": "gpt/knowledge/BSC_PROTOCOL.md",
+      "purpose": "Canonical normative protocol"
+    },
+    {
+      "order": 2,
+      "path": "gpt/knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md",
+      "purpose": "Research, evidence, gate, execution, deployment, and CLI status boundaries"
+    },
+    {
+      "order": 3,
+      "path": "gpt/knowledge/BSC_EXECUTION_AND_RECEIPTS.md",
+      "purpose": "Execution ledger and proof-adapter trust boundaries"
+    },
+    {
+      "order": 4,
+      "path": "gpt/knowledge/BSC_SUPPORTED_CHECKS.md",
+      "purpose": "Implemented Python routes, schemas, findings, and limitations"
+    },
+    {
+      "order": 5,
+      "path": "gpt/knowledge/BSC_WORKED_EXAMPLES.md",
+      "purpose": "Known-answer and adversarial examples without redefining the protocol"
+    }
+  ],
+  "limitation_declarations": [
+    "This is a research-preview interpretive audit interface, not the BSC Python checker, a theorem prover, a universal truth engine, or a certification system.",
+    "The GPT can misunderstand sources, miss counterexamples, formalize claims incorrectly, and overlook relevant evidence.",
+    "A clean finite or structural check does not establish the external theory, empirical truth, independent replication, or safe deployment.",
+    "ChatGPT tool execution is distinct from versioned BSC Python execution and from external theorem-prover, SMT, interval, or empirical execution.",
+    "Submitted proof-adapter receipts are non-admissive unless a supervised runner actually executed and replayed the pinned toolchain.",
+    "Uploading material to this Custom GPT sends it through ChatGPT under the user's applicable terms and settings; it is not a local-only workflow.",
+    "Sensitive, proprietary, identifying, medical, legal, classified, export-controlled, or otherwise restricted material should not be uploaded without appropriate authorization and review.",
+    "Hashes establish byte identity and may still identify low-entropy private material; they do not establish anonymity or truth.",
+    "The output is not scientific, clinical, legal, policy, safety, or deployment certification.",
+    "No GPT Action is included in this release, and no server-side BSC verification API is implied."
+  ],
+  "manifest_schema": "bsc-custom-gpt-release-manifest-v1",
+  "output_sections": [
+    "scope_and_source_coverage",
+    "short_verdict",
+    "decisive_findings",
+    "claim_and_dependency_reconstruction",
+    "evidence_for_and_against",
+    "counterexamples_and_failure_modes",
+    "execution_ledger",
+    "unresolved_obligations",
+    "verdict_changers",
+    "machine_readable_record"
+  ],
+  "profile_schema": "bsc-custom-gpt-profile/v1",
+  "source_commit": null,
+  "source_commit_binding": "The tracked package avoids a circular self-reference. The tagged release builder injects the exact commit, tree, and tag into the standalone archive and its outer RELEASE_MANIFEST.json.",
+  "source_tag": null,
+  "source_tree": null,
+  "supported_audit_depths": [
+    "quick",
+    "standard",
+    "adversarial",
+    "formal-mathematical"
+  ]
+}

@@ -1,6 +1,8 @@
 # Programmer Tutorial
 
-This guide covers release `v0.3.0-alpha.4`; the `holonomy` route first appeared in alpha.3. Preserve the exact engine version with every output.
+This guide covers release `v0.3.0-alpha.5`; the `holonomy` route first appeared in alpha.3. Preserve the exact engine version with every output.
+
+This is the repository and Python exact-checker route. It is distinct from the currently **UNPUBLISHED** [direct ChatGPT Custom GPT](../gpt/README.md) and the [local browser Packet Builder](https://jkolantree.github.io/octo/) used to prepare packets for multiple models. ChatGPT uploads are not local-only, ChatGPT tools are not automatically BSC Python, and this release provides no GPT Action or hosted checker API.
 
 ## Requirements
 
@@ -24,7 +26,7 @@ python run_audit.py --version
 The output must identify the source you intended to audit. The current development checkout reports:
 
 ```text
-bsc-audit 0.3.0a4
+bsc-audit 0.3.0a5
 ```
 
 The published alpha.3 release reports:
@@ -99,7 +101,7 @@ Example shape:
 
 ```json
 {
-  "engine_version": "0.3.0a4",
+  "engine_version": "0.3.0a5",
   "checks": {
     "run": ["strict_json_parse", "finite_observation_descent"],
     "not_run": ["claim_manifest_lint", "gate_product", "domain_plugins"]
@@ -152,7 +154,7 @@ python run_audit.py lint work/my_claim.json
 python run_audit.py audit work/my_claim.json
 ```
 
-The machine-readable contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The manifest version is `0.3.0`; it is independent of the engine's PEP 440 version `0.3.0a4`.
+The machine-readable contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The manifest version is `0.3.0`; it is independent of the engine's PEP 440 version `0.3.0a5`.
 
 ## 7. Evidence and hashes
 
@@ -188,7 +190,9 @@ Treat generated JSON as untrusted source code:
 6. run JSON validation and the mechanical checker yourself;
 7. preserve both the original draft and reviewed revision.
 
-Never report checker execution from simulated output.
+Never report checker execution from simulated output. If ChatGPT Code Interpreter or Data Analysis ran, record that as ChatGPT tool execution. Record a BSC Python run only when the correct versioned checker actually executed and its output is preserved with the relevant input.
+
+The Custom GPT editor setup is an authenticated human step and has not been claimed complete by the repository release. The Audit Return Desk planned to inspect returned model output and receipts is the next trust-layer priority; it is not implemented here.
 
 ## 9. Add a domain gate
 

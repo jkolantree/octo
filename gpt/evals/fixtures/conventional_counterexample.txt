@@ -1,0 +1,1 @@
+Claim: This standard merge-sort implementation sorts every integer list. Supplied execution trace: input [2,1], output [2,1]. The trace is declared to come from the exact implementation under review.

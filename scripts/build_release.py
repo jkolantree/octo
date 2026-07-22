@@ -27,6 +27,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from bsc_audit import __version__  # noqa: E402
 from build_publication_assets import write_release_assets  # noqa: E402
+from build_gpt_package import write_release_asset as write_gpt_release_asset  # noqa: E402
 
 
 PUBLIC_VERSION = __version__.replace("a", "-alpha.", 1)
@@ -195,6 +196,7 @@ def main() -> int:
 
     run([sys.executable, "scripts/check_privacy.py", "--protected-history", "HEAD"])
     run([sys.executable, "scripts/run_tests.py"])
+    run([sys.executable, "scripts/run_null_discrimination.py"])
     run([sys.executable, "scripts/check_release.py"])
     env = dict(os.environ, SOURCE_DATE_EPOCH=str(SOURCE_DATE_EPOCH))
     build = subprocess.run([sys.executable, "scripts/build_dist.py", "--outdir", str(output)], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
@@ -221,6 +223,12 @@ def main() -> int:
     conformance = output / f"bsc-audit-conformance-{PUBLIC_VERSION}.zip"
     conformance_bundle(conformance)
     write_release_assets(output)
+    write_gpt_release_asset(
+        output,
+        source_commit=commit,
+        source_tree=tree,
+        source_tag=tag,
+    )
     artifacts = sorted(path for path in output.iterdir() if path.is_file() and path.name not in {"SHA256SUMS", "RELEASE_MANIFEST.json", "SBOM.spdx.json"})
     sbom_path = output / "SBOM.spdx.json"
     wheel = next(path for path in artifacts if path.suffix == ".whl")
@@ -243,9 +251,11 @@ def main() -> int:
         },
         "verification": {
             "source_tests": "pass",
+            "null_discrimination": "pass",
             "release_integrity_checks": "pass",
             "pages_integrity": "pass",
             "publication_assets": "pass",
+            "custom_gpt_package": "pass",
             "privacy_scan": "pass",
             "reproducible_distributions": "pass",
             "clean_git_tree": "pass",

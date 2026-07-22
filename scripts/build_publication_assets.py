@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL = ROOT / "BSC_AUDIT_LLM_PACKET.md"
 SCHEMA = ROOT / "schemas" / "claim-manifest-v0.3.schema.json"
+GPT_PROFILE = ROOT / "gpt" / "_source" / "GPT_PROFILE.json"
 SOURCE_DATE_EPOCH = int(os.environ.get("SOURCE_DATE_EPOCH", "1784505600"))
 ZIP_TIME = time.gmtime(max(SOURCE_DATE_EPOCH, 315532800))[:6]
 
@@ -52,6 +53,8 @@ def publication_header(purpose: str) -> str:
 
 def site_outputs() -> dict[Path, bytes]:
     protocol = protocol_bytes()
+    profile_bytes = GPT_PROFILE.read_bytes()
+    profile = json.loads(profile_bytes)
     metadata = (
         "window.BSC_PROTOCOL = Object.freeze("
         + json.dumps(
@@ -65,9 +68,35 @@ def site_outputs() -> dict[Path, bytes]:
         )
         + ");\n"
     ).encode("utf-8")
+    page_profile = (
+        "window.BSC_AUDIT_PROFILE = Object.freeze("
+        + json.dumps(
+            {
+                "version": public_version(),
+                "profile_sha256": sha256_bytes(profile_bytes),
+                "audit_depths": [
+                    {
+                        "id": item["id"],
+                        "label": item["label"],
+                        "instruction": item["builder_instruction"],
+                        "machine_record_required": item["machine_record_required"],
+                    }
+                    for item in profile["audit_depths"]
+                ],
+                "output_sections": [
+                    {"order": item["order"], "title": item["title"]}
+                    for item in sorted(profile["output_sections"], key=lambda value: value["order"])
+                ],
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + ");\n"
+    ).encode("utf-8")
     return {
         Path("protocol/BSC_AUDIT_LLM_PACKET.md"): protocol,
         Path("protocol/meta.js"): metadata,
+        Path("profile.js"): page_profile,
     }
 
 
