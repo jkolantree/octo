@@ -55,9 +55,11 @@ class PrivacyTests(unittest.TestCase):
 
     def test_javascript_is_scanned_as_utf8_text(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "app.js"
-            path.write_text("const contact = 'person" + "@" + "example.com';\n", encoding="utf-8")
-            self.assertIn("EMAIL_NOT_ALLOWLISTED", self.codes(scan_path(path, self.policy)))
+            for suffix in (".js", ".cjs", ".mjs", ".ts"):
+                with self.subTest(suffix=suffix):
+                    path = Path(directory) / f"app{suffix}"
+                    path.write_text("const contact = 'person" + "@" + "example.com';\n", encoding="utf-8")
+                    self.assertIn("EMAIL_NOT_ALLOWLISTED", self.codes(scan_path(path, self.policy)))
 
     def test_jsonl_is_scanned_as_utf8_text(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

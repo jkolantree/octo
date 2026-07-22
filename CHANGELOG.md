@@ -2,6 +2,26 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.8 - Unreleased development
+
+### Added
+
+- added the non-admissive Audit Return Desk as matching Python and browser-local inspectors for a closed `audit-return-v0.1` envelope;
+- added exact protocol and schema bindings, strict duplicate-key JSON parsing, portable filename controls, local artifact hashing, summary and fatal-gate recomputation, and deterministic inspection output;
+- added poisoned returns for strengthened summaries, concealed gate failures, unsupported execution, missing-source promotion, receipt-only promotion, and deployment overreach;
+- added cross-runtime regressions for unrelated execution reuse, input/output/receipt scope, receipt relabeling, high-verdict source bytes, claim-scoped gates, invalid evidence roles, broken references, missing artifacts, and portable filenames;
+- added an accessible Return Desk interface with locally verified schema bytes, bounded hashing, cancellable file operations, visible witnesses and repairs, and explicit metadata-disclosure warnings.
+
+### Corrected
+
+- strengthened the alpha.8 Custom GPT controller and all 29 evaluation oracles around per-source coverage, `file_read_only`, absence-only refutation, exact verdict calibration, incomplete or non-admissive evidence, and exact audit-return emission;
+- made `audit_return.json` the required structured draft at adversarial and formal-mathematical depth while preserving the human report as a separate artifact;
+- bound evidence to the exact execution inputs, outputs, receipts, claims, and gates it relies on instead of accepting an unrelated globally valid run.
+
+### Publication boundary
+
+This development line is not a release and is not installed in the live GPT. The validated, link-shared GPT and current GitHub release remain bound to `v0.3.0-alpha.7`. Alpha.8 requires the complete repository gates and a fresh 29-case Builder Preview gate before any live Update or release.
+
 ## 0.3.0-alpha.7 - 2026-07-21
 
 ### Corrected

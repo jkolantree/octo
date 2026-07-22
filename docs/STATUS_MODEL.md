@@ -35,6 +35,7 @@ Execution status records what actually ran. It does not record whether a researc
 | Status | Meaning |
 |---|---|
 | `not_run` | The activity did not execute. |
+| `file_read_only` | ChatGPT Data Analysis opened or inventoried a file but did not perform a mathematical, BSC Python, formal-tool, or empirical verification. This status is valid only for that file-access boundary. |
 | `ran` | The activity executed and its relevant output is available for inspection. |
 | `reported_but_unverified` | A source asserts that the activity ran, but no adequate execution record or receipt is available. |
 | `not_applicable` | The activity is irrelevant to the audited claim; this is not a substitute for `not_run`. |
@@ -106,7 +107,19 @@ Source coverage is recorded separately from evidence maturity and execution. Eac
 
 The ledger also names the source version, inspected ranges, omissions, access mode, and execution mode. Inspecting every available byte does not justify `fully_inspected` when the object may be truncated. Sampling requires `partially_inspected` with the unreviewed remainder identified.
 
-## 8. Exit codes
+## 8. Audit Return Desk outcome
+
+The Return Desk adds a separate returned-envelope consistency coordinate:
+
+| Browser outcome | Python mapping | Meaning |
+|---|---|---|
+| `consistent` | `no_blocking_findings` | Implemented return checks found no blocking inconsistency or unavailable declared byte. |
+| `needs_review` | `no_blocking_findings_with_warnings` | No blocking inconsistency was established, but a byte, source, receipt, or execution claim remains unavailable or unverified. |
+| `blocked` | `blocked`, or `prohibited` for malformed/schema-invalid input | The return is stale, malformed, contradictory, unsupported, or integrity-failing. |
+
+This outcome is non-admissive. It does not assign or validate the research verdict and does not establish truth, proof, citation authenticity, external execution, or deployment authority.
+
+## 9. Exit codes
 
 - `0`: no blocking finding, with or without warnings;
 - `1`: blocked or demoted;
@@ -117,7 +130,7 @@ Automation should inspect both the exit code and structured JSON. It should neve
 
 ## Separation rule
 
-Research verdict, evidence maturity, execution status, deployment status, gate state, CLI decision, and source coverage answer different questions. None may be inferred from another. In particular:
+Research verdict, evidence maturity, execution status, deployment status, gate state, CLI decision, source coverage, and Return Desk outcome answer different questions. None may be inferred from another. In particular:
 
 - a coherent or proven claim does not imply that a proposed execution ran;
 - a finite check that ran does not prove a broader theory;

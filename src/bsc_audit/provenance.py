@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
 
 HASH_PREFIX = "sha256:"
@@ -32,6 +32,22 @@ def is_sha256(value: object) -> bool:
 
 def is_placeholder_sha256(value: object) -> bool:
     return value == ZERO_SHA256
+
+
+def _sha256_stream_bounded(stream: BinaryIO, max_bytes: int) -> tuple[str | None, bool]:
+    """Hash at most ``max_bytes`` and report whether additional bytes existed."""
+
+    digest = hashlib.sha256()
+    bytes_read = 0
+    while True:
+        remaining = max_bytes - bytes_read
+        chunk = stream.read(min(1024 * 1024, remaining + 1))
+        if not chunk:
+            return HASH_PREFIX + digest.hexdigest(), False
+        bytes_read += len(chunk)
+        if bytes_read > max_bytes:
+            return None, True
+        digest.update(chunk)
 
 
 def resolve_local_artifact(root: Path, relative_path: object) -> Path:
@@ -82,13 +98,13 @@ def verify_local_artifact(
     if size > max_bytes:
         return False, "artifact_too_large", None
     try:
-        digest = hashlib.sha256()
         with candidate.open("rb") as stream:
-            while chunk := stream.read(1024 * 1024):
-                digest.update(chunk)
+            actual, exceeded = _sha256_stream_bounded(stream, max_bytes)
     except OSError:
         return False, "unreadable_artifact", None
-    actual = HASH_PREFIX + digest.hexdigest()
+    if exceeded:
+        return False, "artifact_too_large", None
+    assert actual is not None
     if actual != expected_hash:
         return False, "hash_mismatch", actual
     return True, "verified", actual

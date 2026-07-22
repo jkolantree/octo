@@ -34,5 +34,6 @@ recursive-include schemas *.md
 recursive-include scripts *
 recursive-include templates *.json
 recursive-include tests *.py
+recursive-include tests *.cjs
 global-exclude __pycache__
 global-exclude *.py[cod]

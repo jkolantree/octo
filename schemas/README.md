@@ -14,6 +14,7 @@ exact chain equations, hash verification, and evidence-to-gate bindings.
 | `defect` | `defect-v0.3.schema.json` |
 | `adapter` | `adapter-receipt-v0.1.schema.json` |
 | `holonomy` | `derived-holonomy-v0.1.schema.json` |
+| `return-desk` | `audit-return-v0.1.schema.json` |
 
 No external JSON Schema package is required at runtime. Producers can use any
 Draft 2020-12 validator before invoking the engine, then rely on the engine for
@@ -22,6 +23,15 @@ the exact semantic layer.
 The adapter-receipt format is an explicitly non-admissive preview. Passing its
 structural and hash checks does not satisfy a theorem gate; see
 [`docs/PROOF_CARRYING_ADAPTERS.md`](../docs/PROOF_CARRYING_ADAPTERS.md).
+
+The audit-return format is also explicitly non-admissive. Its closed schema
+defines a draft returned-audit envelope; the Python and browser semantic layers
+add protocol/hash binding, portable filename rules, claim-scoped gate
+recomputation, execution/input/output/receipt binding, high-verdict source-byte
+requirements, and deployment-overreach checks. Internal consistency does not
+establish truth, proof, citation authenticity, independent execution, evidence
+admissibility, or deployment authority. See
+[`docs/AUDIT_RETURN_DESK.md`](../docs/AUDIT_RETURN_DESK.md).
 
 The derived-holonomy format is exact only over `field: "Q"`. JSON Schema checks
 the closed record shape; the engine additionally checks semantic-basis digest

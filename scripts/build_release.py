@@ -84,6 +84,11 @@ def repository_identity() -> tuple[str, str, str]:
     return commit, tree, expected_tag
 
 
+def require_release_version() -> None:
+    if ".dev" in __version__:
+        raise SystemExit(f"release builds refuse development version {__version__}")
+
+
 def source_files() -> list[Path]:
     tracked = run(["git", "ls-files", "-z"]).stdout.split("\0")
     paths = [ROOT / relative for relative in tracked if relative and relative not in EXCLUDED_TRACKED_FILES]
@@ -105,6 +110,17 @@ def toolchain_lock() -> dict[str, object]:
     if lock.get("source_date_epoch") != SOURCE_DATE_EPOCH:
         raise SystemExit("SOURCE_DATE_EPOCH does not match toolchain.lock.json")
     return lock
+
+
+def require_node(lock: dict[str, object]) -> str:
+    node = shutil.which("node")
+    if node is None:
+        raise SystemExit("release builds require Node from toolchain.lock.json on PATH")
+    actual = run([node, "--version"]).stdout.strip().removeprefix("v")
+    expected = lock.get("return_desk_node")
+    if actual != expected:
+        raise SystemExit(f"Return Desk Node {actual} does not match toolchain lock {expected}")
+    return node
 
 
 def conformance_bundle(destination: Path) -> None:
@@ -184,12 +200,14 @@ def sbom(destination: Path, wheel: Path) -> None:
 
 
 def main() -> int:
+    require_release_version()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "release")
     args = parser.parse_args()
     output = args.output.resolve()
     commit, tree, tag = repository_identity()
     lock = toolchain_lock()
+    node = require_node(lock)
     if output.exists() and any(output.iterdir()):
         raise SystemExit(f"release output directory must be empty: {output}")
     output.mkdir(parents=True, exist_ok=True)
@@ -197,6 +215,7 @@ def main() -> int:
     run([sys.executable, "scripts/check_privacy.py", "--protected-history", "HEAD"])
     run([sys.executable, "scripts/run_tests.py"])
     run([sys.executable, "scripts/run_null_discrimination.py"])
+    run([node, "--test", "tests/return_desk_runtime.test.cjs"])
     run([sys.executable, "scripts/check_release.py"])
     env = dict(os.environ, SOURCE_DATE_EPOCH=str(SOURCE_DATE_EPOCH))
     build = subprocess.run([sys.executable, "scripts/build_dist.py", "--outdir", str(output)], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
@@ -245,6 +264,7 @@ def main() -> int:
         "source_date_epoch": SOURCE_DATE_EPOCH,
         "toolchain": {
             "python": lock["release_python"],
+            "node": lock["return_desk_node"],
             "setuptools": lock["setuptools"],
             "lock_sha256": sha256(ROOT / "toolchain.lock.json"),
             "container_digest": lock.get("container_digest"),
@@ -252,6 +272,7 @@ def main() -> int:
         "verification": {
             "source_tests": "pass",
             "null_discrimination": "pass",
+            "return_desk_runtime": "pass",
             "release_integrity_checks": "pass",
             "pages_integrity": "pass",
             "publication_assets": "pass",
