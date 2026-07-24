@@ -546,7 +546,7 @@ class CustomGptPackageTests(unittest.TestCase):
                 "block=>no return/pass/"
                 "proven. Refs2way; pass=>no obligation; omit self; fatal IDs exact. Proven/strong/lemma=>"
                 "all6K+S10+evidence/claim/run/pass-gate; else demote/omit. protocol.sha256=sha256:"
-                "df91a7aae7f2d53351e98af5545cdc76127ae1c305a40af5011d4406ffc7c79e. Request/report!=source; "
+                "d694a2ee46466d9f7eaec3d44d7917322feec53b9c982331d53eb73ab9d948f1. Request/report!=source; "
                 "request==target=>distinct bytes/IDs/digests. S7=compiler ledger. Fallback: visible DA MUST run "
                 "exact export-chunk(file,index) once; sole verbatim JSON stdout; never author/infer "
                 "export_failed/reuse/combine."
