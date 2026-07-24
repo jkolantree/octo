@@ -20,6 +20,20 @@ from bsc_audit.return_desk import (
 
 ROOT = Path(__file__).resolve().parents[1]
 VALID_PATH = ROOT / "examples" / "audit_return_valid.json"
+VERSIONED_REPORT_NAME = "versioned-audit-report.txt"
+VERSIONED_OUTPUT_NAME = "versioned-bsc-output.txt"
+VERSIONED_REPORT_BYTES = (
+    b"Execution details: see the bound versioned-bsc-output.txt artifact.\n"
+)
+VERSIONED_OUTPUT_BYTES = b"tool=bsc-audit\nversion=0.3.0a8\n"
+SESSION_RUNTIME = "3.12.13 (session-reported test runtime)"
+DA_REPORT_BYTES = b"Execution details: see chatgpt_data_analysis_output.txt.\n"
+DA_OUTPUT_BYTES = (
+    "bsc_chatgpt_data_analysis_output_version: 2\n"
+    f"session_reported_runtime={SESSION_RUNTIME}\n"
+    "runtime_provenance=session_reported\n"
+    "finalized_artifacts:\n"
+).encode("utf-8")
 
 
 class AuditReturnDeskTests(unittest.TestCase):
@@ -38,6 +52,10 @@ class AuditReturnDeskTests(unittest.TestCase):
             source = ROOT / "examples" / artifact["filename"]
             if source.is_file():
                 shutil.copyfile(source, root / artifact["filename"])
+            elif artifact["filename"] == VERSIONED_REPORT_NAME:
+                (root / VERSIONED_REPORT_NAME).write_bytes(VERSIONED_REPORT_BYTES)
+            elif artifact["filename"] == VERSIONED_OUTPUT_NAME:
+                (root / VERSIONED_OUTPUT_NAME).write_bytes(VERSIONED_OUTPUT_BYTES)
         path = root / "return.json"
         path.write_text(json.dumps(raw, indent=2), encoding="utf-8")
         return path
@@ -54,8 +72,37 @@ class AuditReturnDeskTests(unittest.TestCase):
             }
         )
 
+    def replace_artifact_bytes(
+        self,
+        raw: dict,
+        identifier: str,
+        filename: str,
+        media_type: str,
+        data: bytes,
+    ) -> None:
+        artifact = next(item for item in raw["artifacts"] if item["id"] == identifier)
+        artifact.update(
+            filename=filename,
+            media_type=media_type,
+            sha256=f"sha256:{hashlib.sha256(data).hexdigest()}",
+        )
+
     def bind_effective_bsc_run(self, raw: dict) -> None:
-        self.add_artifact(raw, "artifact:bsc-output", "observation_failure.json", "execution_output")
+        report = next(item for item in raw["artifacts"] if item["id"] == raw["bindings"]["report_artifact_id"])
+        report.update(
+            filename=VERSIONED_REPORT_NAME,
+            media_type="text/plain; charset=utf-8",
+            sha256=f"sha256:{hashlib.sha256(VERSIONED_REPORT_BYTES).hexdigest()}",
+        )
+        raw["artifacts"].append(
+            {
+                "id": "artifact:bsc-output",
+                "filename": VERSIONED_OUTPUT_NAME,
+                "role": "execution_output",
+                "media_type": "text/plain; charset=utf-8",
+                "sha256": f"sha256:{hashlib.sha256(VERSIONED_OUTPUT_BYTES).hexdigest()}",
+            }
+        )
         self.add_artifact(raw, "artifact:bsc-receipt", "atomic_modulus_evasion.json", "receipt")
         raw["receipts"].append(
             {
@@ -72,7 +119,7 @@ class AuditReturnDeskTests(unittest.TestCase):
         run.update(
             status="ran",
             tool="bsc-audit",
-            version="0.3.0a8.dev1",
+            version="0.3.0a8",
             input_artifact_ids=["artifact:request", "artifact:source"],
             output_artifact_ids=["artifact:bsc-output"],
             receipt_ids=["receipt:bsc"],
@@ -92,7 +139,7 @@ class AuditReturnDeskTests(unittest.TestCase):
     def test_return_fixtures_bind_the_exact_current_protocol(self):
         protocol = (ROOT / "BSC_AUDIT_LLM_PACKET.md").read_bytes()
         self.assertEqual(EXPECTED_PROTOCOL_SHA256, f"sha256:{hashlib.sha256(protocol).hexdigest()}")
-        self.assertEqual(EXPECTED_PROTOCOL_VERSION, "0.3.0-alpha.8.dev1")
+        self.assertEqual(EXPECTED_PROTOCOL_VERSION, "0.3.0-alpha.8")
         for path in sorted((ROOT / "examples").glob("audit_return_*.json")):
             with self.subTest(path=path.name):
                 record = json.loads(path.read_text(encoding="utf-8"))
@@ -222,6 +269,66 @@ class AuditReturnDeskTests(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertIn("RETURN_ARTIFACT_BINDING_INVALID", {finding["code"] for finding in payload["findings"]})
 
+    def test_verified_text_artifacts_require_strict_utf8_and_safe_controls(self):
+        allowed_bytes = b"proof line\tvalue\r\nliteral \\\\forall x\n"
+        allowed = self.valid()
+        self.replace_artifact_bytes(
+            allowed,
+            "artifact:evidence",
+            "verified-evidence.txt",
+            "text/plain; charset=utf-8",
+            allowed_bytes,
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_with_artifacts(directory, allowed)
+            (Path(directory) / "verified-evidence.txt").write_bytes(allowed_bytes)
+            status, payload = self.invoke(path)
+        self.assertEqual(status, 0, payload)
+        self.assertNotIn(
+            "RETURN_ARTIFACT_TEXT_CONTROL_INVALID",
+            {item["code"] for item in payload["findings"]},
+        )
+
+        invalid_utf8_bytes = b"proof:\xff"
+        invalid_utf8 = self.valid()
+        self.replace_artifact_bytes(
+            invalid_utf8,
+            "artifact:evidence",
+            "invalid-utf8.txt",
+            "text/plain",
+            invalid_utf8_bytes,
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_with_artifacts(directory, invalid_utf8)
+            (Path(directory) / "invalid-utf8.txt").write_bytes(invalid_utf8_bytes)
+            status, payload = self.invoke(path)
+        self.assertEqual(status, 1)
+        self.assertIn(
+            "RETURN_ARTIFACT_TEXT_ENCODING_INVALID",
+            {item["code"] for item in payload["findings"]},
+        )
+
+        for control in (0x00, 0x0B, 0x0C, 0x1B, 0x7F):
+            with self.subTest(control=f"0x{control:02X}"):
+                controlled_bytes = b"proof:" + bytes([control])
+                controlled = self.valid()
+                self.replace_artifact_bytes(
+                    controlled,
+                    "artifact:evidence",
+                    "controlled-evidence.txt",
+                    "text/plain",
+                    controlled_bytes,
+                )
+                with tempfile.TemporaryDirectory() as directory:
+                    path = self.write_with_artifacts(directory, controlled)
+                    (Path(directory) / "controlled-evidence.txt").write_bytes(controlled_bytes)
+                    status, payload = self.invoke(path)
+                self.assertEqual(status, 1)
+                self.assertIn(
+                    "RETURN_ARTIFACT_TEXT_CONTROL_INVALID",
+                    {item["code"] for item in payload["findings"]},
+                )
+
     def test_browser_ambiguous_filename_and_path_are_fail_closed(self):
         duplicate = self.valid()
         duplicate["artifacts"][1]["filename"] = duplicate["artifacts"][0]["filename"]
@@ -248,6 +355,26 @@ class AuditReturnDeskTests(unittest.TestCase):
             status, payload = self.invoke(self.write_with_artifacts(directory, raw))
         self.assertEqual(status, 1)
         self.assertIn("RETURN_EXECUTION_LEDGER_INCOMPLETE", {finding["code"] for finding in payload["findings"]})
+
+    def test_unrun_critical_activities_use_not_run_not_not_applicable(self):
+        canonical = self.valid()
+        for activity in ("bsc_python_checker", "external_proof_tool", "empirical_test"):
+            self.assertEqual(
+                next(item for item in canonical["execution"] if item["activity"] == activity)["status"],
+                "not_run",
+            )
+
+        for activity in ("bsc_python_checker", "external_proof_tool", "empirical_test"):
+            with self.subTest(activity=activity):
+                raw = self.valid()
+                next(item for item in raw["execution"] if item["activity"] == activity)["status"] = "not_applicable"
+                with tempfile.TemporaryDirectory() as directory:
+                    status, payload = self.invoke(self.write_with_artifacts(directory, raw))
+                self.assertEqual(status, 1)
+                self.assertIn(
+                    "RETURN_EXECUTION_NOT_APPLICABLE_MISUSED",
+                    {item["code"] for item in payload["findings"]},
+                )
 
     def test_file_read_only_is_precise_and_cannot_support_evidence(self):
         raw = self.valid()
@@ -309,6 +436,226 @@ class AuditReturnDeskTests(unittest.TestCase):
             status, payload = self.invoke(self.write_with_artifacts(directory, duplicate_receipt))
         self.assertEqual(status, 1)
         self.assertIn("RETURN_RECEIPT_ARTIFACT_REUSED", {item["code"] for item in payload["findings"]})
+
+    def test_every_verified_role_evidence_artifact_is_a_cited_execution_output(self):
+        positive = self.valid()
+        with tempfile.TemporaryDirectory() as directory:
+            status, payload = self.invoke(self.write_with_artifacts(directory, positive))
+        self.assertEqual(status, 0, payload)
+        self.assertNotIn(
+            "RETURN_EVIDENCE_SUPPORT_OUTPUT_MISMATCH",
+            {item["code"] for item in payload["findings"]},
+        )
+
+        decoy = self.valid()
+        self.add_artifact(decoy, "artifact:decoy-output", "observation_failure.json", "execution_output")
+        decoy["evidence"][0]["artifact_ids"] = ["artifact:evidence", "artifact:decoy-output"]
+        model_reasoning = next(item for item in decoy["execution"] if item["activity"] == "model_reasoning")
+        model_reasoning["output_artifact_ids"] = ["artifact:report", "artifact:decoy-output"]
+        with tempfile.TemporaryDirectory() as directory:
+            status, payload = self.invoke(self.write_with_artifacts(directory, decoy))
+        self.assertEqual(status, 1)
+        self.assertIn(
+            "RETURN_EVIDENCE_SUPPORT_OUTPUT_MISMATCH",
+            {item["code"] for item in payload["findings"]},
+        )
+
+    def test_ran_nonmodel_version_binds_output_and_report_references_it(self):
+        positive = self.valid()
+        self.bind_effective_bsc_run(positive)
+        with tempfile.TemporaryDirectory() as directory:
+            status, payload = self.invoke(self.write_with_artifacts(directory, positive))
+        self.assertEqual(status, 0, payload)
+        self.assertNotIn(
+            "RETURN_EXECUTION_VERSION_UNBOUND",
+            {item["code"] for item in payload["findings"]},
+        )
+        self.assertNotIn(
+            "0.3.0a8",
+            VERSIONED_REPORT_BYTES.decode("utf-8"),
+        )
+
+        absent = copy.deepcopy(positive)
+        run = next(item for item in absent["execution"] if item["activity"] == "bsc_python_checker")
+        run["version"] = "0.3.0a8-not-in-output"
+        with tempfile.TemporaryDirectory() as directory:
+            status, payload = self.invoke(self.write_with_artifacts(directory, absent))
+        self.assertEqual(status, 1)
+        self.assertIn(
+            "RETURN_EXECUTION_VERSION_UNBOUND",
+            {item["code"] for item in payload["findings"]},
+        )
+
+    def test_data_analysis_runtime_is_one_session_reported_binding(self):
+        positive = self.valid()
+        report = next(
+            item
+            for item in positive["artifacts"]
+            if item["id"] == positive["bindings"]["report_artifact_id"]
+        )
+        report.update(
+            filename="da-report.txt",
+            media_type="text/plain; charset=utf-8",
+            sha256=f"sha256:{hashlib.sha256(DA_REPORT_BYTES).hexdigest()}",
+        )
+        positive["artifacts"].append(
+            {
+                "id": "artifact:da-output",
+                "filename": "chatgpt_data_analysis_output.txt",
+                "role": "execution_output",
+                "media_type": "text/plain; charset=utf-8",
+                "sha256": f"sha256:{hashlib.sha256(DA_OUTPUT_BYTES).hexdigest()}",
+            }
+        )
+        run = next(
+            item
+            for item in positive["execution"]
+            if item["activity"] == "chatgpt_data_analysis"
+        )
+        run.update(
+            status="ran",
+            tool="Python",
+            version=SESSION_RUNTIME,
+            input_artifact_ids=["artifact:request", "artifact:source"],
+            output_artifact_ids=["artifact:da-output"],
+            receipt_ids=[],
+            notes="The runtime is session-reported, not independently authenticated.",
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_with_artifacts(directory, positive)
+            Path(directory, "da-report.txt").write_bytes(DA_REPORT_BYTES)
+            Path(directory, "chatgpt_data_analysis_output.txt").write_bytes(
+                DA_OUTPUT_BYTES
+            )
+            status, payload = self.invoke(path)
+        self.assertEqual(status, 0, payload)
+        self.assertNotIn(SESSION_RUNTIME, DA_REPORT_BYTES.decode("utf-8"))
+
+        row_bound = copy.deepcopy(positive)
+        row_bound_run = next(
+            item
+            for item in row_bound["execution"]
+            if item["activity"] == "chatgpt_data_analysis"
+        )
+        row_bound_run["output_artifact_ids"] = [
+            "artifact:report",
+            "artifact:da-output",
+        ]
+        row_bound_bytes = (
+            "bsc_chatgpt_data_analysis_output_version: 2\n"
+            f"session_reported_runtime={SESSION_RUNTIME}\n"
+            "runtime_provenance=session_reported\n"
+            "finalized_artifacts:\n"
+            f"{hashlib.sha256(DA_REPORT_BYTES).hexdigest()}  "
+            f"{len(DA_REPORT_BYTES)}  da-report.txt\n"
+        ).encode("utf-8")
+        row_bound_output = next(
+            item
+            for item in row_bound["artifacts"]
+            if item["id"] == "artifact:da-output"
+        )
+        row_bound_output["sha256"] = (
+            f"sha256:{hashlib.sha256(row_bound_bytes).hexdigest()}"
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_with_artifacts(directory, row_bound)
+            Path(directory, "da-report.txt").write_bytes(DA_REPORT_BYTES)
+            Path(directory, "chatgpt_data_analysis_output.txt").write_bytes(
+                row_bound_bytes
+            )
+            status, payload = self.invoke(path)
+        self.assertEqual(status, 0, payload)
+
+        for original, replacement in (
+            (f"  {len(DA_REPORT_BYTES)}  ", "  999999  "),
+            ("  da-report.txt\n", "  forged-name.md\n"),
+        ):
+            with self.subTest(replacement=replacement):
+                malformed = copy.deepcopy(row_bound)
+                bad_bytes = row_bound_bytes.replace(
+                    original.encode("utf-8"),
+                    replacement.encode("utf-8"),
+                )
+                output = next(
+                    item
+                    for item in malformed["artifacts"]
+                    if item["id"] == "artifact:da-output"
+                )
+                output["sha256"] = (
+                    f"sha256:{hashlib.sha256(bad_bytes).hexdigest()}"
+                )
+                with tempfile.TemporaryDirectory() as directory:
+                    path = self.write_with_artifacts(directory, malformed)
+                    Path(directory, "da-report.txt").write_bytes(DA_REPORT_BYTES)
+                    Path(
+                        directory, "chatgpt_data_analysis_output.txt"
+                    ).write_bytes(bad_bytes)
+                    status, payload = self.invoke(path)
+                self.assertEqual(status, 1)
+                self.assertIn(
+                    "RETURN_DATA_ANALYSIS_RUNTIME_BINDING_INVALID",
+                    {item["code"] for item in payload["findings"]},
+                )
+
+        wrong_provenance = copy.deepcopy(positive)
+        bad_bytes = (
+            f"session_reported_runtime={SESSION_RUNTIME}\n"
+            "runtime_provenance=independently_authenticated\n"
+        ).encode("utf-8")
+        output = next(
+            item
+            for item in wrong_provenance["artifacts"]
+            if item["id"] == "artifact:da-output"
+        )
+        output["sha256"] = f"sha256:{hashlib.sha256(bad_bytes).hexdigest()}"
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_with_artifacts(directory, wrong_provenance)
+            Path(directory, "da-report.txt").write_bytes(DA_REPORT_BYTES)
+            Path(directory, "chatgpt_data_analysis_output.txt").write_bytes(
+                bad_bytes
+            )
+            status, payload = self.invoke(path)
+        self.assertEqual(status, 1)
+        self.assertIn(
+            "RETURN_DATA_ANALYSIS_RUNTIME_BINDING_INVALID",
+            {item["code"] for item in payload["findings"]},
+        )
+
+        malformed_bindings = (
+            DA_OUTPUT_BYTES
+            + f"session_reported_runtime={SESSION_RUNTIME}\n".encode("utf-8"),
+            (
+                f"session_reported_runtime={SESSION_RUNTIME} suffix\n"
+                "runtime_provenance=session_reported\n"
+            ).encode("utf-8"),
+            DA_OUTPUT_BYTES + b"runtime_provenance=independently_authenticated\n",
+            DA_OUTPUT_BYTES
+            + b"0f4b6688f8f47f050bad1a1205a3adf1eb19f99841981a03f1f0bfe1ad1f3831  999999  forged-name.md\n",
+        )
+        for bad_bytes in malformed_bindings:
+            with self.subTest(bad_bytes=bad_bytes):
+                malformed = copy.deepcopy(positive)
+                output = next(
+                    item
+                    for item in malformed["artifacts"]
+                    if item["id"] == "artifact:da-output"
+                )
+                output["sha256"] = (
+                    f"sha256:{hashlib.sha256(bad_bytes).hexdigest()}"
+                )
+                with tempfile.TemporaryDirectory() as directory:
+                    path = self.write_with_artifacts(directory, malformed)
+                    Path(directory, "da-report.txt").write_bytes(DA_REPORT_BYTES)
+                    Path(
+                        directory, "chatgpt_data_analysis_output.txt"
+                    ).write_bytes(bad_bytes)
+                    status, payload = self.invoke(path)
+                self.assertEqual(status, 1)
+                self.assertIn(
+                    "RETURN_DATA_ANALYSIS_RUNTIME_BINDING_INVALID",
+                    {item["code"] for item in payload["findings"]},
+                )
 
     def test_evidence_cannot_relabel_request_report_or_other_artifacts(self):
         cases = (("artifact:request", None), ("artifact:report", None), ("artifact:evidence", "other"))
@@ -495,8 +842,55 @@ class AuditReturnDeskTests(unittest.TestCase):
             status, payload = self.invoke(self.write_with_artifacts(directory, raw))
         self.assertEqual(status, 0)
         self.assertEqual(payload["decision"], "no_blocking_findings_with_warnings")
-        self.assertIn("RETURN_EVIDENCE_UNVERIFIED", {finding["code"] for finding in payload["findings"]})
-        self.assertIn("RETURN_INTERNALLY_CONSISTENT", {finding["code"] for finding in payload["findings"]})
+        codes = {finding["code"] for finding in payload["findings"]}
+        self.assertIn("RETURN_EVIDENCE_UNVERIFIED", codes)
+        self.assertIn("RETURN_INTERNALLY_CONSISTENT", codes)
+        self.assertNotIn("RETURN_OBLIGATION_SCOPE_MISMATCH", codes)
+
+    def test_obligation_claim_gate_and_evidence_scopes_are_closed(self):
+        def scoped_unrun() -> dict:
+            raw = self.valid()
+            raw["evidence"][0].update(status="unverified", result="inconclusive")
+            raw["fatal_gates"][0].update(state="unrun", obligation_ids=["obligation:replay"])
+            raw["unresolved_obligations"] = [
+                {
+                    "id": "obligation:replay",
+                    "statement": "Independently replay the structural check against the bound source.",
+                    "claim_ids": ["claim:fixture"],
+                    "gate_ids": ["gate:structural-consistency"],
+                    "evidence_ids": ["evidence:structural-check"],
+                }
+            ]
+            raw["summary_projection"].update(
+                admission="unrun",
+                unresolved_obligation_ids=["obligation:replay"],
+            )
+            return raw
+
+        for field in ("claim_ids", "gate_ids"):
+            with self.subTest(field=field):
+                mismatch = scoped_unrun()
+                mismatch["unresolved_obligations"][0][field] = []
+                with tempfile.TemporaryDirectory() as directory:
+                    status, payload = self.invoke(self.write_with_artifacts(directory, mismatch))
+                self.assertEqual(status, 1)
+                self.assertIn(
+                    "RETURN_OBLIGATION_SCOPE_MISMATCH",
+                    {item["code"] for item in payload["findings"]},
+                )
+
+        evidence_mismatch = scoped_unrun()
+        unrelated = copy.deepcopy(evidence_mismatch["evidence"][0])
+        unrelated.update(id="evidence:unrelated", claim_ids=[], gate_ids=[])
+        evidence_mismatch["evidence"].append(unrelated)
+        evidence_mismatch["unresolved_obligations"][0]["evidence_ids"] = ["evidence:unrelated"]
+        with tempfile.TemporaryDirectory() as directory:
+            status, payload = self.invoke(self.write_with_artifacts(directory, evidence_mismatch))
+        self.assertEqual(status, 1)
+        self.assertIn(
+            "RETURN_OBLIGATION_SCOPE_MISMATCH",
+            {item["code"] for item in payload["findings"]},
+        )
 
     def test_effective_decisive_and_inconclusive_evidence_preserve_conflict(self):
         raw = self.valid()

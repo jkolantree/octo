@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import unittest
@@ -87,25 +88,44 @@ class PublicationStatusTests(unittest.TestCase):
         gpt = self.status["official_custom_gpt"]
         self.assertEqual(gpt["availability"], "live")
         self.assertEqual(gpt["runtime_identity_smoke"], "pass")
-        self.assertEqual(gpt["complete_preview_gate_for_observed_version"], "not_completed")
+        self.assertIn(
+            gpt["complete_preview_gate_for_observed_version"],
+            {"not_completed", "pass_39_of_39"},
+        )
         self.assertIs(self.status["interpretation"]["live_does_not_mean_preview_validated"], True)
         self.assertIs(self.status["interpretation"]["source_ci_does_not_mean_custom_gpt_preview_validated"], True)
 
-    def test_candidate_identity_matches_canonical_source_but_not_observed_live_identity(self) -> None:
+    def test_candidate_and_observed_live_identities_follow_the_validation_state(self) -> None:
         profile = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
         candidate_version = self.status["next_repository_candidate"]["version"]
         self.assertEqual(candidate_version, profile["product"]["canonical_protocol_version"])
-        self.assertNotEqual(candidate_version, self.status["official_custom_gpt"]["observed_controller_version"])
         metadata = PROTOCOL_META_PATH.read_text(encoding="utf-8")
         self.assertIn(f'"version":"{candidate_version}"', metadata)
+        observed = self.status["official_custom_gpt"]
+        gate = observed["complete_preview_gate_for_observed_version"]
+        if gate == "pass_39_of_39":
+            self.assertEqual(observed["observed_controller_version"], candidate_version)
+            self.assertEqual(
+                observed["observed_profile_sha256"],
+                hashlib.sha256(PROFILE_PATH.read_bytes()).hexdigest(),
+            )
 
-    def test_japanese_pages_remain_pending_until_deployment_is_observed(self) -> None:
+    def test_japanese_pages_state_is_internally_consistent(self) -> None:
         route = self.status["github_pages"]["japanese_route"]
         self.assertEqual(route["url"], "https://jkolantree.github.io/octo/ja.html")
-        self.assertEqual(route["state"], "candidate_not_deployed")
-        self.assertEqual(route["observed_http_status"], 404)
         datetime.strptime(route["observed_at_utc"], "%Y-%m-%dT%H:%M:%SZ")
-        self.assertEqual(self.status["next_repository_candidate"]["japanese_pages_deployment"], "pending")
+        deployment = self.status["next_repository_candidate"]["japanese_pages_deployment"]
+        self.assertIn(route["state"], {"candidate_not_deployed", "deployed"})
+        if route["state"] == "candidate_not_deployed":
+            self.assertEqual(route["observed_http_status"], 404)
+            self.assertEqual(deployment, "pending")
+        else:
+            self.assertEqual(route["observed_http_status"], 200)
+            self.assertEqual(deployment, "deployed")
+            self.assertEqual(
+                self.status["github_pages"]["deployed_commit"],
+                self.status["github_main"]["commit"],
+            )
         self.assertIs(self.status["interpretation"]["candidate_source_does_not_mean_pages_deployed"], True)
 
     def test_public_docs_lead_with_official_gpt_and_link_status(self) -> None:
@@ -135,7 +155,22 @@ class PublicationStatusTests(unittest.TestCase):
             self.assertIn(public_url, text, relative)
             self.assertIn(phrase, text, relative)
 
-    def test_public_docs_do_not_promote_the_japanese_pages_candidate_as_live(self) -> None:
+    def test_public_docs_match_the_observed_japanese_pages_state(self) -> None:
+        route = self.status["github_pages"]["japanese_route"]
+        if route["state"] == "deployed":
+            for relative in (
+                "README.md",
+                "START_HERE.md",
+                "docs/index.md",
+                "docs/CUSTOM_GPT_STATUS.md",
+                "docs/SHARING_GUIDE.md",
+                "SHARE_THIS.md",
+            ):
+                text = (ROOT / relative).read_text(encoding="utf-8")
+                self.assertIn(route["url"], text, relative)
+                self.assertNotIn("candidate pending public deployment", text, relative)
+            return
+
         required_pending_language = {
             "README.md": "pending public deployment",
             "START_HERE.md": "pending public deployment",

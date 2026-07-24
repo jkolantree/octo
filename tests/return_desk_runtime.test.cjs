@@ -17,6 +17,7 @@ const HASHES = {
   evidence: `sha256:${"4".repeat(64)}`,
   protocol: `sha256:${"a".repeat(64)}`,
 };
+const SESSION_RUNTIME = "3.12.13 (session-reported test runtime)";
 
 function execution(activity, status) {
   const ran = status === "ran";
@@ -24,7 +25,7 @@ function execution(activity, status) {
     activity,
     status,
     tool: ran ? "BSC Custom GPT" : null,
-    version: ran ? "0.3.0-alpha.8.dev1" : null,
+    version: ran ? "0.3.0-alpha.8" : null,
     input_artifact_ids: ran ? ["artifact.request", "artifact.source"] : [],
     output_artifact_ids: ran ? ["artifact.report", "artifact.evidence"] : [],
     receipt_ids: [],
@@ -37,7 +38,7 @@ function validRecord() {
     return_version: "0.1.0",
     authority: "non_admissive_return_inspection",
     draft: true,
-    protocol: { version: "0.3.0-alpha.8.dev1", sha256: HASHES.protocol },
+    protocol: { version: "0.3.0-alpha.8", sha256: HASHES.protocol },
     bindings: { request_artifact_id: "artifact.request", report_artifact_id: "artifact.report" },
     audit_depth: "standard",
     primary_claim_id: "claim.main",
@@ -92,6 +93,49 @@ function validRecord() {
   };
 }
 
+function artifactBytes(record, artifact) {
+  if (artifact.id === record.bindings.report_artifact_id) {
+    const outputReferences = record.execution
+      .filter((item) => item.status === "ran" && item.activity !== "model_reasoning")
+      .flatMap((item) => item.output_artifact_ids)
+      .map((artifactId) => record.artifacts.find((item) => item.id === artifactId))
+      .filter((item) => item)
+      .map((item) => item.filename);
+    return Buffer.from(`Audit report.\nExecution details: ${outputReferences.join(", ")}\n`, "utf8");
+  }
+  if (artifact.id === "artifact.bsc-output") {
+    return Buffer.from("tool=bsc-audit\nversion=0.3.0a8\n", "utf8");
+  }
+  if (artifact.id === "artifact.da-output") {
+    const run = record.execution.find((item) => item.activity === "chatgpt_data_analysis");
+    const rows = run.output_artifact_ids
+      .filter((artifactId) => artifactId !== "artifact.da-output")
+      .map((artifactId) => record.artifacts.find((item) => item.id === artifactId))
+      .filter((item) => item && !["request", "source"].includes(item.role))
+      .map((item) => {
+        const bytes = artifactBytes(record, item);
+        return {
+          filename: item.filename,
+          bytes: bytes.byteLength,
+          sha256: item.sha256.slice("sha256:".length),
+        };
+      })
+      .sort((left, right) => (
+        left.filename < right.filename ? -1 : (left.filename > right.filename ? 1 : 0)
+      ));
+    return Buffer.from(
+      "bsc_chatgpt_data_analysis_output_version: 2\n"
+      + `session_reported_runtime=${SESSION_RUNTIME}\n`
+      + "runtime_provenance=session_reported\n"
+      + "finalized_artifacts:\n"
+      + rows.map((row) => `${row.sha256}  ${row.bytes}  ${row.filename}\n`).join(""),
+      "utf8",
+    );
+  }
+  if (artifact.filename.toLowerCase().endsWith(".json")) return Buffer.from(`{"artifact_id":${JSON.stringify(artifact.id)}}\n`, "utf8");
+  return Buffer.from(`${artifact.id}\tverified\r\n`, "utf8");
+}
+
 function options(record, omittedFilename = null) {
   return {
     contract: {
@@ -105,7 +149,10 @@ function options(record, omittedFilename = null) {
     protocol: { version: record.protocol.version, sha256: record.protocol.sha256.slice(7) },
     artifacts: record.artifacts
       .filter((item) => item.filename !== omittedFilename)
-      .map((item) => ({ name: item.filename, sha256: item.sha256, size: 1 })),
+      .map((item) => {
+        const bytes = artifactBytes(record, item);
+        return { name: item.filename, sha256: item.sha256, size: bytes.byteLength, bytes };
+      }),
   };
 }
 
@@ -119,7 +166,7 @@ function codes(result) {
 
 function bindEffectiveBscRun(record) {
   record.artifacts.push(
-    { id: "artifact.bsc-output", filename: "bsc-output.json", role: "execution_output", media_type: "application/json", sha256: `sha256:${"5".repeat(64)}` },
+    { id: "artifact.bsc-output", filename: "bsc-output.txt", role: "execution_output", media_type: "text/plain", sha256: `sha256:${"5".repeat(64)}` },
     { id: "artifact.bsc-receipt", filename: "bsc-receipt.json", role: "receipt", media_type: "application/json", sha256: `sha256:${"6".repeat(64)}` },
   );
   record.receipts.push({
@@ -135,11 +182,31 @@ function bindEffectiveBscRun(record) {
   Object.assign(run, {
     status: "ran",
     tool: "bsc-audit",
-    version: "0.3.0a8.dev1",
+    version: "0.3.0a8",
     input_artifact_ids: ["artifact.request", "artifact.source"],
     output_artifact_ids: ["artifact.bsc-output"],
     receipt_ids: ["receipt.bsc"],
     notes: "Bound positive control for execution-to-evidence linkage.",
+  });
+}
+
+function bindDataAnalysisRun(record) {
+  record.artifacts.push({
+    id: "artifact.da-output",
+    filename: "chatgpt_data_analysis_output.txt",
+    role: "execution_output",
+    media_type: "text/plain",
+    sha256: `sha256:${"7".repeat(64)}`,
+  });
+  const run = record.execution.find((item) => item.activity === "chatgpt_data_analysis");
+  Object.assign(run, {
+    status: "ran",
+    tool: "Python",
+    version: SESSION_RUNTIME,
+    input_artifact_ids: ["artifact.request", "artifact.source"],
+    output_artifact_ids: ["artifact.da-output"],
+    receipt_ids: [],
+    notes: "The runtime is session-reported, not independently authenticated.",
   });
 }
 
@@ -281,6 +348,27 @@ test("missing request bytes need review while a hash mismatch blocks", () => {
   assert.ok(codes(mismatchResult).has("RETURN_ARTIFACT_HASH_MISMATCH"));
 });
 
+test("hash-verified text artifacts require strict UTF-8 and portable controls", () => {
+  const invalidUtf8 = validRecord();
+  const invalidUtf8Options = options(invalidUtf8);
+  invalidUtf8Options.artifacts.find((item) => item.name === "report.txt").bytes = Buffer.from([0xc3, 0x28]);
+  const encodingResult = inspect(invalidUtf8, invalidUtf8Options);
+  assert.equal(encodingResult.outcome, "blocked");
+  assert.ok(codes(encodingResult).has("RETURN_ARTIFACT_TEXT_ENCODING_INVALID"));
+
+  const invalidControl = validRecord();
+  const invalidControlOptions = options(invalidControl);
+  invalidControlOptions.artifacts.find((item) => item.name === "evidence.json").bytes = Buffer.from('{"value":"before"}\f{"value":"after"}\n', "utf8");
+  const controlResult = inspect(invalidControl, invalidControlOptions);
+  assert.equal(controlResult.outcome, "blocked");
+  assert.ok(codes(controlResult).has("RETURN_ARTIFACT_TEXT_CONTROL_INVALID"));
+
+  const allowedControls = validRecord();
+  const allowedOptions = options(allowedControls);
+  allowedOptions.artifacts.find((item) => item.name === "report.txt").bytes = Buffer.from("heading\tvalue\r\nnext line\n", "utf8");
+  assert.equal(inspect(allowedControls, allowedOptions).outcome, "consistent");
+});
+
 test("file-only access cannot support verified evidence", () => {
   const record = validRecord();
   record.evidence[0].execution_activities = ["chatgpt_data_analysis"];
@@ -340,6 +428,42 @@ test("globally valid but unrelated execution cannot support evidence", () => {
   assert.ok(codes(result).has("RETURN_EVIDENCE_EXECUTION_BINDING_MISMATCH"));
 });
 
+test("every evidence-role artifact must be an output of a cited execution", () => {
+  const record = validRecord();
+  record.artifacts.push({
+    id: "artifact.additional-evidence",
+    filename: "additional-evidence.json",
+    role: "evidence",
+    media_type: "application/json",
+    sha256: `sha256:${"7".repeat(64)}`,
+  });
+  record.evidence[0].artifact_ids.push("artifact.additional-evidence");
+  const result = inspect(record);
+  assert.equal(result.outcome, "blocked");
+  assert.ok(codes(result).has("RETURN_EVIDENCE_SUPPORT_OUTPUT_MISMATCH"));
+
+  const unverified = structuredClone(record);
+  Object.assign(unverified.evidence[0], { status: "unverified", result: "inconclusive" });
+  Object.assign(unverified.fatal_gates[0], {
+    state: "unrun",
+    obligation_ids: ["obligation.verify-output"],
+  });
+  unverified.unresolved_obligations = [{
+    id: "obligation.verify-output",
+    statement: "Verify that every support artifact came from the cited execution.",
+    claim_ids: ["claim.main"],
+    gate_ids: ["gate.structure"],
+    evidence_ids: ["evidence.analysis"],
+  }];
+  Object.assign(unverified.summary_projection, {
+    admission: "unrun",
+    unresolved_obligation_ids: ["obligation.verify-output"],
+  });
+  const unverifiedResult = inspect(unverified);
+  assert.equal(unverifiedResult.outcome, "needs_review");
+  assert.ok(!codes(unverifiedResult).has("RETURN_EVIDENCE_SUPPORT_OUTPUT_MISMATCH"));
+});
+
 test("critical execution needs exact evidence, receipt, and scope bindings", () => {
   const record = validRecord();
   bindEffectiveBscRun(record);
@@ -361,6 +485,133 @@ test("critical execution needs exact evidence, receipt, and scope bindings", () 
   const mismatched = inspect(record);
   assert.equal(mismatched.outcome, "blocked");
   assert.ok(codes(mismatched).has("RETURN_RECEIPT_SCOPE_MISMATCH"));
+});
+
+test("critical canonical activities cannot hide behind not_applicable", () => {
+  for (const activity of ["bsc_python_checker", "external_proof_tool", "empirical_test"]) {
+    const record = validRecord();
+    record.execution.find((item) => item.activity === activity).status = "not_applicable";
+    const result = inspect(record);
+    assert.equal(result.outcome, "blocked", activity);
+    assert.ok(codes(result).has("RETURN_EXECUTION_NOT_APPLICABLE_MISUSED"), activity);
+  }
+
+  const proposed = validRecord();
+  proposed.execution.find((item) => item.activity === "proposed_computation").status = "not_applicable";
+  assert.equal(inspect(proposed).outcome, "consistent");
+});
+
+test("ran non-model execution versions bind once in an output that the report references", () => {
+  const record = validRecord();
+  bindEffectiveBscRun(record);
+  const positive = options(record);
+  const reportBytes = positive.artifacts.find((item) => item.name === "report.txt").bytes;
+  assert.equal(reportBytes.includes(Buffer.from("0.3.0a8", "utf8")), false);
+  assert.equal(inspect(record, positive).outcome, "consistent");
+
+  const unboundVersion = options(record);
+  unboundVersion.artifacts.find((item) => item.name === "bsc-output.txt").bytes = Buffer.from("tool=bsc-audit\nversion=0.3.0a7\n", "utf8");
+  const unboundVersionResult = inspect(record, unboundVersion);
+  assert.equal(unboundVersionResult.outcome, "blocked");
+  assert.ok(codes(unboundVersionResult).has("RETURN_EXECUTION_VERSION_UNBOUND"));
+
+  const unreferencedOutput = options(record);
+  unreferencedOutput.artifacts.find((item) => item.name === "report.txt").bytes = Buffer.from("Audit report without an execution-output reference.\n", "utf8");
+  const unreferencedOutputResult = inspect(record, unreferencedOutput);
+  assert.equal(unreferencedOutputResult.outcome, "blocked");
+  assert.ok(codes(unreferencedOutputResult).has("RETURN_EXECUTION_OUTPUT_NOT_REFERENCED"));
+});
+
+test("Data Analysis runtime uses one session-reported output binding", () => {
+  const record = validRecord();
+  bindDataAnalysisRun(record);
+  const positive = options(record);
+  const reportBytes = positive.artifacts.find((item) => item.name === "report.txt").bytes;
+  assert.equal(reportBytes.includes(Buffer.from(SESSION_RUNTIME, "utf8")), false);
+  assert.equal(inspect(record, positive).outcome, "consistent");
+
+  const rowBound = structuredClone(record);
+  rowBound.execution.find(
+    (item) => item.activity === "chatgpt_data_analysis",
+  ).output_artifact_ids = ["artifact.report", "artifact.da-output"];
+  const rowBoundOptions = options(rowBound);
+  assert.equal(inspect(rowBound, rowBoundOptions).outcome, "consistent");
+  for (const [pattern, replacement] of [
+    [/  \d+  report\.txt\n/, "  999999  report.txt\n"],
+    ["  report.txt\n", "  forged-name.md\n"],
+  ]) {
+    const malformed = options(rowBound);
+    const output = malformed.artifacts.find(
+      (item) => item.name === "chatgpt_data_analysis_output.txt",
+    );
+    output.bytes = Buffer.from(
+      output.bytes.toString("utf8").replace(pattern, replacement),
+      "utf8",
+    );
+    const result = inspect(rowBound, malformed);
+    assert.equal(result.outcome, "blocked");
+    assert.ok(codes(result).has("RETURN_DATA_ANALYSIS_RUNTIME_BINDING_INVALID"));
+  }
+
+  const badProvenance = options(record);
+  badProvenance.artifacts.find(
+    (item) => item.name === "chatgpt_data_analysis_output.txt",
+  ).bytes = Buffer.from(
+    "bsc_chatgpt_data_analysis_output_version: 2\n"
+    + `session_reported_runtime=${SESSION_RUNTIME}\n`
+    + "runtime_provenance=independently_authenticated\n"
+    + "finalized_artifacts:\n",
+    "utf8",
+  );
+  const badProvenanceResult = inspect(record, badProvenance);
+  assert.equal(badProvenanceResult.outcome, "blocked");
+  assert.ok(
+    codes(badProvenanceResult).has(
+      "RETURN_DATA_ANALYSIS_RUNTIME_BINDING_INVALID",
+    ),
+  );
+
+  for (const badBytes of [
+    Buffer.from(
+      "bsc_chatgpt_data_analysis_output_version: 2\n"
+      + `session_reported_runtime=${SESSION_RUNTIME}\n`
+      + "runtime_provenance=session_reported\n"
+      + "finalized_artifacts:\n"
+      + `session_reported_runtime=${SESSION_RUNTIME}\n`,
+      "utf8",
+    ),
+    Buffer.from(
+      "bsc_chatgpt_data_analysis_output_version: 2\n"
+      + `session_reported_runtime=${SESSION_RUNTIME} suffix\n`
+      + "runtime_provenance=session_reported\n"
+      + "finalized_artifacts:\n",
+      "utf8",
+    ),
+    Buffer.from(
+      "bsc_chatgpt_data_analysis_output_version: 2\n"
+      + `session_reported_runtime=${SESSION_RUNTIME}\n`
+      + "runtime_provenance=session_reported\n"
+      + "finalized_artifacts:\n"
+      + "runtime_provenance=independently_authenticated\n",
+      "utf8",
+    ),
+    Buffer.from(
+      "bsc_chatgpt_data_analysis_output_version: 2\n"
+      + `session_reported_runtime=${SESSION_RUNTIME}\n`
+      + "runtime_provenance=session_reported\n"
+      + "finalized_artifacts:\n"
+      + "0f4b6688f8f47f050bad1a1205a3adf1eb19f99841981a03f1f0bfe1ad1f3831  999999  forged-name.md\n",
+      "utf8",
+    ),
+  ]) {
+    const malformed = options(record);
+    malformed.artifacts.find(
+      (item) => item.name === "chatgpt_data_analysis_output.txt",
+    ).bytes = badBytes;
+    const result = inspect(record, malformed);
+    assert.equal(result.outcome, "blocked");
+    assert.ok(codes(result).has("RETURN_DATA_ANALYSIS_RUNTIME_BINDING_INVALID"));
+  }
 });
 
 test("receipt bytes and receipt IDs cannot be relabeled across records or activities", () => {
@@ -536,6 +787,53 @@ test("honest unverified evidence remains review-needed", () => {
   assert.equal(result.outcome, "needs_review", JSON.stringify(result.findings));
   assert.ok(codes(result).has("RETURN_EVIDENCE_UNVERIFIED"));
   assert.ok(codes(result).has("RETURN_INTERNALLY_CONSISTENT"));
+});
+
+test("unresolved obligations keep coherent claim, gate, and optional evidence scope", () => {
+  function obligationRecord(evidenceIds = []) {
+    const record = validRecord();
+    Object.assign(record.evidence[0], { status: "unverified", result: "inconclusive" });
+    Object.assign(record.fatal_gates[0], {
+      state: "unrun",
+      obligation_ids: ["obligation.replay"],
+    });
+    record.unresolved_obligations = [{
+      id: "obligation.replay",
+      statement: "Replay the unresolved structural check.",
+      claim_ids: ["claim.main"],
+      gate_ids: ["gate.structure"],
+      evidence_ids: evidenceIds,
+    }];
+    Object.assign(record.summary_projection, {
+      admission: "unrun",
+      unresolved_obligation_ids: ["obligation.replay"],
+    });
+    return record;
+  }
+
+  const missingEvidence = obligationRecord();
+  const missingEvidenceResult = inspect(missingEvidence);
+  assert.equal(missingEvidenceResult.outcome, "needs_review");
+  assert.ok(!codes(missingEvidenceResult).has("RETURN_OBLIGATION_SCOPE_MISMATCH"));
+
+  const emptyScope = obligationRecord();
+  Object.assign(emptyScope.unresolved_obligations[0], { claim_ids: [], gate_ids: [] });
+  const emptyScopeResult = inspect(emptyScope);
+  assert.equal(emptyScopeResult.outcome, "blocked");
+  assert.ok(codes(emptyScopeResult).has("RETURN_OBLIGATION_SCOPE_MISMATCH"));
+
+  const unownedGate = obligationRecord();
+  unownedGate.claims[0].fatal_gate_ids = [];
+  const unownedResult = inspect(unownedGate);
+  assert.equal(unownedResult.outcome, "blocked");
+  assert.ok(codes(unownedResult).has("RETURN_OBLIGATION_SCOPE_MISMATCH"));
+
+  const disjointEvidence = obligationRecord(["evidence.analysis"]);
+  disjointEvidence.evidence[0].claim_ids = [];
+  disjointEvidence.evidence[0].gate_ids = [];
+  const disjointResult = inspect(disjointEvidence);
+  assert.equal(disjointResult.outcome, "blocked");
+  assert.ok(codes(disjointResult).has("RETURN_OBLIGATION_SCOPE_MISMATCH"));
 });
 
 test("required human-semantic strings cannot be blank", () => {
@@ -731,10 +1029,12 @@ test("browser runtime discriminates every canonical Return Desk fixture", () => 
     const artifacts = record.artifacts.flatMap((item) => {
       const local = path.join(ROOT, "examples", item.filename);
       if (!fs.existsSync(local)) return [];
+      const bytes = fs.readFileSync(local);
       return [{
         name: item.filename,
-        sha256: `sha256:${crypto.createHash("sha256").update(fs.readFileSync(local)).digest("hex")}`,
-        size: fs.statSync(local).size,
+        sha256: `sha256:${crypto.createHash("sha256").update(bytes).digest("hex")}`,
+        size: bytes.byteLength,
+        bytes,
       }];
     });
     const result = desk.inspectReturn(JSON.stringify(record), {

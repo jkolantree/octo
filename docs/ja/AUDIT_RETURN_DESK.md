@@ -25,6 +25,19 @@ accepted envelope は次の値を厳密に維持しなければなりません�
 
 closed schema は [`schemas/audit-return-v0.1.schema.json`](../../schemas/audit-return-v0.1.schema.json) です。canonical production rules は [LLM Audit Packet](../../BSC_AUDIT_LLM_PACKET.md) にあります。generated model output は Desk に対しても untrusted input です。
 
+## Deterministic producer transaction
+
+Custom GPT の machine record は、`BSC_EXECUTION_AND_RECEIPTS.md` に埋め込まれた完全な canonical `scripts/gpt_artifact_compiler.py` source によって finalize しなければなりません。model はその source を実行し、その動作を prose で再現したり、代替 finalizer を書いたりしてはいけません。
+
+compiler は、一度だけ capture した session-reported runtime、exact frozen request/source/evidence bytes、report body、structured return template を受け取ります。report を finalize し、final bytes から artifact identities と runtime ledger を導出し、execution/evidence topology を validate し、`chatgpt_data_analysis_output.txt` を書き、最後に `audit_return.json` を serialize します。compiler failure があれば return と、artifact production の成功に依存するすべての conclusion を禁止します。matching final snapshot だけでは historical write order を証明しないため、compiler execution と保存された output も candidate evidence の一部です。
+
+standard Custom GPT artifact transaction の execution topology は固定です。
+
+- `model_reasoning` の input は request、exact case target、6 個すべての canonical Knowledge files です。output は model-produced の role-`evidence` artifact すべてと `audit_report.md` です。`receipt_ids` は empty です。
+- `chatgpt_data_analysis` の input も同じです。output はそれらの evidence artifacts、`audit_report.md`、`chatgpt_data_analysis_output.txt` です。`receipt_ids` は empty です。
+
+external receipt は、それを実際に生成した external activity だけに属します。model reasoning や Data Analysis への alias にしてはいけません。
+
 ## Browser workflow
 
 1. Pages module を開き、表示された protocol version と verification state が intended workflow と一致することを確認する。
@@ -88,3 +101,9 @@ missing bytes は通常 review-needed status になります。declared hash mis
 | malformed、contradictory、unsupported、stale、integrity-failing | `blocked` | `blocked`、または schema/malformed input では `prohibited` |
 
 これら outcome は research verdict、evidence maturity、execution status、gate state、deployment status、他 BSC route の decision とは別 coordinate です。
+
+## Preview transport boundary
+
+evaluation controller は最初に direct generated-file control を試みます。interface が direct download を提供しない場合、または observable download event がない場合、controller は 1 filename だけを対象とする exact fallback prompt を送信できます。candidate はその file に対して compiler の `export-wrapper` command を新たに実行し、他の prose を付けず、1 個の code block 内に 1 個の strict JSON object を返さなければなりません。固定 fallback order は `audit_return.json`、`chatgpt_data_analysis_output.txt`、その後に残りの generated output を各 turn 1 file ずつです。
+
+controller は exact code-block text bytes と完全な transport-response `outerHTML` を別々に保存し、response にその 1 個の wrapper だけが含まれることを証明してから parse/decode します。parsed object の re-serialize は raw transport record ではなく、trial を `trial_invalid_controller` にします。strict Base64、size、digest、local-byte agreement が証明するのは、実際に受け取った exported payload の identity だけです。original download-button bytes が unavailable のままなら、その identity は `transport_identity_unresolved` であり、identity も corruption も確立されていません。

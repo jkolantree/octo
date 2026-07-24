@@ -23,6 +23,36 @@ Every accepted envelope must keep these values exactly:
 
 The closed schema is [`schemas/audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json). The canonical production rules are in the [LLM Audit Packet](../BSC_AUDIT_LLM_PACKET.md). Generated model output is still untrusted input to the Desk.
 
+## Deterministic producer transaction
+
+Custom GPT machine records must be finalized by the complete canonical
+`scripts/gpt_artifact_compiler.py` source embedded in
+`BSC_EXECUTION_AND_RECEIPTS.md`. The model must execute that source, not
+reproduce its behavior in prose or write a substitute finalizer.
+
+The compiler accepts the one captured session-reported runtime, exact frozen
+request/source/evidence bytes, a report body, and a structured return template.
+It finalizes the report, derives artifact identities and the runtime ledger from
+the final bytes, validates execution/evidence topology, writes
+`chatgpt_data_analysis_output.txt`, and serializes `audit_return.json` last. A
+compiler failure prohibits the return and every conclusion that depended on
+successful artifact production. A matching final snapshot does not, by itself,
+prove the historical write order; compiler execution and its preserved output
+are therefore part of the candidate evidence.
+
+For the standard Custom GPT artifact transaction, the execution topology is
+fixed:
+
+- `model_reasoning` inputs are the request, exact case target, and all six
+  canonical Knowledge files; its outputs are every model-produced
+  role-`evidence` artifact and `audit_report.md`; `receipt_ids` is empty.
+- `chatgpt_data_analysis` has those same inputs; its outputs are those evidence
+  artifacts, `audit_report.md`, and
+  `chatgpt_data_analysis_output.txt`; `receipt_ids` is empty.
+
+External receipts belong only to their actual external activity. They cannot be
+aliased to model reasoning or Data Analysis.
+
 ## Browser workflow
 
 1. Open the Pages module and confirm that its displayed protocol version and verification state match the workflow you intend to use.
@@ -84,3 +114,23 @@ Missing bytes normally cause review-needed status. A declared hash mismatch, pla
 | Malformed, contradictory, unsupported, stale, or integrity-failing | `blocked` | `blocked` or `prohibited` for schema/malformed input |
 
 These outcomes are a separate coordinate from research verdict, evidence maturity, execution status, gate state, deployment status, and the decisions of other BSC routes.
+
+## Preview transport boundary
+
+The evaluation controller first attempts the direct generated-file control. If
+the interface exposes no direct download or no observable download event, the
+controller may issue its exact fallback prompt for one filename only. The
+candidate must execute the compiler's `export-wrapper` command freshly for that
+file and return one strict JSON object in one code block, with no other prose.
+The fixed fallback order is `audit_return.json`,
+`chatgpt_data_analysis_output.txt`, then each remaining generated output in its
+own turn.
+
+The controller preserves the exact code-block text bytes and the full
+transport-response `outerHTML` separately, proves that the response contains
+exactly that one wrapper, and only then parses or decodes it. Re-serializing a parsed object is
+not a raw transport record and makes the trial `trial_invalid_controller`.
+Strict Base64, size, digest, and local-byte agreement establishes only the
+identity of the exported payload actually received. If the original
+download-button bytes remain unavailable, their identity is
+`transport_identity_unresolved`; neither identity nor corruption is established.

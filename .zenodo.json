@@ -1,13 +1,13 @@
 {
   "title": "BSC Audit Engine: Fail-Closed Audit-Descent Kernel",
-  "description": "Version 0.3.0-alpha.7 is a public research preview of a fail-closed structural checker for typed scientific claims. It strengthens the deterministic repository-backed Custom GPT controller so a reconstructed repair cannot promote a missing or truncated submitted proof, and it generates an exact depth-explicit Preview prompt for each of 27 evaluation cases. The five Knowledge files, integrity checks, Builder-bounded controller, and canonical audit depths and output order remain deterministic. The release package remains unpublished as a verified GPT configuration until the complete corrected Preview gate passes, adds no Action or verification API, and does not enlarge the Python engine's proof authority. ChatGPT uploads are processed under the user's applicable terms and settings and are not local-only. A clear run means only that no implemented blocking condition fired on the declared input. This metadata applies to the Apache-2.0 software release assets; research material under research/ is separately governed by CC BY 4.0.",
+  "description": "Version 0.3.0-alpha.8 is a public research preview of a fail-closed structural checker for typed scientific claims. It adds the non-admissive Audit Return Desk, matching Python and browser checks, a deterministic six-file Custom GPT Knowledge package, a complete 39-case Preview regression policy, and a controller that separates candidate failure, invalid-controller trials, and unresolved transport identity. Artifact generation captures one session-reported runtime and derives hashes, sizes, report projections, and the structured return from final bytes without granting proof or deployment authority. The package adds no Action or verification API. ChatGPT uploads are processed under the user's applicable terms and settings and are not local-only. A clear run means only that no implemented blocking condition fired on the declared input. This metadata applies to the Apache-2.0 software release assets; research material under research/ is separately governed by CC BY 4.0.",
   "creators": [
     {"name": "Tree, J."}
   ],
   "license": "Apache-2.0",
   "upload_type": "software",
-  "version": "0.3.0-alpha.7",
-  "publication_date": "2026-07-21",
+  "version": "0.3.0-alpha.8",
+  "publication_date": "2026-07-23",
   "keywords": [
     "certificate transport",
     "scientific audit",
