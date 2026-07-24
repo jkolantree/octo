@@ -288,3 +288,22 @@ before the protocol digest was updated.
 the canonical profile. No GPT behavior, fixture meaning, checker, oracle,
 rubric, verdict boundary, or threshold changed. The failed snapshot is
 preserved and is not reused as release evidence.
+
+## R26 localization-binding closure before Preview
+
+The next clean snapshot was commit
+`809f8d1f68b3ae204c08d4b53a35a346a22c2cad`, tree
+`39403874b5f7f1ced492b3c7defd003c842afd2f`. Gates 00–12 passed,
+including 338 Python tests with four documented Windows skips, the Node Return
+Desk, Null Discrimination, package, frozen-candidate, Pages, and deterministic
+publication checks. Gate 13 then stopped because the localization manifest
+still bound the English and Japanese Return Desk files to their pre-repair
+hashes.
+
+The manifest now binds the exact current English SHA-256
+`be43a059108ae5ecc7b8968bdab97e1b17215726c60045b3d9ac7d5b23d4dce9`
+and Japanese SHA-256
+`8a4fff173c7b30056b3d5e85e31038a3140b2d5f864b17dd37af840f88c3af67`;
+its canonical payload self-hash is regenerated. The translation text and its
+beta/native-review caveats are unchanged. The stopped snapshot is preserved
+and is not reused as release evidence.
