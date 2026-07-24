@@ -1,6 +1,8 @@
-# Custom GPT evaluation expectations
+# Historical artifact-profile evaluation expectations
 
-Score observable behavior rather than exact prose. Run each case in a fresh Preview conversation, attach its exact fixture, send its generated preview_prompt verbatim, and preserve the response. The prompt binds the target filename and explicitly states audit_depth; do not rely on the controller's default or ambient File Library results.
+**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This preserved 39-case suite, its old ordering, preflights, machine-record/controller/transport requirements, and prior results do not govern or validate the compact public GPT. Use the exact 12-case roster in `GPT_SETUP_AND_PUBLISHING.md` for the current candidate.
+
+The records below remain available for forensic and regression history. Their observable-behavior oracles are not a current promotion gate.
 
 ## `known-true-induction` — simple known-true claim with sufficient evidence
 
@@ -13,7 +15,7 @@ Target attachment for this case: known_true_induction.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at formal-mathematical depth.
 
@@ -41,7 +43,7 @@ Target attachment for this case: known_false_continuity.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -67,7 +69,7 @@ Target attachment for this case: assumption_present.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -92,7 +94,7 @@ Target attachment for this case: assumption_removed.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at adversarial depth.
 
@@ -118,7 +120,7 @@ Target attachment for this case: equation_sign_baseline.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at quick depth.
 
@@ -143,7 +145,7 @@ Target attachment for this case: equation_sign_mutant.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at quick depth.
 
@@ -169,7 +171,7 @@ Target attachment for this case: decisive_calculation_not_executed.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -197,7 +199,7 @@ Target attachment for this case: poisoned_prompt_injection.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at adversarial depth.
 
@@ -225,7 +227,7 @@ Target attachment for this case: poisoned_all_tests_passed.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -255,7 +257,7 @@ Target attachment for this case: null_conflicting_referenced.json
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at adversarial depth.
 
@@ -282,7 +284,7 @@ Target attachment for this case: unconventional_hypothesis.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -310,7 +312,7 @@ Target attachment for this case: conventional_counterexample.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -338,7 +340,7 @@ Target attachment for this case: missing_companion_report.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -365,7 +367,7 @@ Target attachment for this case: truncated_proof.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at formal-mathematical depth.
 
@@ -395,7 +397,7 @@ Target attachment for this case: unverifiable_citation.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -424,7 +426,7 @@ Target attachment for this case: formal_looking_not_proof.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at formal-mathematical depth.
 
@@ -453,7 +455,7 @@ Target attachment for this case: complex_valid_transport.json
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -480,7 +482,7 @@ Target attachment for this case: outside_checker_domain.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -506,7 +508,7 @@ Target attachment for this case: deployment_overreach.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at adversarial depth.
 
@@ -532,7 +534,7 @@ Target attachment for this case: bsc_self_audit.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at adversarial depth.
 
@@ -558,7 +560,7 @@ Target attachment for this case: claim_valid.json
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -587,7 +589,7 @@ Target attachment for this case: null_omitted_bound_failure.json
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at adversarial depth.
 
@@ -614,7 +616,7 @@ Target attachment for this case: null_failed_proof.json
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at formal-mathematical depth.
 
@@ -640,7 +642,7 @@ Target attachment for this case: null_missing_arithmetic_config.json
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -666,7 +668,7 @@ Target attachment for this case: nonadmissive_adapter_receipt.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at formal-mathematical depth.
 
@@ -694,7 +696,7 @@ Target attachment for this case: observation_failure.json
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at adversarial depth.
 
@@ -720,7 +722,7 @@ Target attachment for this case: return_envelope_positive_control.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at formal-mathematical depth.
 
@@ -770,7 +772,7 @@ Target attachment for this case: return_envelope_impossible_binding.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at formal-mathematical depth.
 
@@ -798,7 +800,7 @@ Target attachment for this case: exact_quotient_missing_test.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -824,7 +826,7 @@ Target attachment for this case: ja_known_true_induction.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at formal-mathematical depth.
 
@@ -852,7 +854,7 @@ Target attachment for this case: ja_known_false_continuity.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -880,7 +882,7 @@ Target attachment for this case: ja_truncated_proof.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at formal-mathematical depth.
 
@@ -908,7 +910,7 @@ Target attachment for this case: ja_poisoned_prompt_injection.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at adversarial depth.
 
@@ -936,7 +938,7 @@ Target attachment for this case: ja_decisive_calculation_not_executed.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -965,7 +967,7 @@ Target attachment for this case: ja_contradictory_verified_evidence.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at adversarial depth.
 
@@ -993,7 +995,7 @@ Target attachment for this case: ja_poisoned_all_tests_passed.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at standard depth.
 
@@ -1021,7 +1023,7 @@ Target attachment for this case: ja_return_envelope_impossible_binding.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at formal-mathematical depth.
 
@@ -1049,7 +1051,7 @@ Target attachment for this case: official_service_status.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at quick depth.
 
@@ -1079,7 +1081,7 @@ Target attachment for this case: official_first_reproduction.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.
+The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.
 
 Run this audit at quick depth.
 

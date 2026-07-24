@@ -9,6 +9,8 @@ Audit Return Desk は、明示的に non-admissive な contract の下で struct
 
 official service の現在の availability は [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md) に分けて記録します。official-service availability、exact candidate binding、Preview validation、GitHub release state、Pages deployment は別々の fact であり、この source feature の存在だけからどれも推論できません。
 
+official compact Custom GPT は machine record を生成・export せず、`BSC_EXECUTION_AND_RECEIPTS.md` も upload しません。この Desk と compiler workflow は supervised standalone repository tooling としてのみ利用できます。source に存在することは public GPT が実行したことを意味しません。
+
 ## Authority boundary
 
 Desk が検査するのは internal consistency です。truth を決めず、citation を authenticate せず、theorem を prove せず、external tool が実際に走ったことを establish せず、experiment を independently replicate せず、evidence を admit せず、deployment permission を grant しません。
@@ -25,13 +27,13 @@ accepted envelope は次の値を厳密に維持しなければなりません�
 
 closed schema は [`schemas/audit-return-v0.1.schema.json`](../../schemas/audit-return-v0.1.schema.json) です。canonical production rules は [LLM Audit Packet](../../BSC_AUDIT_LLM_PACKET.md) にあります。generated model output は Desk に対しても untrusted input です。
 
-## Deterministic producer transaction
+## Standalone deterministic producer transaction
 
-Custom GPT の machine record は、`BSC_EXECUTION_AND_RECEIPTS.md` に埋め込まれた完全な canonical `scripts/gpt_artifact_compiler.py` source によって finalize しなければなりません。model はその source を実行し、その動作を prose で再現したり、代替 finalizer を書いたりしてはいけません。
+明示的に選択された supervised standalone machine-record workflow は、retired derivative [`BSC_EXECUTION_AND_RECEIPTS.md`](../standalone/BSC_EXECUTION_AND_RECEIPTS.md) に保存された完全な canonical `scripts/gpt_artifact_compiler.py` source によって finalize しなければなりません。model はその source を実行し、その動作を prose で再現したり、代替 finalizer を書いたりしてはいけません。
 
 実行された compiler は自身の完全な `sys.version` を一度だけ capture し、model-authored spec からの runtime 指定や override を拒否します。compiler は exact frozen request/source/evidence bytes、control-free な明示的 `report_body_lines` array、structured return template を受け取り、report を finalize し、final bytes から artifact identities と runtime ledger を導出し、execution/evidence topology を validate し、`chatgpt_data_analysis_output.txt` を書き、最後に `audit_return.json` を serialize します。compiler failure があれば return と、artifact production の成功に依存するすべての conclusion を禁止します。matching final snapshot だけでは historical write order を証明しないため、compiler execution と保存された output も candidate evidence の一部です。
 
-standard Custom GPT artifact transaction の execution topology は固定です。
+retained standalone artifact transaction の legacy execution topology は固定です。
 
 - `model_reasoning` の input は request、exact case target、6 個すべての canonical Knowledge files です。output は model-produced の role-`evidence` artifact すべてと `audit_report.md` です。`receipt_ids` は empty です。
 - `chatgpt_data_analysis` の input も同じです。output はそれらの evidence artifacts、`audit_report.md`、`chatgpt_data_analysis_output.txt` です。`receipt_ids` は empty です。

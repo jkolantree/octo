@@ -1,6 +1,9 @@
-# Manual Preview scorecard
+# Historical artifact-profile Manual Preview scorecard
 
-Score every dimension from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.
+**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This scorecard is preserved for historical evidence only and is not the current compact-profile Preview gate. No old score transfers to the compact candidate.
+
+Historically, every dimension was scored from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Under that retired suite, promotion or validation required every case to score at least 18/20 and incur no automatic failure; a failed case could not be averaged away.
+Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.
 
 Scientific cases require a nonempty observed research projection whose verdicts are in the frozen oracle. Status-only cases require the exact empty projection `{}`; inventing a scientific verdict is a candidate failure, not a controller escape hatch.
 

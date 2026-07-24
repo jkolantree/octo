@@ -2,9 +2,17 @@
 
 Alpha.8 is designated as a public research preview of the BSC Audit Engine and the repository-backed BSC Claim Auditor configuration. That designation does not itself establish publication; publication status is established only by the recorded local, Preview, live-binding, CI, and immutable-release gates.
 
-## Root-cause repair
+## Compact public GPT pivot
 
-This release replaces model-mediated artifact identity with one acyclic final-byte transaction:
+The official GPT now performs one job: a bounded human-readable audit. It covers duties 1-9 within 500 words at `quick`, 1,200 at `standard`, and 2,000 at `adversarial` or `formal-mathematical` depth unless the user explicitly requests expansion. It does not generate files, hashes, `audit_return.json`, compiler stdout, Base64, shards, parity, transport, or section 10.
+
+The live Knowledge roster is reduced to five files; `BSC_EXECUTION_AND_RECEIPTS.md` is no longer uploaded. Data Analysis remains available for actual attachment inspection or bounded calculations, but not for packaging the audit. The repository keeps the compiler, controller, return schema, and Audit Return Desk as separately invoked supervised tooling.
+
+The current Preview gate is 12 fresh compact-profile cases, including an explicit request for the disabled export feature. The former 39-case artifact suite and D01/D02 transport preflights are preserved as historical evidence and do not validate this changed profile.
+
+## Retained standalone compiler repairs
+
+For explicitly selected offline repository workflows, this release replaces model-mediated artifact identity with one acyclic final-byte transaction:
 
 - have the executed compiler capture its own Data Analysis `sys.version` once, reject model-authored overrides, and label the value session-reported rather than independently authenticated;
 - finalize request, source, evidence, and report bytes before deriving hashes and sizes;
@@ -19,7 +27,7 @@ This release replaces model-mediated artifact identity with one acyclic final-by
 - have compiler v9 validate the complete gate/obligation contract before rendering or hashing and project schema field `statement`, while keeping exact refutation closure separate from the open workflow duty to retire, narrow, or amend a failed claim before admission;
 - include that dormant zlib/Base64 transport envelope in the original canonical compiler stdout, eliminating every later-turn `/mnt/data` dependency.
 
-The evaluation controller now validates the exact target, all six canonical Knowledge files, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls and explicit per-file direct-acquisition outcomes separately from acquired bytes, never infers `no_download_event` from absence alone, validates the complete original-response compiler block and every container/member identity before local reconstruction, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`. Parity may recover exactly one content-faulted data shard only when its metadata and expected ASCII Base64 text length are intact and all other data plus parity are valid; the controller then reruns every aggregate, container, member, and topology check. Aligned-quartet omission, metadata mutation, multiple bad data, or bad data plus bad parity remains unrecoverable. Valid data with only exact-length bad parity records `parity_degraded_not_used`.
+The retained historical/offline evaluation controller validates the exact target, the legacy six-file Knowledge roster, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls and explicit per-file direct-acquisition outcomes separately from acquired bytes, never infers `no_download_event` from absence alone, validates the complete original-response compiler block and every container/member identity before local reconstruction, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`. Parity may recover exactly one content-faulted data shard only when its metadata and expected ASCII Base64 text length are intact and all other data plus parity are valid; the controller then reruns every aggregate, container, member, and topology check. Aligned-quartet omission, metadata mutation, multiple bad data, or bad data plus bad parity remains unrecoverable. Valid data with only exact-length bad parity records `parity_degraded_not_used`. This controller is not invoked by the compact public GPT.
 
 The frozen-suite checker independently revalidates each trial's manifest-bound candidate snapshot and raw evidence, enforces fresh Preview-session identities and the exact `C001` through `C039` order, and encodes the explicitly authorized three-repair/four-complete-suite release ceiling without allowing controller or transport states to rescue a substantive candidate contradiction.
 
@@ -32,7 +40,7 @@ Alpha.8 adds:
 - matching Python and browser-local inspectors for the non-admissive `audit-return-v0.1` envelope;
 - strict JSON, artifact, source, evidence, execution, receipt, gate, obligation, and summary-projection checks;
 - an accessible English/Japanese Pages interface and deterministic localization freshness checks;
-- six deterministic Knowledge files and 39 depth-explicit evaluation cases;
+- five deterministic public-GPT Knowledge files and a 12-case compact Preview gate, while preserving the former 39-case artifact suite as superseded history;
 - exact package, release, privacy, research-packet, Null-Discrimination, and reproducible-build gates.
 
 ## Preserved R01 negative result
@@ -125,13 +133,11 @@ silently repairing invalid text. Regression coverage binds the ordinary-string
 collisions for `\forall`, `\theta`, `\rho`, and `\nabla` while accepting the
 corresponding Unicode mathematics and safely doubled literal backslashes.
 
-This second authorization does not rewrite the historical compiler-v7/C001
-failure or parity repair. Cases, fixtures, scientific expectations and
-oracles, scorers, rubrics, thresholds, automatic failures, and Return Desk
-negatives are unchanged. All local gates, a new exact freeze, D01 and D02 in
-fresh Preview sessions, and the complete 39-case suite from C001 must restart.
-The official GPT remains unchanged, Update was not clicked, and no push,
-merge, tag, Release, or publication is claimed.
+This second authorization did not rewrite the historical compiler-v7/C001
+failure or parity repair. That artifact-capable candidate subsequently failed
+again and was superseded by the compact product scope above. Its cases,
+fixtures, controller results, and Return Desk negatives remain preserved as
+history; they are not counted toward the new 12-case compact gate.
 
 ## 2026-07-24 C004 obligation boundary and compiler v9
 

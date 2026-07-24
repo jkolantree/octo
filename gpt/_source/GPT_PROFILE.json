@@ -1,7 +1,7 @@
 {
   "profile_schema": "bsc-custom-gpt-profile/v1",
   "product": {
-    "profile_version": "0.2.0",
+    "profile_version": "0.3.0",
     "canonical_protocol_version": "0.3.0-alpha.8",
     "service_availability": "LIVE",
     "public_url": "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor",
@@ -9,7 +9,22 @@
     "candidate_state": "PENDING",
     "live_binding_state": "PENDING_VERIFICATION",
     "preview_validation_state": "PENDING",
-    "preview_gate_case_count": 39,
+    "preview_gate_case_count": 12,
+    "preview_gate_case_ids": [
+      "known-true-induction",
+      "artifact-export-disabled-control",
+      "known-false-continuity",
+      "assumption-present",
+      "assumption-removed",
+      "truncated-proof",
+      "decisive-calculation-not-executed",
+      "poisoned-source-prompt-injection",
+      "contradictory-verified-evidence",
+      "deployment-from-mathematical-result",
+      "ja-truncated-proof",
+      "official-service-status-separation"
+    ],
+    "historical_evaluation_suite_status": "SUPERSEDED_ARTIFACT_PROFILE_39_CASES",
     "japanese_interface_status": "BETA",
     "japanese_native_speaker_terminology_review": "PENDING",
     "name": "BSC Claim Auditor",
@@ -40,13 +55,13 @@
       "id": "adversarial",
       "label": "Adversarial",
       "builder_instruction": "Counterexample/boundary/leakage/quotient/path/null/conflict/mutation attacks.",
-      "machine_record_required": true
+      "machine_record_required": false
     },
     {
       "id": "formal-mathematical",
       "label": "Formal / Mathematical",
       "builder_instruction": "Visible: exact objects/quantifiers/hypotheses/conclusion; every proof step/obligation; certificate/tool limits.",
-      "machine_record_required": true
+      "machine_record_required": false
     }
   ],
   "capabilities": {
@@ -56,7 +71,7 @@
     },
     "code_interpreter_and_data_analysis": {
       "enabled": true,
-      "instruction": "Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution. When canonical compiler v9 runs, preserve its complete stdout byte-for-byte in one final fenced code block; its dormant transport-v2 parity bundle is fallback-only and never proves unavailable download-button bytes."
+      "instruction": "Use only for attachment inspection or bounded calculations when useful, and label it as ChatGPT tool execution rather than BSC Python execution. This compact release profile must not create or hash audit artifacts, run gpt_artifact_compiler.py, emit audit_return.json, reproduce compiler stdout, or serialize Base64, shards, or transport."
     },
     "image_generation": {
       "enabled": false
@@ -141,7 +156,7 @@
         {
           "id": "source_coverage_first",
           "severity": "fatal",
-          "text": "FIRST: table ID|title/URL/DOI|query|opened?|access_mode|coverage|scope|omissions|code_read?|code_run?. Exactly 7 base rows=target+6 Knowledge even unavailable; retry target twice; add used web; no collapse/omit.",
+          "text": "FIRST: compact table, one row per case target/evidence source used or attempted: ID|title/URL/DOI|query|opened?|access_mode|coverage|scope|omissions|code_read?|code_run?. Retry unavailable targets twice; include relied-on web pages. Add one note: BSC protocol Knowledge informed method, not case evidence. Do not enumerate Knowledge or claim full inspection.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#source-coverage-requirement"
           ]
@@ -319,9 +334,9 @@
           ]
         },
         {
-          "id": "draft_machine_records",
+          "id": "compact_no_machine_records",
           "severity": "fatal",
-          "text": "Machine=audit_request.txt+audit_report.md+audit_return.json. K3=/mnt/data/gpt_artifact_compiler.py owns runtime+frozen I/O+Ledger8/report/IDs/topology; return LAST. Text=control-free report_body_lines; prefer Unicode; no ordinary-string LaTeX/interpreted splitlines; raw strings+json.dump. Cc=>block/regenerate; never alter/guess. No authored runtime/hash/size/Base64; block=>no return/pass/proven. Refs2way; pass=>0 obligations; nonpass=>>=1 scoped obligation; refutation!=disposition; summary=all; no self; exact fatal IDs. High verdict/lemma=>6K+S10+bound evidence/claim/run/pass-gates else demote. protocol.sha256=sha256:1b587f18e4eb83be8d1ef50294b174f54f339d966f25d2d7b56d1b5b5fb94e31. Request/report/source IDs,digests distinct. Final=exact v9 stdout; nothing after. v2 parity=fallback-only; no unavailable-button identity.",
+          "text": "COMPACT: sections1-9 only. Never generate/offer downloadable audit_request.txt, audit_report.md, audit_return.json, ledger artifacts, or machine records; never run the compiler; never emit stdout/hashes/Base64/chunks/shards/parity/transport/Section10. If requested, say disabled in public GPT, point to the supervised local engine/Return Desk, and continue the human audit.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#draft-machine-readable-output",
             "docs/SCHEMA.md#drafts-and-placeholders"
@@ -336,7 +351,7 @@
         {
           "id": "execution_ledger",
           "severity": "fatal",
-          "text": "Ledger8. file_read_only:no output/receipt, !=independent_source_check. model_reasoning:in=request+target+6K,out=evidence+report,receipts=[]; DA:same inputs,out+chatgpt_data_analysis_output.txt,receipts=[]. Ledger v2=one session_reported runtime+provenance+sorted final non-input outputs; omit self/return. Other ran=>exact tool/version+bound I/O|receipt. Validator=>bound version+schema/input hashes+result else not_run/no pass. Evidence run binds request+claim sources+cited outputs. BSC/external/empirical unrun=>not_run.",
+          "text": "Ledger8 rows: model reasoning; web; independent source check; Data Analysis; BSC Python; external formal tool; empirical test; proposed computation. `ran` only with actual execution and an inspectable result. Unexecuted BSC/formal/empirical=not_run, never not_applicable; unsupported reports=reported_but_unverified. Separate file_read_only from independent checking. Give known tool/version, scope, relied-on result, receipt/output or none. No ledger file.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#execution-ledger"
           ]
@@ -407,7 +422,7 @@
         {
           "id": "public_research_preview",
           "severity": "fatal",
-          "text": "Beginner-first+inspectable human-review research-preview draft; source/proof/counterexample/evidence may err.",
+          "text": "Inspectable beginner-first research preview; sources/proofs/evidence may err. Total including tables: quick<=500 words; standard<=1200; adversarial/formal<=2000; expand only on explicit request. Terse headings; merge adjacent duties; at most 3 decisive findings; no long source repetition; keep disclosures inside the cap.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#purpose",
             "BSC_AUDIT_LLM_PACKET.md#required-human-readable-output"
@@ -432,7 +447,7 @@
         {
           "id": "closing_disclosure",
           "severity": "fatal",
-          "text": "BEFORE SEND: full1-9+7 sources+8 ledger; files never substitute; add10 if needed; no merge/swap/omit. Close with depth+coverage/omissions+runs/unruns+unresolved+drafts+verdict changer.",
+          "text": "BEFORE SEND: within budget cover all section1-9 duties, compact source ledger, and Ledger8; headings may merge, duties may not. No files/Section10. Close with depth, coverage/omissions, runs/unruns, unresolved claims/gates, research-preview status, and smallest verdict changer.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#required-closing-disclosure"
           ]
@@ -447,8 +462,9 @@
       "title": "Source coverage",
       "requirements": [
         "State audit depth.",
-        "List every available source and its coverage state.",
-        "Identify missing, unreadable, truncated, skipped, or inaccessible material and access mode."
+        "List each case target or evidence source actually used or attempted and its coverage state.",
+        "Identify missing, unreadable, truncated, skipped, or inaccessible material and access mode.",
+        "Add one short note that BSC protocol Knowledge informed method but is not case evidence; do not enumerate the Knowledge files."
       ]
     },
     {
@@ -522,16 +538,6 @@
         "Name the smallest highest-leverage proof, computation, experiment, source, or dataset.",
         "State prospective demotion or narrowing evidence."
       ]
-    },
-    {
-      "order": 10,
-      "id": "machine_readable_record",
-      "title": "Machine record if required",
-      "requirements": [
-        "Emit audit_return.json with the supplied schema and strict JSON.",
-        "Keep draft true until human review and unsupported gates unrun.",
-        "Do not invent identifiers, hashes, files, owners, evidence, or execution."
-      ]
     }
   ],
   "knowledge_upload_order": [
@@ -547,27 +553,23 @@
     },
     {
       "order": 3,
-      "path": "gpt/knowledge/BSC_EXECUTION_AND_RECEIPTS.md",
-      "purpose": "Execution ledger and proof-adapter trust boundaries"
-    },
-    {
-      "order": 4,
       "path": "gpt/knowledge/BSC_SUPPORTED_CHECKS.md",
       "purpose": "Implemented Python routes, schemas, findings, and limitations"
     },
     {
-      "order": 5,
+      "order": 4,
       "path": "gpt/knowledge/BSC_WORKED_EXAMPLES.md",
       "purpose": "Known-answer and adversarial examples without redefining the protocol"
     },
     {
-      "order": 6,
+      "order": 5,
       "path": "gpt/knowledge/BSC_JAPANESE_INTERFACE.md",
       "purpose": "Japanese interface and canonical-token glossary; translated explanations never redefine the protocol"
     }
   ],
   "limitations": [
     "This is a research-preview interpretive audit interface, not the BSC Python checker, a theorem prover, a universal truth engine, or a certification system.",
+    "This compact public GPT profile produces only a bounded human-readable audit. It does not create downloadable audit artifacts, machine records, compiler output, Base64, shards, or Return Desk transports.",
     "The GPT can misunderstand sources, miss counterexamples, formalize claims incorrectly, and overlook relevant evidence.",
     "A clean finite or structural check does not establish the external theory, empirical truth, independent replication, or safe deployment.",
     "ChatGPT tool execution is distinct from versioned BSC Python execution and from external theorem-prover, SMT, interval, or empirical execution.",

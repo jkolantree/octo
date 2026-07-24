@@ -7,9 +7,9 @@
       "sha256": "1b587f18e4eb83be8d1ef50294b174f54f339d966f25d2d7b56d1b5b5fb94e31"
     },
     {
-      "bytes": 10411,
+      "bytes": 10832,
       "path": "docs/AUDIT_RETURN_DESK.md",
-      "sha256": "cd373c0fb24717719a0684655cf409d10bbe2517f15d01c80e8177b1896e9023"
+      "sha256": "b07b90918047b63a7a9ebdf021e5bd22499691f0f657bc56e6a34410b84ba1b7"
     },
     {
       "bytes": 5084,
@@ -17,9 +17,9 @@
       "sha256": "68e7938c55e88642e47824c7d92610014f606336697dc67983357eab9767e295"
     },
     {
-      "bytes": 29480,
+      "bytes": 29681,
       "path": "docs/GPT_FROZEN_CANDIDATE.json",
-      "sha256": "a29d11093038327b73ce25faa0615e21a2bdbf26f51ff1ff9000ade70bb400ab"
+      "sha256": "183480ff7ca6533658b08c13f0d9f9b78f10d1cff75f16c7429eee0c94141f9e"
     },
     {
       "bytes": 10099,
@@ -122,9 +122,9 @@
       "sha256": "5f60476038d1a20a4b55c79389e2e0fe8ba60b89cd737602a30b39e13308821f"
     },
     {
-      "bytes": 26041,
+      "bytes": 26355,
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "fea996469e8c9a68e68d0ec9b67efad61d1bd3651b6f2c70663a0c45dd2fc927"
+      "sha256": "b043bdc966221ccde27b036e58a393ef2c276ad5e62cb1253317aee13c645ada"
     },
     {
       "bytes": 75464,
@@ -142,9 +142,9 @@
       "sha256": "25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799"
     },
     {
-      "bytes": 100943,
+      "bytes": 113279,
       "path": "scripts/build_gpt_package.py",
-      "sha256": "abca2cd293dac7c9e1c2730c750b6563705e0eaba31c72b8f64bbbf732c0752c"
+      "sha256": "aea8a37114d83c822d8bb3daa2b105344e9ab084c6fbb8ecd37df1b7b9b9ab40"
     },
     {
       "bytes": 7824,
@@ -152,9 +152,9 @@
       "sha256": "8871392adac4691458a5b06e4d8ef38bb4d07a8b7ad471512bb59f88ea288259"
     },
     {
-      "bytes": 134424,
+      "bytes": 134831,
       "path": "scripts/check_gpt_eval_bundle.py",
-      "sha256": "42bdf9bd5829f7f3541fa0d2440b1e312ba9ad2b541485693d008b0f67f36811"
+      "sha256": "dd59cf0df5a85cb8f8279ca69098a4d30246ceed9291c458f4b9150e06385a1c"
     },
     {
       "bytes": 45624,
@@ -162,9 +162,9 @@
       "sha256": "cfe1d850884348af9e4d0aca746081c246574ec6532c556b7a7512a7430e1f69"
     },
     {
-      "bytes": 42957,
+      "bytes": 42974,
       "path": "scripts/check_gpt_frozen_candidate.py",
-      "sha256": "c8d925d81339fe9197b2a8273900cfbe654a6eda30435e53202b0cdb5d3c12e1"
+      "sha256": "b315cc0aba8ff6fc8df22570e254dca1341b0260113a77da2460b7228620d6c6"
     },
     {
       "bytes": 91394,
@@ -207,9 +207,9 @@
       "sha256": "53e63616ace707ad671e306b9f4aeb993b9a47165d58455c1fc51115a1b73a28"
     },
     {
-      "bytes": 118194,
+      "bytes": 118928,
       "path": "tests/test_gpt_eval_bundle.py",
-      "sha256": "5d9b5da316d80a199795e1ff627c86b129785086efb4b1888dcc0e099f7930cb"
+      "sha256": "bf72c511e089d69a09d328b616866df9ace8d02df6f3a57d416e55bc5154085c"
     },
     {
       "bytes": 86725,
@@ -222,9 +222,9 @@
       "sha256": "b0d6643b796c131eefab182691c6dcdede147ab7bd5ea23ac77bc24222f675a9"
     },
     {
-      "bytes": 20224,
+      "bytes": 20259,
       "path": "tests/test_gpt_frozen_candidate.py",
-      "sha256": "f9b65f30573731af2258436ac88879035e733ebaf3ff43a4f9b6d9954e8b0ca8"
+      "sha256": "d8ace360ec988570b3dacd769bcca2fc806fb00599797f99e74dc123fb3d5b45"
     },
     {
       "bytes": 56653,
@@ -251,7 +251,7 @@
     },
     "code_interpreter_and_data_analysis": {
       "enabled": true,
-      "instruction": "Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution. When canonical compiler v9 runs, preserve its complete stdout byte-for-byte in one final fenced code block; its dormant transport-v2 parity bundle is fallback-only and never proves unavailable download-button bytes."
+      "instruction": "Use only for attachment inspection or bounded calculations when useful, and label it as ChatGPT tool execution rather than BSC Python execution. This compact release profile must not create or hash audit artifacts, run gpt_artifact_compiler.py, emit audit_return.json, reproduce compiler stdout, or serialize Base64, shards, or transport."
     },
     "image_generation": {
       "enabled": false
@@ -261,8 +261,22 @@
       "instruction": "Use when current source or citation verification is material, and disclose whether each decisive cited source was independently opened."
     }
   },
+  "compact_preview_gate_case_count": 12,
+  "compact_preview_gate_case_ids": [
+    "known-true-induction",
+    "artifact-export-disabled-control",
+    "known-false-continuity",
+    "assumption-present",
+    "assumption-removed",
+    "truncated-proof",
+    "decisive-calculation-not-executed",
+    "poisoned-source-prompt-injection",
+    "contradictory-verified-evidence",
+    "deployment-from-mathematical-result",
+    "ja-truncated-proof",
+    "official-service-status-separation"
+  ],
   "engine_version": "0.3.0a8",
-  "evaluation_case_count": 39,
   "evaluation_schema": "bsc-custom-gpt-eval/v2",
   "generated_artifacts": [
     {
@@ -271,34 +285,34 @@
       "sha256": "f7fa99696fbde41edba2670e21db0cab923646718de3b251262a2100254cc2cf"
     },
     {
-      "bytes": 7498,
+      "bytes": 7495,
       "path": "GPT_INSTRUCTIONS.md",
-      "sha256": "849d1395d59d5eaba07b3d8f84da97b30729f1525bcdd17c61a4303552876e2a"
+      "sha256": "9d5ac85e0c7eea8675cb25da3f83dedacdb5b0f0311e6c5e0cb589d2306a59bb"
     },
     {
-      "bytes": 2667,
+      "bytes": 3630,
       "path": "GPT_PUBLIC_METADATA.md",
-      "sha256": "cc9503e3008d25ab39944a862069393d1e6c6737cc90f0ceaa5aa3360f18b0cd"
+      "sha256": "12587d488f08f457f9a6e118143960c69e10ecbafdc46f591d851ccd3d381ef4"
     },
     {
-      "bytes": 7544,
+      "bytes": 8376,
       "path": "GPT_SETUP_AND_PUBLISHING.md",
-      "sha256": "36552606f3553ac36f5c58c8ea2bddf27979f83ad430fc0942b61c3f20c2d645"
+      "sha256": "2dace3c53a0a6cb4675cf77f9b2e6d8d6e0e0bfbd449c0e3827ff177dbaac85a"
     },
     {
-      "bytes": 2374,
+      "bytes": 2592,
       "path": "README.md",
-      "sha256": "fa67e64f01378c841653be99546e2fa38014e17f314043f897e58ec96dc32e14"
+      "sha256": "f0d00935a09d575d36cfe7f45d57cb1ec89c644c52997ab7955d11bf19150adb"
     },
     {
-      "bytes": 75286,
+      "bytes": 76924,
       "path": "evals/GPT_EVAL_CASES.jsonl",
-      "sha256": "e9b8c3877ab7cfe86eb9f16f1d41ae1b21ff99a71590ac1a40efb5c72aac7b2f"
+      "sha256": "acf86a10b4a68cb213f74bb447655882f9edeae8d7eeac5f22e74b85f3c49ea0"
     },
     {
-      "bytes": 62722,
+      "bytes": 64497,
       "path": "evals/GPT_EVAL_EXPECTATIONS.md",
-      "sha256": "3ad0c6b44b1556ab8e88c907bb7901057cb73f067c698f68225d4fd8e578ca0d"
+      "sha256": "a9bafabb3b7375654a4c1484ca5138a39cf40606bd4335658dbfcb0d8c8844df"
     },
     {
       "bytes": 30533,
@@ -316,9 +330,14 @@
       "sha256": "5f60476038d1a20a4b55c79389e2e0fe8ba60b89cd737602a30b39e13308821f"
     },
     {
-      "bytes": 5665,
+      "bytes": 6092,
       "path": "evals/GPT_MANUAL_SCORECARD.md",
-      "sha256": "97df4eb331eef40f391663fa9fb143c39eaf3f3dd87e1e27ae3a11c19054642a"
+      "sha256": "6c7f71333c145c99a028d18cc4b3da5900eeee5b41be0b2a085f40e835fc8361"
+    },
+    {
+      "bytes": 967,
+      "path": "evals/README.md",
+      "sha256": "88bab2d733834ba8c441627f1c6b5f482a0bee0bb042e79cdc5d0df5a79af836"
     },
     {
       "bytes": 97,
@@ -516,19 +535,14 @@
       "sha256": "ea707fb98f37e748907a3db029d9f5e99ffd41feab60573c58092be72514cbd8"
     },
     {
-      "bytes": 109326,
-      "path": "knowledge/BSC_EXECUTION_AND_RECEIPTS.md",
-      "sha256": "be0ffe2b5bdc8d0abdf04e18faaea86c458d77f1e4cd8873c1db3ace037d4133"
-    },
-    {
       "bytes": 13025,
       "path": "knowledge/BSC_JAPANESE_INTERFACE.md",
       "sha256": "42e73b071b463446fff2ef3077e55cf27181561d378597172f0060914aac3f5d"
     },
     {
-      "bytes": 31040,
+      "bytes": 19867,
       "path": "knowledge/BSC_PROTOCOL.md",
-      "sha256": "d368ad45b540e076708c7cc215e07a2888556f4ce09c4d0e1a1400c8fb12d5c9"
+      "sha256": "f974cc0aa7157eb1f74848a4772704147ae4489f6ee60e1e990529d577fb303a"
     },
     {
       "bytes": 8328,
@@ -536,9 +550,9 @@
       "sha256": "72ab8a1b62021b21df486daef48a2f29f649f30d3f6bf052aafe2d2cab32194f"
     },
     {
-      "bytes": 45386,
+      "bytes": 45867,
       "path": "knowledge/BSC_SUPPORTED_CHECKS.md",
-      "sha256": "f3bed270e142e0d9bc16e56ebbce106140554d4e023be46461584421235eaa68"
+      "sha256": "21af93d80c5d84d4a39c28864bf4208e14e008ae42a36b28f536e99ac53c9cad"
     },
     {
       "bytes": 30600,
@@ -548,9 +562,11 @@
   ],
   "generator": {
     "path": "scripts/build_gpt_package.py",
-    "sha256": "abca2cd293dac7c9e1c2730c750b6563705e0eaba31c72b8f64bbbf732c0752c",
+    "sha256": "aea8a37114d83c822d8bb3daa2b105344e9ab084c6fbb8ecd37df1b7b9b9ab40",
     "version": "bsc-custom-gpt-generator-v1"
   },
+  "historical_artifact_evaluation_case_count": 39,
+  "historical_artifact_evaluation_status": "SUPERSEDED_ARTIFACT_PROFILE_39_CASES",
   "japanese_interface_state": {
     "canonical_language": "en",
     "native_speaker_terminology_review": "PENDING",
@@ -569,27 +585,23 @@
     },
     {
       "order": 3,
-      "path": "gpt/knowledge/BSC_EXECUTION_AND_RECEIPTS.md",
-      "purpose": "Execution ledger and proof-adapter trust boundaries"
-    },
-    {
-      "order": 4,
       "path": "gpt/knowledge/BSC_SUPPORTED_CHECKS.md",
       "purpose": "Implemented Python routes, schemas, findings, and limitations"
     },
     {
-      "order": 5,
+      "order": 4,
       "path": "gpt/knowledge/BSC_WORKED_EXAMPLES.md",
       "purpose": "Known-answer and adversarial examples without redefining the protocol"
     },
     {
-      "order": 6,
+      "order": 5,
       "path": "gpt/knowledge/BSC_JAPANESE_INTERFACE.md",
       "purpose": "Japanese interface and canonical-token glossary; translated explanations never redefine the protocol"
     }
   ],
   "limitation_declarations": [
     "This is a research-preview interpretive audit interface, not the BSC Python checker, a theorem prover, a universal truth engine, or a certification system.",
+    "This compact public GPT profile produces only a bounded human-readable audit. It does not create downloadable audit artifacts, machine records, compiler output, Base64, shards, or Return Desk transports.",
     "The GPT can misunderstand sources, miss counterexamples, formalize claims incorrectly, and overlook relevant evidence.",
     "A clean finite or structural check does not establish the external theory, empirical truth, independent replication, or safe deployment.",
     "ChatGPT tool execution is distinct from versioned BSC Python execution and from external theorem-prover, SMT, interval, or empirical execution.",
@@ -606,7 +618,7 @@
     "candidate_state": "PENDING",
     "live_binding_state": "PENDING_VERIFICATION",
     "package_role": "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
-    "preview_gate_case_count": 39,
+    "preview_gate_case_count": 12,
     "preview_validation_state": "PENDING",
     "public_url": "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor",
     "service_availability": "LIVE"
@@ -620,8 +632,7 @@
     "counterexamples_and_failure_modes",
     "execution_ledger",
     "unresolved_obligations",
-    "verdict_changers",
-    "machine_readable_record"
+    "verdict_changers"
   ],
   "profile_schema": "bsc-custom-gpt-profile/v1",
   "source_commit": null,

@@ -7,6 +7,8 @@ The Audit Return Desk inspects structured audit returns under an explicitly non-
 
 Current official-service availability is recorded separately in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Official-service availability, exact candidate binding, Preview validation, GitHub release state, and Pages deployment are separate facts; none can be inferred solely from the presence of this source feature.
 
+The official compact Custom GPT does not generate or export machine records and does not upload `BSC_EXECUTION_AND_RECEIPTS.md`. This Desk and its compiler workflow remain available only as supervised standalone repository tooling; their presence does not imply that the public GPT ran them.
+
 ## Authority boundary
 
 The Desk checks internal consistency. It does not decide truth, authenticate a citation, prove a theorem, establish that an external tool actually ran, independently replicate an experiment, admit evidence, or grant deployment permission.
@@ -23,11 +25,11 @@ Every accepted envelope must keep these values exactly:
 
 The closed schema is [`schemas/audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json). The canonical production rules are in the [LLM Audit Packet](../BSC_AUDIT_LLM_PACKET.md). Generated model output is still untrusted input to the Desk.
 
-## Deterministic producer transaction
+## Standalone deterministic producer transaction
 
-Custom GPT machine records must be finalized by the complete canonical
-`scripts/gpt_artifact_compiler.py` source embedded in
-`BSC_EXECUTION_AND_RECEIPTS.md`. The model must execute that source, not
+An explicitly selected supervised standalone machine-record workflow must be finalized by the complete canonical
+`scripts/gpt_artifact_compiler.py` source preserved in the retired
+[`BSC_EXECUTION_AND_RECEIPTS.md`](standalone/BSC_EXECUTION_AND_RECEIPTS.md) derivative. The model must execute that source, not
 reproduce its behavior in prose or write a substitute finalizer.
 
 The executed compiler captures its own full `sys.version` once; the
@@ -42,8 +44,8 @@ successful artifact production. A matching final snapshot does not, by itself,
 prove the historical write order; compiler execution and its preserved output
 are therefore part of the candidate evidence.
 
-For the standard Custom GPT artifact transaction, the execution topology is
-fixed:
+For the retained standalone artifact transaction, the legacy execution
+topology is fixed:
 
 - `model_reasoning` inputs are the request, exact case target, and all six
   canonical Knowledge files; its outputs are every model-produced

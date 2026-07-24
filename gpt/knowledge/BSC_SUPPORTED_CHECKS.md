@@ -11,7 +11,7 @@
 - `schemas/README.md` — SHA-256 `2b6c6b3fcb6497c9a9524b26e5cbd7a36fbfbdbbc95eb2f322463b7024d5c21a`
 - `schemas/audit-return-v0.1.schema.json` — SHA-256 `25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799`
 - `docs/SCHEMA.md` — SHA-256 `ed42f2f65972f57d86c8e4d198eafc9a3d970db68012ce71a28eaf589b29b506`
-- `docs/AUDIT_RETURN_DESK.md` — SHA-256 `cd373c0fb24717719a0684655cf409d10bbe2517f15d01c80e8177b1896e9023`
+- `docs/AUDIT_RETURN_DESK.md` — SHA-256 `b07b90918047b63a7a9ebdf021e5bd22499691f0f657bc56e6a34410b84ba1b7`
 - `docs/MATHEMATICS.md` — SHA-256 `25309fb738cb229230991ec556f8fbe5aa692cc67a264124732632a7159a7aec`
 - `docs/DERIVED_HOLONOMY.md` — SHA-256 `68e7938c55e88642e47824c7d92610014f606336697dc67983357eab9767e295`
 
@@ -431,6 +431,8 @@ The Audit Return Desk inspects structured audit returns under an explicitly non-
 
 Current official-service availability is recorded separately in [CUSTOM_GPT_STATUS.md](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.8/docs/CUSTOM_GPT_STATUS.md). Official-service availability, exact candidate binding, Preview validation, GitHub release state, and Pages deployment are separate facts; none can be inferred solely from the presence of this source feature.
 
+The official compact Custom GPT does not generate or export machine records and does not upload `BSC_EXECUTION_AND_RECEIPTS.md`. This Desk and its compiler workflow remain available only as supervised standalone repository tooling; their presence does not imply that the public GPT ran them.
+
 ## Authority boundary
 
 The Desk checks internal consistency. It does not decide truth, authenticate a citation, prove a theorem, establish that an external tool actually ran, independently replicate an experiment, admit evidence, or grant deployment permission.
@@ -447,11 +449,11 @@ Every accepted envelope must keep these values exactly:
 
 The closed schema is [`schemas/audit-return-v0.1.schema.json`](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.8/schemas/audit-return-v0.1.schema.json). The canonical production rules are in the [LLM Audit Packet](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.8/BSC_AUDIT_LLM_PACKET.md). Generated model output is still untrusted input to the Desk.
 
-## Deterministic producer transaction
+## Standalone deterministic producer transaction
 
-Custom GPT machine records must be finalized by the complete canonical
-`scripts/gpt_artifact_compiler.py` source embedded in
-`BSC_EXECUTION_AND_RECEIPTS.md`. The model must execute that source, not
+An explicitly selected supervised standalone machine-record workflow must be finalized by the complete canonical
+`scripts/gpt_artifact_compiler.py` source preserved in the retired
+[`BSC_EXECUTION_AND_RECEIPTS.md`](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.8/docs/standalone/BSC_EXECUTION_AND_RECEIPTS.md) derivative. The model must execute that source, not
 reproduce its behavior in prose or write a substitute finalizer.
 
 The executed compiler captures its own full `sys.version` once; the
@@ -466,8 +468,8 @@ successful artifact production. A matching final snapshot does not, by itself,
 prove the historical write order; compiler execution and its preserved output
 are therefore part of the candidate evidence.
 
-For the standard Custom GPT artifact transaction, the execution topology is
-fixed:
+For the retained standalone artifact transaction, the legacy execution
+topology is fixed:
 
 - `model_reasoning` inputs are the request, exact case target, and all six
   canonical Knowledge files; its outputs are every model-produced
