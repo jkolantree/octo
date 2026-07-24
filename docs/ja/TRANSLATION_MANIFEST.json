@@ -21,9 +21,9 @@
     },
     {
       "source": "docs/AUDIT_RETURN_DESK.md",
-      "source_sha256": "a69a67942ab4f1451a00e0c8168fd47a1b1f93eb5efec87342ddec4ed828795a",
+      "source_sha256": "be43a059108ae5ecc7b8968bdab97e1b17215726c60045b3d9ac7d5b23d4dce9",
       "target": "docs/ja/AUDIT_RETURN_DESK.md",
-      "target_sha256": "f3190731bfd20db234913fff762dabbb994c4dfb8798b6dab379c691add9d555"
+      "target_sha256": "8a4fff173c7b30056b3d5e85e31038a3140b2d5f864b17dd37af840f88c3af67"
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "938f59efa52bd0bc951e5dc1a205144bd9d4c50d92e0956e5a49745fc22701a7"
+  "manifest_payload_sha256": "e58df3b521efe31694e21bf6cb510ce8255d0a43e1d958b40a8897aca642df3f"
 }
