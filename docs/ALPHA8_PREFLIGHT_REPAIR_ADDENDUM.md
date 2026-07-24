@@ -273,3 +273,18 @@ The fixture semantics, verdict boundaries, controller classifications, score
 threshold, and negative expectations are unchanged. The failed gate remains
 preserved as a candidate-consistency failure caught before any new Preview
 trial.
+
+## R25 generated profile projection closure before Preview
+
+The next clean snapshot was commit
+`70eac92b6ab14613cd18faef0c48121882dcfea2`, tree
+`8e95d1c7810987dc7f1fa8d67bb9c996b8601694`. Gates 00–04 passed and
+gate 05 again ran 338 Python tests with four documented Windows skips. The
+protocol fixture test now passed; the sole failure was the Pages checker
+detecting that `pages/profile.js` still projected the profile identity from
+before the protocol digest was updated.
+
+`scripts/build_publication_assets.py` regenerated that public projection from
+the canonical profile. No GPT behavior, fixture meaning, checker, oracle,
+rubric, verdict boundary, or threshold changed. The failed snapshot is
+preserved and is not reused as release evidence.

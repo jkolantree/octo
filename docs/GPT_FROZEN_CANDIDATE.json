@@ -39,7 +39,7 @@
       "bytes": 13672,
       "category": "browser_return_desk",
       "path": "pages/profile.js",
-      "sha256": "7d380096b397a84b20859ad1d3678723965359e727d3148fd7480b3e3f4be210"
+      "sha256": "bcf9a644de2ef39a256e83f747847135659772388139e594b4f6b46e037a6e86"
     },
     {
       "bytes": 28128,
@@ -402,10 +402,10 @@
       "sha256": "d694a2ee46466d9f7eaec3d44d7917322feec53b9c982331d53eb73ab9d948f1"
     },
     {
-      "bytes": 15820,
+      "bytes": 16571,
       "category": "protocol_and_provenance",
       "path": "docs/ALPHA8_PREFLIGHT_REPAIR_ADDENDUM.md",
-      "sha256": "c5966974ffde52225bfac3f44bc4ac33fe9d107e232a0a2729e810e4fa895936"
+      "sha256": "e6643909862ce4dc362d0f7f9d674437d3a078d2c7a1897507f3e5e66517a03d"
     },
     {
       "bytes": 2959,
