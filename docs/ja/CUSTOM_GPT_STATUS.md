@@ -19,7 +19,7 @@ official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed
 | Public Pages | **deployed** | alpha.8.dev0 が [jkolantree.github.io/octo](https://jkolantree.github.io/octo/) で live |
 | Japanese Pages route | **candidate; not deployed** | 予定 `/octo/ja.html` route は `2026-07-22T18:37:44Z` に HTTP 404。post-deploy English/JA/protocol route/metadata smoke が pass するまで live として案内しない |
 | Latest GitHub Release | **unchanged** | [`v0.3.0-alpha.7`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.7)、commit `5ac1b85d4d573d15ce5cf68329443de11428b490` |
-| Final alpha.8 release candidate | **pending gates** | `0.3.0-alpha.8`。live Update、merge、tag、release の前に isolated local gates、2 preflight、fresh frozen 39-case Preview regression が必要 |
+| Final alpha.8 release candidate | **pending gates** | `0.3.0-alpha.8`。live Update、merge、tag、release の前に isolated local gates と fresh frozen 12-case compact-profile Preview regression が必要 |
 
 alpha.8.dev0 について確認済みなのは、repository CI と runtime identity smoke です。fresh Preview conversation による complete behavior evaluation は保存されていないため、CI と identity は Preview validation の代用にはなりません。利用可能な service の output も human-review research-preview draft として扱います。
 
@@ -30,7 +30,12 @@ final `0.3.0-alpha.8` は、service availability と candidate validation を混
 - uploaded Knowledge から mutable service-state claim を除き、現在状態は timestamped repository record に分離する;
 - 利用者向けの official URL と、任意の reproduction/fork/update route を明確に分ける;
 - canonical machine token を保った Japanese human-facing guidance を追加する;
-- Japanese behavior と corrected evidence boundary の generated evaluation suite を拡張する。
+- official GPT の Knowledge を 5 files にし、`BSC_EXECUTION_AND_RECEIPTS.md` は standalone repository tooling に限定する;
+- human-readable duties 1-9 のみを 500/1,200/2,000-word budget 内で返す;
+- downloadable machine record、compiler stdout、Base64、shards、transport、section 10 を official GPT では無効化する;
+- fresh 12-case compact-profile Preview gate で Japanese behavior と corrected evidence boundary を検証する。
+
+preserved 39-case artifact-profile suite、D01/D02 preflight、compiler/transport results は historical and superseded です。これらは compact candidate を validate せず、12-case gate の代用になりません。
 
 candidate が complete Preview gate を通過し、saved configuration との exact binding が確認されるまで、`0.3.0-alpha.8` を installed、bound、Preview-validated、または released として promote しません。official service の現在の availability は上記 timestamped state と machine-readable snapshot で確認します。
 
@@ -49,7 +54,7 @@ merge、live Update、GitHub release の前に:
 
 1. clean candidate tree から exact package を generate/validate する。
 2. Instructions character limit、Profile SHA、Knowledge filenames/hashes、metadata、capabilities、Apps/Actions 不在を verify する。
-3. generated evaluation case をすべて fresh Builder Preview conversation で exact fixture と exact depth-explicit `preview_prompt` を使って実行する。
+3. 12 個の compact-profile evaluation case をすべて fresh Builder Preview conversation で exact fixture と exact depth-explicit `preview_prompt` を使って実行する。
 4. raw response を各々保存し、generated oracle に対して score する。
 5. 各 case に 18/20 以上かつ automatic failure なしを要求する。1 failed case を average で消してはいけない。
 6. repository、Pages、localization、privacy、release-integrity、Null-Discrimination checks を実行する。

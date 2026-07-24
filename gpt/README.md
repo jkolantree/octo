@@ -4,6 +4,8 @@ The official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b3
 
 Candidate state is `PENDING`; live binding is `PENDING_VERIFICATION`; Preview validation is `PENDING`. These states do not change merely because the official service exists or candidate files were generated.
 
+The current compact gate is exactly 12 fresh-conversation cases. The preserved 39-case artifact-profile suite, its D01/D02 preflights, compiler/transport requirements, and prior results are historical and superseded; they neither govern nor validate this compact candidate.
+
 ## Use the official GPT
 
 Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor). You do not need to build a GPT to use the official service.
@@ -24,10 +26,10 @@ Generated files must not be edited by hand. Canonical GPT-specific behavior live
 
 ## Reproduce, verify, fork, or update
 
-Use `GPT_SETUP_AND_PUBLISHING.md` and `evals/GPT_FROZEN_EVALUATION_PROTOCOL.json`. Paste `GPT_INSTRUCTIONS.md`, upload all six Knowledge files in order, validate the controller synthetically, run uncounted Case 1 and Case 27 preflights, freeze exact candidate/evaluation bytes, and then run all 39 counted Preview regressions from Case 1 with controller validity classified before scoring. Creating a separate GPT is optional and produces a fork; updating the official GPT requires owner authorization and separate saved-binding evidence.
+Use `GPT_SETUP_AND_PUBLISHING.md` and its exact 12-case compact Preview roster. Paste `GPT_INSTRUCTIONS.md`, upload all five Knowledge files in order, validate the compact human-response profile, freeze exact candidate/evaluation bytes, and run only the declared compact gate. Creating a separate GPT is optional and produces a fork; updating the official GPT requires owner authorization and separate saved-binding evidence.
 
 ## Boundaries
 
 This package adds no Action, API, account, analytics, or cloud storage. The GPT is an interpretive audit interface. It does not imply that the BSC Python checker or an external proof tool ran. Uploads to ChatGPT are not local-only.
 
-This alpha.8 package emits the draft audit-return envelope consumed by the repository's non-admissive Audit Return Desk. The GPT does not run that browser or Python inspection itself.
+The official GPT compact profile emits no draft audit-return envelope or downloadable machine record. The repository's compiler and non-admissive Audit Return Desk remain available only as separately invoked, supervised standalone tooling.

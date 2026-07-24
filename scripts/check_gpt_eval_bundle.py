@@ -173,6 +173,10 @@ TRANSPORT_LIMITATION = (
     "The transport record preserves the controller's observed download exposure/event outcome; "
     "the record is not independent proof that the UI exposed or emitted a download."
 )
+HISTORICAL_EXECUTION_KNOWLEDGE_FIXTURE = (
+    b"# Historical execution and receipts fixture\n\n"
+    b"Retired public-GPT input; standalone controller tests only.\n"
+)
 
 
 class StrictJsonError(ValueError):
@@ -436,6 +440,18 @@ def _safe_repo_relative_file(root: Path, relative: Any) -> Path | None:
     return resolved if resolved.is_file() else None
 
 
+def _historical_knowledge_bytes(repository_root: Path, filename: str) -> bytes:
+    path = repository_root / "gpt" / "knowledge" / filename
+    try:
+        return path.read_bytes()
+    except OSError as exc:
+        if filename == "BSC_EXECUTION_AND_RECEIPTS.md":
+            return HISTORICAL_EXECUTION_KNOWLEDGE_FIXTURE
+        raise StrictJsonError(
+            f"canonical Knowledge file is unavailable: {filename}"
+        ) from exc
+
+
 def _expected_case_context(
     case_id: str,
     repository_root: Path = ROOT,
@@ -485,13 +501,7 @@ def _expected_case_context(
         raise StrictJsonError("selected evaluation case lacks an exact preview prompt")
     values = [byte_record("target", target.name, target_data)]
     for filename in KNOWLEDGE_FILENAMES:
-        path = repository_root / "gpt" / "knowledge" / filename
-        try:
-            data = path.read_bytes()
-        except OSError as exc:
-            raise StrictJsonError(
-                f"canonical Knowledge file is unavailable: {filename}"
-            ) from exc
+        data = _historical_knowledge_bytes(repository_root, filename)
         values.append(byte_record("knowledge", filename, data))
     expected = selected.get("expected")
     behavior_text = json.dumps(

@@ -17,6 +17,9 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 
 ### Corrected
 
+- pivoted the official Custom GPT to a compact human-audit profile after repeated artifact-output stalls and malformed giant responses: every depth now returns only bounded duties 1-9, with 500/1,200/2,000-word caps; generated/downloadable machine records, compiler execution/stdout, Base64, shards, parity, transport, and section 10 are disabled in the public GPT;
+- reduced the official Knowledge roster from six files to five by removing `BSC_EXECUTION_AND_RECEIPTS.md`; the compiler, return schema, controller, and Audit Return Desk remain preserved as supervised standalone repository tooling rather than live GPT behavior;
+- replaced the live-profile promotion gate with 12 fresh compact cases, including an explicit artifact-export-disabled control; the earlier 39-case artifact-profile suite, D01/D02 preflights, and transport results remain preserved historical evidence but do not govern or validate the compact candidate;
 - strengthened the alpha.8 Custom GPT controller and all 39 evaluation oracles around per-source coverage, `file_read_only`, absence-only refutation, exact verdict calibration, incomplete or non-admissive evidence, and exact audit-return emission;
 - made `audit_return.json` the required structured draft at adversarial and formal-mathematical depth while preserving the human report as a separate artifact;
 - bound evidence to the exact execution inputs, outputs, receipts, claims, and gates it relies on instead of accepting an unrelated globally valid run.
@@ -48,7 +51,7 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 
 The alpha.8.dev0 source tree was merged and deployed to Pages, and the official GPT reported the alpha.8.dev0 controller identity before the intended complete post-update Preview sequence was preserved. R01 on alpha.8.dev1 then preserved a real execution/representation failure; its original local replay was separately controller-incomplete and did not establish browser or download corruption. Neither CI, a runtime identity smoke, nor an invalid controller trial substitutes for the GPT behavior gate.
 
-The final alpha.8 identity is publishable only from the exact commit that passes the isolated repository gates, two development preflights, a frozen 39-case Preview regression suite with every case at least 18/20 and no automatic failure, live GPT binding verification, required CI, and tagged release-build checks. Japanese support remains beta until native-speaker terminology review is recorded.
+The final alpha.8 compact identity is publishable only from the exact commit that passes the isolated repository gates, the fresh frozen 12-case compact Preview regression with every case at least 18/20 and no automatic failure, live GPT binding verification, required CI, and tagged release-build checks. Japanese support remains beta until native-speaker terminology review is recorded. The historical 39-case artifact suite is not substituted into this gate.
 
 ## 0.3.0-alpha.7 - 2026-07-21
 

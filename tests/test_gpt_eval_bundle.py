@@ -57,6 +57,26 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def historical_knowledge_bytes(filename: str) -> bytes:
+    """Return deterministic bytes for the retired six-file controller fixture.
+
+    The compact public package intentionally omits the execution/compiler
+    Knowledge upload. Historical controller tests still exercise the old
+    six-input topology, so use a small fixed placeholder instead of putting
+    the 109 KB document back in the public Knowledge directory.
+    """
+
+    path = ROOT / "gpt" / "knowledge" / filename
+    if path.is_file():
+        return path.read_bytes()
+    if filename != "BSC_EXECUTION_AND_RECEIPTS.md":
+        raise AssertionError(f"missing historical Knowledge fixture: {filename}")
+    return (
+        b"# Historical execution and receipts fixture\n\n"
+        b"Retired public-GPT input; standalone controller tests only.\n"
+    )
+
+
 class GptEvalBundleCheckerTests(unittest.TestCase):
     def case(self, case_id: str = CASE_ID) -> dict:
         for line in (
@@ -355,10 +375,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         target_name = source.name
         shutil.copyfile(source, root / target_name)
         for filename in KNOWLEDGE_FILENAMES:
-            shutil.copyfile(
-                ROOT / "gpt" / "knowledge" / filename,
-                root / filename,
-            )
+            (root / filename).write_bytes(historical_knowledge_bytes(filename))
         canonical_copies = {
             "GPT_FROZEN_CANDIDATE.json": ROOT
             / "docs"
@@ -613,9 +630,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         source_record["sha256"] = f"sha256:{sha256(target_bytes)}"
         (root / TARGET_NAME).write_bytes(target_bytes)
         for index, filename in enumerate(KNOWLEDGE_FILENAMES, 1):
-            knowledge_data = (
-                ROOT / "gpt" / "knowledge" / filename
-            ).read_bytes()
+            knowledge_data = historical_knowledge_bytes(filename)
             (root / filename).write_bytes(knowledge_data)
             record["artifacts"].append(
                 {
@@ -716,9 +731,9 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         shutil.copyfile(target, root / TARGET_NAME)
         inputs = [byte_record("target", TARGET_NAME, target.read_bytes())]
         for filename in KNOWLEDGE_FILENAMES:
-            source = ROOT / "gpt" / "knowledge" / filename
-            shutil.copyfile(source, root / filename)
-            inputs.append(byte_record("knowledge", filename, source.read_bytes()))
+            knowledge_data = historical_knowledge_bytes(filename)
+            (root / filename).write_bytes(knowledge_data)
+            inputs.append(byte_record("knowledge", filename, knowledge_data))
 
         canonical_copies = {
             "GPT_FROZEN_CANDIDATE.json": ROOT

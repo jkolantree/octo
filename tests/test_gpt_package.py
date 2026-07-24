@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from build_gpt_package import (  # noqa: E402
+    COMPACT_PREVIEW_CASE_IDS,
     EVAL_GOVERNANCE_SOURCES,
     GPT_ROOT,
     MAX_GPT_INSTRUCTION_CHARACTERS,
@@ -25,6 +26,7 @@ from build_gpt_package import (  # noqa: E402
     REQUIRED_EVAL_CASE_REQUIREMENTS,
     REQUIRED_EVAL_CASE_IDS,
     REQUIRED_JAPANESE_CRITICAL_EVAL_CASE_IDS,
+    REQUIRED_OUTPUT_IDS,
     REQUIRED_RULE_IDS,
     REQUIRED_RULE_SEVERITIES,
     REQUIRED_STATUS_REPRODUCTION_EVAL_CASE_IDS,
@@ -175,8 +177,8 @@ class CustomGptPackageTests(unittest.TestCase):
                 == (
                     f"Target attachment for this case: {Path(record['fixture_paths'][0]).name}\n\n"
                     "Use this attachment as the sole case target; ambient File Library results are not case targets.\n\n"
-                    "The visible answer must include complete required sections 1-9 and 10 when required; "
-                    "generated files never substitute.\n\n"
+                    "The visible answer must use compact sections 1-9 only. Do not create or offer files, "
+                    "machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
                     f"Run this audit at {record['audit_depth']} depth.\n\n{record['user_request']}"
                 )
                 for record in records
@@ -286,10 +288,14 @@ class CustomGptPackageTests(unittest.TestCase):
         setup = payload[Path("GPT_SETUP_AND_PUBLISHING.md")].decode("utf-8")
         readme = payload[Path("README.md")].decode("utf-8")
         for text in (setup, readme):
-            self.assertIn("validate the controller synthetically", text)
-            self.assertIn("Case 1 and Case 27", text)
-            self.assertIn("freeze", text)
-            self.assertIn("controller validity", text)
+            self.assertIn("12", text)
+            self.assertIn("compact", text.lower())
+            self.assertIn("freeze", text.lower())
+            self.assertIn("historical", text.lower())
+            self.assertIn("39", text)
+            self.assertNotIn("Case 1 and Case 27", text)
+        self.assertIn("artifact-export-disabled-control", setup)
+        self.assertIn("no files", setup)
         self.assertIn("complete restart from Case 1", setup)
         self.assertIn("same frozen candidate", setup)
 
@@ -429,12 +435,14 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertTrue(instructions.endswith(b"BSC_CUSTOM_GPT_INSTRUCTIONS_END"))
         for fixed_contract_line in (
             "Fatal controls.",
-            "BSC_PROTOCOL.md|BSC_STATUS_AND_EVIDENCE_MODEL.md|BSC_EXECUTION_AND_RECEIPTS.md|"
-            "BSC_SUPPORTED_CHECKS.md|BSC_WORKED_EXAMPLES.md|BSC_JAPANESE_INTERFACE.md.",
+            "BSC_PROTOCOL.md|BSC_STATUS_AND_EVIDENCE_MODEL.md|BSC_SUPPORTED_CHECKS.md|"
+            "BSC_WORKED_EXAMPLES.md|BSC_JAPANESE_INTERFACE.md.",
             "Missing:name it;coverage=unavailable/not_reviewed;no affected pass/proven/gate/run;"
             "fail closed/request re-upload.",
-            "DEPTH:quick|standard(default)|adversarial|formal-mathematical;last2 need machine record;"
+            "DEPTH:quick|standard(default)|adversarial|formal-mathematical;human audit only at every depth;"
             "BSC_PROTOCOL.md.",
+            "COMPACT:visible sections1-9 only;no generated/downloadable records;no compiler/Base64/shards/"
+            "transport/Section10.",
             "F=fatal;R=required;all.",
         ):
             self.assertIn(fixed_contract_line, instruction_text)
@@ -463,26 +471,31 @@ class CustomGptPackageTests(unittest.TestCase):
             japanese_knowledge,
         )
         self.assertNotIn("| `inconsistent` |", japanese_knowledge)
-        execution_knowledge = payload[
-            Path("knowledge/BSC_EXECUTION_AND_RECEIPTS.md")
-        ].decode("utf-8")
-        self.assertIn(
-            "derives one deterministic bounded container",
-            execution_knowledge,
+        self.assertNotIn(
+            Path("knowledge/BSC_EXECUTION_AND_RECEIPTS.md"),
+            payload,
+        )
+        self.assertEqual(
+            [
+                path.name
+                for path in payload
+                if path.parts and path.parts[0] == "knowledge"
+            ],
+            [
+                "BSC_PROTOCOL.md",
+                "BSC_STATUS_AND_EVIDENCE_MODEL.md",
+                "BSC_SUPPORTED_CHECKS.md",
+                "BSC_WORKED_EXAMPLES.md",
+                "BSC_JAPANESE_INTERFACE.md",
+            ],
         )
         self.assertIn(
-            "The candidate must copy that stdout",
-            execution_knowledge,
+            "Never generate/offer downloadable audit_request.txt",
+            instruction_text,
         )
-        self.assertIn(
-            "byte-for-byte into one final fenced code block",
-            execution_knowledge,
-        )
-        self.assertIn("`transport_identity_unresolved`", execution_knowledge)
-        self.assertIn(
-            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v9"',
-            execution_knowledge,
-        )
+        self.assertIn("quick<=500 words", instruction_text)
+        self.assertIn("standard<=1200", instruction_text)
+        self.assertIn("adversarial/formal<=2000", instruction_text)
         durable_knowledge = "\n".join(
             data.decode("utf-8")
             for path, data in payload.items()
@@ -502,9 +515,10 @@ class CustomGptPackageTests(unittest.TestCase):
         rules = {rule["id"]: rule["text"] for rule in all_rules(profile)}
         expected_rules = {
             "source_coverage_first": (
-                "FIRST: table ID|title/URL/DOI|query|opened?|access_mode|coverage|scope|omissions|code_read?|"
-                "code_run?. Exactly 7 base rows=target+6 Knowledge even unavailable; retry target twice; add used "
-                "web; no collapse/omit."
+                "FIRST: compact table, one row per case target/evidence source used or attempted: "
+                "ID|title/URL/DOI|query|opened?|access_mode|coverage|scope|omissions|code_read?|code_run?. Retry "
+                "unavailable targets twice; include relied-on web pages. Add one note: BSC protocol Knowledge "
+                "informed method, not case evidence. Do not enumerate Knowledge or claim full inspection."
             ),
             "separate_status_axes": (
                 "Research IDs/text/verdicts exclude gate/admission/deployment/execution/replication/provenance/"
@@ -543,37 +557,34 @@ class CustomGptPackageTests(unittest.TestCase):
                 "Requested language; preserve exact JSON keys/enums/IDs/tokens/paths/hashes/commands/filenames/"
                 "artifact IDs/source quotes; label translations."
             ),
-            "draft_machine_records": (
-                "Machine=audit_request.txt+audit_report.md+audit_return.json. "
-                "K3=/mnt/data/gpt_artifact_compiler.py owns runtime+frozen I/O+"
-                "Ledger8/report/IDs/topology; return LAST. Text=control-free report_body_lines; prefer "
-                "Unicode; no ordinary-string LaTeX/interpreted splitlines; raw strings+json.dump. "
-                "Cc=>block/regenerate; never alter/guess. No authored runtime/hash/size/"
-                "Base64; block=>no return/pass/proven. Refs2way; pass=>0 obligations; "
-                "nonpass=>>=1 scoped obligation; refutation!=disposition; "
-                "summary=all; no self; exact fatal IDs. "
-                "High verdict/lemma=>6K+S10+bound evidence/claim/run/pass-gates else demote. "
-                "protocol.sha256=sha256:"
-                "1b587f18e4eb83be8d1ef50294b174f54f339d966f25d2d7b56d1b5b5fb94e31. "
-                "Request/report/source IDs,digests distinct. Final=exact v9 stdout; nothing after. "
-                "v2 parity=fallback-only; no unavailable-button identity."
+            "compact_no_machine_records": (
+                "COMPACT: sections1-9 only. Never generate/offer downloadable audit_request.txt, "
+                "audit_report.md, audit_return.json, ledger artifacts, or machine records; never run the "
+                "compiler; never emit stdout/hashes/Base64/chunks/shards/parity/transport/Section10. If requested, "
+                "say disabled in public GPT, point to the supervised local engine/Return Desk, and continue the "
+                "human audit."
             ),
             "execution_ledger": (
-                "Ledger8. file_read_only:no output/receipt, !=independent_source_check. "
-                "model_reasoning:in=request+target+6K,out=evidence+report,receipts=[]; DA:same inputs,"
-                "out+chatgpt_data_analysis_output.txt,receipts=[]. Ledger v2=one session_reported "
-                "runtime+provenance+sorted final non-input outputs; omit self/return. Other "
-                "ran=>exact tool/version+bound I/O|receipt. Validator=>bound version+schema/input hashes+result else "
-                "not_run/no pass. Evidence run binds request+claim sources+cited outputs. "
-                "BSC/external/empirical unrun=>not_run."
+                "Ledger8 rows: model reasoning; web; independent source check; Data Analysis; BSC Python; external "
+                "formal tool; empirical test; proposed computation. `ran` only with actual execution and an "
+                "inspectable result. Unexecuted BSC/formal/empirical=not_run, never not_applicable; unsupported "
+                "reports=reported_but_unverified. Separate file_read_only from independent checking. Give known "
+                "tool/version, scope, relied-on result, receipt/output or none. No ledger file."
             ),
             "nonadmissive_receipts": (
                 "Receipt-only: sole research T=plausible_but_unresolved; no authorization/tool-run IDs, type/"
                 "evidence rows, conclusions, extra verdicts. Authorization only decision/gate; no A claim."
             ),
             "closing_disclosure": (
-                "BEFORE SEND: full1-9+7 sources+8 ledger; files never substitute; add10 if needed; no merge/"
-                "swap/omit. Close with depth+coverage/omissions+runs/unruns+unresolved+drafts+verdict changer."
+                "BEFORE SEND: within budget cover all section1-9 duties, compact source ledger, and Ledger8; "
+                "headings may merge, duties may not. No files/Section10. Close with depth, coverage/omissions, "
+                "runs/unruns, unresolved claims/gates, research-preview status, and smallest verdict changer."
+            ),
+            "public_research_preview": (
+                "Inspectable beginner-first research preview; sources/proofs/evidence may err. Total including "
+                "tables: quick<=500 words; standard<=1200; adversarial/formal<=2000; expand only on explicit "
+                "request. Terse headings; merge adjacent duties; at most 3 decisive findings; no long source "
+                "repetition; keep disclosures inside the cap."
             ),
         }
         self.assertEqual({rule_id: rules[rule_id] for rule_id in expected_rules}, expected_rules)
@@ -969,6 +980,40 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertIn("Packet Builder local-only excludes GPT uploads", instructions)
         self.assertIn("ChatGPT settings/terms apply", instructions)
 
+    def test_compact_profile_disables_public_machine_record_path(self) -> None:
+        profile = load_strict_json(PROFILE_PATH)
+        payload = generated_payload()
+        instructions = payload[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
+
+        self.assertTrue(
+            all(depth["machine_record_required"] is False for depth in profile["audit_depths"])
+        )
+        self.assertEqual(
+            [section["id"] for section in profile["output_sections"]],
+            list(REQUIRED_OUTPUT_IDS),
+        )
+        self.assertEqual(len(REQUIRED_OUTPUT_IDS), 9)
+        self.assertNotIn("machine_readable_record", REQUIRED_OUTPUT_IDS)
+        self.assertNotIn(Path("knowledge/BSC_EXECUTION_AND_RECEIPTS.md"), payload)
+        self.assertIn("F:compact_no_machine_records:", instructions)
+        self.assertIn("human audit only at every depth", instructions)
+        self.assertIn("no compiler/Base64/shards/transport/Section10", instructions)
+        self.assertNotIn("last2 need machine record", instructions)
+        self.assertNotIn("Final=exact v9 stdout", instructions)
+
+        metadata = payload[Path("GPT_PUBLIC_METADATA.md")].decode("utf-8")
+        setup = payload[Path("GPT_SETUP_AND_PUBLISHING.md")].decode("utf-8")
+        readme = payload[Path("README.md")].decode("utf-8")
+        for text in (metadata, setup, readme):
+            self.assertIn("compact", text.lower())
+            self.assertIn("standalone tooling", text)
+        self.assertIn("historical and superseded", setup)
+        self.assertIn("These 12 cases, not the historical 39-case suite", setup)
+        self.assertIn(
+            "do not collapse those states or claim that the compact profile passed",
+            setup,
+        )
+
     def test_official_service_candidate_and_bilingual_metadata_are_separate(self) -> None:
         profile = load_strict_json(PROFILE_PATH)
         product = profile["product"]
@@ -978,7 +1023,15 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertEqual(product["candidate_state"], "PENDING")
         self.assertEqual(product["live_binding_state"], "PENDING_VERIFICATION")
         self.assertEqual(product["preview_validation_state"], "PENDING")
-        self.assertEqual(product["preview_gate_case_count"], 39)
+        self.assertEqual(product["preview_gate_case_count"], 12)
+        self.assertEqual(
+            tuple(product["preview_gate_case_ids"]),
+            COMPACT_PREVIEW_CASE_IDS,
+        )
+        self.assertEqual(
+            product["historical_evaluation_suite_status"],
+            "SUPERSEDED_ARTIFACT_PROFILE_39_CASES",
+        )
         self.assertEqual(product["japanese_interface_status"], "BETA")
         self.assertEqual(product["japanese_native_speaker_terminology_review"], "PENDING")
         starters = product["conversation_starters"]
@@ -1007,7 +1060,12 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertIn("Preserve this disclosure in the public Description", setup)
         manifest = json.loads(payload[Path("GPT_RELEASE_MANIFEST.json")])
         self.assertEqual(manifest["official_service_and_candidate_state"]["public_url"], OFFICIAL_GPT_URL)
-        self.assertEqual(manifest["official_service_and_candidate_state"]["preview_gate_case_count"], 39)
+        self.assertEqual(manifest["official_service_and_candidate_state"]["preview_gate_case_count"], 12)
+        self.assertEqual(
+            tuple(manifest["compact_preview_gate_case_ids"]),
+            COMPACT_PREVIEW_CASE_IDS,
+        )
+        self.assertEqual(manifest["historical_artifact_evaluation_case_count"], 39)
         self.assertEqual(
             manifest["japanese_interface_state"],
             {

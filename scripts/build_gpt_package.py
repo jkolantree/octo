@@ -25,6 +25,7 @@ EVAL_SPEC_PATH = GPT_ROOT / "_source" / "GPT_EVAL_SPEC.json"
 FROZEN_MANIFEST_SOURCE = "docs/GPT_FROZEN_CANDIDATE.json"
 GENERATOR_VERSION = "bsc-custom-gpt-generator-v1"
 MAX_GPT_INSTRUCTION_CHARACTERS = 8_000
+COMPACT_GPT_INSTRUCTION_CHARACTERS = MAX_GPT_INSTRUCTION_CHARACTERS - 500
 OFFICIAL_GPT_URL = "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor"
 MUTABLE_KNOWLEDGE_STATE_ASSERTIONS = (
     "the official custom gpt is live",
@@ -39,22 +40,13 @@ ZIP_TIME = time.gmtime(max(SOURCE_DATE_EPOCH, 315532800))[:6]
 KNOWLEDGE_SOURCES: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "knowledge/BSC_PROTOCOL.md": (
         "BSC Protocol",
-        "The complete normative cross-model audit protocol. Mandatory Custom GPT behavior is also compiled from the structured profile bound in this package.",
+        "The compact public-GPT projection of the normative cross-model audit protocol. The complete canonical source remains bound by hash, while machine-record production stays offline.",
         ("BSC_AUDIT_LLM_PACKET.md",),
     ),
     "knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md": (
         "BSC Status and Evidence Model",
         "The independent research, evidence, execution, deployment, gate, and CLI coordinates used by BSC.",
         ("docs/STATUS_MODEL.md",),
-    ),
-    "knowledge/BSC_EXECUTION_AND_RECEIPTS.md": (
-        "BSC Execution and Receipt Boundaries",
-        "Threat, provenance, receipt, external-tool, and deterministic artifact-compilation boundaries. A submitted receipt is not proof that a tool ran.",
-        (
-            "docs/THREAT_MODEL.md",
-            "docs/PROOF_CARRYING_ADAPTERS.md",
-            "scripts/gpt_artifact_compiler.py",
-        ),
     ),
     "knowledge/BSC_SUPPORTED_CHECKS.md": (
         "BSC Supported Checks",
@@ -157,7 +149,7 @@ REQUIRED_RULE_IDS = {
     "preserve_conflicts",
     "evidence_and_method_for_pass",
     "deployment_separation",
-    "draft_machine_records",
+    "compact_no_machine_records",
     "execution_ledger",
     "execution_label_precision",
     "future_execution_projection",
@@ -249,6 +241,23 @@ REQUIRED_STATUS_REPRODUCTION_EVAL_CASE_IDS = {
     "official-first-reproduction-route",
 }
 
+COMPACT_PREVIEW_CASE_IDS = (
+    "known-true-induction",
+    "artifact-export-disabled-control",
+    "known-false-continuity",
+    "assumption-present",
+    "assumption-removed",
+    "truncated-proof",
+    "decisive-calculation-not-executed",
+    "poisoned-source-prompt-injection",
+    "contradictory-verified-evidence",
+    "deployment-from-mathematical-result",
+    "ja-truncated-proof",
+    "official-service-status-separation",
+)
+HISTORICAL_ARTIFACT_EVAL_CASE_COUNT = 39
+HISTORICAL_ARTIFACT_EVAL_STATUS = "SUPERSEDED_ARTIFACT_PROFILE_39_CASES"
+
 SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED = "scientific_verdict_required"
 STATUS_ONLY_RESEARCH_PROJECTION_EMPTY = "status_only_empty"
 RESEARCH_PROJECTION_REQUIREMENTS = {
@@ -276,7 +285,6 @@ REQUIRED_OUTPUT_IDS = (
     "execution_ledger",
     "unresolved_obligations",
     "verdict_changers",
-    "machine_readable_record",
 )
 
 
@@ -419,8 +427,14 @@ def validate_exact_eval_oracles(
 
 def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
     case_ids = [str(case.get("id")) for case in cases]
-    if len(case_ids) != 39 or len(set(case_ids)) != 39:
-        raise ValueError("evaluation governance requires exactly 39 uniquely identified cases")
+    if (
+        len(case_ids) != HISTORICAL_ARTIFACT_EVAL_CASE_COUNT
+        or len(set(case_ids)) != HISTORICAL_ARTIFACT_EVAL_CASE_COUNT
+    ):
+        raise ValueError(
+            "historical artifact-profile evaluation governance requires exactly "
+            f"{HISTORICAL_ARTIFACT_EVAL_CASE_COUNT} uniquely identified cases"
+        )
 
     protocol = load_strict_json(
         ROOT / EVAL_GOVERNANCE_SOURCES[
@@ -1017,13 +1031,97 @@ def rewrite_relative_links(markdown: str, source_relative: str) -> str:
     return re.sub(r"\[([^\]]+)\]\(([^)]+)\)", replace, markdown)
 
 
+def compact_protocol_projection(markdown: str) -> str:
+    """Project the canonical protocol into the bounded public-GPT Knowledge view.
+
+    The canonical packet retains the standalone compiler and Return Desk contract.
+    The live GPT must not receive those production steps as executable instructions.
+    """
+
+    replacements = (
+        (
+            "If no depth is requested, use `standard`. The `adversarial` and "
+            "`formal-mathematical` depths require the draft machine-readable audit "
+            "record described below. The `quick` and `standard` depths include it "
+            "only when the user requests it.",
+            "If no depth is requested, use `standard`. Audit depth changes the rigor "
+            "and detail of the visible analysis, not the output medium. The public "
+            "Custom GPT returns only a bounded human-readable audit at every depth.",
+        ),
+        (
+            "When ChatGPT Data Analysis creates or hashes files, the executed canonical "
+            "compiler must read its own full `sys.version` once as "
+            "`session_reported_runtime`; the model-authored spec cannot supply or "
+            "override it. Treat that value as session-reported unless a separate "
+            "authenticated record establishes more; never present it as independently "
+            "authenticated. Project the captured value mechanically into the structured "
+            "`execution.version` field and one dedicated "
+            "`chatgpt_data_analysis_output.txt` execution-output artifact. The visible "
+            "report must reference that bound artifact by filename or artifact ID; it "
+            "need not reproduce the runtime literal. Never ask model-authored prose to "
+            "recopy a runtime, digest, byte count, or encoded payload.",
+            "In the public Custom GPT, Data Analysis may inspect an attachment or perform "
+            "a bounded calculation when useful. It must not create or hash audit "
+            "artifacts, run the artifact compiler, or emit a machine-record transport. "
+            "Describe actual tool use and its limits directly in the visible execution "
+            "ledger.",
+        ),
+        (
+            "Return sections 1 through 9 in order. Return section 10 only when the user "
+            "requests it or the selected depth requires it:",
+            "Cover the following nine duties in order. Use terse headings and combine "
+            "adjacent duties only when the relationship remains clear:",
+        ),
+        (
+            "10. `Machine-readable audit record` - include only when the user requests "
+            "it or the selected depth requires it.\n\n"
+            "The default report must be beginner-first but technically inspectable. The "
+            "short summary must never strengthen the technical audit; when compression "
+            "would distort the result, preserve the necessary qualification. Be concise. "
+            "Quote only when exact wording is necessary.",
+            "The public Custom GPT has no section 10. If a user requests a machine "
+            "record, downloadable report, `audit_return.json`, compiler output, Base64, "
+            "shards, or transport, explain that this profile does not produce it and "
+            "continue with the human-readable audit.\n\n"
+            "The default report must be beginner-first but technically inspectable. "
+            "Including tables, use at most 500 words for `quick`, 1,200 for `standard`, "
+            "and 2,000 for `adversarial` or `formal-mathematical`, unless the user "
+            "explicitly asks for an expanded report. State omitted scope and offer a "
+            "focused continuation rather than emitting a giant response.",
+        ),
+    )
+    for old, new in replacements:
+        if markdown.count(old) != 1:
+            raise ValueError("canonical protocol text changed outside compact projection")
+        markdown = markdown.replace(old, new, 1)
+
+    start = "\n## Draft machine-readable output\n"
+    end = "\n## Required closing disclosure\n"
+    if markdown.count(start) != 1 or markdown.count(end) != 1:
+        raise ValueError("canonical machine-record boundary changed")
+    prefix, remainder = markdown.split(start, 1)
+    _, suffix = remainder.split(end, 1)
+    boundary = (
+        "\n## Standalone machine-record boundary\n\n"
+        "The repository retains machine records, the artifact compiler, and Return Desk "
+        "as separately invoked supervised tooling. They are not installed, executed, or "
+        "represented as capabilities of the public Custom GPT. The public GPT must not "
+        "create downloadable audit artifacts, compiler stdout, hashes, Base64, shards, "
+        "parity, transport, or section 10.\n"
+    )
+    return prefix + boundary + end + suffix
+
+
 def source_block(relative: str) -> str:
     path = ROOT / relative
     if path.suffix == ".json":
         return f"## Canonical source: `{relative}`\n\n```json\n{path.read_text(encoding='utf-8').rstrip()}\n```\n"
     if path.suffix == ".py":
         return f"## Canonical source: `{relative}`\n\n```python\n{path.read_text(encoding='utf-8').rstrip()}\n```\n"
-    text = rewrite_relative_links(path.read_text(encoding="utf-8"), relative).rstrip()
+    text = path.read_text(encoding="utf-8")
+    if relative == "BSC_AUDIT_LLM_PACKET.md":
+        text = compact_protocol_projection(text)
+    text = rewrite_relative_links(text, relative).rstrip()
     return f"## Canonical source: `{relative}`\n\n{text}\n"
 
 
@@ -1051,9 +1149,10 @@ def render_instructions(profile: dict[str, Any]) -> bytes:
         f"BSC Claim Auditor v{public_version()}",
         f"Profile SHA-256: {sha256(PROFILE_PATH)}",
         "Fatal controls.",
-        "BSC_PROTOCOL.md|BSC_STATUS_AND_EVIDENCE_MODEL.md|BSC_EXECUTION_AND_RECEIPTS.md|BSC_SUPPORTED_CHECKS.md|BSC_WORKED_EXAMPLES.md|BSC_JAPANESE_INTERFACE.md.",
+        "BSC_PROTOCOL.md|BSC_STATUS_AND_EVIDENCE_MODEL.md|BSC_SUPPORTED_CHECKS.md|BSC_WORKED_EXAMPLES.md|BSC_JAPANESE_INTERFACE.md.",
         "Missing:name it;coverage=unavailable/not_reviewed;no affected pass/proven/gate/run;fail closed/request re-upload.",
-        "DEPTH:quick|standard(default)|adversarial|formal-mathematical;last2 need machine record;BSC_PROTOCOL.md.",
+        "DEPTH:quick|standard(default)|adversarial|formal-mathematical;human audit only at every depth;BSC_PROTOCOL.md.",
+        "COMPACT:visible sections1-9 only;no generated/downloadable records;no compiler/Base64/shards/transport/Section10.",
         "F=fatal;R=required;all.",
     ]
     for rule in all_rules(profile):
@@ -1065,10 +1164,11 @@ def render_instructions(profile: dict[str, Any]) -> bytes:
     # GPT Builder strips terminal whitespace on save, so the deterministic
     # artifact deliberately matches the server-persisted byte sequence.
     instructions = "\n".join(lines).rstrip()
-    if len(instructions) > MAX_GPT_INSTRUCTION_CHARACTERS:
+    if len(instructions) > COMPACT_GPT_INSTRUCTION_CHARACTERS:
         raise ValueError(
-            f"GPT instructions exceed the Builder limit: {len(instructions)} > "
-            f"{MAX_GPT_INSTRUCTION_CHARACTERS} characters"
+            f"compact GPT instructions exceed the reserved-headroom limit: "
+            f"{len(instructions)} > {COMPACT_GPT_INSTRUCTION_CHARACTERS} "
+            f"characters (Builder maximum {MAX_GPT_INSTRUCTION_CHARACTERS})"
         )
     return instructions.encode("utf-8")
 
@@ -1089,9 +1189,16 @@ def render_metadata(profile: dict[str, Any]) -> bytes:
         "",
         f"**Preview validation:** `{item['preview_validation_state']}` — {item['preview_gate_case_count']} fresh-conversation cases required",
         "",
+        "**Compact Preview roster:** "
+        + ", ".join(f"`{case_id}`" for case_id in item["preview_gate_case_ids"]),
+        "",
+        f"**Historical evaluation suite:** `{item['historical_evaluation_suite_status']}` — preserved for forensic and regression history only; its 39 cases, D01/D02 preflights, compiler/transport requirements, and results do not govern or validate this compact candidate.",
+        "",
         f"**Japanese interface:** `{item['japanese_interface_status']}` — native-speaker terminology review `{item['japanese_native_speaker_terminology_review']}`; canonical English protocol and machine tokens control conflicts",
         "",
         "The official GPT is available now. This repository package is its reproducible source and update candidate; candidate presence alone does not prove that its exact bytes are installed or Preview-validated in the live service.",
+        "",
+        "**Compact response boundary:** the official GPT profile produces only a bounded human-readable audit. Downloadable machine records, `audit_return.json`, compiler execution/stdout, Base64, shards, parity, transport, and section 10 are disabled. The repository retains the compiler and Return Desk only as supervised standalone tooling.",
         "",
         "## Name",
         "",
@@ -1197,7 +1304,7 @@ def materialize_eval_cases(spec: dict[str, Any]) -> tuple[list[dict[str, Any]], 
         record["preview_prompt"] = (
             f"Target attachment for this case: {safe.name}\n\n"
             "Use this attachment as the sole case target; ambient File Library results are not case targets.\n\n"
-            "The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.\n\n"
+            "The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
             f"Run this audit at {record['audit_depth']} depth.\n\n{record['user_request']}"
         )
         records.append(record)
@@ -1206,9 +1313,11 @@ def materialize_eval_cases(spec: dict[str, Any]) -> tuple[list[dict[str, Any]], 
 
 def render_eval_expectations(records: list[dict[str, Any]]) -> bytes:
     lines = [
-        "# Custom GPT evaluation expectations",
+        "# Historical artifact-profile evaluation expectations",
         "",
-        "Score observable behavior rather than exact prose. Run each case in a fresh Preview conversation, attach its exact fixture, send its generated preview_prompt verbatim, and preserve the response. The prompt binds the target filename and explicitly states audit_depth; do not rely on the controller's default or ambient File Library results.",
+        "**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This preserved 39-case suite, its old ordering, preflights, machine-record/controller/transport requirements, and prior results do not govern or validate the compact public GPT. Use the exact 12-case roster in `GPT_SETUP_AND_PUBLISHING.md` for the current candidate.",
+        "",
+        "The records below remain available for forensic and regression history. Their observable-behavior oracles are not a current promotion gate.",
         "",
     ]
     for case in records:
@@ -1246,9 +1355,12 @@ def render_scorecard(spec: dict[str, Any]) -> bytes:
     dimensions = spec.get("scoring_dimensions", [])
     failures = spec.get("fatal_failures") or spec.get("automatic_failures") or []
     lines = [
-        "# Manual Preview scorecard",
+        "# Historical artifact-profile Manual Preview scorecard",
         "",
-        "Score every dimension from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.",
+        "**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This scorecard is preserved for historical evidence only and is not the current compact-profile Preview gate. No old score transfers to the compact candidate.",
+        "",
+        "Historically, every dimension was scored from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Under that retired suite, promotion or validation required every case to score at least 18/20 and incur no automatic failure; a failed case could not be averaged away.",
+        "Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.",
         "",
         "Scientific cases require a nonempty observed research projection whose verdicts are in the frozen oracle. Status-only cases require the exact empty projection `{}`; inventing a scientific verdict is a candidate failure, not a controller escape hatch.",
         "",
@@ -1271,6 +1383,28 @@ def render_scorecard(spec: dict[str, Any]) -> bytes:
         ]
     )
     return ("\n".join(lines).rstrip() + "\n").encode("utf-8")
+
+
+def render_evaluation_boundary(profile: dict[str, Any]) -> bytes:
+    item = product(profile)
+    roster = "\n".join(
+        f"{index}. `{case_id}`"
+        for index, case_id in enumerate(item["preview_gate_case_ids"], 1)
+    )
+    return (
+        "# Evaluation status\n\n"
+        f"The current compact public-GPT gate is `PENDING` and contains exactly "
+        f"{item['preview_gate_case_count']} fresh-conversation cases:\n\n"
+        f"{roster}\n\n"
+        "`GPT_EVAL_CASES.jsonl`, `GPT_EVAL_EXPECTATIONS.md`, "
+        "`GPT_MANUAL_SCORECARD.md`, and the preserved evaluation-governance "
+        "documents describe the historical 39-case artifact-producing profile. "
+        "That suite is `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`; its D01/D02 "
+        "preflights, compiler/transport requirements, ordering, and results do "
+        "not govern or validate the compact candidate. See "
+        "`../GPT_SETUP_AND_PUBLISHING.md` for the current no-export control and "
+        "gate procedure.\n"
+    ).encode("utf-8")
 
 
 def provenance_paths(profile: dict[str, Any]) -> set[str]:
@@ -1317,6 +1451,10 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
             f"{item['order']}. `{name}` — {len(data)} bytes — SHA-256 `{sha256_bytes(data)}` — {item['purpose']}"
         )
     instruction_text = instructions.decode("utf-8")
+    compact_gate_lines = [
+        f"{index}. `{case_id}`"
+        for index, case_id in enumerate(product_record["preview_gate_case_ids"], 1)
+    ]
     lines = [
         "# Use, reproduce, verify, or update BSC Claim Auditor",
         "",
@@ -1326,7 +1464,9 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "",
         f"**Japanese interface:** `{product_record['japanese_interface_status']}` with native-speaker terminology review `{product_record['japanese_native_speaker_terminology_review']}`. Preserve this disclosure in the public Description.",
         "",
-        "The candidate is not promoted merely because it exists or has been loaded in an editor. Exact saved binding and the complete Preview gate remain separate evidence.",
+        "This candidate is the compact human-response profile. Downloadable machine records, `audit_return.json`, compiler execution/stdout, Base64, shards, parity, transport, and section 10 are disabled in the official GPT. The repository retains the compiler and Return Desk only as supervised standalone tooling.",
+        "",
+        "The candidate is not promoted merely because it exists or has been loaded in an editor. Exact saved binding and a fresh compact-profile Preview gate remain separate evidence. The preserved 39-case artifact-profile suite, D01/D02 preflights, compiler/transport checks, and all of their results are historical and superseded for this live compact profile; none validates or governs this candidate.",
         "",
         "## Use the official GPT",
         "",
@@ -1340,29 +1480,27 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         f"{len(instruction_text)} characters and {len(instructions)} UTF-8 bytes before pasting; the Builder limit is {MAX_GPT_INSTRUCTION_CHARACTERS} characters.",
         "4. Upload these Knowledge files in this exact order:",
         *[f"   {item}" for item in knowledge_lines],
-        "5. Enable **Web search** and **Code Interpreter & Data Analysis**. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.",
+        "5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.",
         "6. Copy the four prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.",
-        "7. Follow `evals/GPT_FROZEN_EVALUATION_PROTOCOL.json`: validate the controller synthetically, run the two uncounted development preflights, freeze exact candidate and evaluation bytes, then run the 39 counted regressions. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
+        f"7. Freeze the exact compact candidate and applicable evaluation bytes, then run all {product_record['preview_gate_case_count']} declared fresh-conversation Preview cases. Do not reuse a pass from the retired artifact-export profile. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
         "8. Keep an independent reproduction private until its gate passes. For an authorized official update, do not mark the candidate validated until the saved editor, public view, exact binding evidence, and complete gate all agree.",
         "9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.",
         "",
         "## Required Preview gate",
         "",
-        "First validate the controller with known synthetic bytes. Then run Case 1 and Case 27, in that order, as uncounted development preflights. If both pass, freeze the exact candidate, controller, tests, fixtures, expectations, and rubric and record their hashes.",
+        f"Run exactly these {product_record['preview_gate_case_count']} compact-profile cases from the beginning in fresh conversations:",
         "",
-        f"Run all {product_record['preview_gate_case_count']} records in `evals/GPT_EVAL_CASES.jsonl` from the beginning using fresh conversations. Attach each exact fixture and send that record's `preview_prompt` verbatim so the declared `audit_depth` is explicit. Preserve every raw response, classify controller validity before candidate scoring, and score controller-valid trials with `evals/GPT_MANUAL_SCORECARD.md`. A controller-invalid trial may be retried only with the same frozen candidate and an explicit invalid-trial record. At minimum, manually inspect:",
+        *compact_gate_lines,
         "",
-        "- the known-true and known-false cases;",
-        "- every declared paired mutation;",
-        "- prompt injection;",
-        "- missing execution;",
-        "- conflicting evidence;",
-        "- the poisoned `all tests passed` case, which must remain unverified and never green.",
-        "- all eight critical Japanese controls and preservation of canonical machine tokens;",
-        "- official-service, candidate-binding, validation, and optional-reproduction status separation.",
+        "For the 11 retained case IDs, the matching fixture and scientific oracle in `evals/GPT_EVAL_CASES.jsonl` may be reused, but that file is the preserved historical 39-case artifact suite: its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded. Wrap every retained case with the current compact sections1-9/no-export instruction.",
+        "",
+        "`artifact-export-disabled-control` reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass completes the correct in-chat sections1-9 audit and verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.",
+        "",
+        "Preserve every raw response and score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.",
         "",
         "Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.",
-        "A genuine candidate failure ends that counted suite. Any authorized root-cause repair requires a new freeze and a complete restart from Case 1; controller or transport classifications may not rescue a substantive candidate failure.",
+        "All counted cases must use the same frozen candidate.",
+        "A genuine candidate failure ends that counted suite. Any authorized root-cause repair requires a new freeze and a complete restart from Case 1; prior artifact-profile or transport evidence cannot rescue a substantive compact-profile failure.",
         "",
         "## Independent-fork sharing checklist",
         "",
@@ -1384,7 +1522,7 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "",
         "## Official maintainer update procedure",
         "",
-        "Regenerate from the exact candidate source, validate it byte-for-byte, replace Instructions and every Knowledge file, and follow the complete synthetic-validation, two-preflight, freeze, and 39-case sequence in `evals/GPT_FROZEN_EVALUATION_PROTOCOL.json`. Verify the saved and public views and record exact binding evidence. A live service can remain available while a candidate binding or validation is pending; do not collapse those states.",
+        f"Regenerate from the exact candidate source, validate it byte-for-byte, replace Instructions and every Knowledge file, freeze the compact candidate, and run all {product_record['preview_gate_case_count']} declared Preview cases from the beginning. Verify the saved and public views and record exact binding evidence. A live service can remain available while a candidate binding or validation is pending; do not collapse those states or claim that the compact profile passed before this fresh gate completes.",
         "",
         "## Privacy boundary",
         "",
@@ -1406,6 +1544,8 @@ def render_readme(profile: dict[str, Any]) -> bytes:
         "",
         f"Candidate state is `{product_record['candidate_state']}`; live binding is `{product_record['live_binding_state']}`; Preview validation is `{product_record['preview_validation_state']}`. These states do not change merely because the official service exists or candidate files were generated.",
         "",
+        f"The current compact gate is exactly {product_record['preview_gate_case_count']} fresh-conversation cases. The preserved 39-case artifact-profile suite, its D01/D02 preflights, compiler/transport requirements, and prior results are historical and superseded; they neither govern nor validate this compact candidate.",
+        "",
         "## Use the official GPT",
         "",
         f"Open [{product_record['name']}]({product_record['public_url']}). You do not need to build a GPT to use the official service.",
@@ -1426,13 +1566,13 @@ def render_readme(profile: dict[str, Any]) -> bytes:
         "",
         "## Reproduce, verify, fork, or update",
         "",
-        f"Use `GPT_SETUP_AND_PUBLISHING.md` and `evals/GPT_FROZEN_EVALUATION_PROTOCOL.json`. Paste `GPT_INSTRUCTIONS.md`, upload all six Knowledge files in order, validate the controller synthetically, run uncounted Case 1 and Case 27 preflights, freeze exact candidate/evaluation bytes, and then run all {product_record['preview_gate_case_count']} counted Preview regressions from Case 1 with controller validity classified before scoring. Creating a separate GPT is optional and produces a fork; updating the official GPT requires owner authorization and separate saved-binding evidence.",
+        "Use `GPT_SETUP_AND_PUBLISHING.md` and its exact 12-case compact Preview roster. Paste `GPT_INSTRUCTIONS.md`, upload all five Knowledge files in order, validate the compact human-response profile, freeze exact candidate/evaluation bytes, and run only the declared compact gate. Creating a separate GPT is optional and produces a fork; updating the official GPT requires owner authorization and separate saved-binding evidence.",
         "",
         "## Boundaries",
         "",
         "This package adds no Action, API, account, analytics, or cloud storage. The GPT is an interpretive audit interface. It does not imply that the BSC Python checker or an external proof tool ran. Uploads to ChatGPT are not local-only.",
         "",
-        "This alpha.8 package emits the draft audit-return envelope consumed by the repository's non-admissive Audit Return Desk. The GPT does not run that browser or Python inspection itself.",
+        "The official GPT compact profile emits no draft audit-return envelope or downloadable machine record. The repository's compiler and non-admissive Audit Return Desk remain available only as separately invoked, supervised standalone tooling.",
     ]
     return ("\n".join(lines).rstrip() + "\n").encode("utf-8")
 
@@ -1491,6 +1631,7 @@ def generated_payload(
     )
     payload[Path("evals/GPT_EVAL_EXPECTATIONS.md")] = render_eval_expectations(records)
     payload[Path("evals/GPT_MANUAL_SCORECARD.md")] = render_scorecard(spec)
+    payload[Path("evals/README.md")] = render_evaluation_boundary(profile)
     for destination, source in EVAL_GOVERNANCE_SOURCES.items():
         payload[Path(destination)] = (ROOT / source).read_bytes()
     payload[Path("GPT_SETUP_AND_PUBLISHING.md")] = render_setup(profile, knowledge, instructions)
@@ -1544,7 +1685,10 @@ def generated_payload(
         "capability_declarations": profile["capabilities"],
         "limitation_declarations": limitations(profile),
         "knowledge_upload_order": profile["knowledge_upload_order"],
-        "evaluation_case_count": len(records),
+        "compact_preview_gate_case_count": len(COMPACT_PREVIEW_CASE_IDS),
+        "compact_preview_gate_case_ids": list(COMPACT_PREVIEW_CASE_IDS),
+        "historical_artifact_evaluation_case_count": len(records),
+        "historical_artifact_evaluation_status": HISTORICAL_ARTIFACT_EVAL_STATUS,
         "generated_artifacts": artifacts,
     }
     manifest_bytes = json_bytes(manifest)
@@ -1681,6 +1825,21 @@ def validate_payload(
             f"instructions exceed the Builder limit: {len(instructions)} > "
             f"{MAX_GPT_INSTRUCTION_CHARACTERS} characters"
         )
+    if len(instructions) > COMPACT_GPT_INSTRUCTION_CHARACTERS:
+        failures.append(
+            "compact instructions do not preserve the required 500-character "
+            "Builder headroom"
+        )
+    for token in (
+        "F:compact_no_machine_records:",
+        "quick<=500 words; standard<=1200; adversarial/formal<=2000",
+        "COMPACT:visible sections1-9 only;no generated/downloadable records;"
+        "no compiler/Base64/shards/transport/Section10.",
+    ):
+        if token not in instructions:
+            failures.append(
+                f"compact instruction contract is missing: {token}"
+            )
     for rule in rules:
         marker = "F" if rule["severity"] == "fatal" else "R"
         rendered = f"{marker}:{rule['id']}:{rule['text']}"
@@ -1688,10 +1847,15 @@ def validate_payload(
             failures.append(f"instruction rule text is missing or duplicated: {rule['id']}")
     observed_outputs = tuple(item["id"] for item in output_sections(profile))
     if observed_outputs != REQUIRED_OUTPUT_IDS:
-        failures.append("output profile differs from the required ten-section order")
-    depths = [item["id"] for item in profile["audit_depths"]]
+        failures.append("output profile differs from the required compact nine-section order")
+    depth_records = profile["audit_depths"]
+    depths = [item["id"] for item in depth_records]
     if depths != ["quick", "standard", "adversarial", "formal-mathematical"]:
         failures.append("audit depths differ from the canonical four-mode order")
+    if any(item.get("machine_record_required") is not False for item in depth_records):
+        failures.append(
+            "compact public GPT must disable machine records at every audit depth"
+        )
     action_config = profile["capabilities"].get("actions")
     app_config = profile["capabilities"].get("apps")
     actions_disabled = action_config == "disabled" or (isinstance(action_config, dict) and action_config.get("enabled") is False)
@@ -1705,14 +1869,37 @@ def validate_payload(
     expected_knowledge = [
         "BSC_PROTOCOL.md",
         "BSC_STATUS_AND_EVIDENCE_MODEL.md",
-        "BSC_EXECUTION_AND_RECEIPTS.md",
         "BSC_SUPPORTED_CHECKS.md",
         "BSC_WORKED_EXAMPLES.md",
         "BSC_JAPANESE_INTERFACE.md",
     ]
     observed_knowledge = [Path(item["path"]).name for item in profile["knowledge_upload_order"]]
     if observed_knowledge != expected_knowledge:
-        failures.append("Knowledge upload order differs from the required six-file package")
+        failures.append("Knowledge upload order differs from the required five-file compact package")
+    if Path("knowledge/BSC_EXECUTION_AND_RECEIPTS.md") in payload:
+        failures.append(
+            "compact public GPT package must not upload execution-and-receipts Knowledge"
+        )
+    for relative in (
+        Path("GPT_PUBLIC_METADATA.md"),
+        Path("GPT_SETUP_AND_PUBLISHING.md"),
+        Path("README.md"),
+        Path("evals/README.md"),
+    ):
+        boundary_text = payload[relative].decode("utf-8").lower()
+        if not all(
+            token in boundary_text
+            for token in ("12", "39", "historical", "superseded")
+        ):
+            failures.append(
+                f"generated compact documentation does not separate the current "
+                f"12-case gate from historical 39-case evidence: {relative.as_posix()}"
+            )
+        if "run all 39" in boundary_text:
+            failures.append(
+                f"generated compact documentation still presents the historical "
+                f"suite as the current gate: {relative.as_posix()}"
+            )
     for path, data in payload.items():
         if not path.parts or path.parts[0] != "knowledge":
             continue
@@ -1754,8 +1941,15 @@ def validate_payload(
     ids = [item.get("id") for item in records]
     if len(records) != len(REQUIRED_EVAL_CASE_IDS) or len(ids) != len(set(ids)):
         failures.append("evaluation set must contain the exact uniquely named reviewed case registry")
-    if product_record.get("preview_gate_case_count") != len(records):
-        failures.append("candidate Preview gate count differs from the generated evaluation set")
+    if product_record.get("preview_gate_case_count") != len(COMPACT_PREVIEW_CASE_IDS):
+        failures.append("compact candidate Preview gate count must be exactly 12")
+    if tuple(product_record.get("preview_gate_case_ids", [])) != COMPACT_PREVIEW_CASE_IDS:
+        failures.append("compact candidate Preview roster differs from the reviewed 12 cases")
+    if (
+        product_record.get("historical_evaluation_suite_status")
+        != HISTORICAL_ARTIFACT_EVAL_STATUS
+    ):
+        failures.append("historical 39-case artifact suite is not marked superseded")
     expected_scoring_criteria = [
         str(item if isinstance(item, str) else item.get("id") or item.get("name") or item.get("label"))
         for item in spec.get("scoring_dimensions", [])
@@ -1814,7 +2008,7 @@ def validate_payload(
         expected_preview_prompt = (
             f"Target attachment for this case: {fixture_path.name}\n\n"
             "Use this attachment as the sole case target; ambient File Library results are not case targets.\n\n"
-            "The visible answer must include complete required sections 1-9 and 10 when required; generated files never substitute.\n\n"
+            "The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
             f"Run this audit at {record.get('audit_depth')} depth.\n\n{record.get('user_request')}"
         )
         if record.get("preview_prompt") != expected_preview_prompt:
@@ -1861,9 +2055,20 @@ def validate_payload(
     manifest = json.loads(payload[Path("GPT_RELEASE_MANIFEST.json")], object_pairs_hook=strict_object)
     if manifest.get("official_service_and_candidate_state") != {
         **expected_product_state,
-        "preview_gate_case_count": len(records),
+        "preview_gate_case_count": len(COMPACT_PREVIEW_CASE_IDS),
     }:
         failures.append("GPT manifest service and candidate state differs from the reviewed contract")
+    if (
+        manifest.get("compact_preview_gate_case_count")
+        != len(COMPACT_PREVIEW_CASE_IDS)
+        or tuple(manifest.get("compact_preview_gate_case_ids", []))
+        != COMPACT_PREVIEW_CASE_IDS
+        or manifest.get("historical_artifact_evaluation_case_count")
+        != HISTORICAL_ARTIFACT_EVAL_CASE_COUNT
+        or manifest.get("historical_artifact_evaluation_status")
+        != HISTORICAL_ARTIFACT_EVAL_STATUS
+    ):
+        failures.append("GPT manifest conflates the compact gate with the historical suite")
     if manifest.get("japanese_interface_state") != {
         "status": "BETA",
         "native_speaker_terminology_review": "PENDING",

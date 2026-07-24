@@ -15,7 +15,7 @@ from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_SCHEMA = "bsc-gpt-frozen-candidate-manifest/v1"
-REGISTRY_VERSION = "bsc-gpt-frozen-candidate-registry/v1"
+REGISTRY_VERSION = "bsc-gpt-frozen-candidate-registry/v2"
 OUTPUT_VERSION = "1.0"
 MAX_MANIFEST_BYTES = 8 * 1024 * 1024
 MAX_REGISTRY_FILE_BYTES = 64 * 1024 * 1024
@@ -85,7 +85,6 @@ EVAL_FIXTURE_FILENAMES = (
 )
 
 KNOWLEDGE_FILENAMES = (
-    "BSC_EXECUTION_AND_RECEIPTS.md",
     "BSC_JAPANESE_INTERFACE.md",
     "BSC_PROTOCOL.md",
     "BSC_STATUS_AND_EVIDENCE_MODEL.md",
@@ -178,7 +177,6 @@ REGISTRY: dict[str, tuple[str, ...]] = {
     "candidate": (
         "gpt/GPT_INSTRUCTIONS.md",
         "gpt/_source/GPT_PROFILE.json",
-        "gpt/knowledge/BSC_EXECUTION_AND_RECEIPTS.md",
         "gpt/knowledge/BSC_JAPANESE_INTERFACE.md",
         "gpt/knowledge/BSC_PROTOCOL.md",
         "gpt/knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md",
@@ -193,6 +191,7 @@ REGISTRY: dict[str, tuple[str, ...]] = {
         "gpt/evals/GPT_FROZEN_EVALUATION_PROTOCOL.json",
         "gpt/evals/GPT_INVARIANT_ENFORCEMENT_MATRIX.md",
         "gpt/evals/GPT_MANUAL_SCORECARD.md",
+        "gpt/evals/README.md",
     ),
     "evaluation_fixtures": tuple(
         f"gpt/evals/fixtures/{filename}" for filename in EVAL_FIXTURE_FILENAMES
@@ -201,6 +200,7 @@ REGISTRY: dict[str, tuple[str, ...]] = {
         "BSC_AUDIT_LLM_PACKET.md",
         "docs/ALPHA8_PREFLIGHT_REPAIR_ADDENDUM.md",
         "docs/R01_FORENSIC_ADDENDUM.md",
+        "docs/standalone/BSC_EXECUTION_AND_RECEIPTS.md",
         "gpt/_source/GPT_EVAL_PROVENANCE.md",
         "gpt/_source/GPT_FROZEN_EVALUATION_PROTOCOL.json",
         "gpt/_source/GPT_INVARIANT_ENFORCEMENT_MATRIX.md",
@@ -242,6 +242,7 @@ CLOSED_DIRECTORIES: dict[str, tuple[str, ...]] = {
         "GPT_FROZEN_EVALUATION_PROTOCOL.json",
         "GPT_INVARIANT_ENFORCEMENT_MATRIX.md",
         "GPT_MANUAL_SCORECARD.md",
+        "README.md",
     ),
     "gpt/evals/fixtures": EVAL_FIXTURE_FILENAMES,
     "gpt/knowledge": KNOWLEDGE_FILENAMES,

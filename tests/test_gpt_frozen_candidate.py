@@ -38,9 +38,9 @@ class FrozenCandidateManifestTests(unittest.TestCase):
     def test_registry_contract_is_explicit_complete_and_current(self) -> None:
         document, findings = checker.build_manifest(ROOT)
         self.assertEqual(findings, [])
-        self.assertEqual(len(checker.registry_entries()), 141)
-        self.assertEqual(document["file_count"], 141)
-        self.assertEqual(len(document["files"]), 141)
+        self.assertEqual(len(checker.registry_entries()), 142)
+        self.assertEqual(document["file_count"], 142)
+        self.assertEqual(len(document["files"]), 142)
         self.assertEqual(
             [(entry["category"], entry["path"]) for entry in document["files"]],
             list(checker.registry_entries()),
@@ -70,7 +70,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
                 for filename in checker.KNOWLEDGE_FILENAMES
             },
         )
-        self.assertEqual(len(checker.KNOWLEDGE_FILENAMES), 6)
+        self.assertEqual(len(checker.KNOWLEDGE_FILENAMES), 5)
         self.assertEqual(len(checker.TEST_FILENAMES), 25)
         self.assertEqual(
             {
@@ -110,6 +110,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "gpt/evals/GPT_EVAL_CASES.jsonl",
             "gpt/evals/GPT_EVAL_EXPECTATIONS.md",
             "gpt/evals/GPT_MANUAL_SCORECARD.md",
+            "gpt/evals/README.md",
             "gpt/_source/GPT_EVAL_PROVENANCE.md",
             "gpt/_source/GPT_INVARIANT_ENFORCEMENT_MATRIX.md",
             "gpt/_source/GPT_FROZEN_EVALUATION_PROTOCOL.json",
