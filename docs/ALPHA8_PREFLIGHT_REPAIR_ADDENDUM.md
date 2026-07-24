@@ -307,3 +307,42 @@ and Japanese SHA-256
 its canonical payload self-hash is regenerated. The translation text and its
 beta/native-review caveats are unchanged. The stopped snapshot is preserved
 and is not reused as release evidence.
+
+## R27 live cross-turn lifecycle failure and in-turn transport repair
+
+The clean compiler-v5 candidate used manifest
+`82a9cba5bc40d94cfc2d5145ad2e17321e6df4489d32e4833c014ff79db61495`,
+commit `41d7e6d52fe349d8d2743612f2d24974a026ba06`, and tree
+`22c3ca97abf32212d23d93dba4d25f6608eec734`. All 49 isolated local
+gates passed, including 338 Python tests with four documented Windows skips.
+
+A fresh live transport canary then ran the exact compiler-v5 `export-chunk`
+command for the private `audit_return.json` snapshot. The visible Data
+Analysis invocation returned the compiler's exact handled block:
+`transport snapshot directory must be one regular non-linked directory`.
+That proves only that the parent was a symlink, junction, or not a directory
+at the later turn. It does not identify which predicate applied, prove that
+the payload existed then, establish changed bytes, or establish corruption.
+The canary step is `candidate_failed` with
+`transport_identity_unresolved`. The enclosing D01 development trial was
+deliberately not completed or scored and is neither a candidate pass nor
+failure.
+
+A separate non-counted probe confirmed that a generated-file control caused
+ChatGPT to request a message-bound interpreter download and content resource,
+but the supported controller interface emitted no download event, rejected
+export of that response-body asset kind, and wrote no locally observable file.
+The resource binding was observable; its response bytes were not. No signed
+resource URL, cookie, or private conversation identifier is retained here.
+
+Compiler v6 removes the failed lifecycle assumption. After serializing
+`audit_return.json`, the same original compiler transaction derives one
+deterministic bounded multi-artifact container directly from the finalized
+in-memory output bytes and includes its complete canonical transport envelope
+in stdout. The candidate copies that stdout byte-for-byte once in the original
+response. The controller tries direct acquisition first and, only when it is
+unavailable, reconstructs the already-preserved container without any later
+`/mnt/data` path or tool call. Valid fallback bytes still do not authenticate
+unavailable download-button bytes. No fixture, oracle, scorer, verdict
+boundary, 18/20 threshold, automatic-failure rule, or negative Return Desk
+case is weakened.

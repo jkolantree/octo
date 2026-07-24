@@ -328,11 +328,11 @@ class CustomGptPackageTests(unittest.TestCase):
         ] = "allowed"
         mutations.append(("transport_identity", transport_identity_claimed))
 
-        inferred_export_failed = copy.deepcopy(protocol)
-        inferred_export_failed["artifact_transport"][
-            "model_authored_or_inferred_export_failed"
+        cross_turn_path_allowed = copy.deepcopy(protocol)
+        cross_turn_path_allowed["artifact_transport"][
+            "cross_turn_filesystem_path_dependency"
         ] = "allowed"
-        mutations.append(("inferred_export_failed", inferred_export_failed))
+        mutations.append(("cross_turn_path", cross_turn_path_allowed))
 
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-governance-") as directory:
             for name, mutated_protocol in mutations:
@@ -467,16 +467,16 @@ class CustomGptPackageTests(unittest.TestCase):
             Path("knowledge/BSC_EXECUTION_AND_RECEIPTS.md")
         ].decode("utf-8")
         self.assertIn(
-            "must visibly invoke the enabled Data Analysis tool once",
+            "derives one deterministic bounded container",
             execution_knowledge,
         )
         self.assertIn(
-            "The model must never infer or author",
+            "copy that complete stdout byte-for-byte",
             execution_knowledge,
         )
-        self.assertIn("`export_failed`", execution_knowledge)
+        self.assertIn("`transport_identity_unresolved`", execution_knowledge)
         self.assertIn(
-            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v5"',
+            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v6"',
             execution_knowledge,
         )
         durable_knowledge = "\n".join(
@@ -540,16 +540,16 @@ class CustomGptPackageTests(unittest.TestCase):
                 "artifact IDs/source quotes; label translations."
             ),
             "draft_machine_records": (
-                "Machine=audit_request.txt(request)+audit_report.md(report)+audit_return.json. Compiler=/mnt/"
-                "data/gpt_artifact_compiler.py; copy K3; RUN captures sys.version+freezes request/source/"
-                "evidence+owns Ledger8/report/IDs/topology; return=LAST. No manual runtime/hash/size/Base64; "
-                "block=>no return/pass/"
-                "proven. Refs2way; pass=>no obligation; omit self; fatal IDs exact. Proven/strong/lemma=>"
-                "all6K+S10+evidence/claim/run/pass-gate; else demote/omit. protocol.sha256=sha256:"
-                "d694a2ee46466d9f7eaec3d44d7917322feec53b9c982331d53eb73ab9d948f1. Request/report!=source; "
-                "request==target=>distinct bytes/IDs/digests. S7=compiler ledger. Fallback: visible DA MUST run "
-                "exact export-chunk(file,index) once; sole verbatim JSON stdout; never author/infer "
-                "export_failed/reuse/combine."
+                "Machine=audit_request.txt(request)+audit_report.md(report)+audit_return.json. "
+                "K3 compiler=/mnt/data/gpt_artifact_compiler.py. RUN captures sys.version once, freezes "
+                "request/source/evidence, owns Ledger8/report/IDs/topology; return LAST. Never author "
+                "runtime/hash/size/Base64; block=>no return/pass/proven. Refs2way; pass=>no obligation; "
+                "omit self; fatal IDs exact. Proven/strong/lemma=>all6K+S10+bound evidence/claim/run/pass-gates; "
+                "else demote/omit. protocol.sha256=sha256:"
+                "260803de04fcf8ee54b36f7e7147cf7f4c54fa6b15aa39e5e3cf72dd7b352bb2. "
+                "Request/report!=source; request=target=>distinct IDs/digests. S7=compiler ledger. "
+                "Final fenced block=exact compiler stdout; nothing follows. Bundle=fallback-only; "
+                "never edit/claim unavailable button-byte identity."
             ),
             "execution_ledger": (
                 "Ledger8. file_read_only=>no output/receipt; !=independent_source_check. Topology: "

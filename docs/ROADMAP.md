@@ -105,6 +105,7 @@ Exit criterion: a nonexpert can reproduce the package, identify exactly what to 
 - preserve poisoned returns for concealed failures, unsupported execution, missing-source promotion, receipt-only promotion, and deployment overreach;
 - harden all 39 GPT evaluation oracles around source coverage, absence-only refutation, `file_read_only`, verdict calibration, and exact return-envelope emission;
 - generate return artifacts through one acyclic final-byte transaction in which the executed compiler captures its own runtime and rejects model-authored overrides, with no model-copied hash, size, Base64, or runtime projection;
+- preserve one compiler-generated, bounded original-response transport container for fallback reconstruction without any cross-turn filesystem-path assumption, while keeping direct acquisition primary and download-button identity unresolved when its bytes are unavailable;
 - fail the evaluation controller before scoring unless the exact target, six canonical Knowledge files, and generated outputs are present;
 - preserve `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved` as separate outcomes that cannot rescue a substantive contradiction;
 - lead public documentation with the official GPT while keeping its reproducible package, exact configuration binding, Preview validation, GitHub release, and Pages deployment as separate states;

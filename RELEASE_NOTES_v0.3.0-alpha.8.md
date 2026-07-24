@@ -1,6 +1,6 @@
 # BSC Audit Engine v0.3.0-alpha.8
 
-Alpha.8 is a public research preview of the BSC Audit Engine and the repository-backed BSC Claim Auditor configuration.
+Alpha.8 is designated as a public research preview of the BSC Audit Engine and the repository-backed BSC Claim Auditor configuration. That designation does not itself establish publication; publication status is established only by the recorded local, Preview, live-binding, CI, and immutable-release gates.
 
 ## Root-cause repair
 
@@ -13,10 +13,10 @@ This release replaces model-mediated artifact identity with one acyclic final-by
 - serialize `audit_return.json` only after every referenced artifact is final;
 - canonicalize all eight execution activities and the report-facing execution projection before any report, ledger, hash, or return bytes are derived;
 - keep Base64 outside the primary proof path and treat any fallback only as the identity of the exported payload actually received;
-- replace unbounded whole-file fallback responses with stable-read, zlib-compressed, fixed-size indexed chunks whose decoded transport payload is capped at 2,048 bytes per response;
-- seal private, unexposed transport snapshots from the compiler's same final in-memory byte objects so a later fallback never relies on public artifact paths that the interface may relink.
+- derive one deterministic bounded multi-artifact container from the compiler's same final in-memory output bytes after `audit_return.json` is serialized;
+- include that dormant zlib/Base64 transport envelope in the original canonical compiler stdout, eliminating every later-turn `/mnt/data` dependency.
 
-The evaluation controller now validates the exact target, all six canonical Knowledge files, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls separately from acquired bytes, validates every chunk prompt/response/parser binding before reassembly, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`.
+The evaluation controller now validates the exact target, all six canonical Knowledge files, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls and explicit per-file direct-acquisition outcomes separately from acquired bytes, never infers `no_download_event` from absence alone, validates the complete original-response compiler block and every container/member identity before local reconstruction, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`.
 
 The frozen-suite checker independently revalidates each trial's manifest-bound candidate snapshot and raw evidence, enforces fresh Preview-session identities and the exact `C001` through `C039` order, and encodes the one-repair/two-complete-suite release ceiling without allowing controller or transport states to rescue a substantive candidate contradiction.
 
@@ -66,6 +66,16 @@ longer satisfied its regular/non-linked check on later turns, so the
 controller-valid trial remained `candidate_failed` with unresolved transport
 identity. The compiler v5 snapshot repair changes only that lifecycle source.
 It neither follows public links nor calls unavailable button bytes corrupt.
+
+The following live compiler-v5 canary then showed that a hidden snapshot
+directory itself was not a stable cross-turn source. The exact handled block
+established only a symlink, junction, or non-directory parent state; it did not
+establish changed bytes or corruption. The canary step is preserved as
+`candidate_failed` with `transport_identity_unresolved`, while the enclosing
+D01 trial was not completed or scored. Compiler v6 replaces that environmental
+assumption with the original-turn container described above. Direct
+acquisition remains primary, and valid fallback reconstruction still does not
+authenticate unavailable download-button bytes.
 
 ## Authority and privacy boundary
 

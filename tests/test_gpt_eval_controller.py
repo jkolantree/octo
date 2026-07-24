@@ -1,4 +1,3 @@
-import base64
 import copy
 import hashlib
 import html
@@ -7,7 +6,8 @@ import json
 import tempfile
 import unittest
 import zlib
-from contextlib import redirect_stdout
+import base64
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import scripts.gpt_artifact_compiler as artifact_compiler
@@ -38,12 +38,12 @@ from scripts.gpt_eval_controller import (
     output_record,
     parse_runtime_ledger,
     runtime_ledger_text,
-    transport_fallback_prompt,
     validate_frozen_trial_binding,
 )
 
 
 RUNTIME = "3.13.5 (main, May  5 2026, 21:05:52) [GCC 14.2.0]"
+transport_fallback_prompt = eval_controller._legacy_transport_fallback_prompt
 
 
 def digest(data: bytes) -> str:
@@ -118,10 +118,10 @@ class GptEvalControllerTests(unittest.TestCase):
             "extract_session_reported_runtime",
             "finalize_candidate_artifacts",
             "output_record",
+            "parse_compile_transport_stdout",
             "parse_runtime_ledger",
             "runtime_ledger_text",
             "sha256_bytes",
-            "transport_fallback_prompt",
         ):
             self.assertIs(
                 getattr(eval_controller, name),
@@ -129,12 +129,24 @@ class GptEvalControllerTests(unittest.TestCase):
                 name,
             )
 
-    def test_transport_request_cli_emits_exact_one_index_prompt_without_newline(self):
+    def test_legacy_transport_request_requires_explicit_offline_acknowledgment(self):
+        with redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit):
+                _parser().parse_args(
+                    [
+                        "transport-request",
+                        "--output",
+                        "audit_return.json",
+                        "--chunk-index",
+                        "0",
+                    ]
+                )
         output = io.StringIO()
         with redirect_stdout(output):
             status = controller_main(
                 [
                     "transport-request",
+                    "--offline-historical-v3",
                     "--output",
                     "audit_return.json",
                     "--chunk-index",
@@ -248,7 +260,6 @@ class GptEvalControllerTests(unittest.TestCase):
             (root / filename).write_bytes(f"{filename}\n".encode("utf-8"))
         for _, filename in eval_controller.CANDIDATE_IDENTITY_FILENAMES:
             (root / filename).write_bytes(f"{filename}\n".encode("utf-8"))
-        (root / "artifact_transport.json").write_bytes(b"{}\n")
         (root / "visible_response_dom.txt").write_bytes(b"terminal response\n")
         (root / "preview_prompt.txt").write_bytes(b"prompt")
         for filename in fallback_attempts:
@@ -264,6 +275,643 @@ class GptEvalControllerTests(unittest.TestCase):
                 encoding="utf-8",
                 newline="",
             )
+
+    def compiler_v6_stdout(
+        self,
+        *,
+        extra_files: dict[str, bytes] | None = None,
+    ) -> tuple[bytes, dict[str, bytes]]:
+        artifacts = [
+            {
+                "id": "artifact:target",
+                "filename": "known_true_induction.txt",
+                "role": "source",
+            },
+            *[
+                {
+                    "id": f"artifact:knowledge:{index}",
+                    "filename": filename,
+                    "role": "source",
+                }
+                for index, filename in enumerate(
+                    eval_controller.KNOWLEDGE_FILENAMES,
+                    start=1,
+                )
+            ],
+            {
+                "id": "artifact:request",
+                "filename": "audit_request.txt",
+                "role": "request",
+            },
+            {
+                "id": "artifact:report",
+                "filename": "audit_report.md",
+                "role": "report",
+            },
+            {
+                "id": "artifact:runtime",
+                "filename": BOUND_RUNTIME_ARTIFACT,
+                "role": "execution_output",
+            },
+            {
+                "id": "artifact:evidence",
+                "filename": "proof_evidence.md",
+                "role": "evidence",
+            },
+        ]
+        all_files = {
+            "known_true_induction.txt": b"target\n",
+            **{
+                filename: f"{filename}\n".encode("utf-8")
+                for filename in eval_controller.KNOWLEDGE_FILENAMES
+            },
+            "audit_request.txt": b"prompt\n",
+            "audit_report.md": b"# Report\n\nBound output reference.\n",
+            BOUND_RUNTIME_ARTIFACT: (
+                b"session_reported_runtime=3.12.13 (main) [MSC v.1944]\n"
+            ),
+            "proof_evidence.md": b"independently verified bytes\n",
+        }
+        for artifact in artifacts:
+            artifact["sha256"] = (
+                "sha256:" + digest(all_files[artifact["filename"]])
+            )
+        request_and_source_ids = [
+            "artifact:request",
+            "artifact:target",
+            *[
+                f"artifact:knowledge:{index}"
+                for index in range(1, len(eval_controller.KNOWLEDGE_FILENAMES) + 1)
+            ],
+        ]
+        execution = []
+        for activity in artifact_compiler.CANONICAL_EXECUTION_ACTIVITIES:
+            row = {
+                "activity": activity,
+                "status": "not_run",
+                "tool": None,
+                "version": None,
+                "input_artifact_ids": [],
+                "output_artifact_ids": [],
+                "receipt_ids": [],
+                "notes": "Not run in the synthetic controller fixture.",
+            }
+            if activity == "model_reasoning":
+                row.update(
+                    status="ran",
+                    tool="BSC Custom GPT",
+                    version="0.3.0-alpha.8",
+                    input_artifact_ids=request_and_source_ids,
+                    output_artifact_ids=[
+                        "artifact:evidence",
+                        "artifact:report",
+                    ],
+                    notes="Synthetic exact compiler topology.",
+                )
+            elif activity == "chatgpt_data_analysis":
+                row.update(
+                    status="ran",
+                    tool="ChatGPT Data Analysis",
+                    version="3.12.13 (main) [MSC v.1944]",
+                    input_artifact_ids=request_and_source_ids,
+                    output_artifact_ids=[
+                        "artifact:evidence",
+                        "artifact:report",
+                        "artifact:runtime",
+                    ],
+                    notes="Synthetic exact compiler topology.",
+                )
+            execution.append(row)
+        return_document = {
+            "artifacts": artifacts,
+            "receipts": [],
+            "execution": execution,
+            "evidence": [],
+        }
+        all_files[BOUND_RETURN_ARTIFACT] = canonical_json_bytes(return_document)
+        source_filenames = {
+            "known_true_induction.txt",
+            *eval_controller.KNOWLEDGE_FILENAMES,
+        }
+        transport_files = {
+            filename: data
+            for filename, data in all_files.items()
+            if filename not in source_filenames
+        }
+        if extra_files:
+            all_files.update(extra_files)
+            transport_files.update(extra_files)
+        compile_document = {
+            "compiler": artifact_compiler.COMPILER_VERSION,
+            "status": "pass",
+            "outputs": [
+                output_record(filename, data)
+                for filename, data in sorted(all_files.items())
+            ],
+            "return_serialized_last": True,
+            "transport": artifact_compiler.build_same_response_transport(
+                transport_files
+            ),
+        }
+        return canonical_transport_wrapper_bytes(compile_document), transport_files
+
+    def build_v4_record(
+        self,
+        root: Path,
+        response_html: str,
+        *,
+        output_controls: tuple[str, ...] = (),
+        direct_outputs: dict[str, bytes] | None = None,
+        direct_acquisition_attempts: tuple[tuple[str, str], ...] | None = None,
+    ) -> dict:
+        self.make_minimal_controller_root(
+            root,
+            output_controls=output_controls,
+            fallback_attempts=(),
+        )
+        (root / "raw" / "response.outerHTML.html").write_text(
+            response_html,
+            encoding="utf-8",
+            newline="",
+        )
+        for filename, data in (direct_outputs or {}).items():
+            (root / filename).write_bytes(data)
+        if direct_acquisition_attempts is None:
+            input_files = {
+                "known_true_induction.txt": b"target\n",
+                **{
+                    filename: f"{filename}\n".encode("utf-8")
+                    for filename in eval_controller.KNOWLEDGE_FILENAMES
+                },
+            }
+            _, reconstructed = eval_controller._capture_same_response_transport(
+                response_html.encode("utf-8"),
+                expected_untransported_files=input_files,
+                required_untransported_filenames=set(input_files),
+            )
+            attempt_names = (
+                set(output_controls)
+                | set(direct_outputs or {})
+                | set(reconstructed)
+            )
+            direct_acquisition_attempts = tuple(
+                (
+                    filename,
+                    (
+                        "download_event"
+                        if filename in (direct_outputs or {})
+                        else (
+                            "no_download_event"
+                            if filename in output_controls
+                            else "unavailable"
+                        )
+                    ),
+                )
+                for filename in sorted(attempt_names)
+            )
+        return eval_controller.build_controller_record(
+            root=root,
+            case_id="known-true-induction",
+            trial_id="D01",
+            counting_state="preflight",
+            target_filename="known_true_induction.txt",
+            output_filenames=sorted(direct_outputs or {}),
+            session_reference="preview:v4-test",
+            observability_boundary="Original response and exposed files only.",
+            output_control_filenames=output_controls,
+            direct_acquisition_attempts=direct_acquisition_attempts,
+        )
+
+    def validate_v4_record(self, root: Path, record: dict) -> list[dict[str, str]]:
+        return eval_controller.validate_controller_record(
+            root=root,
+            record=record,
+            expected_case_id="known-true-induction",
+            expected_preview_prompt=b"prompt",
+            expected_inputs=record["inputs"],
+            expected_candidate_identity=record["candidate_identity"],
+            expected_output_filenames={
+                item["filename"] for item in record["observed_outputs"]
+            },
+            repository_root=Path(__file__).resolve().parents[1],
+        )
+
+    def test_v4_reconstructs_one_original_response_bundle_with_unrelated_code(self):
+        stdout, files = self.compiler_v6_stdout()
+        escaped = html.escape(stdout.decode("utf-8"), quote=False)
+        response = (
+            "<article><p>complete answer</p>"
+            "<pre><code>unrelated inline example</code></pre>"
+            f"<pre><code>{escaped}</code></pre></article>"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            record = self.build_v4_record(root, response)
+            capture = record["compiler_transport_capture"]
+            self.assertEqual(capture["status"], "verified")
+            self.assertFalse(capture["candidate_evidence"])
+            self.assertEqual(capture["compiler_blocks"][0]["code_block_index"], 1)
+            self.assertEqual(
+                capture["compiler_blocks"][0]["sha256"],
+                digest(stdout),
+            )
+            self.assertEqual(
+                [item["filename"] for item in record["reconstructed_outputs"]],
+                sorted(files),
+            )
+            for filename, data in files.items():
+                self.assertEqual(
+                    (root / "reconstructed" / filename).read_bytes(),
+                    data,
+                )
+            self.assertIn(
+                b"independently",
+                (root / "reconstructed" / "proof_evidence.md").read_bytes(),
+            )
+            self.assertEqual(
+                record["direct_acquisition_attempts"],
+                [
+                    {"filename": filename, "outcome": "unavailable"}
+                    for filename in sorted(files)
+                ],
+            )
+            transport = json.loads(
+                (root / "artifact_transport.json").read_bytes()
+            )
+            self.assertEqual(
+                {
+                    item["filename"]: (
+                        item["method"],
+                        item["direct_download_outcome"],
+                    )
+                    for item in transport["records"]
+                },
+                {
+                    filename: (
+                        eval_controller.SAME_RESPONSE_TRANSPORT_METHOD,
+                        "unavailable",
+                    )
+                    for filename in files
+                },
+            )
+            self.assertEqual(self.validate_v4_record(root, record), [])
+            self.assertEqual(
+                derive_disposition(
+                    controller=CONTROLLER_VALID,
+                    candidate=CANDIDATE_PASSED,
+                    transport=TRANSPORT_IDENTITY_UNRESOLVED,
+                ),
+                TRANSPORT_IDENTITY_UNRESOLVED,
+            )
+
+    def test_v4_requires_every_knowledge_source_output_in_builder_and_validator(self):
+        valid_stdout, _ = self.compiler_v6_stdout()
+        valid_document = json.loads(valid_stdout)
+        valid_response = (
+            "<article><pre><code>"
+            + html.escape(valid_stdout.decode("utf-8"), quote=False)
+            + "</code></pre></article>"
+        )
+        for missing in eval_controller.KNOWLEDGE_FILENAMES:
+            with self.subTest(missing=missing):
+                mutated_document = copy.deepcopy(valid_document)
+                mutated_document["outputs"] = [
+                    row
+                    for row in mutated_document["outputs"]
+                    if row["filename"] != missing
+                ]
+                mutated_stdout = canonical_transport_wrapper_bytes(
+                    mutated_document
+                )
+                mutated_response = (
+                    "<article><pre><code>"
+                    + html.escape(mutated_stdout.decode("utf-8"), quote=False)
+                    + "</code></pre></article>"
+                )
+
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    candidate_record = self.build_v4_record(
+                        root,
+                        mutated_response,
+                    )
+                    self.assertNotEqual(
+                        candidate_record["compiler_transport_capture"]["status"],
+                        "verified",
+                    )
+                    self.assertTrue(
+                        candidate_record["compiler_transport_capture"][
+                            "candidate_evidence"
+                        ]
+                    )
+                    self.assertEqual(
+                        candidate_record["reconstructed_outputs"],
+                        [],
+                    )
+                    self.assertEqual(
+                        self.validate_v4_record(root, candidate_record),
+                        [],
+                    )
+
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    verified_record = self.build_v4_record(
+                        root,
+                        valid_response,
+                    )
+                    self.assertEqual(
+                        verified_record["compiler_transport_capture"]["status"],
+                        "verified",
+                    )
+                    mutated_response_bytes = mutated_response.encode("utf-8")
+                    (
+                        root / eval_controller.RAW_RESPONSE_FILENAME
+                    ).write_bytes(mutated_response_bytes)
+                    stale_verified_record = copy.deepcopy(verified_record)
+                    stale_verified_record["raw_response"] = output_record(
+                        eval_controller.RAW_RESPONSE_FILENAME,
+                        mutated_response_bytes,
+                    )
+                    issue_codes = {
+                        issue["code"]
+                        for issue in self.validate_v4_record(
+                            root,
+                            stale_verified_record,
+                        )
+                    }
+                    self.assertIn(
+                        "CONTROLLER_COMPILER_CAPTURE_MISMATCH",
+                        issue_codes,
+                    )
+                    self.assertIn(
+                        "CONTROLLER_RECONSTRUCTED_OUTPUT_ROSTER_MISMATCH",
+                        issue_codes,
+                    )
+
+    def test_explicit_no_download_attempt_precedes_same_response_fallback(self):
+        stdout, files = self.compiler_v6_stdout()
+        response = (
+            '<article><button aria-label="Download audit_report.md"></button>'
+            "<pre><code>"
+            + html.escape(stdout.decode("utf-8"), quote=False)
+            + "</code></pre></article>"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            record = self.build_v4_record(
+                root,
+                response,
+                output_controls=("audit_report.md",),
+            )
+            attempts = {
+                item["filename"]: item["outcome"]
+                for item in record["direct_acquisition_attempts"]
+            }
+            self.assertEqual(attempts["audit_report.md"], "no_download_event")
+            self.assertEqual(
+                {
+                    item["filename"]: (
+                        item["method"],
+                        item["direct_download_outcome"],
+                    )
+                    for item in json.loads(
+                        (root / "artifact_transport.json").read_bytes()
+                    )["records"]
+                }["audit_report.md"],
+                (
+                    eval_controller.SAME_RESPONSE_TRANSPORT_METHOD,
+                    "no_download_event",
+                ),
+            )
+            self.assertEqual(
+                (root / "reconstructed" / "audit_report.md").read_bytes(),
+                files["audit_report.md"],
+            )
+            self.assertEqual(self.validate_v4_record(root, record), [])
+
+    def test_direct_bytes_are_primary_without_hiding_a_bundle_contradiction(self):
+        stdout, files = self.compiler_v6_stdout()
+        response = (
+            '<article><button aria-label="Download audit_report.md"></button>'
+            "<pre><code>"
+            + html.escape(stdout.decode("utf-8"), quote=False)
+            + "</code></pre></article>"
+        )
+        direct_bytes = b"# Direct report\n\nContradictory candidate bytes.\n"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            record = self.build_v4_record(
+                root,
+                response,
+                output_controls=("audit_report.md",),
+                direct_outputs={"audit_report.md": direct_bytes},
+            )
+            transport_by_filename = {
+                item["filename"]: item
+                for item in json.loads(
+                    (root / "artifact_transport.json").read_bytes()
+                )["records"]
+            }
+            self.assertEqual(
+                transport_by_filename["audit_report.md"],
+                {
+                    "filename": "audit_report.md",
+                    "method": "direct_download",
+                    "direct_download_outcome": "download_event",
+                    "bytes": len(direct_bytes),
+                    "sha256": digest(direct_bytes),
+                    "export_chunks": None,
+                },
+            )
+            self.assertEqual(
+                (root / "reconstructed" / "audit_report.md").read_bytes(),
+                files["audit_report.md"],
+            )
+            self.assertNotEqual(direct_bytes, files["audit_report.md"])
+            self.assertEqual(self.validate_v4_record(root, record), [])
+
+    def test_v4_rejects_prose_or_code_after_the_compiler_block(self):
+        stdout, _ = self.compiler_v6_stdout()
+        escaped = html.escape(stdout.decode("utf-8"), quote=False)
+        responses = {
+            "prose": (
+                f"<article><pre><code>{escaped}</code></pre>"
+                "<p>prohibited trailing prose</p></article>"
+            ),
+            "code": (
+                f"<article><pre><code>{escaped}</code></pre>"
+                "<pre><code>later block</code></pre></article>"
+            ),
+        }
+        for label, response in responses.items():
+            with self.subTest(label=label):
+                with tempfile.TemporaryDirectory() as temporary:
+                    record = self.build_v4_record(Path(temporary), response)
+                    self.assertEqual(
+                        record["compiler_transport_capture"]["status"],
+                        "extra",
+                    )
+                    self.assertTrue(
+                        record["compiler_transport_capture"]["candidate_evidence"]
+                    )
+                    self.assertEqual(record["reconstructed_outputs"], [])
+
+    def test_v4_requires_the_compiler_stdout_to_be_fenced(self):
+        stdout, _ = self.compiler_v6_stdout()
+        escaped = html.escape(stdout.decode("utf-8"), quote=False)
+        with tempfile.TemporaryDirectory() as temporary:
+            record = self.build_v4_record(
+                Path(temporary),
+                f"<article><p><code>{escaped}</code></p></article>",
+            )
+            self.assertEqual(
+                record["compiler_transport_capture"]["status"],
+                "malformed",
+            )
+            self.assertTrue(
+                record["compiler_transport_capture"]["candidate_evidence"]
+            )
+            self.assertEqual(record["reconstructed_outputs"], [])
+
+    def test_aligned_base64_omission_is_candidate_evidence_not_controller_invalid(self):
+        stdout, _ = self.compiler_v6_stdout()
+        document = json.loads(stdout)
+        encoded = document["transport"]["chunks"][0]["base64"]
+        self.assertGreaterEqual(len(encoded), 12)
+        document["transport"]["chunks"][0]["base64"] = encoded[:4] + encoded[8:]
+        malformed = canonical_transport_wrapper_bytes(document)
+        escaped = html.escape(malformed.decode("utf-8"), quote=False)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            record = self.build_v4_record(
+                root,
+                f"<article><pre><code>{escaped}</code></pre></article>",
+            )
+            self.assertEqual(
+                record["compiler_transport_capture"]["status"],
+                "malformed",
+            )
+            self.assertTrue(
+                record["compiler_transport_capture"]["candidate_evidence"]
+            )
+            self.assertEqual(record["reconstructed_outputs"], [])
+            self.assertEqual(self.validate_v4_record(root, record), [])
+
+    def test_candidate_transport_states_cannot_be_relabeled_controller_invalid(self):
+        stdout, _ = self.compiler_v6_stdout(
+            extra_files={"unexpected.txt": b"extra\n"}
+        )
+        blocked = canonical_transport_wrapper_bytes(
+            {
+                "compiler": artifact_compiler.COMPILER_VERSION,
+                "status": "blocked",
+                "error": "bounded transport unavailable",
+            }
+        )
+        states = {
+            "missing": "<article>completed without transport</article>",
+            "blocked": (
+                "<article><pre><code>"
+                + html.escape(blocked.decode("utf-8"), quote=False)
+                + "</code></pre></article>"
+            ),
+            "extra": (
+                "<article><pre><code>"
+                + html.escape(stdout.decode("utf-8"), quote=False)
+                + "</code></pre></article>"
+            ),
+            "duplicate": (
+                "<article><pre><code>"
+                + html.escape(blocked.decode("utf-8"), quote=False)
+                + "</code></pre><pre><code>"
+                + html.escape(blocked.decode("utf-8"), quote=False)
+                + "</code></pre></article>"
+            ),
+            "truncated": (
+                "<article><pre><code>"
+                + html.escape(blocked.decode("utf-8"), quote=False)
+            ),
+        }
+        for expected_status, response in states.items():
+            with self.subTest(status=expected_status):
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    record = self.build_v4_record(root, response)
+                    self.assertEqual(
+                        record["compiler_transport_capture"]["status"],
+                        expected_status,
+                    )
+                    self.assertTrue(
+                        record["compiler_transport_capture"]["candidate_evidence"]
+                    )
+                    self.assertEqual(self.validate_v4_record(root, record), [])
+
+    def test_controller_mutation_is_invalid_but_candidate_defect_is_not(self):
+        stdout, _ = self.compiler_v6_stdout()
+        document = json.loads(stdout)
+        document["transport"]["chunks"][0]["chunk_sha256"] = "0" * 64
+        malformed = canonical_transport_wrapper_bytes(document)
+        response = (
+            "<article><pre><code>"
+            + html.escape(malformed.decode("utf-8"), quote=False)
+            + "</code></pre></article>"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            record = self.build_v4_record(root, response)
+            self.assertEqual(self.validate_v4_record(root, record), [])
+
+            relabeled = copy.deepcopy(record)
+            relabeled["compiler_transport_capture"]["status"] = "missing"
+            self.assertIn(
+                "CONTROLLER_COMPILER_CAPTURE_MISMATCH",
+                {
+                    issue["code"]
+                    for issue in self.validate_v4_record(root, relabeled)
+                },
+            )
+
+            (root / "raw" / "response.outerHTML.html").write_text(
+                "<article>controller-mutated capture</article>",
+                encoding="utf-8",
+                newline="",
+            )
+            codes = {
+                issue["code"]
+                for issue in self.validate_v4_record(root, record)
+            }
+            self.assertIn("CONTROLLER_FILE_BINDING_MISMATCH", codes)
+            self.assertIn("CONTROLLER_COMPILER_CAPTURE_MISMATCH", codes)
+
+    def test_builder_requires_target_all_six_knowledge_and_candidate_identity(self):
+        for missing in (
+            "known_true_induction.txt",
+            eval_controller.KNOWLEDGE_FILENAMES[3],
+            eval_controller.CANDIDATE_IDENTITY_FILENAMES[1][1],
+        ):
+            with self.subTest(missing=missing):
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    self.make_minimal_controller_root(
+                        root,
+                        output_controls=(),
+                        fallback_attempts=(),
+                    )
+                    (root / missing).unlink()
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "required input|candidate identity",
+                    ):
+                        eval_controller.build_controller_record(
+                            root=root,
+                            case_id="known-true-induction",
+                            trial_id="D01",
+                            counting_state="preflight",
+                            target_filename="known_true_induction.txt",
+                            output_filenames=[],
+                            session_reference="preview:test",
+                            observability_boundary="Original response only.",
+                        )
 
     def test_verified_chunk_assembly_round_trips_known_bytes(self):
         payload = b"independently\n" + b"".join(
@@ -661,11 +1309,26 @@ class GptEvalControllerTests(unittest.TestCase):
                     "audit_report.md",
                     "proof_reconstruction.md",
                 ),
-                fallback_attempts=(
-                    "audit_report.md",
-                    "proof_reconstruction.md",
-                ),
+                fallback_attempts=(),
             )
+            with self.assertRaisesRegex(
+                ValueError,
+                "direct acquisition attempts must exactly cover",
+            ):
+                eval_controller.build_controller_record(
+                    root=root,
+                    case_id="known-true-induction",
+                    trial_id="D01",
+                    counting_state="preflight",
+                    target_filename="known_true_induction.txt",
+                    output_filenames=[],
+                    session_reference="preview:test",
+                    observability_boundary="Visible Preview response only.",
+                    output_control_filenames=[
+                        "audit_report.md",
+                        "proof_reconstruction.md",
+                    ],
+                )
             record = eval_controller.build_controller_record(
                 root=root,
                 case_id="known-true-induction",
@@ -679,10 +1342,27 @@ class GptEvalControllerTests(unittest.TestCase):
                     "audit_report.md",
                     "proof_reconstruction.md",
                 ],
+                direct_acquisition_attempts=[
+                    ("audit_report.md", "no_download_event"),
+                    ("proof_reconstruction.md", "no_download_event"),
+                ],
             )
             self.assertEqual(
                 record["observed_output_controls"],
                 ["audit_report.md", "proof_reconstruction.md"],
+            )
+            self.assertEqual(
+                record["direct_acquisition_attempts"],
+                [
+                    {
+                        "filename": "audit_report.md",
+                        "outcome": "no_download_event",
+                    },
+                    {
+                        "filename": "proof_reconstruction.md",
+                        "outcome": "no_download_event",
+                    },
+                ],
             )
             issues = eval_controller.validate_controller_record(
                 root=root,
@@ -713,6 +1393,25 @@ class GptEvalControllerTests(unittest.TestCase):
                 "CONTROLLER_OUTPUT_CONTROL_ROSTER_MISMATCH",
                 {issue["code"] for issue in issues},
             )
+            mutated_attempt = copy.deepcopy(record)
+            mutated_attempt["direct_acquisition_attempts"][0][
+                "outcome"
+            ] = "unavailable"
+            issues = eval_controller.validate_controller_record(
+                root=root,
+                record=mutated_attempt,
+                expected_case_id="known-true-induction",
+                expected_preview_prompt=b"prompt",
+                expected_inputs=record["inputs"],
+                expected_candidate_identity=record["candidate_identity"],
+                expected_output_filenames=set(),
+                required_output_filenames={"audit_report.md"},
+                repository_root=Path(__file__).resolve().parents[1],
+            )
+            self.assertIn(
+                "CONTROLLER_DIRECT_ACQUISITION_INVALID",
+                {issue["code"] for issue in issues},
+            )
 
     def test_record_builder_rejects_an_omitted_optional_generated_control(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -741,7 +1440,7 @@ class GptEvalControllerTests(unittest.TestCase):
                     output_control_filenames=["audit_report.md"],
                 )
 
-    def test_unacquired_visible_control_requires_chunk_zero_attempt(self):
+    def test_later_transport_attempt_cannot_replace_missing_original_bundle(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             self.make_minimal_controller_root(
@@ -765,6 +1464,10 @@ class GptEvalControllerTests(unittest.TestCase):
                     "audit_report.md",
                     "proof_reconstruction.md",
                 ],
+                direct_acquisition_attempts=[
+                    ("audit_report.md", "no_download_event"),
+                    ("proof_reconstruction.md", "no_download_event"),
+                ],
             )
             issues = eval_controller.validate_controller_record(
                 root=root,
@@ -778,16 +1481,17 @@ class GptEvalControllerTests(unittest.TestCase):
                 repository_root=Path(__file__).resolve().parents[1],
             )
             self.assertIn(
-                "CONTROLLER_FALLBACK_ATTEMPT_MISSING",
+                "CONTROLLER_LEGACY_TRANSPORT_EVIDENCE_FORBIDDEN",
                 {issue["code"] for issue in issues},
             )
-            fallback_issue = next(
-                issue
-                for issue in issues
-                if issue["code"] == "CONTROLLER_FALLBACK_ATTEMPT_MISSING"
+            self.assertEqual(
+                record["compiler_transport_capture"]["status"],
+                "missing",
             )
-            self.assertIn("proof_reconstruction.md", fallback_issue["message"])
-            self.assertNotIn("'audit_report.md'", fallback_issue["message"])
+            self.assertTrue(
+                record["compiler_transport_capture"]["candidate_evidence"]
+            )
+            self.assertEqual(record["reconstructed_outputs"], [])
 
     def test_acquired_output_bytes_remain_separate_from_visible_controls(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -798,7 +1502,7 @@ class GptEvalControllerTests(unittest.TestCase):
                     "audit_report.md",
                     "proof_reconstruction.md",
                 ),
-                fallback_attempts=("audit_report.md",),
+                fallback_attempts=(),
             )
             (root / "proof_reconstruction.md").write_bytes(
                 b"independently acquired output bytes\n"
@@ -816,6 +1520,10 @@ class GptEvalControllerTests(unittest.TestCase):
                     "audit_report.md",
                     "proof_reconstruction.md",
                 ],
+                direct_acquisition_attempts=[
+                    ("audit_report.md", "no_download_event"),
+                    ("proof_reconstruction.md", "download_event"),
+                ],
             )
             self.assertEqual(
                 record["observed_output_controls"],
@@ -824,6 +1532,31 @@ class GptEvalControllerTests(unittest.TestCase):
             self.assertEqual(
                 [item["filename"] for item in record["observed_outputs"]],
                 ["proof_reconstruction.md"],
+            )
+            self.assertEqual(
+                record["compiler_transport_capture"]["status"],
+                "missing",
+            )
+            self.assertTrue(
+                record["compiler_transport_capture"]["candidate_evidence"]
+            )
+            transport = json.loads(
+                (root / "artifact_transport.json").read_bytes()
+            )
+            self.assertEqual(
+                transport["records"],
+                [
+                    {
+                        "filename": "proof_reconstruction.md",
+                        "method": "direct_download",
+                        "direct_download_outcome": "download_event",
+                        "bytes": len(b"independently acquired output bytes\n"),
+                        "sha256": digest(
+                            b"independently acquired output bytes\n"
+                        ),
+                        "export_chunks": None,
+                    }
+                ],
             )
             issues = eval_controller.validate_controller_record(
                 root=root,
@@ -1032,6 +1765,8 @@ class GptEvalControllerTests(unittest.TestCase):
                 "preflight",
                 "--target",
                 "known_true_induction.txt",
+                "--direct-acquisition",
+                "audit_report.md=no_download_event",
                 "--session-reference",
                 "preview:test",
                 "--observability-boundary",
@@ -1039,6 +1774,10 @@ class GptEvalControllerTests(unittest.TestCase):
             ]
         )
         self.assertEqual(args.output_filenames, [])
+        self.assertEqual(
+            args.direct_acquisition_attempts,
+            [("audit_report.md", "no_download_event")],
+        )
 
     def test_finalizer_rejects_model_invented_conflicting_runtime_literal(self):
         other_runtime = "3.11.8 (main, Mar 12 2024, 11:41:52) [GCC 12.2.0]"

@@ -16,9 +16,12 @@ from scripts.check_gpt_eval_bundle import (
     main,
 )
 from scripts.gpt_artifact_compiler import (
+    COMPILER_VERSION,
+    SAME_RESPONSE_TRANSPORT_VERSION,
+    build_same_response_transport,
     canonical_transport_wrapper_bytes as compiler_transport_bytes,
     export_payload_chunk,
-    transport_fallback_prompt,
+    output_record as compiler_output_record,
 )
 from scripts.gpt_eval_controller import (
     BOUND_RUNTIME_ARTIFACT,
@@ -27,6 +30,8 @@ from scripts.gpt_eval_controller import (
     KNOWLEDGE_FILENAMES,
     OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES,
     RAW_RESPONSE_FILENAME,
+    _extract_single_code_block_bytes,
+    _legacy_transport_fallback_prompt as transport_fallback_prompt,
     _inspect_response_outer_html,
     build_controller_record,
     byte_record,
@@ -139,9 +144,8 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         )
 
     def write_return(self, root: Path, record: dict) -> bytes:
-        data = (json.dumps(record, indent=2) + "\n").encode("utf-8")
+        data = canonical_json_bytes(record)
         (root / "audit_return.json").write_bytes(data)
-        self.write_wrapper(root, "audit_return.json", data)
         return data
 
     def write_failed_transport_attempt(
@@ -213,6 +217,130 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             encoding="utf-8",
         )
 
+    def write_same_response_transport(
+        self,
+        root: Path,
+        record: dict,
+        *,
+        include_controls: bool = True,
+        direct_filenames: set[str] | None = None,
+    ) -> None:
+        """Preserve one exact compiler-v6 result in the original response."""
+
+        generated = sorted(
+            {
+                artifact["filename"]
+                for artifact in record["artifacts"]
+                if artifact["role"] != "source"
+            }
+            | {"audit_return.json"}
+        )
+        files = {filename: (root / filename).read_bytes() for filename in generated}
+        all_output_names = sorted(
+            {artifact["filename"] for artifact in record["artifacts"]}
+            | {"audit_return.json"}
+        )
+        document = {
+            "compiler": COMPILER_VERSION,
+            "status": "pass",
+            "outputs": [
+                compiler_output_record(filename, (root / filename).read_bytes())
+                for filename in all_output_names
+            ],
+            "return_serialized_last": True,
+            "transport": build_same_response_transport(files),
+        }
+        compiler_stdout = compiler_transport_bytes(document)
+        controls = (
+            "".join(
+                f'<button aria-label="{html.escape(filename, quote=True)}"></button>'
+                for filename in generated
+            )
+            if include_controls
+            else ""
+        )
+        escaped = html.escape(compiler_stdout.decode("utf-8"), quote=False)
+        raw = root / "raw"
+        raw.mkdir(exist_ok=True)
+        (raw / "response.outerHTML.html").write_text(
+            (
+                "<article>The generated files are available."
+                f"{controls}<pre><code class=\"language-json\">"
+                f"{escaped}</code></pre></article>\n"
+            ),
+            encoding="utf-8",
+            newline="",
+        )
+        direct = direct_filenames or set()
+        rows = [
+            {
+                "filename": filename,
+                "method": (
+                    "direct_download"
+                    if filename in direct
+                    else "in_turn_compiler_bundle"
+                ),
+                "direct_download_outcome": (
+                    "download_event"
+                    if filename in direct
+                    else "no_download_event"
+                ),
+                "bytes": len(data),
+                "sha256": sha256(data),
+                "export_chunks": None,
+            }
+            for filename, data in sorted(files.items())
+        ]
+        (root / "artifact_transport.json").write_text(
+            json.dumps(
+                {"transport_version": "3.0", "records": rows},
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+            newline="",
+        )
+
+    def compiler_document(self, root: Path) -> dict:
+        return json.loads(
+            _extract_single_code_block_bytes(
+                (root / RAW_RESPONSE_FILENAME).read_bytes()
+            ).decode("utf-8")
+        )
+
+    def write_compiler_document(
+        self,
+        root: Path,
+        document: dict,
+        *,
+        clear_transport_records: bool = False,
+    ) -> None:
+        _, controls = _inspect_response_outer_html(
+            (root / RAW_RESPONSE_FILENAME).read_bytes()
+        )
+        buttons = "".join(
+            f'<button aria-label="{html.escape(filename, quote=True)}"></button>'
+            for filename in controls
+        )
+        encoded = html.escape(
+            compiler_transport_bytes(document).decode("utf-8"),
+            quote=False,
+        )
+        (root / RAW_RESPONSE_FILENAME).write_text(
+            (
+                f"<article>{buttons}<pre><code class=\"language-json\">"
+                f"{encoded}</code></pre></article>\n"
+            ),
+            encoding="utf-8",
+            newline="",
+        )
+        if clear_transport_records:
+            (root / "artifact_transport.json").write_text(
+                json.dumps({"transport_version": "3.0", "records": []}) + "\n",
+                encoding="utf-8",
+                newline="",
+            )
+
     def copy_controller_inputs_and_identity(
         self,
         root: Path,
@@ -256,10 +384,6 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         (root / "raw").mkdir(exist_ok=True)
         (root / "raw" / "response.outerHTML.html").write_text(
             "<article>Complete visible sections; no generated artifacts were requested.</article>\n",
-            encoding="utf-8",
-        )
-        (root / "artifact_transport.json").write_text(
-            json.dumps({"transport_version": "2.0", "records": []}) + "\n",
             encoding="utf-8",
         )
         if case_id == "known-true-induction":
@@ -454,6 +578,10 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             ),
             output_filenames=[],
             output_control_filenames=controller["observed_output_controls"],
+            direct_acquisition_attempts=[
+                (item["filename"], item["outcome"])
+                for item in controller["direct_acquisition_attempts"]
+            ],
             session_reference=controller["fresh_conversation"][
                 "session_reference"
             ],
@@ -472,6 +600,30 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         visible: bool = True,
     ) -> tuple[dict, dict[str, str]]:
         record = json.loads(VALID_RETURN.read_text(encoding="utf-8"))
+        target = ROOT / "gpt" / "evals" / "fixtures" / TARGET_NAME
+        target_bytes = target.read_bytes()
+        source_record = next(
+            artifact
+            for artifact in record["artifacts"]
+            if artifact["role"] == "source"
+        )
+        source_record["filename"] = TARGET_NAME
+        source_record["sha256"] = f"sha256:{sha256(target_bytes)}"
+        (root / TARGET_NAME).write_bytes(target_bytes)
+        for index, filename in enumerate(KNOWLEDGE_FILENAMES, 1):
+            knowledge_data = (
+                ROOT / "gpt" / "knowledge" / filename
+            ).read_bytes()
+            (root / filename).write_bytes(knowledge_data)
+            record["artifacts"].append(
+                {
+                    "id": f"artifact:knowledge-{index}",
+                    "filename": filename,
+                    "role": "source",
+                    "media_type": "text/markdown",
+                    "sha256": f"sha256:{sha256(knowledge_data)}",
+                }
+            )
         report_record = next(
             artifact
             for artifact in record["artifacts"]
@@ -480,7 +632,11 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         for artifact in record["artifacts"]:
             if artifact is report_record:
                 continue
-            shutil.copyfile(EXAMPLES / artifact["filename"], root / artifact["filename"])
+            if artifact["role"] != "source":
+                shutil.copyfile(
+                    EXAMPLES / artifact["filename"],
+                    root / artifact["filename"],
+                )
 
         report = (
             "# Preserved audit report\n\n"
@@ -493,9 +649,18 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             media_type="text/markdown",
             sha256=f"sha256:{sha256(report)}",
         )
+        evidence_record = next(
+            artifact
+            for artifact in record["artifacts"]
+            if artifact["id"] == "artifact:evidence"
+        )
+        evidence = (root / evidence_record["filename"]).read_bytes()
         analysis_output = runtime_ledger_text(
             PYTHON_VERSION,
-            [output_record("audit_report.md", report)],
+            [
+                output_record("audit_report.md", report),
+                output_record(evidence_record["filename"], evidence),
+            ],
         ).encode("utf-8")
         (root / "chatgpt_data_analysis_output.txt").write_bytes(analysis_output)
         record["artifacts"].append(
@@ -507,6 +672,20 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 "sha256": f"sha256:{sha256(analysis_output)}",
             }
         )
+        execution_input_ids = [
+            "artifact:request",
+            "artifact:source",
+            *[
+                f"artifact:knowledge-{index}"
+                for index in range(1, len(KNOWLEDGE_FILENAMES) + 1)
+            ],
+        ]
+        model_reasoning = next(
+            item
+            for item in record["execution"]
+            if item["activity"] == "model_reasoning"
+        )
+        model_reasoning["input_artifact_ids"] = execution_input_ids
         analysis = next(
             item
             for item in record["execution"]
@@ -516,35 +695,22 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             status="ran",
             tool="Python",
             version=PYTHON_VERSION,
-            input_artifact_ids=["artifact:request", "artifact:source"],
+            input_artifact_ids=execution_input_ids,
             output_artifact_ids=[
                 "artifact:report",
+                "artifact:evidence",
                 "artifact:data-analysis-output",
             ],
             receipt_ids=[],
             notes="Read, wrote, reread, and hashed the bound local files.",
         )
         self.write_return(root, record)
-        self.write_wrapper(root, "audit_report.md", report)
         (root / "visible_response_dom.txt").write_text(
             "The generated files are available.\n",
             encoding="utf-8",
         )
-        generated = sorted(
-            {artifact["filename"] for artifact in record["artifacts"]}
-            | {"audit_return.json"}
-        )
-        controls = "".join(
-            f'<button aria-label="{html.escape(filename, quote=True)}"></button>'
-            for filename in generated
-        )
-        (root / "raw" / "response.outerHTML.html").write_text(
-            f"<article>The generated files are available.{controls}</article>\n",
-            encoding="utf-8",
-        )
-        self.write_transport_record(root, record)
+        self.write_same_response_transport(root, record)
 
-        target = ROOT / "gpt" / "evals" / "fixtures" / TARGET_NAME
         shutil.copyfile(target, root / TARGET_NAME)
         inputs = [byte_record("target", TARGET_NAME, target.read_bytes())]
         for filename in KNOWLEDGE_FILENAMES:
@@ -586,24 +752,65 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         record: dict,
         inputs: list[dict] | None = None,
     ) -> None:
-        excluded = {
-            "controller_record.json",
-            TARGET_NAME,
-            *KNOWLEDGE_FILENAMES,
-            *(filename for _, filename in CANDIDATE_IDENTITY_FILENAMES),
-            *CONTROLLER_ARTIFACT_FILENAMES,
-            *OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES,
-        }
-        output_names = [
-            path.name
-            for path in root.iterdir()
-            if path.is_file()
-            and path.name not in excluded
-            and ".export." not in path.name
-        ]
+        reconstructed = root / "reconstructed"
+        if reconstructed.is_dir():
+            shutil.rmtree(reconstructed)
         _, output_controls = _inspect_response_outer_html(
             (root / RAW_RESPONSE_FILENAME).read_bytes()
         )
+        transport_path = root / "artifact_transport.json"
+        transport = (
+            json.loads(transport_path.read_text(encoding="utf-8"))
+            if transport_path.is_file()
+            else {"records": []}
+        )
+        transport_names = {
+            item["filename"]
+            for item in transport.get("records", [])
+            if isinstance(item, dict)
+            and isinstance(item.get("filename"), str)
+        }
+        output_names = [
+            item["filename"]
+            for item in transport.get("records", [])
+            if isinstance(item, dict)
+            and item.get("method") == "direct_download"
+            and isinstance(item.get("filename"), str)
+        ]
+        existing_controller_path = root / "controller_record.json"
+        if existing_controller_path.is_file():
+            existing_controller = json.loads(
+                existing_controller_path.read_text(encoding="utf-8")
+            )
+            existing_outputs = existing_controller.get("observed_outputs")
+            if isinstance(existing_outputs, list):
+                output_names.extend(
+                    item["filename"]
+                    for item in existing_outputs
+                    if isinstance(item, dict)
+                    and isinstance(item.get("filename"), str)
+                )
+        output_names = sorted(set(output_names))
+        direct_names = set(output_names)
+        direct_acquisition_attempts = [
+            (
+                filename,
+                (
+                    "download_event"
+                    if filename in direct_names
+                    else (
+                        "no_download_event"
+                        if filename in output_controls
+                        else "unavailable"
+                    )
+                ),
+            )
+            for filename in sorted(
+                transport_names | direct_names | set(output_controls)
+            )
+        ]
+        if transport_path.is_file():
+            transport_path.unlink()
         controller = build_controller_record(
             root=root,
             case_id=CASE_ID,
@@ -612,6 +819,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             target_filename=TARGET_NAME,
             output_filenames=output_names,
             output_control_filenames=output_controls,
+            direct_acquisition_attempts=direct_acquisition_attempts,
             session_reference="preview-conversation:test",
             observability_boundary=(
                 "Authenticated editor Preview DOM and files exposed in this conversation only."
@@ -631,7 +839,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         )
         row["sha256"] = f"sha256:{sha256(data)}"
         self.write_return(root, record)
-        self.write_transport_record(root, record)
+        self.write_same_response_transport(root, record)
 
     def replace_report(self, root: Path, record: dict, report: bytes) -> None:
         (root / "audit_report.md").write_bytes(report)
@@ -641,9 +849,18 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             if item["id"] == record["bindings"]["report_artifact_id"]
         )
         report_row["sha256"] = f"sha256:{sha256(report)}"
+        evidence_row = next(
+            item
+            for item in record["artifacts"]
+            if item["id"] == "artifact:evidence"
+        )
+        evidence = (root / evidence_row["filename"]).read_bytes()
         analysis_output = runtime_ledger_text(
             PYTHON_VERSION,
-            [output_record("audit_report.md", report)],
+            [
+                output_record("audit_report.md", report),
+                output_record(evidence_row["filename"], evidence),
+            ],
         ).encode("utf-8")
         (root / BOUND_RUNTIME_ARTIFACT).write_bytes(analysis_output)
         runtime_row = next(
@@ -653,8 +870,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         )
         runtime_row["sha256"] = f"sha256:{sha256(analysis_output)}"
         self.write_return(root, record)
-        self.write_wrapper(root, "audit_report.md", report)
-        self.write_transport_record(root, record)
+        self.write_same_response_transport(root, record)
 
     def invoke(
         self,
@@ -726,18 +942,80 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         self.assertIn(LIMITATION, payload["limitations"])
         self.assertIn("do not establish download-button identity", LIMITATION)
 
+    def test_direct_download_bytes_are_primary_and_can_resolve_transport(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            record, expected = self.make_bundle(root)
+            names = {
+                item["filename"]
+                for item in json.loads(
+                    (root / "artifact_transport.json").read_text(encoding="utf-8")
+                )["records"]
+            }
+            self.write_same_response_transport(
+                root,
+                record,
+                direct_filenames=names,
+            )
+            self.write_controller_record(root, record)
+            status, payload = self.invoke(root, expected)
+
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["transport"], "transport_identity_resolved")
+        self.assertEqual(payload["checks"]["export_wrappers"]["status"], "pass")
+
+    def test_direct_download_bundle_mismatch_is_candidate_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            record, _ = self.make_bundle(root)
+            transport_path = root / "artifact_transport.json"
+            transport = json.loads(transport_path.read_text(encoding="utf-8"))
+            names = {item["filename"] for item in transport["records"]}
+            self.write_same_response_transport(
+                root,
+                record,
+                direct_filenames=names,
+            )
+            direct = (root / "audit_report.md").read_bytes() + b"direct mismatch\n"
+            (root / "audit_report.md").write_bytes(direct)
+            transport = json.loads(transport_path.read_text(encoding="utf-8"))
+            report_row = next(
+                item
+                for item in transport["records"]
+                if item["filename"] == "audit_report.md"
+            )
+            report_row["bytes"] = len(direct)
+            report_row["sha256"] = sha256(direct)
+            transport_path.write_text(
+                json.dumps(transport, indent=2) + "\n",
+                encoding="utf-8",
+                newline="",
+            )
+            self.write_controller_record(root, record)
+            status, payload = self.invoke(root)
+
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+        self.assertEqual(payload["outcomes"]["transport"], "transport_identity_resolved")
+        self.assertIn(
+            "CANDIDATE_DIRECT_BUNDLE_MISMATCH",
+            self.finding_codes(payload),
+        )
+
     def test_bound_artifact_change_reports_hash_and_report_transport_mismatch(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.make_bundle(root)
-            with (root / "audit_report.md").open("ab") as stream:
+            with (root / "reconstructed" / "audit_report.md").open("ab") as stream:
                 stream.write(b"changed after binding\n")
-            status, payload = self.invoke(root)
+            status, payload = self.invoke(root, refresh_record=False)
 
         self.assertEqual(status, 1)
         self.assertEqual(payload["status"], "blocked")
         self.assertIn(
-            "ARTIFACT_TRANSPORT_BYTE_BINDING_MISMATCH",
+            "CONTROLLER_FILE_BINDING_MISMATCH",
             self.finding_codes(payload),
         )
         self.assertEqual(
@@ -748,15 +1026,21 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
     def test_report_transport_mismatch_is_distinct_when_export_is_self_consistent(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            self.make_bundle(root)
+            record, _ = self.make_bundle(root)
             transported = b"a different but internally self-consistent exported report\n"
-            self.write_wrapper(root, "audit_report.md", transported)
+            (root / "audit_report.md").write_bytes(transported)
+            self.write_same_response_transport(root, record)
+            (root / "artifact_transport.json").write_text(
+                json.dumps({"transport_version": "3.0", "records": []}) + "\n",
+                encoding="utf-8",
+                newline="",
+            )
+            self.write_controller_record(root, record)
             status, payload = self.invoke(root)
 
         self.assertEqual(status, 1)
         codes = self.finding_codes(payload)
-        self.assertIn("REPORT_TRANSPORT_MISMATCH", codes)
-        self.assertNotIn("EXPORT_PAYLOAD_IDENTITY_MISMATCH", codes)
+        self.assertIn("CANDIDATE_COMPILER_TRANSPORT_MALFORMED", codes)
         self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
         self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
         self.assertEqual(
@@ -767,17 +1051,20 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
     def test_noncanonical_or_invalid_base64_blocks(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            self.make_bundle(root)
-            path = root / "audit_report.md.export.00000.json"
-            wrapper = json.loads(path.read_text(encoding="utf-8"))
-            wrapper["base64"] += "*"
-            mutated = compiler_transport_bytes(wrapper)
-            self.write_wrapper_capture_bytes(root, "audit_report.md", mutated)
+            record, _ = self.make_bundle(root)
+            document = self.compiler_document(root)
+            document["transport"]["chunks"][0]["base64"] += "*"
+            self.write_compiler_document(
+                root,
+                document,
+                clear_transport_records=True,
+            )
+            self.write_controller_record(root, record)
             status, payload = self.invoke(root)
 
         self.assertEqual(status, 1)
         codes = self.finding_codes(payload)
-        self.assertIn("EXPORT_CHUNK_BASE64_INVALID", codes)
+        self.assertIn("CANDIDATE_COMPILER_TRANSPORT_MALFORMED", codes)
         self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
         self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
 
@@ -863,7 +1150,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             )
             analysis["notes"] = f"Model-authored runtime copy: {PYTHON_VERSION}"
             self.write_return(root, record)
-            self.write_transport_record(root, record)
+            self.write_same_response_transport(root, record)
             status, payload = self.invoke(root)
 
         self.assertEqual(status, 1)
@@ -882,9 +1169,16 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 "]",
                 "&#93;",
             )
-            (root / "raw" / "response.outerHTML.html").write_text(
-                f"<article>Model runtime copy: {encoded_runtime}</article>\n",
+            raw_path = root / "raw" / "response.outerHTML.html"
+            raw = raw_path.read_text(encoding="utf-8")
+            raw_path.write_text(
+                raw.replace(
+                    "<pre>",
+                    f"Model runtime copy: {encoded_runtime}<pre>",
+                    1,
+                ),
                 encoding="utf-8",
+                newline="",
             )
             status, payload = self.invoke(root)
 
@@ -911,7 +1205,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             (root / evidence["filename"]).write_bytes(evidence_bytes)
             evidence["sha256"] = f"sha256:{sha256(evidence_bytes)}"
             self.write_return(root, record)
-            self.write_transport_record(root, record)
+            self.write_same_response_transport(root, record)
             status, payload = self.invoke(root)
 
         self.assertEqual(status, 1)
@@ -922,7 +1216,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
         self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
 
-    def test_data_analysis_output_must_be_bound_and_list_other_output_hashes(self):
+    def test_compiler_rejects_missing_data_analysis_output_binding(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             record, _ = self.make_bundle(root)
@@ -933,14 +1227,16 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             )
             analysis["output_artifact_ids"] = ["artifact:report"]
             self.write_return(root, record)
-            self.write_transport_record(root, record)
+            self.write_same_response_transport(root, record)
             status, payload = self.invoke(root)
 
         self.assertEqual(status, 1)
         self.assertIn(
-            "CHATGPT_DATA_ANALYSIS_OUTPUT_BINDING_MISSING",
+            "CANDIDATE_COMPILER_TRANSPORT_MALFORMED",
             self.finding_codes(payload),
         )
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
 
     def test_data_analysis_output_hash_ledger_is_fail_closed(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -960,7 +1256,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             (root / output_record["filename"]).write_bytes(bad_output)
             output_record["sha256"] = f"sha256:{sha256(bad_output)}"
             self.write_return(root, record)
-            self.write_transport_record(root, record)
+            self.write_same_response_transport(root, record)
             status, payload = self.invoke(root)
 
         self.assertEqual(status, 1)
@@ -991,7 +1287,11 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 status, payload = self.invoke(root)
                 self.assertEqual(status, 1)
                 self.assertIn(
-                    "CHATGPT_DATA_ANALYSIS_OUTPUT_LEDGER_ROSTER_MISMATCH",
+                    (
+                        "CHATGPT_DATA_ANALYSIS_RUNTIME_BINDING_INVALID"
+                        if label == "forged_name"
+                        else "CHATGPT_DATA_ANALYSIS_OUTPUT_LEDGER_ROSTER_MISMATCH"
+                    ),
                     self.finding_codes(payload),
                 )
 
@@ -1055,30 +1355,16 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
     def test_transport_coverage_uses_actual_outputs_without_audit_return(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            self.make_prose_only_bundle(root)
-            (root / "independently.txt").write_text(
-                "independently observed output\n",
-                encoding="utf-8",
-            )
-            controller = build_controller_record(
-                root=root,
-                case_id=CASE_ID,
-                trial_id=TRIAL_ID,
-                counting_state="preflight",
-                target_filename=TARGET_NAME,
-                output_filenames=["independently.txt"],
-                output_control_filenames=[],
-                session_reference="preview-conversation:transport-coverage",
-                observability_boundary="Visible Preview response and exposed files only.",
-            )
-            (root / "controller_record.json").write_bytes(
-                canonical_json_bytes(controller)
-            )
+            record, _ = self.make_bundle(root)
+            path = root / "artifact_transport.json"
+            transport = json.loads(path.read_text(encoding="utf-8"))
+            transport["records"] = transport["records"][:-1]
+            path.write_bytes(canonical_json_bytes(transport))
             status, payload = self.invoke(root, refresh_record=False)
 
         self.assertEqual(status, 1)
         self.assertIn(
-            "ARTIFACT_TRANSPORT_COVERAGE_MISSING",
+            "ARTIFACT_TRANSPORT_RECONSTRUCTED_ROSTER_MISMATCH",
             self.finding_codes(payload),
         )
         self.assertEqual(
@@ -1156,18 +1442,24 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
     def test_truncated_report_export_is_distinguished_and_blocked(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            self.make_bundle(root)
-            path = root / "audit_report.md.export.00000.json"
-            wrapper = json.loads(path.read_text(encoding="utf-8"))
-            wrapper["base64"] = wrapper["base64"][:-4]
-            mutated = compiler_transport_bytes(wrapper)
-            self.write_wrapper_capture_bytes(root, "audit_report.md", mutated)
+            record, _ = self.make_bundle(root)
+            raw_path = root / RAW_RESPONSE_FILENAME
+            raw = raw_path.read_text(encoding="utf-8")
+            raw_path.write_text(
+                raw.replace("</code></pre></article>", ""),
+                encoding="utf-8",
+                newline="",
+            )
+            (root / "artifact_transport.json").write_text(
+                json.dumps({"transport_version": "3.0", "records": []}) + "\n",
+                encoding="utf-8",
+            )
+            self.write_controller_record(root, record)
             status, payload = self.invoke(root)
 
         self.assertEqual(status, 1)
         codes = self.finding_codes(payload)
-        self.assertIn("EXPORT_CHUNK_BYTE_BINDING_MISMATCH", codes)
-        self.assertIn("EXPORT_ENCODED_AGGREGATE_MISMATCH", codes)
+        self.assertIn("CANDIDATE_COMPILER_TRANSPORT_TRUNCATED", codes)
         self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
         self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
         self.assertEqual(payload["outcomes"]["disposition"], "candidate_failed")
@@ -1176,25 +1468,20 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.make_bundle(root)
-            payload_bytes = b"Xindependently"
-            wrapper = self.wrapper("audit_report.md", payload_bytes)
-            encoded = wrapper["base64"]
+            document = self.compiler_document(root)
+            encoded = document["transport"]["chunks"][0]["base64"]
             self.assertGreaterEqual(len(encoded), 8)
-            wrapper_with_omission = dict(wrapper)
-            wrapper_with_omission["base64"] = encoded[:4] + encoded[8:]
-            raw = compiler_transport_bytes(wrapper)
-            self.assertIn(b"independently", payload_bytes)
-            parser_input = compiler_transport_bytes(wrapper_with_omission)
-            self.assertNotEqual(raw, parser_input)
-            self.write_wrapper_capture_bytes(root, "audit_report.md", raw)
-            (root / "audit_report.md.export.00000.json").write_bytes(parser_input)
+            document["transport"]["chunks"][0]["base64"] = (
+                encoded[:4] + encoded[8:]
+            )
+            self.write_compiler_document(root, document)
             status, result = self.invoke(root, refresh_record=False)
 
         self.assertEqual(status, 1)
         self.assertTrue(
             {
-                "CONTROLLER_PARSER_ROUND_TRIP_MISMATCH",
-                "CONTROLLER_TRANSPORT_CAPTURE_INVALID",
+                "CONTROLLER_FILE_BINDING_MISMATCH",
+                "CONTROLLER_COMPILER_CAPTURE_MISMATCH",
             }
             & self.finding_codes(result)
         )
@@ -1213,26 +1500,24 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
     def test_aligned_base64_omission_from_preserved_wrapper_is_candidate_failure(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            self.make_bundle(root)
-            payload_bytes = b"Xindependently"
-            wrapper = self.wrapper("audit_report.md", payload_bytes)
-            encoded = wrapper["base64"]
+            record, _ = self.make_bundle(root)
+            document = self.compiler_document(root)
+            encoded = document["transport"]["chunks"][0]["base64"]
             self.assertGreaterEqual(len(encoded), 8)
-            wrapper["base64"] = encoded[:4] + encoded[8:]
-            self.assertIn(b"independently", payload_bytes)
-            self_consistent_capture = compiler_transport_bytes(wrapper)
-            self.write_wrapper_capture_bytes(
-                root,
-                "audit_report.md",
-                self_consistent_capture,
+            document["transport"]["chunks"][0]["base64"] = (
+                encoded[:4] + encoded[8:]
             )
+            self.write_compiler_document(
+                root,
+                document,
+                clear_transport_records=True,
+            )
+            self.write_controller_record(root, record)
             status, result = self.invoke(root)
 
         self.assertEqual(status, 1)
         codes = self.finding_codes(result)
-        self.assertNotIn("CONTROLLER_PARSER_ROUND_TRIP_MISMATCH", codes)
-        self.assertIn("EXPORT_CHUNK_BYTE_BINDING_MISMATCH", codes)
-        self.assertIn("EXPORT_ENCODED_AGGREGATE_MISMATCH", codes)
+        self.assertIn("CANDIDATE_COMPILER_TRANSPORT_MALFORMED", codes)
         self.assertEqual(result["outcomes"]["controller"], "controller_valid")
         self.assertEqual(result["outcomes"]["candidate"], "candidate_failed")
         self.assertEqual(result["outcomes"]["disposition"], "candidate_failed")
@@ -1241,59 +1526,79 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         for mutation in ("aggregate_hash", "zlib_stream"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
-                self.make_bundle(root)
-                path = root / "audit_report.md.export.00000.json"
-                wrapper = json.loads(path.read_text(encoding="utf-8"))
+                record, _ = self.make_bundle(root)
+                document = self.compiler_document(root)
                 if mutation == "aggregate_hash":
-                    wrapper["encoded_sha256"] = "0" * 64
-                    expected_code = "EXPORT_ENCODED_AGGREGATE_MISMATCH"
+                    document["transport"]["encoded_sha256"] = "0" * 64
                 else:
                     encoded = b"not-one-zlib-stream"
-                    wrapper["base64"] = base64.b64encode(encoded).decode("ascii")
-                    wrapper["chunk_size_bytes"] = len(encoded)
-                    wrapper["chunk_sha256"] = sha256(encoded)
-                    wrapper["encoded_size_bytes"] = len(encoded)
-                    wrapper["encoded_sha256"] = sha256(encoded)
-                    expected_code = "EXPORT_ZLIB_STREAM_INVALID"
-                self.write_wrapper_capture_bytes(
+                    document["transport"]["chunks"] = [
+                        {
+                            "chunk_index": 0,
+                            "chunk_count": 1,
+                            "offset_bytes": 0,
+                            "chunk_size_bytes": len(encoded),
+                            "chunk_sha256": sha256(encoded),
+                            "base64": base64.b64encode(encoded).decode("ascii"),
+                        }
+                    ]
+                    document["transport"]["chunk_count"] = 1
+                    document["transport"]["encoded_size_bytes"] = len(encoded)
+                    document["transport"]["encoded_sha256"] = sha256(encoded)
+                self.write_compiler_document(
                     root,
-                    "audit_report.md",
-                    compiler_transport_bytes(wrapper),
+                    document,
+                    clear_transport_records=True,
                 )
+                self.write_controller_record(root, record)
                 status, payload = self.invoke(root)
 
             self.assertEqual(status, 1)
             self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
             self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
-            self.assertIn(expected_code, self.finding_codes(payload))
+            self.assertIn(
+                "CANDIDATE_COMPILER_TRANSPORT_MALFORMED",
+                self.finding_codes(payload),
+            )
 
     def test_transport_prompt_and_response_provenance_defects_invalidate_trial(self):
-        mutations = {
-            "prompt_drift": lambda root: (
-                root / "raw" / "audit_report.md.transport.00000.prompt.txt"
-            ).write_bytes(b"model-authored substitute prompt"),
-            "zero_code_blocks": lambda root: (
-                root / "raw" / "audit_report.md.transport.00000.outerHTML.html"
-            ).write_text("<article>no code</article>", encoding="utf-8"),
-            "multiple_code_blocks": lambda root: (
-                root / "raw" / "audit_report.md.transport.00000.outerHTML.html"
-            ).write_text(
-                "<article><code>{}</code><code>{}</code></article>",
-                encoding="utf-8",
-            ),
-            "code_text_drift": lambda root: (
-                root / "raw" / "audit_report.md.transport.00000.outerHTML.html"
-            ).write_text(
-                "<article><code>{\"filename\":\"different.txt\"}</code></article>",
-                encoding="utf-8",
-            ),
-        }
-        for name, mutate in mutations.items():
+        for name in (
+            "response_drift",
+            "zero_code_blocks",
+            "multiple_code_blocks",
+            "code_text_drift",
+        ):
             with self.subTest(name=name):
                 with tempfile.TemporaryDirectory() as directory:
                     root = Path(directory)
                     self.make_bundle(root)
-                    mutate(root)
+                    path = root / RAW_RESPONSE_FILENAME
+                    raw = path.read_text(encoding="utf-8")
+                    if name == "response_drift":
+                        raw = raw.replace("<article>", "<article>mutated", 1)
+                    elif name == "zero_code_blocks":
+                        raw = "<article>no compiler block</article>\n"
+                    elif name == "multiple_code_blocks":
+                        block = _extract_single_code_block_bytes(
+                            path.read_bytes()
+                        ).decode("utf-8")
+                        raw = raw.replace(
+                            "</article>",
+                            (
+                                "<pre><code class=\"language-json\">"
+                                f"{html.escape(block, quote=False)}"
+                                "</code></pre></article>"
+                            ),
+                        )
+                    else:
+                        document = self.compiler_document(root)
+                        encoded = document["transport"]["chunks"][0]["base64"]
+                        document["transport"]["chunks"][0]["base64"] = (
+                            encoded[:4] + encoded[8:]
+                        )
+                        self.write_compiler_document(root, document)
+                        raw = path.read_text(encoding="utf-8")
+                    path.write_text(raw, encoding="utf-8", newline="")
                     status, result = self.invoke(root, refresh_record=False)
                 self.assertEqual(status, 1)
                 self.assertEqual(
@@ -1309,11 +1614,8 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 codes = self.finding_codes(result)
                 self.assertTrue(
                     {
-                        "CONTROLLER_TRANSPORT_PROMPT_MISMATCH",
-                        "CONTROLLER_TRANSPORT_RESPONSE_INVALID",
-                        "CONTROLLER_TRANSPORT_PROVENANCE_MISMATCH",
-                        "CONTROLLER_TRANSPORT_CAPTURE_INVALID",
                         "CONTROLLER_FILE_BINDING_MISMATCH",
+                        "CONTROLLER_COMPILER_CAPTURE_MISMATCH",
                     }
                     & codes,
                     codes,
@@ -1347,9 +1649,20 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
     def test_stale_wrapper_without_local_payload_blocks(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            self.make_bundle(root)
-            stale = b"stale transport payload\n"
-            self.write_wrapper(root, "stale.txt", stale)
+            record, _ = self.make_bundle(root)
+            transport_path = root / "artifact_transport.json"
+            transport = json.loads(transport_path.read_text(encoding="utf-8"))
+            transport["records"].append(
+                {
+                    "filename": "stale.txt",
+                    "method": "in_turn_compiler_bundle",
+                    "direct_download_outcome": "no_download_event",
+                    "bytes": 24,
+                    "sha256": "0" * 64,
+                    "export_chunks": None,
+                }
+            )
+            transport_path.write_bytes(canonical_json_bytes(transport))
             status, payload = self.invoke(root, refresh_record=False)
 
         self.assertEqual(status, 1)
@@ -1362,7 +1675,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
     def test_transport_record_is_required_and_base64_is_fallback_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            self.make_bundle(root)
+            record, _ = self.make_bundle(root)
             transport_path = root / "artifact_transport.json"
             transport = json.loads(transport_path.read_text(encoding="utf-8"))
             report = next(
@@ -1370,10 +1683,11 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 for item in transport["records"]
                 if item["filename"] == "audit_report.md"
             )
-            report["method"] = "direct_download"
-            report["direct_download_outcome"] = "download_event"
-            transport_path.write_text(json.dumps(transport), encoding="utf-8")
-            status, payload = self.invoke(root)
+            report["method"] = "chunked_base64_export"
+            report["direct_download_outcome"] = "no_download_event"
+            report["export_chunks"] = ["audit_report.md.export.00000.json"]
+            transport_path.write_bytes(canonical_json_bytes(transport))
+            status, payload = self.invoke(root, refresh_record=False)
             transport_path.unlink()
             missing_status, missing_payload = self.invoke(
                 root,
@@ -1396,54 +1710,37 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 record, _ = self.make_bundle(root)
-                large_report = (
-                    b"# independently captured report\n\n"
-                    b"Execution ledger: see the bound execution-output artifact "
-                    + f"`{BOUND_RUNTIME_ARTIFACT}`.\n".encode("utf-8")
-                    + b"\n".join(
-                        hashlib.sha256(str(index).encode("ascii")).hexdigest().encode("ascii")
-                        for index in range(1000)
-                    )
-                    + b"\n"
-                )
-                self.replace_report(root, record, large_report)
-                transport_path = root / "artifact_transport.json"
-                transport = json.loads(transport_path.read_text(encoding="utf-8"))
-                report_row = next(
-                    item
-                    for item in transport["records"]
-                    if item["filename"] == "audit_report.md"
-                )
-                chunks = list(report_row["export_chunks"])
-                self.assertGreater(len(chunks), 2)
+                document = self.compiler_document(root)
+                chunks = list(document["transport"]["chunks"])
+                self.assertGreater(len(chunks), 1)
                 if mutation == "missing":
-                    report_row["export_chunks"] = chunks[:-1]
+                    document["transport"]["chunks"] = chunks[:-1]
                 elif mutation == "reordered":
-                    report_row["export_chunks"] = [
-                        chunks[1],
-                        chunks[0],
-                        *chunks[2:],
-                    ]
+                    document["transport"]["chunks"] = list(reversed(chunks))
                 else:
-                    report_row["export_chunks"] = [
+                    document["transport"]["chunks"] = [
                         chunks[0],
                         chunks[0],
-                        *chunks[2:],
+                        *chunks[1:],
                     ]
-                transport_path.write_bytes(canonical_json_bytes(transport))
+                self.write_compiler_document(
+                    root,
+                    document,
+                    clear_transport_records=True,
+                )
                 self.write_controller_record(root, record)
                 status, payload = self.invoke(root, refresh_record=False)
 
             self.assertEqual(status, 1)
             self.assertEqual(
                 payload["outcomes"]["controller"],
-                "trial_invalid_controller",
+                "controller_valid",
             )
-            self.assertEqual(payload["outcomes"]["candidate"], "not_scored")
+            self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
             self.assertTrue(
                 {
-                    "ARTIFACT_TRANSPORT_METHOD_INVALID",
-                    "ARTIFACT_TRANSPORT_CHUNK_ROSTER_MISMATCH",
+                    "CANDIDATE_COMPILER_TRANSPORT_MALFORMED",
+                    "CANDIDATE_COMPILER_TRANSPORT_DUPLICATE",
                 }
                 & self.finding_codes(payload)
             )
@@ -1453,51 +1750,27 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 record, _ = self.make_bundle(root)
-                large_report = (
-                    b"# independently captured report\n\n"
-                    b"Execution ledger: see the bound execution-output artifact "
-                    + f"`{BOUND_RUNTIME_ARTIFACT}`.\n".encode("utf-8")
-                    + b"\n".join(
-                        hashlib.sha256(f"chunk-{index}".encode("ascii"))
-                        .hexdigest()
-                        .encode("ascii")
-                        for index in range(1000)
-                    )
-                    + b"\n"
-                )
-                self.replace_report(root, record, large_report)
-                first_path = root / "audit_report.md.export.00000.json"
-                first = json.loads(first_path.read_text(encoding="utf-8"))
-                last_index = first["chunk_count"] - 1
-                self.assertGreater(last_index, 0)
-                later_path = (
-                    root
-                    / f"audit_report.md.export.{last_index:05d}.json"
-                )
-                later = json.loads(later_path.read_text(encoding="utf-8"))
+                document = self.compiler_document(root)
+                first, later = document["transport"]["chunks"][:2]
                 if mutation == "offset":
                     later["offset_bytes"] += 1
                 else:
-                    later["payload_sha256"] = "0" * 64
-                self.write_wrapper_capture_bytes(
+                    later["chunk_sha256"] = first["chunk_sha256"]
+                self.write_compiler_document(
                     root,
-                    "audit_report.md",
-                    compiler_transport_bytes(later),
-                    chunk_index=last_index,
-                    expected_payload_sha256=first["payload_sha256"],
-                    expected_encoded_sha256=first["encoded_sha256"],
+                    document,
+                    clear_transport_records=True,
                 )
+                self.write_controller_record(root, record)
                 status, payload = self.invoke(root)
 
             self.assertEqual(status, 1)
             self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
             self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
-            expected_code = (
-                "EXPORT_CHUNK_METADATA_INVALID"
-                if mutation == "offset"
-                else "EXPORT_CHUNK_REPEATED_IDENTITY_MISMATCH"
+            self.assertIn(
+                "CANDIDATE_COMPILER_TRANSPORT_MALFORMED",
+                self.finding_codes(payload),
             )
-            self.assertIn(expected_code, self.finding_codes(payload))
 
     def test_expected_copy_hash_mismatch_blocks(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1516,7 +1789,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             record, _ = self.make_bundle(root)
             record["protocol"]["sha256"] = "sha256:" + "0" * 64
             self.write_return(root, record)
-            self.write_transport_record(root, record)
+            self.write_same_response_transport(root, record)
             status, payload = self.invoke(root)
 
         self.assertEqual(status, 1)
@@ -1878,8 +2151,6 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 f"<article>Generated files.{controls}</article>\n",
                 encoding="utf-8",
             )
-            self.write_failed_transport_attempt(root, "audit_report.md")
-            self.write_failed_transport_attempt(root, "audit_return.json")
             controller = build_controller_record(
                 root=root,
                 case_id=case_id,
@@ -1890,6 +2161,10 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 output_control_filenames=[
                     "audit_report.md",
                     "audit_return.json",
+                ],
+                direct_acquisition_attempts=[
+                    ("audit_report.md", "no_download_event"),
+                    ("audit_return.json", "no_download_event"),
                 ],
                 session_reference="preview-conversation:visible-unacquired",
                 observability_boundary="Visible Preview response and exposed files only.",
@@ -1909,7 +2184,81 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         self.assertFalse(any("CORRUPT" in code for code in codes))
         self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
         self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
-        self.assertIn("CANDIDATE_TRANSPORT_ATTEMPT_FAILED", codes)
+        self.assertIn("CANDIDATE_COMPILER_TRANSPORT_MISSING", codes)
+        self.assertEqual(
+            payload["outcomes"]["transport"],
+            "transport_identity_unresolved",
+        )
+
+    def test_missing_compiler_preserves_direct_only_bytes_without_rescuing_candidate(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            case_id = "return-envelope-positive-control"
+            self.make_prose_only_bundle(root, case_id=case_id)
+            direct_report = b"# Directly acquired report\n"
+            (root / "audit_report.md").write_bytes(direct_report)
+            (root / RAW_RESPONSE_FILENAME).write_text(
+                (
+                    "<article>Generated files."
+                    '<button aria-label="audit_report.md"></button>'
+                    '<button aria-label="audit_return.json"></button>'
+                    "</article>\n"
+                ),
+                encoding="utf-8",
+                newline="",
+            )
+            (root / "artifact_transport.json").unlink()
+            controller = build_controller_record(
+                root=root,
+                case_id=case_id,
+                trial_id="D02",
+                counting_state="preflight",
+                target_filename=self.case(case_id)["fixture_paths"][0].split("/")[-1],
+                output_filenames=["audit_report.md"],
+                output_control_filenames=[
+                    "audit_report.md",
+                    "audit_return.json",
+                ],
+                direct_acquisition_attempts=[
+                    ("audit_report.md", "download_event"),
+                    ("audit_return.json", "no_download_event"),
+                ],
+                session_reference="preview-conversation:direct-only",
+                observability_boundary="Visible Preview response and exposed files only.",
+            )
+            (root / "controller_record.json").write_bytes(
+                canonical_json_bytes(controller)
+            )
+            transport = json.loads(
+                (root / "artifact_transport.json").read_text(encoding="utf-8")
+            )
+            status, payload = self.invoke(
+                root,
+                refresh_record=False,
+                case_id=case_id,
+            )
+
+        self.assertEqual(
+            transport["records"],
+            [
+                {
+                    "filename": "audit_report.md",
+                    "method": "direct_download",
+                    "direct_download_outcome": "download_event",
+                    "bytes": len(direct_report),
+                    "sha256": sha256(direct_report),
+                    "export_chunks": None,
+                }
+            ],
+        )
+        self.assertEqual(status, 1)
+        codes = self.finding_codes(payload)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+        self.assertIn("CANDIDATE_COMPILER_TRANSPORT_MISSING", codes)
+        self.assertFalse(any("CORRUPT" in code for code in codes))
         self.assertEqual(
             payload["outcomes"]["transport"],
             "transport_identity_unresolved",
@@ -1928,11 +2277,6 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 encoding="utf-8",
                 newline="",
             )
-            self.write_failed_transport_attempt(
-                root,
-                "audit_report.md",
-                response_html="<article><p>export_failed</p></article>",
-            )
             controller = build_controller_record(
                 root=root,
                 case_id=CASE_ID,
@@ -1941,6 +2285,9 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 target_filename=TARGET_NAME,
                 output_filenames=[],
                 output_control_filenames=["audit_report.md"],
+                direct_acquisition_attempts=[
+                    ("audit_report.md", "no_download_event"),
+                ],
                 session_reference="preview-conversation:inferred-export-failed",
                 observability_boundary=(
                     "Visible Preview response and exposed files only; no Data "
@@ -1963,10 +2310,10 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             payload["outcomes"]["transport"],
             "transport_identity_unresolved",
         )
-        self.assertIn("CANDIDATE_TRANSPORT_ATTEMPT_FAILED", codes)
+        self.assertIn("CANDIDATE_COMPILER_TRANSPORT_MISSING", codes)
         self.assertFalse(any("CORRUPT" in code for code in codes))
 
-    def test_visible_required_control_without_fallback_invalidates_controller(self):
+    def test_visible_required_control_without_compiler_is_candidate_failure(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             case_id = "return-envelope-positive-control"
@@ -1990,6 +2337,10 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 target_filename=self.case(case_id)["fixture_paths"][0].split("/")[-1],
                 output_filenames=[],
                 output_control_filenames=controls,
+                direct_acquisition_attempts=[
+                    (filename, "no_download_event")
+                    for filename in controls
+                ],
                 session_reference="preview-conversation:no-fallback",
                 observability_boundary="Visible Preview response and exposed files only.",
             )
@@ -2005,11 +2356,11 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertEqual(
             payload["outcomes"]["controller"],
-            "trial_invalid_controller",
+            "controller_valid",
         )
-        self.assertEqual(payload["outcomes"]["candidate"], "not_scored")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
         self.assertIn(
-            "CONTROLLER_TRANSPORT_ATTEMPT_MISSING",
+            "CANDIDATE_COMPILER_TRANSPORT_MISSING",
             self.finding_codes(payload),
         )
 
@@ -2029,27 +2380,6 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 "</article>",
                 encoding="utf-8",
             )
-            synthetic = b"\n".join(
-                hashlib.sha256(f"incomplete-{index}".encode("ascii"))
-                .hexdigest()
-                .encode("ascii")
-                for index in range(1000)
-            )
-            first = export_payload_chunk("audit_report.md", synthetic, 0)
-            self.assertGreater(first["chunk_count"], 1)
-            self.write_wrapper_capture_bytes(
-                root,
-                "audit_report.md",
-                compiler_transport_bytes(first),
-            )
-            self.write_failed_transport_attempt(
-                root,
-                "audit_report.md",
-                chunk_index=1,
-                expected_payload_sha256=first["payload_sha256"],
-                expected_encoded_sha256=first["encoded_sha256"],
-            )
-            self.write_failed_transport_attempt(root, "audit_return.json")
             controller = build_controller_record(
                 root=root,
                 case_id=case_id,
@@ -2058,6 +2388,10 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 target_filename=self.case(case_id)["fixture_paths"][0].split("/")[-1],
                 output_filenames=[],
                 output_control_filenames=controls,
+                direct_acquisition_attempts=[
+                    (filename, "no_download_event")
+                    for filename in controls
+                ],
                 session_reference="preview-conversation:incomplete-chunks",
                 observability_boundary="Visible Preview response and exposed files only.",
             )
@@ -2078,49 +2412,48 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             "transport_identity_unresolved",
         )
         codes = self.finding_codes(payload)
-        self.assertIn("CANDIDATE_TRANSPORT_ATTEMPT_FAILED", codes)
+        self.assertIn("CANDIDATE_COMPILER_TRANSPORT_MISSING", codes)
         self.assertNotIn("EXPORT_CHUNK_METADATA_INVALID", codes)
         self.assertNotIn("EXPORT_ENCODED_AGGREGATE_MISMATCH", codes)
 
-    def test_missing_declared_next_attempt_is_controller_omission(self):
+    def test_missing_followup_attempt_is_not_a_v4_controller_omission(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.make_prose_only_bundle(
                 root,
                 case_id="return-envelope-positive-control",
             )
-            synthetic = b"\n".join(
-                hashlib.sha256(f"omitted-attempt-{index}".encode("ascii"))
-                .hexdigest()
-                .encode("ascii")
-                for index in range(1000)
+            controller = build_controller_record(
+                root=root,
+                case_id="return-envelope-positive-control",
+                trial_id="D02",
+                counting_state="preflight",
+                target_filename=self.case(
+                    "return-envelope-positive-control"
+                )["fixture_paths"][0].split("/")[-1],
+                output_filenames=[],
+                output_control_filenames=[],
+                session_reference="preview-conversation:omitted-next-attempt",
+                observability_boundary=(
+                    "Visible Preview response and exposed files only."
+                ),
             )
-            first = export_payload_chunk("audit_report.md", synthetic, 0)
-            self.assertGreater(first["chunk_count"], 1)
-            self.write_wrapper_capture_bytes(
+            (root / "controller_record.json").write_bytes(
+                canonical_json_bytes(controller)
+            )
+            status, payload = self.invoke(
                 root,
-                "audit_report.md",
-                compiler_transport_bytes(first),
+                refresh_record=False,
+                case_id="return-envelope-positive-control",
             )
-            with self.assertRaisesRegex(
-                ValueError,
-                "missing declared chunks",
-            ):
-                build_controller_record(
-                    root=root,
-                    case_id="return-envelope-positive-control",
-                    trial_id="D02",
-                    counting_state="preflight",
-                    target_filename=self.case(
-                        "return-envelope-positive-control"
-                    )["fixture_paths"][0].split("/")[-1],
-                    output_filenames=[],
-                    output_control_filenames=[],
-                    session_reference="preview-conversation:omitted-next-attempt",
-                    observability_boundary=(
-                        "Visible Preview response and exposed files only."
-                    ),
-                )
+
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+        self.assertIn(
+            "CANDIDATE_COMPILER_TRANSPORT_MISSING",
+            self.finding_codes(payload),
+        )
 
     def test_malformed_observed_output_roster_is_fail_closed_without_type_error(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -2137,6 +2470,32 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         self.assertEqual(
             payload["outcomes"]["disposition"],
             "trial_invalid_controller",
+        )
+
+    def test_missing_direct_acquisition_attempts_cannot_be_inferred(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.make_bundle(root)
+            path = root / "controller_record.json"
+            record = json.loads(path.read_text(encoding="utf-8"))
+            record.pop("direct_acquisition_attempts")
+            path.write_bytes(canonical_json_bytes(record))
+            status, payload = self.invoke(root, refresh_record=False)
+
+        codes = self.finding_codes(payload)
+        self.assertEqual(status, 1)
+        self.assertIn("CONTROLLER_RECORD_FIELDS_INVALID", codes)
+        self.assertIn(
+            "ARTIFACT_TRANSPORT_DIRECT_ACQUISITION_INVALID",
+            codes,
+        )
+        self.assertEqual(
+            payload["outcomes"]["disposition"],
+            "trial_invalid_controller",
+        )
+        self.assertNotEqual(
+            payload["outcomes"]["transport"],
+            "transport_identity_resolved",
         )
 
     def test_candidate_identity_copy_mismatch_invalidates_freeze(self):
@@ -2205,7 +2564,26 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         self.assertIn("CANDIDATE_OUTPUT_UNDECLARED", self.finding_codes(payload))
         self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
 
-    def test_candidate_declared_missing_capture_invalidates_controller(self):
+    def test_unclassified_root_output_is_not_hidden_by_unchanged_controller(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.make_bundle(root)
+            (root / "unclassified_output.txt").write_text(
+                "regular root output omitted from every controller roster\n",
+                encoding="utf-8",
+                newline="",
+            )
+            status, payload = self.invoke(root, refresh_record=False)
+
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+        self.assertIn(
+            "CANDIDATE_OUTPUT_UNDECLARED",
+            self.finding_codes(payload),
+        )
+
+    def test_candidate_declared_missing_compiler_member_fails_candidate(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             record, _ = self.make_bundle(root)
@@ -2214,39 +2592,33 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 for item in record["artifacts"]
                 if item["role"] == "evidence"
             )
-            (root / missing).unlink()
-            transport = json.loads(
-                (root / "artifact_transport.json").read_text(encoding="utf-8")
-            )
-            transport["records"] = [
-                item for item in transport["records"] if item["filename"] != missing
-            ]
-            (root / "artifact_transport.json").write_bytes(
-                canonical_json_bytes(transport)
-            )
-            raw_path = root / "raw" / "response.outerHTML.html"
-            raw_html = raw_path.read_text(encoding="utf-8")
-            raw_path.write_text(
-                raw_html.replace(
-                    f'<button aria-label="{missing}"></button>',
-                    "",
-                ),
-                encoding="utf-8",
+            document = self.compiler_document(root)
+            files = {
+                path.name: path.read_bytes()
+                for path in (root / "reconstructed").iterdir()
+                if path.name != missing
+            }
+            document["transport"] = build_same_response_transport(files)
+            self.write_compiler_document(
+                root,
+                document,
+                clear_transport_records=True,
             )
             self.write_controller_record(root, record)
             status, payload = self.invoke(root)
 
         self.assertEqual(status, 1)
-        self.assertIn(
-            "CONTROLLER_DECLARED_OUTPUT_NOT_CAPTURED",
-            self.finding_codes(payload),
+        self.assertTrue(
+            {
+                "CANDIDATE_COMPILER_TRANSPORT_EXTRA",
+                "CANDIDATE_COMPILER_TRANSPORT_MALFORMED",
+            }
+            & self.finding_codes(payload)
         )
-        self.assertEqual(
-            payload["outcomes"]["disposition"],
-            "trial_invalid_controller",
-        )
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
 
-    def test_self_reported_direct_download_event_remains_unresolved(self):
+    def test_controller_bound_direct_download_bytes_resolve_transport(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             record, _ = self.make_bundle(root)
@@ -2268,10 +2640,6 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
 
         self.assertEqual(status, 0)
         self.assertEqual(
-            payload["outcomes"]["transport"],
-            "transport_identity_unresolved",
-        )
-        self.assertNotEqual(
             payload["outcomes"]["transport"],
             "transport_identity_resolved",
         )
@@ -2295,14 +2663,21 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 "--target",
                 TARGET_NAME,
                 "--session-reference",
-                "preview-conversation:test",
+                controller["fresh_conversation"]["session_reference"],
                 "--observability-boundary",
-                "Visible Preview response and exposed files only.",
+                controller["fresh_conversation"]["observability_boundary"],
             ]
             for item in controller["observed_outputs"]:
                 argv.extend(["--output", item["filename"]])
             for filename in controller["observed_output_controls"]:
                 argv.extend(["--observed-control", filename])
+            for item in controller["direct_acquisition_attempts"]:
+                argv.extend(
+                    [
+                        "--direct-acquisition",
+                        f"{item['filename']}={item['outcome']}",
+                    ]
+                )
             output = io.StringIO()
             with redirect_stdout(output):
                 status = controller_main(argv)
@@ -2310,7 +2685,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             check_status, payload = self.invoke(root, refresh_record=False)
 
         self.assertEqual(status, 0)
-        self.assertEqual(result["output_version"], "3.0")
+        self.assertEqual(result["output_version"], "4.0")
         self.assertEqual(check_status, 0)
         self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
 
@@ -2318,6 +2693,9 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.make_prose_only_bundle(root)
+            controller = json.loads(
+                (root / "controller_record.json").read_text(encoding="utf-8")
+            )
             argv = [
                 "build-record",
                 str(root),
@@ -2330,9 +2708,9 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 "--target",
                 TARGET_NAME,
                 "--session-reference",
-                "preview-conversation:zero-output",
+                controller["fresh_conversation"]["session_reference"],
                 "--observability-boundary",
-                "Visible Preview response and exposed files only.",
+                controller["fresh_conversation"]["observability_boundary"],
             ]
             output = io.StringIO()
             with redirect_stdout(output):

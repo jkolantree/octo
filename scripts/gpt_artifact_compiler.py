@@ -4,9 +4,10 @@
 The Custom GPT must execute this compiler for any machine-record transaction.
 It freezes caller-supplied bytes, derives every identity from those bytes,
 builds the one runtime ledger, validates execution/evidence topology, and
-serializes ``audit_return.json`` last.  The Base64 transport fallback compresses
-one stable-read payload and emits only fixed-bound chunks whose identities are
-derived from that same byte value.
+serializes ``audit_return.json`` last.  The same-response transport escrow
+frames every public transport artifact from those final in-memory byte objects,
+compresses the one deterministic container, and emits one bounded canonical
+stdout object.  No later Preview turn needs to reopen a generated path.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ import hashlib
 import json
 import os
 import re
-import shlex
+import struct
 import sys
 import unicodedata
 import zlib
@@ -27,14 +28,21 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
-COMPILER_VERSION = "bsc-gpt-artifact-compiler-v5"
+COMPILER_VERSION = "bsc-gpt-artifact-compiler-v6"
 TRANSPORT_CHUNK_VERSION = "bsc-gpt-export-chunk-v1"
+SAME_RESPONSE_TRANSPORT_VERSION = "bsc-gpt-same-response-transport-v1"
+TRANSPORT_CONTAINER_VERSION = "bsc-gpt-multi-artifact-container-v1"
 TRANSPORT_ENCODING = "zlib+base64"
 TRANSPORT_CHUNK_BYTES = 2048
-TRANSPORT_SNAPSHOT_DIRECTORY = ".bsc-transport-v1"
+TRANSPORT_CONTAINER_MAGIC = b"BSC-GPT-MULTI-ARTIFACT-V1\x00"
+MAX_COMPILE_STDOUT_BYTES = 64 * 1024
 MAX_TRANSPORT_PAYLOAD_BYTES = 64 * 1024 * 1024
 MAX_TRANSPORT_ENCODED_BYTES = 65 * 1024 * 1024
 MAX_TRANSPORT_CHUNKS = 100_000
+MAX_TRANSPORT_FILES = 32
+MAX_TRANSPORT_FILENAME_BYTES = 255
+MAX_SAME_RESPONSE_MEMBER_BYTES = 8 * 1024 * 1024
+MAX_TRANSPORT_CONTAINER_BYTES = 16 * 1024 * 1024
 EXPORT_CHUNK_FIELDS = {
     "transport_version",
     "filename",
@@ -49,6 +57,34 @@ EXPORT_CHUNK_FIELDS = {
     "chunk_size_bytes",
     "chunk_sha256",
     "base64",
+}
+SAME_RESPONSE_CHUNK_FIELDS = {
+    "chunk_index",
+    "chunk_count",
+    "offset_bytes",
+    "chunk_size_bytes",
+    "chunk_sha256",
+    "base64",
+}
+SAME_RESPONSE_TRANSPORT_FIELDS = {
+    "transport_version",
+    "container_version",
+    "encoding",
+    "container_size_bytes",
+    "container_sha256",
+    "encoded_size_bytes",
+    "encoded_sha256",
+    "file_count",
+    "files",
+    "chunk_count",
+    "chunks",
+}
+COMPILE_RESULT_FIELDS = {
+    "compiler",
+    "status",
+    "outputs",
+    "return_serialized_last",
+    "transport",
 }
 RUNTIME_PREFIX = "session_reported_runtime="
 RUNTIME_BASIS_LINE = "runtime_provenance=session_reported"
@@ -317,19 +353,6 @@ def _stable_read_payload(path: Path) -> bytes:
     """Read one payload once and reject an identity change during the read."""
 
     if isinstance(path, Path):
-        parent = path.parent
-        parent_is_junction = getattr(parent, "is_junction", None)
-        if (
-            parent.name == TRANSPORT_SNAPSHOT_DIRECTORY
-            and (
-                parent.is_symlink()
-                or (callable(parent_is_junction) and parent_is_junction())
-                or not parent.is_dir()
-            )
-        ):
-            raise ValueError(
-                "transport snapshot directory must be one regular non-linked directory"
-            )
         is_junction = getattr(path, "is_junction", None)
         if (
             path.is_symlink()
@@ -372,6 +395,559 @@ def _transport_chunks(encoded: bytes) -> tuple[bytes, ...]:
         encoded[offset : offset + TRANSPORT_CHUNK_BYTES]
         for offset in range(0, len(encoded), TRANSPORT_CHUNK_BYTES)
     )
+
+
+def build_transport_container(files: dict[str, bytes]) -> bytes:
+    """Frame one sorted exact-byte artifact roster without filesystem metadata."""
+
+    if not isinstance(files, dict) or not files:
+        raise ValueError("transport container roster must be a nonempty mapping")
+    if len(files) > MAX_TRANSPORT_FILES:
+        raise ValueError("transport container file count exceeds the bounded limit")
+    _assert_unique_basenames(files, "transport container filenames")
+    if any(not isinstance(data, bytes) for data in files.values()):
+        raise ValueError("transport container values must be exact bytes")
+
+    ordered = sorted(files.items())
+    total_size = len(TRANSPORT_CONTAINER_MAGIC) + 4
+    for filename, data in ordered:
+        name_bytes = filename.encode("utf-8")
+        if len(name_bytes) > MAX_TRANSPORT_FILENAME_BYTES:
+            raise ValueError("transport container filename exceeds the bounded limit")
+        if len(data) > MAX_SAME_RESPONSE_MEMBER_BYTES:
+            raise ValueError("transport container payload exceeds the bounded limit")
+        total_size += 2 + len(name_bytes) + 8 + 32 + len(data)
+    if total_size > MAX_TRANSPORT_CONTAINER_BYTES:
+        raise ValueError("transport container exceeds the bounded aggregate limit")
+
+    framed = bytearray(TRANSPORT_CONTAINER_MAGIC)
+    framed.extend(struct.pack(">I", len(ordered)))
+    for filename, data in ordered:
+        name_bytes = filename.encode("utf-8")
+        framed.extend(struct.pack(">H", len(name_bytes)))
+        framed.extend(name_bytes)
+        framed.extend(struct.pack(">Q", len(data)))
+        framed.extend(hashlib.sha256(data).digest())
+        framed.extend(data)
+    container = bytes(framed)
+    if len(container) != total_size:
+        raise AssertionError("transport container framing length changed")
+    return container
+
+
+def parse_transport_container(container: bytes) -> dict[str, bytes]:
+    """Strictly parse and authenticate one canonical framed transport container."""
+
+    if not isinstance(container, bytes):
+        raise ValueError("transport container must be exact bytes")
+    if (
+        len(container) < len(TRANSPORT_CONTAINER_MAGIC) + 4
+        or len(container) > MAX_TRANSPORT_CONTAINER_BYTES
+        or not container.startswith(TRANSPORT_CONTAINER_MAGIC)
+    ):
+        raise ValueError("transport container header or bounded size is invalid")
+
+    cursor = len(TRANSPORT_CONTAINER_MAGIC)
+
+    def take(size: int, label: str) -> bytes:
+        nonlocal cursor
+        if (
+            isinstance(size, bool)
+            or not isinstance(size, int)
+            or size < 0
+            or cursor + size > len(container)
+        ):
+            raise ValueError(f"transport container {label} is truncated")
+        value = container[cursor : cursor + size]
+        cursor += size
+        return value
+
+    file_count = struct.unpack(">I", take(4, "file-count header"))[0]
+    if not 0 < file_count <= MAX_TRANSPORT_FILES:
+        raise ValueError("transport container file count is invalid")
+
+    files: dict[str, bytes] = {}
+    previous_filename: str | None = None
+    for _ in range(file_count):
+        name_size = struct.unpack(">H", take(2, "filename-length header"))[0]
+        if not 0 < name_size <= MAX_TRANSPORT_FILENAME_BYTES:
+            raise ValueError("transport container filename length is invalid")
+        try:
+            filename = take(name_size, "filename").decode("utf-8", errors="strict")
+        except UnicodeError as exc:
+            raise ValueError("transport container filename is not strict UTF-8") from exc
+        if not _portable_basename(filename):
+            raise ValueError("transport container filename is not a portable basename")
+        if previous_filename is not None and filename <= previous_filename:
+            raise ValueError("transport container filenames are not strictly sorted")
+        previous_filename = filename
+
+        payload_size = struct.unpack(">Q", take(8, "payload-length header"))[0]
+        if payload_size > MAX_SAME_RESPONSE_MEMBER_BYTES:
+            raise ValueError("transport container payload exceeds the bounded limit")
+        expected_digest = take(32, "payload digest")
+        payload = take(payload_size, "payload")
+        if hashlib.sha256(payload).digest() != expected_digest:
+            raise ValueError("transport container payload digest mismatch")
+        files[filename] = payload
+
+    if cursor != len(container):
+        raise ValueError("transport container has trailing bytes")
+    _assert_unique_basenames(files, "transport container filenames")
+    if build_transport_container(files) != container:
+        raise ValueError("transport container is not in canonical framing")
+    return files
+
+
+def _bounded_transport_decompress(encoded: bytes, declared_size: int) -> bytes:
+    if (
+        not isinstance(encoded, bytes)
+        or isinstance(declared_size, bool)
+        or not isinstance(declared_size, int)
+        or not 0 < declared_size <= MAX_TRANSPORT_CONTAINER_BYTES
+    ):
+        raise ValueError("transport container decompression bounds are invalid")
+    decompressor = zlib.decompressobj()
+    try:
+        container = decompressor.decompress(encoded, declared_size + 1)
+        container += decompressor.flush()
+    except zlib.error as exc:
+        raise ValueError("transport container zlib stream is invalid") from exc
+    if (
+        len(container) != declared_size
+        or not decompressor.eof
+        or decompressor.unused_data
+        or decompressor.unconsumed_tail
+    ):
+        raise ValueError("transport container decompression boundary mismatch")
+    return container
+
+
+def build_same_response_transport(files: dict[str, bytes]) -> dict[str, Any]:
+    """Build one complete same-response transport envelope from final bytes."""
+
+    required = {
+        BOUND_REPORT_ARTIFACT,
+        BOUND_RUNTIME_ARTIFACT,
+        BOUND_RETURN_ARTIFACT,
+    }
+    if not isinstance(files, dict) or not required.issubset(files):
+        raise ValueError("same-response transport roster lacks required final artifacts")
+    container = build_transport_container(files)
+    encoded = zlib.compress(container, level=9)
+    if not encoded or len(encoded) > MAX_TRANSPORT_ENCODED_BYTES:
+        raise ValueError("same-response encoded transport exceeds the bounded limit")
+    if _bounded_transport_decompress(encoded, len(container)) != container:
+        raise AssertionError("same-response transport did not round trip")
+
+    parts = _transport_chunks(encoded)
+    if len(parts) > MAX_TRANSPORT_CHUNKS:
+        raise ValueError("same-response transport chunk count exceeds the bounded limit")
+    chunks = [
+        {
+            "chunk_index": index,
+            "chunk_count": len(parts),
+            "offset_bytes": index * TRANSPORT_CHUNK_BYTES,
+            "chunk_size_bytes": len(part),
+            "chunk_sha256": sha256_bytes(part),
+            "base64": base64.b64encode(part).decode("ascii"),
+        }
+        for index, part in enumerate(parts)
+    ]
+    if any(set(chunk) != SAME_RESPONSE_CHUNK_FIELDS for chunk in chunks):
+        raise AssertionError("same-response transport chunk fields changed")
+
+    envelope = {
+        "transport_version": SAME_RESPONSE_TRANSPORT_VERSION,
+        "container_version": TRANSPORT_CONTAINER_VERSION,
+        "encoding": TRANSPORT_ENCODING,
+        "container_size_bytes": len(container),
+        "container_sha256": sha256_bytes(container),
+        "encoded_size_bytes": len(encoded),
+        "encoded_sha256": sha256_bytes(encoded),
+        "file_count": len(files),
+        "files": [
+            output_record(filename, data)
+            for filename, data in sorted(files.items())
+        ],
+        "chunk_count": len(chunks),
+        "chunks": chunks,
+    }
+    if set(envelope) != SAME_RESPONSE_TRANSPORT_FIELDS:
+        raise AssertionError("same-response transport envelope fields changed")
+    reconstructed = parse_same_response_transport(
+        envelope,
+        expected_transport_filenames=files,
+    )
+    if reconstructed != {name: files[name] for name in sorted(files)}:
+        raise AssertionError("same-response transport reconstruction changed bytes")
+    return envelope
+
+
+def _strict_canonical_json_object(raw: bytes, label: str) -> dict[str, Any]:
+    if not isinstance(raw, bytes):
+        raise ValueError(f"{label} must be exact bytes")
+    try:
+        text = raw.decode("utf-8", errors="strict")
+    except UnicodeError as exc:
+        raise ValueError(f"{label} must be strict UTF-8") from exc
+
+    def strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError(f"{label} contains a duplicate JSON key")
+            value[key] = item
+        return value
+
+    try:
+        document = json.loads(
+            text,
+            object_pairs_hook=strict_object,
+            parse_constant=lambda item: (_ for _ in ()).throw(
+                ValueError(f"{label} contains non-finite JSON number: {item}")
+            ),
+        )
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{label} is not strict JSON") from exc
+    if not isinstance(document, dict):
+        raise ValueError(f"{label} must be a JSON object")
+    if canonical_transport_wrapper_bytes(document) != raw:
+        raise ValueError(f"{label} is not canonical no-terminal-LF JSON")
+    return document
+
+
+def _transport_roster_from_audit_return(raw: bytes) -> list[str]:
+    if not isinstance(raw, bytes) or not raw.endswith(b"\n"):
+        raise ValueError("transport audit_return.json must retain its canonical final LF")
+    document = _strict_canonical_json_object(
+        raw[:-1],
+        "transport audit_return.json",
+    )
+    if canonical_json_bytes(document) != raw:
+        raise ValueError("transport audit_return.json is not canonical JSON")
+    artifact_rows = document.get("artifacts")
+    if not isinstance(artifact_rows, list):
+        raise ValueError("transport audit_return.json artifact roster is invalid")
+    names: list[str] = []
+    for row in artifact_rows:
+        if (
+            not isinstance(row, dict)
+            or not _portable_basename(row.get("filename"))
+            or not isinstance(row.get("role"), str)
+        ):
+            raise ValueError("transport audit_return.json artifact row is invalid")
+        if row["role"] != "source":
+            names.append(row["filename"])
+    names.append(BOUND_RETURN_ARTIFACT)
+    _assert_unique_basenames(names, "transport audit_return.json filenames")
+    return sorted(names)
+
+
+def _output_identity_contract_from_audit_return(
+    raw: bytes,
+) -> tuple[list[str], dict[str, str], dict[str, Any]]:
+    """Return the complete artifact roster and declared lowercase digests."""
+
+    if not isinstance(raw, bytes) or not raw.endswith(b"\n"):
+        raise ValueError("output audit_return.json must retain its canonical final LF")
+    document = _strict_canonical_json_object(
+        raw[:-1],
+        "output audit_return.json",
+    )
+    if canonical_json_bytes(document) != raw:
+        raise ValueError("output audit_return.json is not canonical JSON")
+    artifact_rows = document.get("artifacts")
+    if not isinstance(artifact_rows, list):
+        raise ValueError("output audit_return.json artifact roster is invalid")
+    declared_hashes: dict[str, str] = {}
+    for row in artifact_rows:
+        filename = row.get("filename") if isinstance(row, dict) else None
+        digest = row.get("sha256") if isinstance(row, dict) else None
+        if (
+            not _portable_basename(filename)
+            or not isinstance(digest, str)
+            or re.fullmatch(r"sha256:[0-9a-f]{64}", digest) is None
+            or filename in declared_hashes
+        ):
+            raise ValueError(
+                "output audit_return.json artifact identity row is invalid"
+            )
+        declared_hashes[filename] = digest.removeprefix("sha256:")
+    names = [*declared_hashes, BOUND_RETURN_ARTIFACT]
+    _assert_unique_basenames(names, "output audit_return.json filenames")
+    return sorted(names), declared_hashes, document
+
+
+def _validate_output_records(
+    value: object,
+    label: str,
+) -> list[dict[str, Any]]:
+    if not isinstance(value, list) or not value:
+        raise ValueError(f"{label} must be a nonempty array")
+    records: list[dict[str, Any]] = []
+    for record in value:
+        if not isinstance(record, dict) or set(record) != OUTPUT_RECORD_FIELDS:
+            raise ValueError(f"{label} contains an invalid identity record")
+        filename = record.get("filename")
+        size = record.get("bytes")
+        digest = record.get("sha256")
+        if (
+            not _portable_basename(filename)
+            or isinstance(size, bool)
+            or not isinstance(size, int)
+            or size < 0
+            or not isinstance(digest, str)
+            or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+        ):
+            raise ValueError(f"{label} contains an invalid identity value")
+        records.append(record)
+    _assert_unique_basenames(
+        (record["filename"] for record in records),
+        f"{label} filenames",
+    )
+    if records != sorted(records, key=lambda record: record["filename"]):
+        raise ValueError(f"{label} must be strictly filename-sorted")
+    return records
+
+
+def parse_same_response_transport(
+    value: object,
+    *,
+    expected_transport_filenames: Iterable[str] | None = None,
+) -> dict[str, bytes]:
+    """Strictly verify an envelope and reconstruct its exact artifact bytes."""
+
+    if not isinstance(value, dict) or set(value) != SAME_RESPONSE_TRANSPORT_FIELDS:
+        raise ValueError("same-response transport fields differ from the contract")
+    if (
+        value.get("transport_version") != SAME_RESPONSE_TRANSPORT_VERSION
+        or value.get("container_version") != TRANSPORT_CONTAINER_VERSION
+        or value.get("encoding") != TRANSPORT_ENCODING
+    ):
+        raise ValueError("same-response transport version or encoding is invalid")
+
+    container_size = value.get("container_size_bytes")
+    encoded_size = value.get("encoded_size_bytes")
+    file_count = value.get("file_count")
+    chunk_count = value.get("chunk_count")
+    container_hash = value.get("container_sha256")
+    encoded_hash = value.get("encoded_sha256")
+    if (
+        isinstance(container_size, bool)
+        or not isinstance(container_size, int)
+        or not 0 < container_size <= MAX_TRANSPORT_CONTAINER_BYTES
+        or isinstance(encoded_size, bool)
+        or not isinstance(encoded_size, int)
+        or not 0 < encoded_size <= MAX_TRANSPORT_ENCODED_BYTES
+        or isinstance(file_count, bool)
+        or not isinstance(file_count, int)
+        or not 0 < file_count <= MAX_TRANSPORT_FILES
+        or isinstance(chunk_count, bool)
+        or not isinstance(chunk_count, int)
+        or not 0 < chunk_count <= MAX_TRANSPORT_CHUNKS
+        or not isinstance(container_hash, str)
+        or re.fullmatch(r"[0-9a-f]{64}", container_hash) is None
+        or not isinstance(encoded_hash, str)
+        or re.fullmatch(r"[0-9a-f]{64}", encoded_hash) is None
+    ):
+        raise ValueError("same-response transport bounded metadata is invalid")
+
+    records = _validate_output_records(
+        value.get("files"),
+        "same-response transport files",
+    )
+    if len(records) != file_count:
+        raise ValueError("same-response transport file count differs from its roster")
+    names = [record["filename"] for record in records]
+    if expected_transport_filenames is not None:
+        expected_names = list(expected_transport_filenames)
+        _assert_unique_basenames(
+            expected_names,
+            "expected same-response transport filenames",
+        )
+        if names != sorted(expected_names):
+            raise ValueError("same-response transport roster differs from expected files")
+
+    chunks = value.get("chunks")
+    if not isinstance(chunks, list) or len(chunks) != chunk_count:
+        raise ValueError("same-response transport chunk count differs from its roster")
+    calculated_count = (
+        encoded_size + TRANSPORT_CHUNK_BYTES - 1
+    ) // TRANSPORT_CHUNK_BYTES
+    if chunk_count != calculated_count:
+        raise ValueError("same-response transport chunk count is inconsistent")
+
+    encoded_parts: list[bytes] = []
+    max_base64_chars = ((TRANSPORT_CHUNK_BYTES + 2) // 3) * 4
+    for index, chunk in enumerate(chunks):
+        if not isinstance(chunk, dict) or set(chunk) != SAME_RESPONSE_CHUNK_FIELDS:
+            raise ValueError("same-response transport chunk fields are invalid")
+        offset = chunk.get("offset_bytes")
+        chunk_size = chunk.get("chunk_size_bytes")
+        chunk_hash = chunk.get("chunk_sha256")
+        encoded_text = chunk.get("base64")
+        expected_size = min(
+            TRANSPORT_CHUNK_BYTES,
+            encoded_size - index * TRANSPORT_CHUNK_BYTES,
+        )
+        if (
+            chunk.get("chunk_index") != index
+            or isinstance(chunk.get("chunk_index"), bool)
+            or chunk.get("chunk_count") != chunk_count
+            or isinstance(chunk.get("chunk_count"), bool)
+            or offset != index * TRANSPORT_CHUNK_BYTES
+            or isinstance(offset, bool)
+            or chunk_size != expected_size
+            or isinstance(chunk_size, bool)
+            or not isinstance(chunk_hash, str)
+            or re.fullmatch(r"[0-9a-f]{64}", chunk_hash) is None
+            or not isinstance(encoded_text, str)
+            or not encoded_text.isascii()
+            or len(encoded_text) > max_base64_chars
+        ):
+            raise ValueError("same-response transport chunk metadata is invalid")
+        try:
+            part = base64.b64decode(encoded_text, validate=True)
+        except (ValueError, TypeError) as exc:
+            raise ValueError("same-response transport chunk Base64 is invalid") from exc
+        if (
+            base64.b64encode(part).decode("ascii") != encoded_text
+            or len(part) != chunk_size
+            or sha256_bytes(part) != chunk_hash
+        ):
+            raise ValueError("same-response transport chunk byte binding mismatch")
+        encoded_parts.append(part)
+
+    encoded = b"".join(encoded_parts)
+    if len(encoded) != encoded_size or sha256_bytes(encoded) != encoded_hash:
+        raise ValueError("same-response transport encoded aggregate mismatch")
+    container = _bounded_transport_decompress(encoded, container_size)
+    if sha256_bytes(container) != container_hash:
+        raise ValueError("same-response transport container identity mismatch")
+    files = parse_transport_container(container)
+    actual_records = [
+        output_record(filename, data)
+        for filename, data in files.items()
+    ]
+    if actual_records != records:
+        raise ValueError("same-response transport file identities mismatch")
+    return files
+
+
+def parse_compile_transport_stdout(
+    raw: bytes,
+    *,
+    expected_transport_filenames: Iterable[str] | None = None,
+    expected_untransported_files: dict[str, bytes] | None = None,
+    required_untransported_filenames: Iterable[str] = (),
+) -> tuple[dict[str, Any], dict[str, bytes]]:
+    """Parse exact compiler stdout and reconstruct the same-turn transport."""
+
+    if not isinstance(raw, bytes) or len(raw) > MAX_COMPILE_STDOUT_BYTES:
+        raise ValueError("compiler stdout exceeds the bounded exact-byte contract")
+    document = _strict_canonical_json_object(raw, "compiler stdout")
+    if set(document) != COMPILE_RESULT_FIELDS:
+        raise ValueError("compiler stdout fields differ from the pass contract")
+    if (
+        document.get("compiler") != COMPILER_VERSION
+        or document.get("status") != "pass"
+        or document.get("return_serialized_last") is not True
+    ):
+        raise ValueError("compiler stdout identity or finalization status is invalid")
+    outputs = _validate_output_records(document.get("outputs"), "compiler outputs")
+    files = parse_same_response_transport(
+        document.get("transport"),
+        expected_transport_filenames=expected_transport_filenames,
+    )
+    required = {
+        BOUND_REPORT_ARTIFACT,
+        BOUND_RUNTIME_ARTIFACT,
+        BOUND_RETURN_ARTIFACT,
+    }
+    if not required.issubset(files):
+        raise ValueError("same-response transport lacks required final artifacts")
+    expected_output_names, declared_hashes, return_document = (
+        _output_identity_contract_from_audit_return(
+            files[BOUND_RETURN_ARTIFACT],
+        )
+    )
+    if [record["filename"] for record in outputs] != expected_output_names:
+        raise ValueError(
+            "compiler output roster differs from audit_return.json artifacts"
+        )
+    output_by_filename = {
+        record["filename"]: record
+        for record in outputs
+    }
+    for filename, digest in declared_hashes.items():
+        if output_by_filename[filename]["sha256"] != digest:
+            raise ValueError(
+                "compiler output identity differs from audit_return.json"
+            )
+    artifact_rows = return_document.get("artifacts")
+    if not isinstance(artifact_rows, list):
+        raise ValueError("compiler return artifact roster is invalid")
+    artifacts_by_id: dict[str, dict[str, Any]] = {}
+    for row in artifact_rows:
+        identifier = row.get("id") if isinstance(row, dict) else None
+        if (
+            not isinstance(identifier, str)
+            or not identifier
+            or identifier in artifacts_by_id
+        ):
+            raise ValueError("compiler return artifact identifiers are invalid")
+        artifacts_by_id[identifier] = row
+    _validate_execution_contract(return_document, artifacts_by_id)
+    untransported_names = sorted(set(expected_output_names) - set(files))
+    required_untransported = set(required_untransported_filenames)
+    _assert_unique_basenames(
+        required_untransported,
+        "required untransported filenames",
+    )
+    if not required_untransported.issubset(untransported_names):
+        raise ValueError(
+            "compiler output roster omits a required untransported input"
+        )
+    if untransported_names:
+        if not isinstance(expected_untransported_files, dict):
+            raise ValueError(
+                "compiler untransported outputs require exact expected input bytes"
+            )
+        _assert_unique_basenames(
+            expected_untransported_files,
+            "expected untransported filenames",
+        )
+        if any(
+            not isinstance(data, bytes)
+            for data in expected_untransported_files.values()
+        ):
+            raise ValueError(
+                "expected untransported files must contain exact bytes"
+            )
+        for filename in untransported_names:
+            data = expected_untransported_files.get(filename)
+            if data is None:
+                raise ValueError(
+                    "compiler untransported output lacks an exact expected input"
+                )
+            if output_by_filename[filename] != output_record(filename, data):
+                raise ValueError(
+                    "compiler untransported output identity differs from expected input bytes"
+                )
+    for filename, data in files.items():
+        if output_by_filename.get(filename) != output_record(filename, data):
+            raise ValueError(
+                "same-response transport identity differs from compiler outputs"
+            )
+    derived_names = _transport_roster_from_audit_return(
+        files[BOUND_RETURN_ARTIFACT],
+    )
+    if list(files) != derived_names:
+        raise ValueError(
+            "same-response transport roster differs from audit_return.json roles"
+        )
+    return document, files
 
 
 def _validate_expected_hash(value: str | None, label: str) -> None:
@@ -467,69 +1043,6 @@ def export_payload_chunk(
     ):
         raise AssertionError("derived fallback chunk did not round trip")
     return wrapper
-
-
-def transport_fallback_prompt(
-    filename: str,
-    chunk_index: int = 0,
-    *,
-    expected_payload_sha256: str | None = None,
-    expected_encoded_sha256: str | None = None,
-) -> str:
-    if not _portable_basename(filename):
-        raise ValueError("transport payload filename must be a portable basename")
-    if isinstance(chunk_index, bool) or not isinstance(chunk_index, int) or chunk_index < 0:
-        raise ValueError("transport chunk index must be a nonnegative integer")
-    if chunk_index >= MAX_TRANSPORT_CHUNKS:
-        raise ValueError("transport chunk index exceeds the bounded transport limit")
-    _validate_expected_hash(
-        expected_payload_sha256,
-        "expected payload SHA-256",
-    )
-    _validate_expected_hash(
-        expected_encoded_sha256,
-        "expected encoded SHA-256",
-    )
-    if (expected_payload_sha256 is None) != (expected_encoded_sha256 is None):
-        raise ValueError("expected payload and encoded SHA-256 values must be paired")
-    if chunk_index > 0 and expected_payload_sha256 is None:
-        raise ValueError("later transport chunks require both expected SHA-256 values")
-    snapshot_path = f"/mnt/data/{TRANSPORT_SNAPSHOT_DIRECTORY}/{filename}"
-    command = (
-        "python /mnt/data/gpt_artifact_compiler.py export-chunk "
-        + shlex.quote(snapshot_path)
-        + f" --chunk-index {chunk_index}"
-    )
-    if expected_payload_sha256 is not None:
-        command += (
-            " --expect-payload-sha256 "
-            + expected_payload_sha256
-            + " --expect-encoded-sha256 "
-            + expected_encoded_sha256
-        )
-    return (
-        "TRANSPORT FALLBACK ONLY. The direct file control emitted no observable "
-        f"download event for {filename}. Requesting bounded chunk {chunk_index}. "
-        "Use the enabled Data Analysis tool now. A visible Data Analysis invocation "
-        "of the exact command below is mandatory before any answer; do not answer "
-        "from reasoning or infer that execution occurred. "
-        "The compiler sealed the final bytes in a private unexposed transport "
-        "snapshot during the original compile transaction. Do not regenerate or "
-        "alter that snapshot. "
-        "Do not read, trim, normalize, or encode the payload yourself. Execute this "
-        f"literal command exactly once: {command} . Return the command's complete "
-        "stdout byte-for-byte as the only strict JSON object in one code block, "
-        "whether it is a chunk wrapper or a compiler-generated blocked record. "
-        "The canonical stdout has no trailing line feed; do not reimplement it or "
-        "reuse a hash, size, ledger row, return field, or "
-        "prose value. The controller alone requests later chunk indices using the "
-        "payload and encoded SHA-256 values from chunk 0. If the command reports "
-        "a handled failure, return only its exact JSON stdout. If no invocation or "
-        "stdout occurs, emit no substitute token or prose. Never infer or emit "
-        "export_failed. This identifies only "
-        "the exported compressed chunk received here and its strictly reconstructed "
-        "payload, never unavailable download-button bytes."
-    )
 
 
 def _semantic_report_projection(document: dict[str, Any]) -> dict[str, Any]:
@@ -1031,8 +1544,8 @@ def finalize_candidate_artifacts(
         artifacts_by_filename[filename]["sha256"] = f"sha256:{sha256_bytes(data)}"
 
     ledger_members = [
-        output_record(filename, data)
-        for filename, data in prior_files.items()
+        output_record(filename, prior_files[filename])
+        for filename in sorted(prior_files)
         if artifacts_by_filename[filename].get("role") not in {"request", "source"}
     ]
     ledger_bytes = runtime_ledger_text(runtime, ledger_members).encode("utf-8")
@@ -1093,48 +1606,6 @@ def _load_strict_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def _publish_transport_snapshots(
-    output_dir: Path,
-    transport_files: dict[str, bytes],
-) -> tuple[dict[str, Any], ...]:
-    """Atomically publish private exact-byte snapshots for later fallback export."""
-
-    if not isinstance(transport_files, dict) or not transport_files:
-        raise ValueError("transport snapshot roster must be a nonempty mapping")
-    _assert_unique_basenames(transport_files, "transport snapshot filenames")
-    if any(not isinstance(data, bytes) for data in transport_files.values()):
-        raise ValueError("transport snapshots must contain exact bytes")
-
-    destination = output_dir / TRANSPORT_SNAPSHOT_DIRECTORY
-    staging = output_dir / f"{TRANSPORT_SNAPSHOT_DIRECTORY}.{os.getpid()}.tmp"
-    if (
-        destination.exists()
-        or destination.is_symlink()
-        or staging.exists()
-        or staging.is_symlink()
-    ):
-        raise ValueError("refusing to reuse a transport snapshot directory")
-    staging.mkdir(mode=0o700)
-    for filename, data in sorted(transport_files.items()):
-        snapshot = staging / filename
-        with snapshot.open("xb") as stream:
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-        if _stable_read_payload(snapshot) != data:
-            raise ValueError(f"transport snapshot verification failed: {filename}")
-    staging.replace(destination)
-    if destination.is_symlink() or not destination.is_dir():
-        raise ValueError("transport snapshot publication is not a regular directory")
-    identities: list[dict[str, Any]] = []
-    for filename, data in sorted(transport_files.items()):
-        snapshot = destination / filename
-        if _stable_read_payload(snapshot) != data:
-            raise ValueError(f"published transport snapshot differs: {filename}")
-        identities.append(output_record(filename, data))
-    return tuple(identities)
-
-
 def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
     spec = _load_strict_json(spec_path)
     if set(spec) != {
@@ -1160,7 +1631,38 @@ def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
         frozen_artifacts=frozen,
         audit_return_template=spec["audit_return_template"],
     )
+    return_serialized_last = list(finalized.files)[-1] == BOUND_RETURN_ARTIFACT
+    if not return_serialized_last:
+        raise AssertionError("audit_return.json was not serialized last")
+    result = {
+        "compiler": COMPILER_VERSION,
+        "status": "pass",
+        "outputs": list(finalized.identities),
+        "return_serialized_last": return_serialized_last,
+        "transport": build_same_response_transport(finalized.transport_files),
+    }
+    stdout_bytes = canonical_transport_wrapper_bytes(result)
+    if len(stdout_bytes) > MAX_COMPILE_STDOUT_BYTES:
+        raise ValueError("same-response transport exceeds the compiler stdout limit")
+    _, reconstructed = parse_compile_transport_stdout(
+        stdout_bytes,
+        expected_transport_filenames=finalized.transport_files,
+        expected_untransported_files=finalized.files,
+        required_untransported_filenames=(
+            set(finalized.files) - set(finalized.transport_files)
+        ),
+    )
+    if reconstructed != finalized.transport_files:
+        raise AssertionError("compiler stdout transport changed final artifact bytes")
+
     output_dir.mkdir(parents=True, exist_ok=True)
+    output_is_junction = getattr(output_dir, "is_junction", None)
+    if (
+        output_dir.is_symlink()
+        or (callable(output_is_junction) and output_is_junction())
+        or not output_dir.is_dir()
+    ):
+        raise ValueError("compiler output directory must be one regular non-linked directory")
     for filename, data in finalized.files.items():
         destination = output_dir / filename
         if filename in frozen:
@@ -1184,33 +1686,30 @@ def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
     for filename, data in finalized.files.items():
         if _stable_read_payload(output_dir / filename) != data:
             raise ValueError(f"post-write verification failed: {filename}")
-    snapshot_identities = _publish_transport_snapshots(
-        output_dir,
-        finalized.transport_files,
-    )
-    expected_snapshot_identities = tuple(
-        output_record(filename, data)
-        for filename, data in sorted(finalized.transport_files.items())
-    )
-    if snapshot_identities != expected_snapshot_identities:
-        raise AssertionError("transport snapshot identities changed during publication")
-    return {
-        "compiler": COMPILER_VERSION,
-        "status": "pass",
-        "outputs": list(finalized.identities),
-        "return_serialized_last": list(finalized.files)[-1] == BOUND_RETURN_ARTIFACT,
-    }
+    return result
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Compile or export deterministic Custom GPT audit artifacts"
+        description=(
+            "Compile deterministic Custom GPT audit artifacts; retain legacy "
+            "single-file export only for explicitly acknowledged historical evidence"
+        )
     )
     commands = parser.add_subparsers(dest="command", required=True)
     compile_command = commands.add_parser("compile")
     compile_command.add_argument("--spec", required=True, type=Path)
     compile_command.add_argument("--output-dir", required=True, type=Path)
-    export_command = commands.add_parser("export-chunk")
+    export_command = commands.add_parser(
+        "export-chunk",
+        help="offline historical-v3 compatibility diagnostic only",
+    )
+    export_command.add_argument(
+        "--offline-historical-v3",
+        action="store_true",
+        required=True,
+        help="acknowledge that this command is forbidden in active v4 Preview trials",
+    )
     export_command.add_argument("payload", type=Path)
     export_command.add_argument("--chunk-index", required=True, type=int)
     export_command.add_argument("--expect-payload-sha256")
@@ -1238,19 +1737,10 @@ def main(argv: list[str] | None = None) -> int:
             "status": "blocked",
             "error": str(exc),
         }
-        if args.command == "export-chunk":
-            print(
-                canonical_transport_wrapper_bytes(failure).decode("utf-8"),
-                end="",
-            )
-        else:
-            print(
-                json.dumps(
-                    failure,
-                    sort_keys=True,
-                    ensure_ascii=False,
-                )
-            )
+        print(
+            canonical_transport_wrapper_bytes(failure).decode("utf-8"),
+            end="",
+        )
         return 1
     print(canonical_transport_wrapper_bytes(result).decode("utf-8"), end="")
     return 0

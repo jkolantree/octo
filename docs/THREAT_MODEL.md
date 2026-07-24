@@ -58,15 +58,25 @@ The three entry points do not share one privacy or execution boundary:
 
 For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
 
-The Custom GPT artifact-transport fallback is an execution request, not a
-reasoning question. For every exact controller-generated `export-chunk`
-request, the candidate must visibly invoke the enabled Data Analysis tool once
-with that literal command and may return only the compiler's exact JSON stdout.
-The compiler emits canonical no-terminal-LF JSON for either a chunk or a
-handled blocked record. The model must never infer or author
-`export_failed`. A missing invocation, absent stdout, or noncanonical response
-is a candidate transport failure while payload identity remains unresolved; it
-is not proof that unavailable download-button bytes are corrupt.
+The Custom GPT artifact-transport fallback is generated during the original
+Data Analysis compiler transaction, after `audit_return.json` is serialized.
+The compiler derives one deterministic bounded container from the same final
+in-memory output bytes and includes it in canonical no-terminal-LF stdout. The
+candidate must copy that complete stdout byte-for-byte into one final fenced
+code block; it must not regenerate, trim, reserialize, or independently author
+any runtime, hash, size, or Base64 value. The controller always validates the
+already-preserved bundle, uses direct acquisition as the primary candidate-byte
+path, and selects the reconstructed member only when no direct bytes exist. If
+both copies exist, any byte difference is a candidate transport failure. The
+controller binds an explicit per-file outcome for every visible direct control;
+absence of bytes alone cannot be relabeled `no_download_event`. It derives the
+transport ledger from those bound observations rather than accepting a
+model-authored record. A missing, malformed, blocked, or noncanonical candidate
+block is also a candidate transport failure.
+Controller loss or mutation of a block demonstrably present in the complete
+raw response instead invalidates the trial. A valid fallback identifies only
+the exported bundle received by the controller; unavailable download-button
+bytes remain `transport_identity_unresolved`, not corrupt.
 
 ## Returned-output threats
 

@@ -12,6 +12,7 @@ import io
 import json
 import re
 import sys
+import tempfile
 import unicodedata
 import zlib
 from contextlib import redirect_stdout
@@ -26,11 +27,15 @@ try:
         CANDIDATE_NOT_SCORED,
         CANDIDATE_PASSED,
         CONTROLLER_ARTIFACT_FILENAMES,
+        DIRECT_ACQUISITION_ATTEMPT_FIELDS,
+        DIRECT_ACQUISITION_OUTCOMES,
+        CONTROLLER_RECORD_VERSION,
         CONTROLLER_RECORD_FIELDS,
         CONTROLLER_VALID,
         KNOWLEDGE_FILENAMES,
         OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES,
         RAW_RESPONSE_FILENAME,
+        RECONSTRUCTED_OUTPUT_DIRECTORY,
         TRANSPORT_IDENTITY_RESOLVED,
         TRANSPORT_IDENTITY_UNRESOLVED,
         TRANSPORT_NOT_APPLICABLE,
@@ -51,11 +56,15 @@ except ModuleNotFoundError:  # Direct ``python scripts/check_gpt_eval_bundle.py`
         CANDIDATE_NOT_SCORED,
         CANDIDATE_PASSED,
         CONTROLLER_ARTIFACT_FILENAMES,
+        DIRECT_ACQUISITION_ATTEMPT_FIELDS,
+        DIRECT_ACQUISITION_OUTCOMES,
+        CONTROLLER_RECORD_VERSION,
         CONTROLLER_RECORD_FIELDS,
         CONTROLLER_VALID,
         KNOWLEDGE_FILENAMES,
         OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES,
         RAW_RESPONSE_FILENAME,
+        RECONSTRUCTED_OUTPUT_DIRECTORY,
         TRANSPORT_IDENTITY_RESOLVED,
         TRANSPORT_IDENTITY_UNRESOLVED,
         TRANSPORT_NOT_APPLICABLE,
@@ -79,18 +88,22 @@ from bsc_audit.cli import main as bsc_audit_main  # noqa: E402
 
 try:
     from scripts.gpt_artifact_compiler import (  # noqa: E402
+        COMPILER_VERSION,
         EXPORT_CHUNK_FIELDS,
         MAX_TRANSPORT_ENCODED_BYTES,
         MAX_TRANSPORT_PAYLOAD_BYTES,
+        SAME_RESPONSE_TRANSPORT_VERSION,
         TRANSPORT_CHUNK_BYTES,
         TRANSPORT_CHUNK_VERSION,
         TRANSPORT_ENCODING,
     )
 except ModuleNotFoundError:  # Direct ``python scripts/check_gpt_eval_bundle.py``.
     from gpt_artifact_compiler import (  # type: ignore[no-redef] # noqa: E402
+        COMPILER_VERSION,
         EXPORT_CHUNK_FIELDS,
         MAX_TRANSPORT_ENCODED_BYTES,
         MAX_TRANSPORT_PAYLOAD_BYTES,
+        SAME_RESPONSE_TRANSPORT_VERSION,
         TRANSPORT_CHUNK_BYTES,
         TRANSPORT_CHUNK_VERSION,
         TRANSPORT_ENCODING,
@@ -107,7 +120,13 @@ TRANSPORT_RECORD_FIELDS = {
     "sha256",
     "export_chunks",
 }
-TRANSPORT_RECORD_VERSION = "2.0"
+LEGACY_TRANSPORT_RECORD_VERSION = "2.0"
+TRANSPORT_RECORD_VERSION = "3.0"
+SUPPORTED_TRANSPORT_RECORD_VERSIONS = {
+    LEGACY_TRANSPORT_RECORD_VERSION,
+    TRANSPORT_RECORD_VERSION,
+}
+SAME_RESPONSE_TRANSPORT_METHOD = "in_turn_compiler_bundle"
 TRANSPORT_CHUNK_FILENAME_RE = re.compile(
     r"^(?P<payload>.+)\.export\.(?P<index>[0-9]{5})\.json$"
 )
@@ -145,9 +164,10 @@ RESEARCH_PROJECTION_REQUIREMENTS = {
     STATUS_ONLY_RESEARCH_PROJECTION_EMPTY,
 }
 LIMITATION = (
-    "Strict chunk decoding and bounded decompression validate the compiler-sealed exported "
-    "payload encoding, declared identities, and local-byte equality; they do not establish download-button "
-    "identity or prove which bytes a UI download button served."
+    "Strict same-response compiler-bundle or legacy chunk reconstruction validates "
+    "the captured encoding, declared identities, and local-byte equality; they do "
+    "not establish download-button identity or prove which bytes a UI download "
+    "button served."
 )
 TRANSPORT_LIMITATION = (
     "The transport record preserves the controller's observed download exposure/event outcome; "
@@ -613,12 +633,88 @@ def _expected_candidate_identity(
     return result
 
 
+def _uses_same_response_transport(controller_record: object) -> bool:
+    return (
+        isinstance(controller_record, dict)
+        and controller_record.get("controller_record_version")
+        == CONTROLLER_RECORD_VERSION
+        and "compiler_transport_capture" in controller_record
+        and "reconstructed_outputs" in controller_record
+    )
+
+
+def _candidate_output_root(
+    root: Path,
+    controller_record: object,
+) -> Path:
+    if _uses_same_response_transport(controller_record):
+        return root / RECONSTRUCTED_OUTPUT_DIRECTORY
+    return root
+
+
 def _actual_candidate_output_filenames(
     root: Path,
     *,
     input_filenames: set[str],
+    controller_record: object = None,
 ) -> set[str]:
     """Inventory candidate outputs independently of audit_return declarations."""
+
+    output_root = _candidate_output_root(root, controller_record)
+    if output_root != root:
+        outputs: set[str] = set()
+        try:
+            if (
+                output_root.is_symlink()
+                or not output_root.is_dir()
+                or output_root.resolve(strict=True).parent != root.resolve(strict=True)
+            ):
+                entries: list[Path] = []
+            else:
+                entries = list(output_root.iterdir())
+        except (OSError, RuntimeError):
+            entries = []
+        for path in entries:
+            if (
+                not path.is_file()
+                or path.is_symlink()
+                or _safe_file(output_root.resolve(strict=True), path.name) is None
+            ):
+                continue
+            outputs.add(path.name)
+        observed_direct = (
+            controller_record.get("observed_outputs")
+            if isinstance(controller_record, dict)
+            else None
+        )
+        if isinstance(observed_direct, list):
+            for item in observed_direct:
+                filename = item.get("filename") if isinstance(item, dict) else None
+                if isinstance(filename, str) and _safe_file(root, filename) is not None:
+                    outputs.add(filename)
+        excluded_root_names = {
+            CONTROLLER_RECORD_NAME,
+            *input_filenames,
+            *(filename for _, filename in CANDIDATE_IDENTITY_FILENAMES),
+            *CONTROLLER_ARTIFACT_FILENAMES,
+            *OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES,
+        }
+        try:
+            root_entries = list(root.iterdir())
+        except OSError:
+            root_entries = []
+        for path in root_entries:
+            if (
+                path.name in excluded_root_names
+                or path.name in outputs
+                or TRANSPORT_CHUNK_FILENAME_RE.fullmatch(path.name) is not None
+                or not path.is_file()
+                or path.is_symlink()
+                or _safe_file(root, path.name) is None
+            ):
+                continue
+            outputs.add(path.name)
+        return outputs
 
     excluded = {
         CONTROLLER_RECORD_NAME,
@@ -652,7 +748,10 @@ def _declared_candidate_outputs(
     for item in artifacts:
         if not isinstance(item, dict) or not isinstance(item.get("filename"), str):
             return None
-        if item["filename"] not in input_filenames:
+        if (
+            item["filename"] not in input_filenames
+            and item.get("role") != "source"
+        ):
             names.add(item["filename"])
     return names
 
@@ -703,12 +802,30 @@ def _transport_identity_axis(
     observed_output_controls: set[str],
     *,
     has_transport_attempts: bool,
+    has_same_response_capture: bool = False,
+    required_output_filenames: set[str] | None = None,
+    direct_download_filenames: set[str] | None = None,
 ) -> str:
-    if not records and not observed_output_controls and not has_transport_attempts:
+    if (
+        not records
+        and not observed_output_controls
+        and not has_transport_attempts
+        and not has_same_response_capture
+    ):
         return TRANSPORT_NOT_APPLICABLE
-    # File controls, self-reported download events, and reconstructed fallback
-    # payloads preserve different observations. None independently authenticates
-    # the bytes that a UI download button would have served.
+    required_controls = (
+        set(required_output_filenames or set()) & observed_output_controls
+    )
+    if not required_controls and observed_output_controls:
+        required_controls = set(observed_output_controls)
+    if required_controls and required_controls.issubset(
+        direct_download_filenames or set()
+    ):
+        return TRANSPORT_IDENTITY_RESOLVED
+    # File controls, self-reported download events, same-response compiler
+    # reconstruction, and legacy fallback payloads preserve different
+    # observations. None independently authenticates the bytes that a UI
+    # download button would have served.
     return TRANSPORT_IDENTITY_UNRESOLVED
 
 
@@ -719,6 +836,7 @@ def _verify_artifacts(
     checks: dict[str, dict[str, Any]],
     *,
     unavailable_filenames: set[str] | None = None,
+    source_root: Path | None = None,
 ) -> tuple[dict[str, tuple[Path, bytes, str | None]], tuple[Path, str] | None]:
     unavailable = unavailable_filenames or set()
     artifacts_raw = audit_return.get("artifacts")
@@ -753,6 +871,12 @@ def _verify_artifacts(
         records[identifier] = artifact
         filename = artifact.get("filename")
         local_path = _safe_file(root, filename)
+        if (
+            local_path is None
+            and artifact.get("role") == "source"
+            and source_root is not None
+        ):
+            local_path = _safe_file(source_root, filename)
         if local_path is None:
             if isinstance(filename, str) and filename in unavailable:
                 _set_check(
@@ -868,6 +992,47 @@ def _audit_return_string_values(
     return results
 
 
+def _strict_direct_acquisition_map(
+    controller_record: dict[str, Any],
+) -> dict[str, str] | None:
+    """Index only a complete, canonical direct-acquisition field shape."""
+
+    attempts = controller_record.get("direct_acquisition_attempts")
+    if not isinstance(attempts, list):
+        return None
+    records: list[dict[str, str]] = []
+    for item in attempts:
+        if (
+            not isinstance(item, dict)
+            or set(item) != DIRECT_ACQUISITION_ATTEMPT_FIELDS
+        ):
+            return None
+        filename = item.get("filename")
+        outcome = item.get("outcome")
+        if (
+            not isinstance(filename, str)
+            or not filename
+            or filename != unicodedata.normalize("NFC", filename)
+            or filename in {".", ".."}
+            or "/" in filename
+            or "\\" in filename
+            or "\x00" in filename
+            or ":" in filename
+            or filename != filename.rstrip(" .")
+            or PurePosixPath(filename).is_absolute()
+            or len(PurePosixPath(filename).parts) != 1
+            or outcome not in DIRECT_ACQUISITION_OUTCOMES
+        ):
+            return None
+        records.append({"filename": filename, "outcome": outcome})
+    if records != sorted(records, key=lambda item: item["filename"]):
+        return None
+    normalized_names = [item["filename"].casefold() for item in records]
+    if len(normalized_names) != len(set(normalized_names)):
+        return None
+    return {item["filename"]: item["outcome"] for item in records}
+
+
 def _verify_transport_record(
     root: Path,
     audit_return: dict[str, Any] | None,
@@ -875,6 +1040,9 @@ def _verify_transport_record(
     controller_record: dict[str, Any],
     findings: list[dict[str, str]],
     checks: dict[str, dict[str, Any]],
+    *,
+    payload_root: Path | None = None,
+    allow_incomplete_candidate_capture: bool = False,
 ) -> dict[str, dict[str, Any]]:
     path = root / "artifact_transport.json"
     document = _load_json_path(
@@ -894,22 +1062,50 @@ def _verify_transport_record(
             )
             _set_check(checks, "artifact_transport", "blocked")
         return {}
-    if set(document) != {"transport_version", "records"} or document.get(
-        "transport_version"
-    ) != TRANSPORT_RECORD_VERSION:
+    record_version = document.get("transport_version")
+    if (
+        set(document) != {"transport_version", "records"}
+        or not isinstance(record_version, str)
+        or record_version not in SUPPORTED_TRANSPORT_RECORD_VERSIONS
+    ):
         _add_finding(
             findings,
             "ARTIFACT_TRANSPORT_RECORD_INVALID",
             path.name,
             (
-                "transport record must contain only "
-                f"transport_version={TRANSPORT_RECORD_VERSION} and records"
+                "transport record must contain only a supported transport_version "
+                f"{sorted(SUPPORTED_TRANSPORT_RECORD_VERSIONS)!r} and records"
+            ),
+        )
+        _set_check(checks, "artifact_transport", "blocked")
+    same_response_controller = _uses_same_response_transport(controller_record)
+    if (
+        record_version == TRANSPORT_RECORD_VERSION
+    ) != same_response_controller:
+        _add_finding(
+            findings,
+            "ARTIFACT_TRANSPORT_RECORD_VERSION_MISMATCH",
+            path.name,
+            (
+                "controller v4 same-response captures require transport_version "
+                f"{TRANSPORT_RECORD_VERSION}; legacy records require "
+                f"{LEGACY_TRANSPORT_RECORD_VERSION}"
             ),
         )
         _set_check(checks, "artifact_transport", "blocked")
 
-    expected = set(expected_output_filenames)
-    allowed = set(expected_output_filenames)
+    observed_direct_by_filename: dict[str, dict[str, Any]] = {}
+    observed_direct = controller_record.get("observed_outputs")
+    if isinstance(observed_direct, list):
+        for direct_item in observed_direct:
+            if (
+                isinstance(direct_item, dict)
+                and isinstance(direct_item.get("filename"), str)
+            ):
+                observed_direct_by_filename[direct_item["filename"]] = direct_item
+    expected = set(expected_output_filenames) | set(observed_direct_by_filename)
+    allowed = set(expected)
+    local_root = payload_root if payload_root is not None else root
     records_raw = document.get("records")
     if not isinstance(records_raw, list):
         _add_finding(
@@ -923,6 +1119,82 @@ def _verify_transport_record(
 
     records: dict[str, dict[str, Any]] = {}
     captured_chunks: dict[str, list[tuple[int, str]]] = {}
+    reconstructed_by_filename: dict[str, dict[str, Any]] = {}
+    reconstructed = controller_record.get("reconstructed_outputs")
+    if isinstance(reconstructed, list):
+        for reconstructed_item in reconstructed:
+            if (
+                isinstance(reconstructed_item, dict)
+                and isinstance(reconstructed_item.get("filename"), str)
+            ):
+                reconstructed_by_filename[reconstructed_item["filename"]] = (
+                    reconstructed_item
+                )
+    direct_acquisition_map = _strict_direct_acquisition_map(controller_record)
+    if same_response_controller:
+        observed_controls = controller_record.get("observed_output_controls")
+        observed_control_names = (
+            {
+                item
+                for item in observed_controls
+                if isinstance(item, str)
+            }
+            if isinstance(observed_controls, list)
+            else set()
+        )
+        expected_attempt_names = (
+            set(reconstructed_by_filename)
+            | set(observed_direct_by_filename)
+            | observed_control_names
+        )
+        if direct_acquisition_map is None:
+            _add_finding(
+                findings,
+                "ARTIFACT_TRANSPORT_DIRECT_ACQUISITION_INVALID",
+                "controller_record.json:$.direct_acquisition_attempts",
+                (
+                    "controller v4 requires canonical sorted "
+                    "{filename,outcome} direct-acquisition records"
+                ),
+            )
+            _set_check(checks, "artifact_transport", "blocked")
+        elif set(direct_acquisition_map) != expected_attempt_names:
+            _add_finding(
+                findings,
+                "ARTIFACT_TRANSPORT_DIRECT_ACQUISITION_ROSTER_MISMATCH",
+                "controller_record.json:$.direct_acquisition_attempts",
+                (
+                    "direct-acquisition records must exactly cover reconstructed "
+                    "outputs, direct outputs, and visible output controls"
+                ),
+            )
+            _set_check(checks, "artifact_transport", "blocked")
+        else:
+            outcome_mismatches = []
+            for filename in sorted(expected_attempt_names):
+                expected_outcome = (
+                    "download_event"
+                    if filename in observed_direct_by_filename
+                    else (
+                        "no_download_event"
+                        if filename in observed_control_names
+                        else "unavailable"
+                    )
+                )
+                if direct_acquisition_map[filename] != expected_outcome:
+                    outcome_mismatches.append(filename)
+            if outcome_mismatches:
+                _add_finding(
+                    findings,
+                    "ARTIFACT_TRANSPORT_DIRECT_ACQUISITION_OUTCOME_MISMATCH",
+                    "controller_record.json:$.direct_acquisition_attempts",
+                    (
+                        "direct-acquisition outcomes contradict the bound direct, "
+                        f"visible-control, or reconstructed evidence: "
+                        f"{outcome_mismatches!r}"
+                    ),
+                )
+                _set_check(checks, "artifact_transport", "blocked")
     captures = controller_record.get("wrapper_captures")
     if isinstance(captures, list):
         for capture in captures:
@@ -966,7 +1238,13 @@ def _verify_transport_record(
             _set_check(checks, "artifact_transport", "blocked", str(filename))
             continue
         records[filename] = item
-        local_path = _safe_file(root, filename)
+        method = item.get("method")
+        outcome = item.get("direct_download_outcome")
+        export_chunks = item.get("export_chunks")
+        local_path = _safe_file(
+            root if method == "direct_download" else local_root,
+            filename,
+        )
         if local_path is None:
             _add_finding(
                 findings,
@@ -1003,14 +1281,45 @@ def _verify_transport_record(
             )
             _set_check(checks, "artifact_transport", "blocked", filename)
 
-        method = item.get("method")
-        outcome = item.get("direct_download_outcome")
-        export_chunks = item.get("export_chunks")
         if method == "direct_download":
-            valid_method = outcome == "download_event" and export_chunks is None
+            direct_item = observed_direct_by_filename.get(filename)
+            explicit_outcome = (
+                direct_acquisition_map.get(filename)
+                if same_response_controller
+                and direct_acquisition_map is not None
+                else outcome
+            )
+            valid_method = (
+                explicit_outcome == "download_event"
+                and outcome == explicit_outcome
+                and export_chunks is None
+                and isinstance(direct_item, dict)
+                and direct_item.get("bytes") == len(data)
+                and direct_item.get("sha256") == _sha256(data)
+            )
+        elif method == SAME_RESPONSE_TRANSPORT_METHOD:
+            reconstructed_item = reconstructed_by_filename.get(filename)
+            explicit_outcome = (
+                direct_acquisition_map.get(filename)
+                if direct_acquisition_map is not None
+                else None
+            )
+            valid_method = (
+                record_version == TRANSPORT_RECORD_VERSION
+                and same_response_controller
+                and explicit_outcome in {"unavailable", "no_download_event"}
+                and outcome == explicit_outcome
+                and export_chunks is None
+                and filename not in observed_direct_by_filename
+                and isinstance(reconstructed_item, dict)
+                and reconstructed_item.get("bytes") == len(data)
+                and reconstructed_item.get("sha256") == _sha256(data)
+            )
         elif method == "chunked_base64_export":
             valid_method = (
-                outcome in {"unavailable", "no_download_event"}
+                record_version == LEGACY_TRANSPORT_RECORD_VERSION
+                and not same_response_controller
+                and outcome in {"unavailable", "no_download_event"}
                 and isinstance(export_chunks, list)
                 and bool(export_chunks)
             )
@@ -1075,14 +1384,33 @@ def _verify_transport_record(
                 label,
                 (
                     "direct download requires download_event and export_chunks=null; "
+                    f"{SAME_RESPONSE_TRANSPORT_METHOD} requires a controller-v4 "
+                    "reconstructed member, unavailable/no_download_event, and "
+                    "export_chunks=null; "
                     "chunked Base64 requires unavailable/no_download_event and an "
                     "ordered, contiguous list of indexed wrapper filenames"
                 ),
             )
             _set_check(checks, "artifact_transport", "blocked", filename)
 
+    if same_response_controller and record_version == TRANSPORT_RECORD_VERSION:
+        expected_v4_record_names = (
+            set(reconstructed_by_filename) | set(observed_direct_by_filename)
+        )
+        if set(records) != expected_v4_record_names:
+            _add_finding(
+                findings,
+                "ARTIFACT_TRANSPORT_RECONSTRUCTED_ROSTER_MISMATCH",
+                f"{path.name}:$.records",
+                (
+                    "transport records must exactly cover the union of "
+                    "controller-bound direct bytes and reconstructed outputs"
+                ),
+            )
+            _set_check(checks, "artifact_transport", "blocked")
+
     missing = sorted(expected - set(records))
-    if missing:
+    if missing and not allow_incomplete_candidate_capture:
         _add_finding(
             findings,
             "ARTIFACT_TRANSPORT_COVERAGE_MISSING",
@@ -1094,6 +1422,177 @@ def _verify_transport_record(
     if checks["artifact_transport"]["status"] == "not_run":
         _set_check(checks, "artifact_transport", "pass")
     return records
+
+
+def _verify_same_response_candidate_transport(
+    *,
+    root: Path,
+    controller_record: dict[str, Any],
+    required_output_filenames: set[str],
+    actual_output_filenames: set[str],
+    observed_output_controls: set[str],
+    transport_records: dict[str, dict[str, Any]],
+    findings: list[dict[str, str]],
+    checks: dict[str, dict[str, Any]],
+) -> bool:
+    """Classify controller-valid same-response transport as candidate evidence.
+
+    The controller validator owns raw-response and parser identity. This layer
+    treats a faithfully recorded compiler failure as candidate evidence rather
+    than converting it into an invalid trial.
+    """
+
+    if not _uses_same_response_transport(controller_record):
+        return False
+    capture = controller_record.get("compiler_transport_capture")
+    reconstructed = controller_record.get("reconstructed_outputs")
+    status = capture.get("status") if isinstance(capture, dict) else None
+    reconstructed_names = {
+        item["filename"]
+        for item in reconstructed
+        if isinstance(item, dict) and isinstance(item.get("filename"), str)
+    } if isinstance(reconstructed, list) else set()
+    observed_direct = controller_record.get("observed_outputs")
+    direct_names = {
+        item["filename"]
+        for item in observed_direct
+        if isinstance(item, dict) and isinstance(item.get("filename"), str)
+    } if isinstance(observed_direct, list) else set()
+    applicable = bool(
+        required_output_filenames
+        or actual_output_filenames
+        or observed_output_controls
+        or reconstructed_names
+        or direct_names
+        or transport_records
+        or status not in {None, "missing"}
+    )
+    if not applicable:
+        if checks["export_wrappers"]["status"] == "not_run":
+            _set_check(
+                checks,
+                "export_wrappers",
+                "pass",
+                "same-response transport was not required for this frozen case",
+            )
+        return False
+
+    if status != "verified":
+        suffix = (
+            status.upper()
+            if isinstance(status, str) and re.fullmatch(r"[a-z_]+", status)
+            else "INVALID"
+        )
+        _add_finding(
+            findings,
+            f"CANDIDATE_COMPILER_TRANSPORT_{suffix}",
+            "controller_record.json:$.compiler_transport_capture",
+            (
+                "the controller faithfully preserved a candidate same-response "
+                f"compiler transport outcome of {status!r}; exact payload identity "
+                "remains unresolved and no corruption or equality claim is made"
+            ),
+        )
+        _set_check(
+            checks,
+            "export_wrappers",
+            "blocked",
+            f"same-response compiler transport status={status!r}",
+        )
+        return True
+
+    expected_transport_names = reconstructed_names | direct_names
+    missing_records = sorted(expected_transport_names - set(transport_records))
+    if missing_records:
+        _add_finding(
+            findings,
+            "CANDIDATE_TRANSPORT_COVERAGE_MISSING",
+            "artifact_transport.json:$.records",
+            (
+                "verified same-response reconstruction lacks transport records "
+                f"for locally materialized outputs: {missing_records!r}"
+            ),
+        )
+        _set_check(
+            checks,
+            "export_wrappers",
+            "blocked",
+            f"missing transport records={missing_records!r}",
+        )
+    elif reconstructed_names != actual_output_filenames:
+        _add_finding(
+            findings,
+            "CANDIDATE_RECONSTRUCTED_OUTPUT_ROSTER_MISMATCH",
+            "controller_record.json:$.reconstructed_outputs",
+            (
+                "controller-bound reconstructed output names differ from the "
+                "independently inventoried local member bytes"
+            ),
+        )
+        _set_check(checks, "export_wrappers", "blocked")
+    else:
+        for filename in sorted(reconstructed_names):
+            record = transport_records.get(filename)
+            expected_method = (
+                "direct_download"
+                if filename in direct_names
+                else SAME_RESPONSE_TRANSPORT_METHOD
+            )
+            if not isinstance(record, dict) or record.get("method") != expected_method:
+                _add_finding(
+                    findings,
+                    "CANDIDATE_TRANSPORT_PRIMARY_METHOD_MISMATCH",
+                    f"artifact_transport.json:{filename}",
+                    (
+                        "exact direct-download bytes are primary when captured; "
+                        "same-response reconstruction is the fallback"
+                    ),
+                )
+                _set_check(checks, "export_wrappers", "blocked", filename)
+                continue
+            if filename in direct_names:
+                direct_path = _safe_file(root, filename)
+                bundle_path = _safe_file(
+                    root / RECONSTRUCTED_OUTPUT_DIRECTORY,
+                    filename,
+                )
+                if direct_path is None or bundle_path is None:
+                    _add_finding(
+                        findings,
+                        "CANDIDATE_DIRECT_BUNDLE_CAPTURE_MISSING",
+                        filename,
+                        "direct and reconstructed copies must both be preserved",
+                    )
+                    _set_check(checks, "export_wrappers", "blocked", filename)
+                    continue
+                try:
+                    direct_data = direct_path.read_bytes()
+                    bundle_data = bundle_path.read_bytes()
+                except OSError:
+                    direct_data = b""
+                    bundle_data = b"\x00"
+                if direct_data != bundle_data:
+                    _add_finding(
+                        findings,
+                        "CANDIDATE_DIRECT_BUNDLE_MISMATCH",
+                        filename,
+                        (
+                            "captured download bytes differ from the exact "
+                            "same-response reconstructed member"
+                        ),
+                    )
+                    _set_check(checks, "export_wrappers", "blocked", filename)
+        if checks["export_wrappers"]["status"] == "not_run":
+            _set_check(
+                checks,
+                "export_wrappers",
+                "pass",
+                (
+                    "direct bytes were primary where captured and every remaining "
+                    "member used the exact same-response reconstruction"
+                ),
+            )
+    return True
 
 
 def _strict_chunk_hash(value: Any) -> str | None:
@@ -1820,11 +2319,37 @@ def _invoke_return_desk(
     audit_return_path: Path,
     findings: list[dict[str, str]],
     checks: dict[str, dict[str, Any]],
+    *,
+    source_root: Path | None = None,
 ) -> dict[str, Any] | None:
+    temporary: tempfile.TemporaryDirectory[str] | None = None
+    verification_path = audit_return_path
+    if source_root is not None and audit_return_path.parent != source_root:
+        try:
+            document = _strict_json(audit_return_path.read_text(encoding="utf-8"))
+            artifact_rows = document.get("artifacts")
+            if isinstance(artifact_rows, list):
+                temporary = tempfile.TemporaryDirectory()
+                verification_root = Path(temporary.name)
+                verification_path = verification_root / audit_return_path.name
+                verification_path.write_bytes(audit_return_path.read_bytes())
+                for item in artifact_rows:
+                    if not isinstance(item, dict):
+                        continue
+                    filename = item.get("filename")
+                    candidate = _safe_file(audit_return_path.parent, filename)
+                    if candidate is None and item.get("role") == "source":
+                        candidate = _safe_file(source_root, filename)
+                    if candidate is not None:
+                        (verification_root / candidate.name).write_bytes(
+                            candidate.read_bytes()
+                        )
+        except (OSError, StrictJsonError):
+            verification_path = audit_return_path
     output = io.StringIO()
     try:
         with redirect_stdout(output):
-            exit_status = bsc_audit_main(["return-desk", str(audit_return_path)])
+            exit_status = bsc_audit_main(["return-desk", str(verification_path)])
         result = _strict_json(output.getvalue())
     except Exception as exc:  # pragma: no cover - last-resort checker boundary
         _add_finding(
@@ -1834,7 +2359,11 @@ def _invoke_return_desk(
             f"Python Return Desk invocation failed ({type(exc).__name__})",
         )
         _set_check(checks, "python_return_desk", "blocked")
+        if temporary is not None:
+            temporary.cleanup()
         return None
+    if temporary is not None:
+        temporary.cleanup()
     decision = result.get("decision") if isinstance(result, dict) else None
     severities = {
         item.get("severity")
@@ -2298,9 +2827,11 @@ def check_bundle(
                 actual_outputs = _actual_candidate_output_filenames(
                     root,
                     input_filenames=input_names,
+                    controller_record=controller_record,
                 )
 
-        audit_return_path = root / "audit_return.json"
+        candidate_output_root = _candidate_output_root(root, controller_record)
+        audit_return_path = candidate_output_root / "audit_return.json"
         audit_return: dict[str, Any] | None = None
         parse_findings: list[dict[str, str]] = []
         parse_checks: dict[str, dict[str, Any]] = {
@@ -2349,7 +2880,19 @@ def check_bundle(
                     expected_preview_prompt=expected_prompt,
                     expected_inputs=expected_inputs,
                     expected_candidate_identity=expected_identity,
-                    expected_output_filenames=actual_outputs,
+                    expected_output_filenames=(
+                        {
+                            item["filename"]
+                            for item in controller_record["observed_outputs"]
+                            if isinstance(item, dict)
+                            and isinstance(item.get("filename"), str)
+                        }
+                        if isinstance(
+                            controller_record.get("observed_outputs"),
+                            list,
+                        )
+                        else set()
+                    ),
                     required_output_filenames=required_outputs,
                     repository_root=source_root,
                 )
@@ -2366,13 +2909,17 @@ def check_bundle(
                 if isinstance(attempts, list)
                 else set()
             )
-            missing_required_attempts = sorted(
-                (
-                    required_outputs
-                    & observed_output_controls
-                    - actual_outputs
+            missing_required_attempts = (
+                []
+                if _uses_same_response_transport(controller_record)
+                else sorted(
+                    (
+                        required_outputs
+                        & observed_output_controls
+                        - actual_outputs
+                    )
+                    - attempted_chunk_zero
                 )
-                - attempted_chunk_zero
             )
             if missing_required_attempts:
                 controller_issues.append(
@@ -2463,6 +3010,10 @@ def check_bundle(
                 controller_record,
                 transport_findings,
                 transport_checks,
+                payload_root=candidate_output_root,
+                allow_incomplete_candidate_capture=(
+                    _uses_same_response_transport(controller_record)
+                ),
             )
             controller_issues.extend(transport_findings)
             checks["artifact_transport"] = transport_checks["artifact_transport"]
@@ -2597,6 +3148,18 @@ def check_bundle(
                     f"missing={missing_required!r}",
                 )
 
+            same_response_transport_applicable = (
+                _verify_same_response_candidate_transport(
+                    root=root,
+                    controller_record=controller_record,
+                    required_output_filenames=required_outputs,
+                    actual_output_filenames=actual_outputs,
+                    observed_output_controls=observed_output_controls,
+                    transport_records=transport_records,
+                    findings=findings,
+                    checks=checks,
+                )
+            )
             report: tuple[Path, str] | None = None
             if audit_return is not None:
                 declared = _declared_candidate_outputs(
@@ -2630,25 +3193,27 @@ def check_bundle(
                         _set_check(checks, "candidate_output_consistency", "pass")
 
                 artifacts, report = _verify_artifacts(
-                    root,
+                    candidate_output_root,
                     audit_return,
                     findings,
                     checks,
                     unavailable_filenames=unavailable_controls,
+                    source_root=root,
                 )
                 if (
                     checks["audit_return_artifacts"]["status"] == "not_run"
                     and not unavailable_controls
                 ):
                     _set_check(checks, "audit_return_artifacts", "pass")
-                _verify_export_chunks(
-                    root,
-                    report,
-                    transport_records,
-                    controller_record,
-                    findings,
-                    checks,
-                )
+                if not _uses_same_response_transport(controller_record):
+                    _verify_export_chunks(
+                        root,
+                        report,
+                        transport_records,
+                        controller_record,
+                        findings,
+                        checks,
+                    )
                 if checks["export_wrappers"]["status"] == "not_run":
                     _set_check(checks, "export_wrappers", "pass")
                 _verify_version_literal(
@@ -2665,16 +3230,18 @@ def check_bundle(
                     audit_return_path,
                     findings,
                     checks,
+                    source_root=root,
                 )
             else:
-                _verify_export_chunks(
-                    root,
-                    None,
-                    transport_records,
-                    controller_record,
-                    findings,
-                    checks,
-                )
+                if not _uses_same_response_transport(controller_record):
+                    _verify_export_chunks(
+                        root,
+                        None,
+                        transport_records,
+                        controller_record,
+                        findings,
+                        checks,
+                    )
                 if checks["export_wrappers"]["status"] == "not_run":
                     _set_check(checks, "export_wrappers", "pass")
                 visible_path = root / "visible_response_dom.txt"
@@ -2702,12 +3269,25 @@ def check_bundle(
                 if checks["candidate_output_consistency"]["status"] == "not_run":
                     _set_check(checks, "candidate_output_consistency", "pass")
 
+            direct_acquisition_map = (
+                _strict_direct_acquisition_map(controller_record) or {}
+            )
             transport_axis = _transport_identity_axis(
                 transport_records,
                 observed_output_controls,
                 has_transport_attempts=bool(
                     controller_record.get("transport_attempts")
-                ),
+                )
+                or bool(direct_acquisition_map),
+                has_same_response_capture=same_response_transport_applicable,
+                required_output_filenames=required_outputs,
+                direct_download_filenames={
+                    filename
+                    for filename, item in transport_records.items()
+                    if item.get("method") == "direct_download"
+                    and item.get("direct_download_outcome") == "download_event"
+                    and direct_acquisition_map.get(filename) == "download_event"
+                },
             )
             candidate_findings = findings[candidate_finding_start:]
             candidate_blocked = bool(candidate_findings) or any(

@@ -34,6 +34,7 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 - preserved the following r10 result: D01 passed 20/20, while D02 exposed all five output controls but could not return required bytes after the unbounded report wrapper became another file control and the return fallback was blank; the 39-case suite and publication steps were not run.
 - replaced the generic unbounded whole-file fallback with stable-read, zlib-compressed, contiguous 2,048-byte transport chunks, and separated visible output controls from acquired byte identities without treating unresolved downloads as corruption or allowing transport state to rescue a candidate contradiction.
 - preserved r23 as a controller-valid candidate failure after all five literal fallback commands ran: two pre-existing payloads reconstructed exactly, while three compiler-created public paths no longer met the later-turn regular/non-linked contract; compiler v5 now seals private unexposed copies from the original final-byte transaction and exports those snapshots without following or weakening public links.
+- preserved the subsequent live compiler-v5 canary failure without calling D01 failed or unavailable bytes corrupt, then removed the cross-turn filesystem assumption: compiler v6 emits one deterministic bounded multi-artifact fallback container in its original canonical stdout, while direct acquisition remains primary and unresolved download-button identity remains a separate transport axis.
 
 ### Publication boundary
 
