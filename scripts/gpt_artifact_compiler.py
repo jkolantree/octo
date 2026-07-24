@@ -27,7 +27,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
-COMPILER_VERSION = "bsc-gpt-artifact-compiler-v3"
+COMPILER_VERSION = "bsc-gpt-artifact-compiler-v4"
 TRANSPORT_CHUNK_VERSION = "bsc-gpt-export-chunk-v1"
 TRANSPORT_ENCODING = "zlib+base64"
 TRANSPORT_CHUNK_BYTES = 2048
@@ -495,15 +495,21 @@ def transport_fallback_prompt(
     return (
         "TRANSPORT FALLBACK ONLY. The direct file control emitted no observable "
         f"download event for {filename}. Requesting bounded chunk {chunk_index}. "
+        "Use the enabled Data Analysis tool now. A visible Data Analysis invocation "
+        "of the exact command below is mandatory before any answer; do not answer "
+        "from reasoning or infer that execution occurred. "
         "Do not regenerate or alter that file. "
         "Do not read, trim, normalize, or encode the payload yourself. Execute this "
         f"literal command exactly once: {command} . Return the command's complete "
-        "stdout byte-for-byte as the only strict JSON object in one code block. "
+        "stdout byte-for-byte as the only strict JSON object in one code block, "
+        "whether it is a chunk wrapper or a compiler-generated blocked record. "
         "The canonical stdout has no trailing line feed; do not reimplement it or "
         "reuse a hash, size, ledger row, return field, or "
         "prose value. The controller alone requests later chunk indices using the "
         "payload and encoded SHA-256 values from chunk 0. If the command reports "
-        "any failure, emit no chunk and state export_failed. This identifies only "
+        "a handled failure, return only its exact JSON stdout. If no invocation or "
+        "stdout occurs, emit no substitute token or prose. Never infer or emit "
+        "export_failed. This identifies only "
         "the exported compressed chunk received here and its strictly reconstructed "
         "payload, never unavailable download-button bytes."
     )
@@ -1146,17 +1152,24 @@ def main(argv: list[str] | None = None) -> int:
                 expected_encoded_sha256=args.expect_encoded_sha256,
             )
     except (OSError, ValueError, TypeError, AssertionError) as exc:
-        print(
-            json.dumps(
-                {
-                    "compiler": COMPILER_VERSION,
-                    "status": "blocked",
-                    "error": str(exc),
-                },
-                sort_keys=True,
-                ensure_ascii=False,
+        failure = {
+            "compiler": COMPILER_VERSION,
+            "status": "blocked",
+            "error": str(exc),
+        }
+        if args.command == "export-chunk":
+            print(
+                canonical_transport_wrapper_bytes(failure).decode("utf-8"),
+                end="",
             )
-        )
+        else:
+            print(
+                json.dumps(
+                    failure,
+                    sort_keys=True,
+                    ensure_ascii=False,
+                )
+            )
         return 1
     print(canonical_transport_wrapper_bytes(result).decode("utf-8"), end="")
     return 0

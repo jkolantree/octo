@@ -1873,7 +1873,10 @@ def _parser() -> argparse.ArgumentParser:
     build.add_argument("--observability-boundary", required=True)
     transport = subparsers.add_parser(
         "transport-request",
-        help="emit one exact one-file/one-index fallback prompt without a newline",
+        help=(
+            "emit one exact mandatory current-turn Data Analysis fallback prompt "
+            "without a newline"
+        ),
     )
     transport.add_argument(
         "--output",

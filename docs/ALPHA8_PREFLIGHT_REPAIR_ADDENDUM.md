@@ -198,3 +198,29 @@ unacquired output. Parser mutation remains invalid, candidate contradictions
 remain candidate failures, and unavailable download-button bytes remain
 `transport_identity_unresolved`. The package, all local gates, D01, and D02
 restart on the regenerated candidate.
+
+## R20 controller-valid D01 and mandatory-invocation repair
+
+The next D01 run used frozen candidate manifest
+`380f128c5b93f8fd6ef9d50d3168c54d96c240fe73baf678dfb59d80a20eeefd`.
+The controller record had SHA-256
+`a2eb83d499efc6a8d9449aea32e79224ff6162d55688882dfd0d286247848546`.
+It bound the exact target, all six Knowledge files, all five visible generated
+file controls, and one exact chunk-zero fallback prompt and complete response
+for each unacquired control. The controller was valid.
+
+Each of the five fallback responses contained only model-authored
+`export_failed`. No Data Analysis invocation or command stdout was observed.
+The candidate therefore failed while transport identity remained
+`transport_identity_unresolved`; no unavailable download-button bytes were
+called corrupt. This is not an invalid-controller retry and is not a candidate
+pass.
+
+The generic repair removes the prompt language that allowed a model to infer a
+failure. Every fallback now requires one visible current-turn Data Analysis
+invocation of the exact controller command. The only permitted response is the
+compiler's verbatim canonical no-terminal-LF JSON stdout, whether it carries a
+chunk or a handled blocked record. Missing invocation or stdout is a candidate
+transport failure, and the model may never author or infer `export_failed`.
+No fixture, oracle, rubric, score threshold, controller-validity rule, or
+transport-identity boundary is relaxed.

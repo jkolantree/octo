@@ -152,6 +152,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         chunk_index: int = 0,
         expected_payload_sha256: str | None = None,
         expected_encoded_sha256: str | None = None,
+        response_html: str = "<article></article>",
     ) -> None:
         raw = root / "raw"
         raw.mkdir(parents=True, exist_ok=True)
@@ -169,7 +170,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             raw
             / f"{filename}.transport.{chunk_index:05d}.outerHTML.html"
         ).write_text(
-            "<article></article>",
+            response_html,
             encoding="utf-8",
             newline="",
         )
@@ -1913,6 +1914,57 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             payload["outcomes"]["transport"],
             "transport_identity_unresolved",
         )
+
+    def test_inferred_export_failed_is_candidate_failure_with_unresolved_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.make_prose_only_bundle(root)
+            (root / "raw" / "response.outerHTML.html").write_text(
+                (
+                    "<article>Generated file."
+                    '<button aria-label="audit_report.md"></button>'
+                    "</article>"
+                ),
+                encoding="utf-8",
+                newline="",
+            )
+            self.write_failed_transport_attempt(
+                root,
+                "audit_report.md",
+                response_html="<article><p>export_failed</p></article>",
+            )
+            controller = build_controller_record(
+                root=root,
+                case_id=CASE_ID,
+                trial_id=TRIAL_ID,
+                counting_state="preflight",
+                target_filename=TARGET_NAME,
+                output_filenames=[],
+                output_control_filenames=["audit_report.md"],
+                session_reference="preview-conversation:inferred-export-failed",
+                observability_boundary=(
+                    "Visible Preview response and exposed files only; no Data "
+                    "Analysis invocation was observed."
+                ),
+            )
+            (root / "controller_record.json").write_bytes(
+                canonical_json_bytes(controller)
+            )
+            status, payload = self.invoke(
+                root,
+                refresh_record=False,
+            )
+
+        self.assertEqual(status, 1)
+        codes = self.finding_codes(payload)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+        self.assertEqual(
+            payload["outcomes"]["transport"],
+            "transport_identity_unresolved",
+        )
+        self.assertIn("CANDIDATE_TRANSPORT_ATTEMPT_FAILED", codes)
+        self.assertFalse(any("CORRUPT" in code for code in codes))
 
     def test_visible_required_control_without_fallback_invalidates_controller(self):
         with tempfile.TemporaryDirectory() as directory:
