@@ -428,11 +428,12 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
         ]
     )
     expected_protocol = {
-        "protocol_schema": "bsc-gpt-frozen-evaluation/v3",
+        "protocol_schema": "bsc-gpt-frozen-evaluation/v4",
         "defined_before_counted_suite_output_inspection": True,
         "candidate_mutation_during_counted_suite": "forbidden",
         "provenance_basis": "gpt/evals/GPT_EVAL_PROVENANCE.md",
         "controller_validation": {
+            "controller_record_version": "5.0",
             "synthetic_validation_before_preview_preflights": "required",
             "expected_roster_before_replay": {
                 "case_target": "exact_attached_fixture",
@@ -610,9 +611,40 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
                 "one_final_fenced_code_block_with_no_following_prose"
             ),
             "model_transport_action": "byte_for_byte_copy_only",
+            "fallback_compiler_version": "bsc-gpt-artifact-compiler-v7",
+            "fallback_transport_version": "bsc-gpt-same-response-transport-v2",
             "fallback_transport_encoding": (
-                "length_framed_container_then_zlib_then_canonical_base64_chunks"
+                "length_framed_container_then_zlib_then_2048_byte_data_shards_"
+                "plus_xor_parity_v1_then_canonical_base64"
             ),
+            "data_shard_max_bytes": 2048,
+            "parity_scheme": "xor_parity_v1",
+            "parity_definition": (
+                "bytewise_xor_of_every_data_shard_zero_padded_to_maximum_shard_width"
+            ),
+            "single_data_shard_recovery_scope": (
+                "exactly_one_content_fault_with_intact_metadata_and_expected_"
+                "ascii_base64_text_length"
+            ),
+            "single_data_shard_recovery_requires_all_other_data_shards_and_parity_valid": True,
+            "post_recovery_aggregate_container_member_and_topology_validation": (
+                "required"
+            ),
+            "recovery_for_aligned_quartet_omission_metadata_mutation_multiple_bad_data_or_bad_data_plus_parity": (
+                "forbidden"
+            ),
+            "all_data_valid_exact_length_parity_content_fault_outcome": (
+                "parity_degraded_not_used"
+            ),
+            "transport_receipt_state_derivation": "controller_deterministic",
+            "transport_recovery_receipt_location": (
+                "controller_record.compiler_transport_capture.recovery_receipt"
+            ),
+            "transport_recovery_receipt_states": [
+                "not_needed",
+                "data_shard_recovered",
+                "parity_degraded_not_used",
+            ],
             "bounded_complete_bundle_required": True,
             "sorted_unique_portable_member_roster_required": True,
             "container_and_member_size_and_sha256_required": True,
@@ -640,7 +672,12 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
         },
         "repair_allowance": {
             "maximum_root_cause_repairs_after_counted_suite_failure": 1,
+            "post_suite_root_cause_repairs_consumed": 1,
             "trigger": "candidate_failed",
+            "old_freeze_c001_layered_record": (
+                "trial_invalid_controller_outer_with_candidate_failed_transport_beneath"
+            ),
+            "old_freeze_reuse": "forbidden",
             "repair_scope": "one_consolidated_root_cause_repair",
             "all_local_gates_before_new_freeze": "required",
             "new_freeze_required": True,
@@ -702,6 +739,10 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
         "browser/download corruption was not established",
         "Case 1 and Case 27 are uncounted development preflights",
         "All 39 cases then run in order as one counted frozen-candidate regression suite",
+        "That candidate failure consumes the one post-suite root-cause repair allowance",
+        "Compiler v7 and same-response transport v2 add one `xor_parity_v1` shard",
+        "the counted suite must restart from C001",
+        "strict controller-v5 record contract with a bound recovery receipt",
     )
     if any(
         statement not in normalized_provenance
@@ -726,6 +767,10 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
         "`trial_invalid_controller`",
         "`transport_identity_unresolved`",
         "browser/download corruption was not established",
+        "Compiler v7 derives one deterministic bounded multi-artifact container",
+        "Controller-record v5 binds the complete raw response",
+        "`xor_parity_v1`",
+        "`parity_degraded_not_used`",
     )
     if any(
         statement not in normalized_matrix for statement in required_matrix_statements

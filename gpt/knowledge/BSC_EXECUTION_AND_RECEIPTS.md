@@ -8,9 +8,9 @@
 
 ## Bound canonical sources
 
-- `docs/THREAT_MODEL.md` — SHA-256 `777fadf395f7df7f01fc6f7fd771caa2d5c0a0f7d480a7ff5aa438512c0a262c`
+- `docs/THREAT_MODEL.md` — SHA-256 `5d08fd6ce5cc02d0fee8ea17da596d0ab4de5f0c86cf9d7fa98eb32c3abdfc43`
 - `docs/PROOF_CARRYING_ADAPTERS.md` — SHA-256 `b8ad039964660b704a1076348c834af9201c9463e7d6ca1fabcec91c3213212c`
-- `scripts/gpt_artifact_compiler.py` — SHA-256 `6c92ef6f5405d813997639c53820aa9168b3a01bf198acba417805f3b14b05b0`
+- `scripts/gpt_artifact_compiler.py` — SHA-256 `bd5fb76665321238679ec6a36253d02415f0a101afe4c25b2b6f5bc46acc2b57`
 
 Source hashes bind the pre-upload repository bytes. They do not prove that ChatGPT preserves an identical internal index.
 
@@ -79,20 +79,33 @@ The three entry points do not share one privacy or execution boundary:
 For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
 
 The Custom GPT artifact-transport fallback is generated during the original
-Data Analysis compiler transaction, after `audit_return.json` is serialized.
-The compiler derives one deterministic bounded container from the same final
-in-memory output bytes and includes it in canonical no-terminal-LF stdout. The
-candidate must copy that complete stdout byte-for-byte into one final fenced
-code block; it must not regenerate, trim, reserialize, or independently author
-any runtime, hash, size, or Base64 value. The controller always validates the
-already-preserved bundle, uses direct acquisition as the primary candidate-byte
-path, and selects the reconstructed member only when no direct bytes exist. If
-both copies exist, any byte difference is a candidate transport failure. The
-controller binds an explicit per-file outcome for every visible direct control;
-absence of bytes alone cannot be relabeled `no_download_event`. It derives the
-transport ledger from those bound observations rather than accepting a
-model-authored record. A missing, malformed, blocked, or noncanonical candidate
-block is also a candidate transport failure.
+Data Analysis compiler-v7 transaction, after `audit_return.json` is serialized.
+Same-response transport v2 derives one deterministic bounded container from the
+same final in-memory output bytes, zlib-compresses it into contiguous data
+shards of at most 2,048 bytes, and adds one `xor_parity_v1` shard computed over
+zero-padded data shards. The compiler includes the complete envelope in
+canonical no-terminal-LF stdout. The candidate must copy that stdout
+byte-for-byte into one final fenced code block; it must not regenerate, trim,
+reserialize, or independently author any runtime, hash, size, Base64, data, or
+parity value.
+
+The controller may repair only one content-faulted data shard with intact
+metadata and expected ASCII Base64 text length, and only while every other data
+shard and parity is valid. It then reruns all aggregate, container, member, and
+topology checks. Aligned-quartet omission, metadata mutation, multiple bad data
+shards, or bad data together with bad parity remains a candidate transport
+failure. Valid data with only an exact-length parity-content fault is accepted
+without parity as deterministic state `parity_degraded_not_used`.
+
+The controller always validates the already-preserved bundle, uses direct
+acquisition as the primary candidate-byte path, and selects the reconstructed
+member only when no direct bytes exist. If both copies exist, any byte
+difference is a candidate transport failure. The controller binds an explicit
+per-file outcome for every visible direct control; absence of bytes alone cannot
+be relabeled `no_download_event`. It derives the transport ledger from those
+bound observations rather than accepting a model-authored record. A missing,
+malformed, blocked, or noncanonical candidate block is also a candidate
+transport failure.
 Controller loss or mutation of a block demonstrably present in the complete
 raw response instead invalidates the trial. A valid fallback identifies only
 the exported bundle received by the controller; unavailable download-button
@@ -322,11 +335,12 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
-COMPILER_VERSION = "bsc-gpt-artifact-compiler-v6"
+COMPILER_VERSION = "bsc-gpt-artifact-compiler-v7"
 TRANSPORT_CHUNK_VERSION = "bsc-gpt-export-chunk-v1"
-SAME_RESPONSE_TRANSPORT_VERSION = "bsc-gpt-same-response-transport-v1"
+SAME_RESPONSE_TRANSPORT_VERSION = "bsc-gpt-same-response-transport-v2"
 TRANSPORT_CONTAINER_VERSION = "bsc-gpt-multi-artifact-container-v1"
 TRANSPORT_ENCODING = "zlib+base64"
+XOR_PARITY_SCHEME = "xor_parity_v1"
 TRANSPORT_CHUNK_BYTES = 2048
 TRANSPORT_CONTAINER_MAGIC = b"BSC-GPT-MULTI-ARTIFACT-V1\x00"
 MAX_COMPILE_STDOUT_BYTES = 64 * 1024
@@ -360,6 +374,27 @@ SAME_RESPONSE_CHUNK_FIELDS = {
     "chunk_sha256",
     "base64",
 }
+SAME_RESPONSE_PARITY_FIELDS = {
+    "scheme",
+    "shard_size_bytes",
+    "parity_sha256",
+    "base64",
+}
+SAME_RESPONSE_RECOVERY_RECEIPT_FIELDS = {
+    "scheme",
+    "state",
+    "recovered_chunk_index",
+    "received_base64_sha256",
+    "reconstructed_chunk_sha256",
+}
+RECOVERY_STATE_NOT_NEEDED = "not_needed"
+RECOVERY_STATE_DATA_SHARD_RECOVERED = "data_shard_recovered"
+RECOVERY_STATE_PARITY_DEGRADED_NOT_USED = "parity_degraded_not_used"
+SAME_RESPONSE_RECOVERY_STATES = {
+    RECOVERY_STATE_NOT_NEEDED,
+    RECOVERY_STATE_DATA_SHARD_RECOVERED,
+    RECOVERY_STATE_PARITY_DEGRADED_NOT_USED,
+}
 SAME_RESPONSE_TRANSPORT_FIELDS = {
     "transport_version",
     "container_version",
@@ -372,6 +407,7 @@ SAME_RESPONSE_TRANSPORT_FIELDS = {
     "files",
     "chunk_count",
     "chunks",
+    "parity",
 }
 COMPILE_RESULT_FIELDS = {
     "compiler",
@@ -691,6 +727,86 @@ def _transport_chunks(encoded: bytes) -> tuple[bytes, ...]:
     )
 
 
+def _base64_text_length(byte_count: int) -> int:
+    if isinstance(byte_count, bool) or not isinstance(byte_count, int) or byte_count < 0:
+        raise ValueError("Base64 byte count must be a nonnegative integer")
+    return 4 * ((byte_count + 2) // 3)
+
+
+def _xor_parity_shard(parts: Iterable[bytes], shard_size: int) -> bytes:
+    ordered = tuple(parts)
+    if (
+        not ordered
+        or isinstance(shard_size, bool)
+        or not isinstance(shard_size, int)
+        or not 0 < shard_size <= TRANSPORT_CHUNK_BYTES
+        or any(not isinstance(part, bytes) or len(part) > shard_size for part in ordered)
+    ):
+        raise ValueError("same-response XOR parity inputs are invalid")
+    parity = bytearray(shard_size)
+    for part in ordered:
+        for index, value in enumerate(part):
+            parity[index] ^= value
+    return bytes(parity)
+
+
+def _same_response_recovery_receipt(
+    state: str,
+    *,
+    recovered_chunk_index: int | None = None,
+    received_base64_sha256: str | None = None,
+    reconstructed_chunk_sha256: str | None = None,
+) -> dict[str, Any]:
+    receipt = {
+        "scheme": XOR_PARITY_SCHEME,
+        "state": state,
+        "recovered_chunk_index": recovered_chunk_index,
+        "received_base64_sha256": received_base64_sha256,
+        "reconstructed_chunk_sha256": reconstructed_chunk_sha256,
+    }
+    if set(receipt) != SAME_RESPONSE_RECOVERY_RECEIPT_FIELDS:
+        raise AssertionError("same-response recovery receipt fields changed")
+    digest_values = (
+        received_base64_sha256,
+        reconstructed_chunk_sha256,
+    )
+    if (
+        state not in SAME_RESPONSE_RECOVERY_STATES
+        or any(
+            value is not None
+            and (
+                not isinstance(value, str)
+                or re.fullmatch(r"[0-9a-f]{64}", value) is None
+            )
+            for value in digest_values
+        )
+    ):
+        raise AssertionError("same-response recovery receipt values are invalid")
+    if state == RECOVERY_STATE_NOT_NEEDED:
+        valid_shape = (
+            recovered_chunk_index is None
+            and received_base64_sha256 is None
+            and reconstructed_chunk_sha256 is None
+        )
+    elif state == RECOVERY_STATE_DATA_SHARD_RECOVERED:
+        valid_shape = (
+            isinstance(recovered_chunk_index, int)
+            and not isinstance(recovered_chunk_index, bool)
+            and recovered_chunk_index >= 0
+            and received_base64_sha256 is not None
+            and reconstructed_chunk_sha256 is not None
+        )
+    else:
+        valid_shape = (
+            recovered_chunk_index is None
+            and received_base64_sha256 is not None
+            and reconstructed_chunk_sha256 is None
+        )
+    if not valid_shape:
+        raise AssertionError("same-response recovery receipt state is inconsistent")
+    return receipt
+
+
 def build_transport_container(files: dict[str, bytes]) -> bytes:
     """Frame one sorted exact-byte artifact roster without filesystem metadata."""
 
@@ -850,6 +966,18 @@ def build_same_response_transport(files: dict[str, bytes]) -> dict[str, Any]:
     ]
     if any(set(chunk) != SAME_RESPONSE_CHUNK_FIELDS for chunk in chunks):
         raise AssertionError("same-response transport chunk fields changed")
+    shard_size = (
+        TRANSPORT_CHUNK_BYTES if len(parts) > 1 else len(encoded)
+    )
+    parity_bytes = _xor_parity_shard(parts, shard_size)
+    parity = {
+        "scheme": XOR_PARITY_SCHEME,
+        "shard_size_bytes": shard_size,
+        "parity_sha256": sha256_bytes(parity_bytes),
+        "base64": base64.b64encode(parity_bytes).decode("ascii"),
+    }
+    if set(parity) != SAME_RESPONSE_PARITY_FIELDS:
+        raise AssertionError("same-response parity fields changed")
 
     envelope = {
         "transport_version": SAME_RESPONSE_TRANSPORT_VERSION,
@@ -866,15 +994,20 @@ def build_same_response_transport(files: dict[str, bytes]) -> dict[str, Any]:
         ],
         "chunk_count": len(chunks),
         "chunks": chunks,
+        "parity": parity,
     }
     if set(envelope) != SAME_RESPONSE_TRANSPORT_FIELDS:
         raise AssertionError("same-response transport envelope fields changed")
-    reconstructed = parse_same_response_transport(
+    reconstructed, receipt = parse_same_response_transport_with_receipt(
         envelope,
         expected_transport_filenames=files,
     )
     if reconstructed != {name: files[name] for name in sorted(files)}:
         raise AssertionError("same-response transport reconstruction changed bytes")
+    if receipt != _same_response_recovery_receipt(
+        RECOVERY_STATE_NOT_NEEDED
+    ):
+        raise AssertionError("pristine same-response transport required recovery")
     return envelope
 
 
@@ -1012,6 +1145,20 @@ def parse_same_response_transport(
 ) -> dict[str, bytes]:
     """Strictly verify an envelope and reconstruct its exact artifact bytes."""
 
+    files, _ = parse_same_response_transport_with_receipt(
+        value,
+        expected_transport_filenames=expected_transport_filenames,
+    )
+    return files
+
+
+def parse_same_response_transport_with_receipt(
+    value: object,
+    *,
+    expected_transport_filenames: Iterable[str] | None = None,
+) -> tuple[dict[str, bytes], dict[str, Any]]:
+    """Strictly verify an envelope and reconstruct its exact artifact bytes."""
+
     if not isinstance(value, dict) or set(value) != SAME_RESPONSE_TRANSPORT_FIELDS:
         raise ValueError("same-response transport fields differ from the contract")
     if (
@@ -1072,8 +1219,9 @@ def parse_same_response_transport(
     if chunk_count != calculated_count:
         raise ValueError("same-response transport chunk count is inconsistent")
 
-    encoded_parts: list[bytes] = []
-    max_base64_chars = ((TRANSPORT_CHUNK_BYTES + 2) // 3) * 4
+    expected_sizes: list[int] = []
+    chunk_hashes: list[str] = []
+    encoded_texts: list[str] = []
     for index, chunk in enumerate(chunks):
         if not isinstance(chunk, dict) or set(chunk) != SAME_RESPONSE_CHUNK_FIELDS:
             raise ValueError("same-response transport chunk fields are invalid")
@@ -1098,22 +1246,136 @@ def parse_same_response_transport(
             or re.fullmatch(r"[0-9a-f]{64}", chunk_hash) is None
             or not isinstance(encoded_text, str)
             or not encoded_text.isascii()
-            or len(encoded_text) > max_base64_chars
+            or len(encoded_text) != _base64_text_length(expected_size)
         ):
             raise ValueError("same-response transport chunk metadata is invalid")
+        expected_sizes.append(expected_size)
+        chunk_hashes.append(chunk_hash)
+        encoded_texts.append(encoded_text)
+
+    parity = value.get("parity")
+    expected_shard_size = (
+        TRANSPORT_CHUNK_BYTES if chunk_count > 1 else encoded_size
+    )
+    if not isinstance(parity, dict) or set(parity) != SAME_RESPONSE_PARITY_FIELDS:
+        raise ValueError("same-response transport parity fields are invalid")
+    parity_hash = parity.get("parity_sha256")
+    parity_text = parity.get("base64")
+    if (
+        parity.get("scheme") != XOR_PARITY_SCHEME
+        or parity.get("shard_size_bytes") != expected_shard_size
+        or isinstance(parity.get("shard_size_bytes"), bool)
+        or not isinstance(parity_hash, str)
+        or re.fullmatch(r"[0-9a-f]{64}", parity_hash) is None
+        or not isinstance(parity_text, str)
+        or not parity_text.isascii()
+        or len(parity_text) != _base64_text_length(expected_shard_size)
+    ):
+        raise ValueError("same-response transport parity metadata is invalid")
+
+    encoded_parts: list[bytes | None] = []
+    bad_data_indices: list[int] = []
+    for index, encoded_text in enumerate(encoded_texts):
         try:
             part = base64.b64decode(encoded_text, validate=True)
-        except (ValueError, TypeError) as exc:
-            raise ValueError("same-response transport chunk Base64 is invalid") from exc
-        if (
-            base64.b64encode(part).decode("ascii") != encoded_text
-            or len(part) != chunk_size
-            or sha256_bytes(part) != chunk_hash
-        ):
-            raise ValueError("same-response transport chunk byte binding mismatch")
-        encoded_parts.append(part)
+        except (ValueError, TypeError):
+            part = b""
+            payload_valid = False
+        else:
+            payload_valid = (
+                base64.b64encode(part).decode("ascii") == encoded_text
+                and len(part) == expected_sizes[index]
+                and sha256_bytes(part) == chunk_hashes[index]
+            )
+        if not payload_valid:
+            bad_data_indices.append(index)
+            encoded_parts.append(None)
+        else:
+            encoded_parts.append(part)
 
-    encoded = b"".join(encoded_parts)
+    try:
+        parity_bytes = base64.b64decode(parity_text, validate=True)
+    except (ValueError, TypeError):
+        parity_bytes = b""
+        parity_payload_valid = False
+    else:
+        parity_payload_valid = (
+            base64.b64encode(parity_bytes).decode("ascii") == parity_text
+            and len(parity_bytes) == expected_shard_size
+            and sha256_bytes(parity_bytes) == parity_hash
+        )
+
+    if len(bad_data_indices) > 1:
+        raise ValueError(
+            "same-response transport has more than one invalid data shard"
+        )
+
+    if not bad_data_indices:
+        good_parts = [
+            part
+            for part in encoded_parts
+            if isinstance(part, bytes)
+        ]
+        if len(good_parts) != chunk_count:
+            raise AssertionError("same-response valid data shard count changed")
+        expected_parity = _xor_parity_shard(
+            good_parts,
+            expected_shard_size,
+        )
+        if sha256_bytes(expected_parity) != parity_hash:
+            raise ValueError("same-response transport parity identity mismatch")
+        if parity_payload_valid:
+            if parity_bytes != expected_parity:
+                raise ValueError("same-response transport parity bytes mismatch")
+            receipt = _same_response_recovery_receipt(
+                RECOVERY_STATE_NOT_NEEDED
+            )
+        else:
+            receipt = _same_response_recovery_receipt(
+                RECOVERY_STATE_PARITY_DEGRADED_NOT_USED,
+                received_base64_sha256=sha256_bytes(
+                    parity_text.encode("ascii")
+                ),
+            )
+    else:
+        if not parity_payload_valid:
+            raise ValueError(
+                "same-response transport data and parity shards are both invalid"
+            )
+        bad_index = bad_data_indices[0]
+        reconstructed = bytearray(parity_bytes)
+        for index, part in enumerate(encoded_parts):
+            if index == bad_index:
+                continue
+            if not isinstance(part, bytes):
+                raise AssertionError(
+                    "same-response recovery encountered another bad data shard"
+                )
+            for offset, item in enumerate(part):
+                reconstructed[offset] ^= item
+        recovered = bytes(reconstructed[: expected_sizes[bad_index]])
+        recovered_hash = sha256_bytes(recovered)
+        if recovered_hash != chunk_hashes[bad_index]:
+            raise ValueError(
+                "same-response reconstructed data shard identity mismatch"
+            )
+        encoded_parts[bad_index] = recovered
+        receipt = _same_response_recovery_receipt(
+            RECOVERY_STATE_DATA_SHARD_RECOVERED,
+            recovered_chunk_index=bad_index,
+            received_base64_sha256=sha256_bytes(
+                encoded_texts[bad_index].encode("ascii")
+            ),
+            reconstructed_chunk_sha256=recovered_hash,
+        )
+
+    if any(not isinstance(part, bytes) for part in encoded_parts):
+        raise AssertionError("same-response recovery left an invalid data shard")
+    encoded = b"".join(
+        part
+        for part in encoded_parts
+        if isinstance(part, bytes)
+    )
     if len(encoded) != encoded_size or sha256_bytes(encoded) != encoded_hash:
         raise ValueError("same-response transport encoded aggregate mismatch")
     container = _bounded_transport_decompress(encoded, container_size)
@@ -1126,7 +1388,7 @@ def parse_same_response_transport(
     ]
     if actual_records != records:
         raise ValueError("same-response transport file identities mismatch")
-    return files
+    return files, receipt
 
 
 def parse_compile_transport_stdout(
@@ -1136,6 +1398,24 @@ def parse_compile_transport_stdout(
     expected_untransported_files: dict[str, bytes] | None = None,
     required_untransported_filenames: Iterable[str] = (),
 ) -> tuple[dict[str, Any], dict[str, bytes]]:
+    """Parse compiler stdout while retaining the legacy two-value API."""
+
+    document, files, _ = parse_compile_transport_stdout_with_receipt(
+        raw,
+        expected_transport_filenames=expected_transport_filenames,
+        expected_untransported_files=expected_untransported_files,
+        required_untransported_filenames=required_untransported_filenames,
+    )
+    return document, files
+
+
+def parse_compile_transport_stdout_with_receipt(
+    raw: bytes,
+    *,
+    expected_transport_filenames: Iterable[str] | None = None,
+    expected_untransported_files: dict[str, bytes] | None = None,
+    required_untransported_filenames: Iterable[str] = (),
+) -> tuple[dict[str, Any], dict[str, bytes], dict[str, Any]]:
     """Parse exact compiler stdout and reconstruct the same-turn transport."""
 
     if not isinstance(raw, bytes) or len(raw) > MAX_COMPILE_STDOUT_BYTES:
@@ -1150,7 +1430,7 @@ def parse_compile_transport_stdout(
     ):
         raise ValueError("compiler stdout identity or finalization status is invalid")
     outputs = _validate_output_records(document.get("outputs"), "compiler outputs")
-    files = parse_same_response_transport(
+    files, receipt = parse_same_response_transport_with_receipt(
         document.get("transport"),
         expected_transport_filenames=expected_transport_filenames,
     )
@@ -1241,7 +1521,7 @@ def parse_compile_transport_stdout(
         raise ValueError(
             "same-response transport roster differs from audit_return.json roles"
         )
-    return document, files
+    return document, files, receipt
 
 
 def _validate_expected_hash(value: str | None, label: str) -> None:
@@ -1938,7 +2218,7 @@ def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
     stdout_bytes = canonical_transport_wrapper_bytes(result)
     if len(stdout_bytes) > MAX_COMPILE_STDOUT_BYTES:
         raise ValueError("same-response transport exceeds the compiler stdout limit")
-    _, reconstructed = parse_compile_transport_stdout(
+    _, reconstructed, receipt = parse_compile_transport_stdout_with_receipt(
         stdout_bytes,
         expected_transport_filenames=finalized.transport_files,
         expected_untransported_files=finalized.files,
@@ -1948,6 +2228,10 @@ def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
     )
     if reconstructed != finalized.transport_files:
         raise AssertionError("compiler stdout transport changed final artifact bytes")
+    if receipt != _same_response_recovery_receipt(
+        RECOVERY_STATE_NOT_NEEDED
+    ):
+        raise AssertionError("compiler stdout required recovery before emission")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     output_is_junction = getattr(output_dir, "is_junction", None)
@@ -2002,7 +2286,7 @@ def _parser() -> argparse.ArgumentParser:
         "--offline-historical-v3",
         action="store_true",
         required=True,
-        help="acknowledge that this command is forbidden in active v4 Preview trials",
+        help="acknowledge that this command is forbidden in active v5 Preview trials",
     )
     export_command.add_argument("payload", type=Path)
     export_command.add_argument("--chunk-index", required=True, type=int)

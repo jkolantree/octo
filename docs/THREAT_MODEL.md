@@ -59,20 +59,33 @@ The three entry points do not share one privacy or execution boundary:
 For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
 
 The Custom GPT artifact-transport fallback is generated during the original
-Data Analysis compiler transaction, after `audit_return.json` is serialized.
-The compiler derives one deterministic bounded container from the same final
-in-memory output bytes and includes it in canonical no-terminal-LF stdout. The
-candidate must copy that complete stdout byte-for-byte into one final fenced
-code block; it must not regenerate, trim, reserialize, or independently author
-any runtime, hash, size, or Base64 value. The controller always validates the
-already-preserved bundle, uses direct acquisition as the primary candidate-byte
-path, and selects the reconstructed member only when no direct bytes exist. If
-both copies exist, any byte difference is a candidate transport failure. The
-controller binds an explicit per-file outcome for every visible direct control;
-absence of bytes alone cannot be relabeled `no_download_event`. It derives the
-transport ledger from those bound observations rather than accepting a
-model-authored record. A missing, malformed, blocked, or noncanonical candidate
-block is also a candidate transport failure.
+Data Analysis compiler-v7 transaction, after `audit_return.json` is serialized.
+Same-response transport v2 derives one deterministic bounded container from the
+same final in-memory output bytes, zlib-compresses it into contiguous data
+shards of at most 2,048 bytes, and adds one `xor_parity_v1` shard computed over
+zero-padded data shards. The compiler includes the complete envelope in
+canonical no-terminal-LF stdout. The candidate must copy that stdout
+byte-for-byte into one final fenced code block; it must not regenerate, trim,
+reserialize, or independently author any runtime, hash, size, Base64, data, or
+parity value.
+
+The controller may repair only one content-faulted data shard with intact
+metadata and expected ASCII Base64 text length, and only while every other data
+shard and parity is valid. It then reruns all aggregate, container, member, and
+topology checks. Aligned-quartet omission, metadata mutation, multiple bad data
+shards, or bad data together with bad parity remains a candidate transport
+failure. Valid data with only an exact-length parity-content fault is accepted
+without parity as deterministic state `parity_degraded_not_used`.
+
+The controller always validates the already-preserved bundle, uses direct
+acquisition as the primary candidate-byte path, and selects the reconstructed
+member only when no direct bytes exist. If both copies exist, any byte
+difference is a candidate transport failure. The controller binds an explicit
+per-file outcome for every visible direct control; absence of bytes alone cannot
+be relabeled `no_download_event`. It derives the transport ledger from those
+bound observations rather than accepting a model-authored record. A missing,
+malformed, blocked, or noncanonical candidate block is also a candidate
+transport failure.
 Controller loss or mutation of a block demonstrably present in the complete
 raw response instead invalidates the trial. A valid fallback identifies only
 the exported bundle received by the controller; unavailable download-button

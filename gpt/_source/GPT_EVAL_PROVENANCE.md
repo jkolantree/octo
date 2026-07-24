@@ -172,7 +172,8 @@ response, raw block, and parser input, and requires contiguous indices before
 reassembly. This is a generic transport repair; it changes no fixture, oracle,
 scientific verdict, Return Desk rule, score threshold, or candidate-failure
 boundary. It is preserved as historical evidence only and is forbidden as an
-active controller-v4 transport path.
+historical controller-v4 transport path. The repaired candidate uses the
+strict controller-v5 record contract with a bound recovery receipt.
 
 The additional transport repair was explicitly authorized after the preserved
 r10 stop. It does not relabel r10, consume or reset a counted-suite repair
@@ -291,3 +292,47 @@ identity. Candidate omission or mutation remains
 `candidate_failed`; controller loss or mutation of a block present in the raw
 response is `trial_invalid_controller`. No scientific oracle, fixture,
 checker boundary, score threshold, or negative expectation changes.
+
+## Old-freeze C001 invalid controller and underlying candidate failure
+
+The first counted C001 attempt used the old freeze identified by prefix
+`2593db7d`. Its preserved candidate response contained the compiler version
+literal once in inline prose and once at the start of the required final fenced
+stdout. The then-current controller treated both occurrences as transport
+blocks and reported a false duplicate. That outer attempt remains
+`trial_invalid_controller`; it is not rewritten as a controller-valid score.
+
+After limiting compiler-block recognition to canonical stdout at the start of
+the captured code block, replay of the exact preserved fence exposed a separate
+candidate defect. The fenced stdout is 10,470 bytes with SHA-256
+`5c5001e261333f2f27d4dc1189fd30a1cf349f4f0f67bc9ed1d4400e9d3b06cc`.
+Data chunk 0 still decoded to its declared 2,048-byte size, but its actual
+SHA-256 was
+`03db73735fdaed7ea1e3f7ed1b6e415204ea0f5f5c42fd389d6ffa772d3abbab`
+rather than declared
+`90468d82f4c2e48af82cb5c6d5e4f9c58cc3433b4cac3d3b61ab47920c9f0401`;
+chunks 1 and 2 matched. The 5,444-byte decoded aggregate consequently had
+actual SHA-256
+`7ef6294f376ecf59b48d5877900d3742b7316cba9d6def6348f75a068ec5a59f`
+rather than declared
+`5923a7cb8499316e363833803a2c6f6b150212b49386ebc3b6edb86e2984d281`.
+This is a genuine `candidate_failed` transport result beneath the preserved
+outer controller-invalid layer. It does not establish corruption of
+unavailable download-button bytes, whose identity remains
+`transport_identity_unresolved`.
+
+That candidate failure consumes the one post-suite root-cause repair allowance.
+Compiler v7 and same-response transport v2 add one `xor_parity_v1` shard over
+the unchanged 2,048-byte zlib data shards. Recovery is limited to exactly one
+data-content fault with intact metadata and expected ASCII Base64 text length,
+valid remaining data, and valid parity, followed by all original aggregate,
+container, member, and topology checks. Aligned-quartet omission, metadata
+mutation, multiple bad data, or bad data plus bad parity remains unrecoverable.
+If all data is valid and only exact-length parity content is bad, parity is not
+used and the deterministic receipt state is `parity_degraded_not_used`.
+
+The old freeze cannot be reused after this candidate and controller change.
+All local gates and preflights must pass, a new exact freeze is required, and
+the counted suite must restart from C001. R01 and every other preserved
+negative remain unchanged. No live update, merge, tag, release, or publication
+claim follows from this repair.

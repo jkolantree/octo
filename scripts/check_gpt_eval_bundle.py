@@ -1087,7 +1087,7 @@ def _verify_transport_record(
             "ARTIFACT_TRANSPORT_RECORD_VERSION_MISMATCH",
             path.name,
             (
-                "controller v4 same-response captures require transport_version "
+                "controller v5 same-response captures require transport_version "
                 f"{TRANSPORT_RECORD_VERSION}; legacy records require "
                 f"{LEGACY_TRANSPORT_RECORD_VERSION}"
             ),
@@ -1153,7 +1153,7 @@ def _verify_transport_record(
                 "ARTIFACT_TRANSPORT_DIRECT_ACQUISITION_INVALID",
                 "controller_record.json:$.direct_acquisition_attempts",
                 (
-                    "controller v4 requires canonical sorted "
+                    "controller v5 requires canonical sorted "
                     "{filename,outcome} direct-acquisition records"
                 ),
             )
@@ -1384,7 +1384,7 @@ def _verify_transport_record(
                 label,
                 (
                     "direct download requires download_event and export_chunks=null; "
-                    f"{SAME_RESPONSE_TRANSPORT_METHOD} requires a controller-v4 "
+                    f"{SAME_RESPONSE_TRANSPORT_METHOD} requires a controller-v5 "
                     "reconstructed member, unavailable/no_download_event, and "
                     "export_chunks=null; "
                     "chunked Base64 requires unavailable/no_download_event and an "
@@ -1394,10 +1394,10 @@ def _verify_transport_record(
             _set_check(checks, "artifact_transport", "blocked", filename)
 
     if same_response_controller and record_version == TRANSPORT_RECORD_VERSION:
-        expected_v4_record_names = (
+        expected_v5_record_names = (
             set(reconstructed_by_filename) | set(observed_direct_by_filename)
         )
-        if set(records) != expected_v4_record_names:
+        if set(records) != expected_v5_record_names:
             _add_finding(
                 findings,
                 "ARTIFACT_TRANSPORT_RECONSTRUCTED_ROSTER_MISMATCH",
@@ -1447,6 +1447,16 @@ def _verify_same_response_candidate_transport(
     capture = controller_record.get("compiler_transport_capture")
     reconstructed = controller_record.get("reconstructed_outputs")
     status = capture.get("status") if isinstance(capture, dict) else None
+    recovery_receipt = (
+        capture.get("recovery_receipt")
+        if isinstance(capture, dict)
+        else None
+    )
+    recovery_state = (
+        recovery_receipt.get("state")
+        if isinstance(recovery_receipt, dict)
+        else None
+    )
     reconstructed_names = {
         item["filename"]
         for item in reconstructed
@@ -1589,7 +1599,8 @@ def _verify_same_response_candidate_transport(
                 "pass",
                 (
                     "direct bytes were primary where captured and every remaining "
-                    "member used the exact same-response reconstruction"
+                    "member used the exact same-response reconstruction; "
+                    f"compiler transport recovery state={recovery_state}"
                 ),
             )
     return True
