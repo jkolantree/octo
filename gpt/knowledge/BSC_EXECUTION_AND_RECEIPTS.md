@@ -10,7 +10,7 @@
 
 - `docs/THREAT_MODEL.md` — SHA-256 `5d35f3275821d6f7bd5f0874612c8eb769c07f135a500c968d349ef41f040f73`
 - `docs/PROOF_CARRYING_ADAPTERS.md` — SHA-256 `b8ad039964660b704a1076348c834af9201c9463e7d6ca1fabcec91c3213212c`
-- `scripts/gpt_artifact_compiler.py` — SHA-256 `04e431b4960928dc481aa97cb58dcf091904b3228feba635e9ca159c97ea6d1a`
+- `scripts/gpt_artifact_compiler.py` — SHA-256 `f908fc0fcac9a7852b4bfe684221799daa1d33a44345ea4d6ecb0df29f0208cc`
 
 Source hashes bind the pre-upload repository bytes. They do not prove that ChatGPT preserves an identical internal index.
 
@@ -311,10 +311,11 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
-COMPILER_VERSION = "bsc-gpt-artifact-compiler-v4"
+COMPILER_VERSION = "bsc-gpt-artifact-compiler-v5"
 TRANSPORT_CHUNK_VERSION = "bsc-gpt-export-chunk-v1"
 TRANSPORT_ENCODING = "zlib+base64"
 TRANSPORT_CHUNK_BYTES = 2048
+TRANSPORT_SNAPSHOT_DIRECTORY = ".bsc-transport-v1"
 MAX_TRANSPORT_PAYLOAD_BYTES = 64 * 1024 * 1024
 MAX_TRANSPORT_ENCODED_BYTES = 65 * 1024 * 1024
 MAX_TRANSPORT_CHUNKS = 100_000
@@ -600,6 +601,19 @@ def _stable_read_payload(path: Path) -> bytes:
     """Read one payload once and reject an identity change during the read."""
 
     if isinstance(path, Path):
+        parent = path.parent
+        parent_is_junction = getattr(parent, "is_junction", None)
+        if (
+            parent.name == TRANSPORT_SNAPSHOT_DIRECTORY
+            and (
+                parent.is_symlink()
+                or (callable(parent_is_junction) and parent_is_junction())
+                or not parent.is_dir()
+            )
+        ):
+            raise ValueError(
+                "transport snapshot directory must be one regular non-linked directory"
+            )
         is_junction = getattr(path, "is_junction", None)
         if (
             path.is_symlink()
@@ -764,9 +778,10 @@ def transport_fallback_prompt(
         raise ValueError("expected payload and encoded SHA-256 values must be paired")
     if chunk_index > 0 and expected_payload_sha256 is None:
         raise ValueError("later transport chunks require both expected SHA-256 values")
+    snapshot_path = f"/mnt/data/{TRANSPORT_SNAPSHOT_DIRECTORY}/{filename}"
     command = (
         "python /mnt/data/gpt_artifact_compiler.py export-chunk "
-        + shlex.quote(f"/mnt/data/{filename}")
+        + shlex.quote(snapshot_path)
         + f" --chunk-index {chunk_index}"
     )
     if expected_payload_sha256 is not None:
@@ -782,7 +797,9 @@ def transport_fallback_prompt(
         "Use the enabled Data Analysis tool now. A visible Data Analysis invocation "
         "of the exact command below is mandatory before any answer; do not answer "
         "from reasoning or infer that execution occurred. "
-        "Do not regenerate or alter that file. "
+        "The compiler sealed the final bytes in a private unexposed transport "
+        "snapshot during the original compile transaction. Do not regenerate or "
+        "alter that snapshot. "
         "Do not read, trim, normalize, or encode the payload yourself. Execute this "
         f"literal command exactly once: {command} . Return the command's complete "
         "stdout byte-for-byte as the only strict JSON object in one code block, "
@@ -1193,6 +1210,7 @@ def _validate_execution_contract(
 class FinalizedArtifactSet:
     files: dict[str, bytes]
     identities: tuple[dict[str, Any], ...]
+    transport_files: dict[str, bytes]
     audit_return: dict[str, Any]
 
 
@@ -1316,9 +1334,20 @@ def finalize_candidate_artifacts(
             item["sha256"] for item in identities if item["filename"] == filename
         ):
             raise AssertionError("post-finalization byte identity changed")
+    transport_names = {
+        row["filename"]
+        for row in document["artifacts"]
+        if row.get("role") != "source"
+    }
+    transport_names.add(BOUND_RETURN_ARTIFACT)
+    transport_files = {
+        filename: files[filename]
+        for filename in sorted(transport_names)
+    }
     return FinalizedArtifactSet(
         files=files,
         identities=identities,
+        transport_files=transport_files,
         audit_return=document,
     )
 
@@ -1346,6 +1375,48 @@ def _load_strict_json(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("JSON document must be an object")
     return value
+
+
+def _publish_transport_snapshots(
+    output_dir: Path,
+    transport_files: dict[str, bytes],
+) -> tuple[dict[str, Any], ...]:
+    """Atomically publish private exact-byte snapshots for later fallback export."""
+
+    if not isinstance(transport_files, dict) or not transport_files:
+        raise ValueError("transport snapshot roster must be a nonempty mapping")
+    _assert_unique_basenames(transport_files, "transport snapshot filenames")
+    if any(not isinstance(data, bytes) for data in transport_files.values()):
+        raise ValueError("transport snapshots must contain exact bytes")
+
+    destination = output_dir / TRANSPORT_SNAPSHOT_DIRECTORY
+    staging = output_dir / f"{TRANSPORT_SNAPSHOT_DIRECTORY}.{os.getpid()}.tmp"
+    if (
+        destination.exists()
+        or destination.is_symlink()
+        or staging.exists()
+        or staging.is_symlink()
+    ):
+        raise ValueError("refusing to reuse a transport snapshot directory")
+    staging.mkdir(mode=0o700)
+    for filename, data in sorted(transport_files.items()):
+        snapshot = staging / filename
+        with snapshot.open("xb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if _stable_read_payload(snapshot) != data:
+            raise ValueError(f"transport snapshot verification failed: {filename}")
+    staging.replace(destination)
+    if destination.is_symlink() or not destination.is_dir():
+        raise ValueError("transport snapshot publication is not a regular directory")
+    identities: list[dict[str, Any]] = []
+    for filename, data in sorted(transport_files.items()):
+        snapshot = destination / filename
+        if _stable_read_payload(snapshot) != data:
+            raise ValueError(f"published transport snapshot differs: {filename}")
+        identities.append(output_record(filename, data))
+    return tuple(identities)
 
 
 def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
@@ -1397,6 +1468,16 @@ def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
     for filename, data in finalized.files.items():
         if _stable_read_payload(output_dir / filename) != data:
             raise ValueError(f"post-write verification failed: {filename}")
+    snapshot_identities = _publish_transport_snapshots(
+        output_dir,
+        finalized.transport_files,
+    )
+    expected_snapshot_identities = tuple(
+        output_record(filename, data)
+        for filename, data in sorted(finalized.transport_files.items())
+    )
+    if snapshot_identities != expected_snapshot_identities:
+        raise AssertionError("transport snapshot identities changed during publication")
     return {
         "compiler": COMPILER_VERSION,
         "status": "pass",

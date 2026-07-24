@@ -145,8 +145,8 @@ RESEARCH_PROJECTION_REQUIREMENTS = {
     STATUS_ONLY_RESEARCH_PROJECTION_EMPTY,
 }
 LIMITATION = (
-    "Strict chunk decoding and bounded decompression validate the exported payload encoding, "
-    "declared identities, and local-byte equality; they do not establish download-button "
+    "Strict chunk decoding and bounded decompression validate the compiler-sealed exported "
+    "payload encoding, declared identities, and local-byte equality; they do not establish download-button "
     "identity or prove which bytes a UI download button served."
 )
 TRANSPORT_LIMITATION = (

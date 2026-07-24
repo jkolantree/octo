@@ -25,6 +25,7 @@ from scripts.gpt_artifact_compiler import (
     TRANSPORT_CHUNK_BYTES,
     TRANSPORT_CHUNK_VERSION,
     TRANSPORT_ENCODING,
+    TRANSPORT_SNAPSHOT_DIRECTORY,
     _stable_read_payload,
     _transport_chunks,
     canonical_json_bytes,
@@ -146,6 +147,19 @@ class GptArtifactCompilerTests(unittest.TestCase):
             generated,
         )
         self.assertEqual(execution["chatgpt_data_analysis"]["receipt_ids"], [])
+        self.assertEqual(
+            set(finalized.transport_files),
+            {
+                "claim_valid.json",
+                "defect_composition_valid.json",
+                BOUND_REPORT_ARTIFACT,
+                BOUND_RUNTIME_ARTIFACT,
+                BOUND_RETURN_ARTIFACT,
+            },
+        )
+        self.assertNotIn("atomic_modulus_valid.json", finalized.transport_files)
+        for filename, data in finalized.transport_files.items():
+            self.assertIs(data, finalized.files[filename])
 
     def test_report_projection_comes_from_the_return_semantic_object(self):
         template = self.template()
@@ -538,7 +552,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 )
             self.assertEqual(status, 0)
             wrapper = json.loads(output.getvalue())
-            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v4")
+            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v5")
             self.assertEqual(
                 output.getvalue().encode("utf-8"),
                 canonical_transport_wrapper_bytes(wrapper),
@@ -607,7 +621,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 set(failure),
                 {"compiler", "error", "status"},
             )
-            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v4")
+            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v5")
             self.assertEqual(failure["status"], "blocked")
             self.assertTrue(failure["error"])
             self.assertEqual(
@@ -620,9 +634,10 @@ class GptArtifactCompilerTests(unittest.TestCase):
         prompt = transport_fallback_prompt("audit_report.md", 0)
         self.assertIn(
             "python /mnt/data/gpt_artifact_compiler.py export-chunk "
-            "/mnt/data/audit_report.md --chunk-index 0",
+            "/mnt/data/.bsc-transport-v1/audit_report.md --chunk-index 0",
             prompt,
         )
+        self.assertIn("private unexposed transport snapshot", prompt)
         self.assertIn("Use the enabled Data Analysis tool now", prompt)
         self.assertIn(
             "A visible Data Analysis invocation of the exact command below is "
@@ -704,6 +719,93 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 if row["activity"] == "chatgpt_data_analysis"
             )
             self.assertEqual(analysis["version"], sys.version)
+            compile_result = json.loads(output.getvalue())
+            self.assertEqual(
+                compile_result["compiler"],
+                "bsc-gpt-artifact-compiler-v5",
+            )
+            self.assertNotIn(TRANSPORT_SNAPSHOT_DIRECTORY, output.getvalue())
+            self.assertNotIn(TRANSPORT_SNAPSHOT_DIRECTORY, ledger)
+            self.assertNotIn(
+                TRANSPORT_SNAPSHOT_DIRECTORY,
+                json.dumps(document, sort_keys=True),
+            )
+            self.assertTrue(
+                all(
+                    TRANSPORT_SNAPSHOT_DIRECTORY not in row["filename"]
+                    for row in compile_result["outputs"]
+                )
+            )
+            snapshot_root = output_root / TRANSPORT_SNAPSHOT_DIRECTORY
+            self.assertTrue(snapshot_root.is_dir())
+            self.assertFalse(snapshot_root.is_symlink())
+            expected_transport = {
+                "claim_valid.json",
+                "defect_composition_valid.json",
+                BOUND_REPORT_ARTIFACT,
+                BOUND_RUNTIME_ARTIFACT,
+                BOUND_RETURN_ARTIFACT,
+            }
+            self.assertEqual(
+                {path.name for path in snapshot_root.iterdir()},
+                expected_transport,
+            )
+            original_transport = {
+                filename: (output_root / filename).read_bytes()
+                for filename in expected_transport
+            }
+            for filename, original in original_transport.items():
+                snapshot = snapshot_root / filename
+                self.assertTrue(snapshot.is_file())
+                self.assertFalse(snapshot.is_symlink())
+                self.assertEqual(snapshot.read_bytes(), original)
+
+            # Simulate ChatGPT replacing, deleting, or otherwise making every
+            # public output path unusable after the original response. The
+            # private compile-time snapshots remain the sole fallback source.
+            for filename in expected_transport:
+                (output_root / filename).unlink()
+            for filename, original in original_transport.items():
+                wrappers: list[dict] = []
+                chunk_index = 0
+                expected_payload = None
+                expected_encoded = None
+                while True:
+                    chunk_output = io.StringIO()
+                    command = [
+                        "export-chunk",
+                        str(snapshot_root / filename),
+                        "--chunk-index",
+                        str(chunk_index),
+                    ]
+                    if expected_payload is not None:
+                        command.extend(
+                            [
+                                "--expect-payload-sha256",
+                                expected_payload,
+                                "--expect-encoded-sha256",
+                                expected_encoded,
+                            ]
+                        )
+                    with redirect_stdout(chunk_output):
+                        chunk_status = compiler_main(command)
+                    self.assertEqual(chunk_status, 0, chunk_output.getvalue())
+                    wrapper = json.loads(chunk_output.getvalue())
+                    self.assertEqual(wrapper["filename"], filename)
+                    wrappers.append(wrapper)
+                    if expected_payload is None:
+                        expected_payload = wrapper["payload_sha256"]
+                        expected_encoded = wrapper["encoded_sha256"]
+                    chunk_index += 1
+                    if chunk_index == wrapper["chunk_count"]:
+                        break
+                encoded = b"".join(
+                    base64.b64decode(wrapper["base64"], validate=True)
+                    for wrapper in wrappers
+                )
+                reconstructed = zlib.decompress(encoded)
+                self.assertEqual(reconstructed, original)
+                self.assertEqual(sha256_bytes(reconstructed), expected_payload)
 
             injected = dict(spec)
             injected["session_reported_runtime"] = RUNTIME
@@ -724,6 +826,72 @@ class GptArtifactCompilerTests(unittest.TestCase):
             self.assertIn(
                 "compiler spec fields differ from the strict contract",
                 injected_output.getvalue(),
+            )
+
+    def test_compile_refuses_stale_transport_snapshot_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source_root = root / "source"
+            output_root = root / "output"
+            source_root.mkdir()
+            output_root.mkdir()
+            (output_root / TRANSPORT_SNAPSHOT_DIRECTORY).mkdir()
+            frozen_paths: dict[str, str] = {}
+            for filename, data in self.frozen().items():
+                source = source_root / filename
+                destination = output_root / filename
+                source.write_bytes(data)
+                destination.write_bytes(data)
+                frozen_paths[filename] = str(source)
+            spec = {
+                "report_body": "# BSC audit report\n\nDeterministic transaction.",
+                "frozen_artifact_paths": frozen_paths,
+                "audit_return_template": self.template(),
+            }
+            spec_path = root / "compile-spec.json"
+            spec_path.write_bytes(canonical_json_bytes(spec))
+            output = io.StringIO()
+            with redirect_stdout(output):
+                status = compiler_main(
+                    [
+                        "compile",
+                        "--spec",
+                        str(spec_path),
+                        "--output-dir",
+                        str(output_root),
+                    ]
+                )
+            self.assertEqual(status, 1)
+            self.assertIn(
+                "refusing to reuse a transport snapshot directory",
+                output.getvalue(),
+            )
+
+    def test_export_rejects_linked_transport_snapshot_directory_when_supported(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real = root / "real"
+            real.mkdir()
+            (real / "audit_report.md").write_bytes(b"exact")
+            linked = root / TRANSPORT_SNAPSHOT_DIRECTORY
+            try:
+                linked.symlink_to(real, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("directory symlink creation is unavailable on this platform")
+            output = io.StringIO()
+            with redirect_stdout(output):
+                status = compiler_main(
+                    [
+                        "export-chunk",
+                        str(linked / "audit_report.md"),
+                        "--chunk-index",
+                        "0",
+                    ]
+                )
+            self.assertEqual(status, 1)
+            self.assertIn(
+                "transport snapshot directory must be one regular non-linked directory",
+                output.getvalue(),
             )
 
     def test_compiler_does_not_mutate_the_supplied_template(self):

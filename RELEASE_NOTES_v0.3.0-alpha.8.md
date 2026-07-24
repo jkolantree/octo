@@ -13,7 +13,8 @@ This release replaces model-mediated artifact identity with one acyclic final-by
 - serialize `audit_return.json` only after every referenced artifact is final;
 - canonicalize all eight execution activities and the report-facing execution projection before any report, ledger, hash, or return bytes are derived;
 - keep Base64 outside the primary proof path and treat any fallback only as the identity of the exported payload actually received;
-- replace unbounded whole-file fallback responses with stable-read, zlib-compressed, fixed-size indexed chunks whose decoded transport payload is capped at 2,048 bytes per response.
+- replace unbounded whole-file fallback responses with stable-read, zlib-compressed, fixed-size indexed chunks whose decoded transport payload is capped at 2,048 bytes per response;
+- seal private, unexposed transport snapshots from the compiler's same final in-memory byte objects so a later fallback never relies on public artifact paths that the interface may relink.
 
 The evaluation controller now validates the exact target, all six canonical Knowledge files, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls separately from acquired bytes, validates every chunk prompt/response/parser binding before reassembly, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`.
 
@@ -57,6 +58,14 @@ downloadable wrapper file and the following return fallback was blank. The
 negative result is preserved without calling unavailable bytes corrupt or
 pretending the counted suite ran. The fixed-size chunk transport repairs that
 generic response-size assumption; it does not weaken the D02 artifact gate.
+
+The later r23 D01 run showed that the literal bounded fallback and Data Analysis
+invocation worked: `audit_request.txt` and `proof_reconstruction.md`
+reconstructed exactly. The three public paths created by the compiler no
+longer satisfied its regular/non-linked check on later turns, so the
+controller-valid trial remained `candidate_failed` with unresolved transport
+identity. The compiler v5 snapshot repair changes only that lifecycle source.
+It neither follows public links nor calls unavailable button bytes corrupt.
 
 ## Authority and privacy boundary
 
