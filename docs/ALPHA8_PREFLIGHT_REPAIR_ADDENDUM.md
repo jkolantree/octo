@@ -255,3 +255,21 @@ the compile output roster, or assistant file controls. Public symlinks remain
 rejected, original download-button identity remains unresolved when
 unavailable, and any missing, changed, linked, or stale private snapshot still
 fails the candidate gate.
+
+## R24 protocol-binding closure before Preview
+
+The first clean local-gate snapshot for compiler v5 was commit
+`5e5b1d3c742bee101825fd2f69c5a354a64663ae`, tree
+`acb32392293f5d141a73bc6a15df50a23952b336`. Gates 00–04 passed. Gate
+05 then ran 338 Python tests and stopped on one failure, with four documented
+Windows skips: the Return Desk still expected the prior protocol-packet digest
+after the sealed-snapshot wording changed the packet bytes.
+
+The actual `BSC_AUDIT_LLM_PACKET.md` SHA-256 was
+`d694a2ee46466d9f7eaec3d44d7917322feec53b9c982331d53eb73ab9d948f1`.
+That digest is now propagated through the Return Desk constant, the profile
+atom, generated Instructions, and all eight positive/negative return fixtures.
+The fixture semantics, verdict boundaries, controller classifications, score
+threshold, and negative expectations are unchanged. The failed gate remains
+preserved as a candidate-consistency failure caught before any new Preview
+trial.

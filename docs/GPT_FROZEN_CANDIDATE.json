@@ -75,13 +75,13 @@
       "bytes": 7500,
       "category": "candidate",
       "path": "gpt/GPT_INSTRUCTIONS.md",
-      "sha256": "a09cc2bd28f4f898e1550b743e637ea63fcc90189a45eb397abfc8a6f66233f6"
+      "sha256": "7e1a95d658f4bcfe969731ced0f2c4d6200e376ec057ec701977c7518dc41879"
     },
     {
       "bytes": 25986,
       "category": "candidate",
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "bd4713465e988183673421b4c5a041656672c74c6785b3fa75781119946d46c6"
+      "sha256": "14d6b0f35a9e48f85e74231e64ed0cbf412ad8a6362f99f775d4983005474fd1"
     },
     {
       "bytes": 65425,
@@ -402,10 +402,10 @@
       "sha256": "d694a2ee46466d9f7eaec3d44d7917322feec53b9c982331d53eb73ab9d948f1"
     },
     {
-      "bytes": 14863,
+      "bytes": 15820,
       "category": "protocol_and_provenance",
       "path": "docs/ALPHA8_PREFLIGHT_REPAIR_ADDENDUM.md",
-      "sha256": "8f961163187c5000490de6fc488e6593e31f23102add9ebe5be1795fcb025034"
+      "sha256": "c5966974ffde52225bfac3f44bc4ac33fe9d107e232a0a2729e810e4fa895936"
     },
     {
       "bytes": 2959,
@@ -579,7 +579,7 @@
       "bytes": 82022,
       "category": "python_return_desk",
       "path": "src/bsc_audit/return_desk.py",
-      "sha256": "cf56927cbaeee1d785f2fb3f967a961ad93b662af7536f5b0fc59409a27b6443"
+      "sha256": "011ecaf8d8180be14bcacf5f032f5d05c49ea75d891159d291f0d62af4d87914"
     },
     {
       "bytes": 4096,
@@ -717,7 +717,7 @@
       "bytes": 49282,
       "category": "tests",
       "path": "tests/test_gpt_package.py",
-      "sha256": "e8c96a99ae6f79fe7c67663a54633cbac47e8bfadde72f9bbc9638ec0ce773ec"
+      "sha256": "738c6036300f4f930c0521425f53ba147a8fe0581e89116431e304a8b38d5fee"
     },
     {
       "bytes": 11575,
