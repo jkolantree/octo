@@ -451,7 +451,12 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
             "missing_required_input_outcome": "trial_invalid_controller",
             "parser_mutation_outcome": "trial_invalid_controller",
             "transport_provenance_validation_before_candidate_scoring": True,
-            "missing_or_reserialized_transport_record_outcome": "trial_invalid_controller",
+            "completed_candidate_response_missing_or_malformed_transport_outcome": (
+                "candidate_failed"
+            ),
+            "controller_omitted_or_reserialized_present_transport_outcome": (
+                "trial_invalid_controller"
+            ),
             "candidate_scoring_before_valid_controller": "forbidden",
         },
         "outcome_axes": {
@@ -570,37 +575,55 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
             "direct_download_required_when_automation_exposes_it": True,
             "direct_download_event_or_unavailability_record_required": True,
             "model_mediated_base64_primary_proof_path": "forbidden",
-            "base64_fallback_only_when_direct_download_is_unavailable_or_emits_no_download_event": True,
-            "fallback_prompt_source": (
-                "controller_generated_exact_one_file_one_index_request"
+            "same_response_bundle_integrity_validation_always_required": True,
+            "bundle_member_selection_as_candidate_bytes_only_when_direct_download_is_unavailable_or_emits_no_download_event": True,
+            "direct_and_bundle_bytes_must_match_when_both_are_available": True,
+            "direct_acquisition_attempt_precedes_bundle_use": True,
+            "direct_acquisition_observation_source": (
+                "controller_bound_per_file_record"
             ),
-            "fallback_order": [
-                "audit_return.json",
-                "chatgpt_data_analysis_output.txt",
-                "remaining_generated_outputs_one_file_and_index_at_a_time",
+            "direct_acquisition_outcomes": [
+                "download_event",
+                "no_download_event",
+                "unavailable",
             ],
-            "fallback_data_analysis_invocation": "mandatory_observed_current_turn",
-            "fallback_response_contract": "one_strict_json_object_in_one_code_block",
-            "fallback_stdout_contract": (
-                "verbatim_compiler_json_chunk_or_handled_blocked_record"
+            "visible_control_requires_explicit_attempt_outcome": True,
+            "no_download_event_inference_from_missing_bytes_only": "forbidden",
+            "artifact_transport_record_derivation": (
+                "controller_only_from_bound_direct_attempts_and_bytes"
+            ),
+            "fallback_capture_time": (
+                "original_compiler_transaction_after_return_serialization"
             ),
             "fallback_payload_source": (
-                "private_compiler_sealed_final_byte_snapshot"
+                "same_finalized_in_memory_generated_output_bytes"
             ),
-            "fallback_snapshot_created_in_original_compile_transaction": True,
-            "fallback_snapshot_visible_file_control": "forbidden",
-            "fallback_snapshot_semantic_artifact_or_execution_output": "forbidden",
-            "fallback_snapshot_stale_linked_missing_or_changed_action": (
-                "candidate_failed"
+            "fallback_container_scope": (
+                "exact_non_source_generated_output_roster_plus_audit_return"
             ),
-            "model_authored_or_inferred_export_failed": "forbidden",
-            "fallback_transport_encoding": "zlib_then_canonical_base64_chunks",
-            "maximum_decoded_chunk_bytes": 2048,
+            "fallback_container_semantic_artifact_or_execution_output": "forbidden",
+            "cross_turn_filesystem_path_dependency": "forbidden",
+            "fallback_stdout_contract": (
+                "complete_verbatim_canonical_compiler_result"
+            ),
+            "fallback_response_contract": (
+                "one_final_fenced_code_block_with_no_following_prose"
+            ),
+            "model_transport_action": "byte_for_byte_copy_only",
+            "fallback_transport_encoding": (
+                "length_framed_container_then_zlib_then_canonical_base64_chunks"
+            ),
+            "bounded_complete_bundle_required": True,
+            "sorted_unique_portable_member_roster_required": True,
+            "container_and_member_size_and_sha256_required": True,
             "contiguous_chunk_indices_required": True,
-            "repeated_payload_and_encoded_identity_required": True,
             "raw_wrapper_bytes_source": "exact_code_block_text_bytes_not_reserialized",
-            "transport_response_binding": "full_transport_response_outer_html",
-            "one_chunk_wrapper_per_transport_response": True,
+            "transport_response_binding": "full_original_response_outer_html",
+            "one_compiler_transport_block_per_response": True,
+            "completed_response_missing_or_malformed_bundle_action": "candidate_failed",
+            "controller_loss_or_mutation_of_present_bundle_action": (
+                "trial_invalid_controller"
+            ),
             "base64_identity_scope": "exported_payload_actually_received",
             "base64_declared_size_and_sha256_must_match_decoded_bytes": True,
             "download_button_identity_from_base64": "forbidden",

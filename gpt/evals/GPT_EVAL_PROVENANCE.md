@@ -163,15 +163,16 @@ failed acquisition leaves original download bytes
 with a local file. The controller's prior `observed_outputs` field also
 incorrectly conflated a visible file control with locally acquired bytes.
 
-The replacement protocol uses exact one-file, one-index `export-chunk`
-commands. The stable-read compiler zlib-compresses the unchanged payload and
-emits at most 2,048 decoded transport bytes per response, repeating the full
+That superseded r10 repair used exact one-file, one-index `export-chunk`
+commands. The then-current stable-read compiler zlib-compressed the unchanged
+payload and emitted at most 2,048 decoded transport bytes per response, repeating the full
 payload and encoded-stream identities in every wrapper. Controller v3 records
 visible controls separately from acquired outputs, binds every prompt,
 response, raw block, and parser input, and requires contiguous indices before
 reassembly. This is a generic transport repair; it changes no fixture, oracle,
 scientific verdict, Return Desk rule, score threshold, or candidate-failure
-boundary.
+boundary. It is preserved as historical evidence only and is forbidden as an
+active controller-v4 transport path.
 
 The additional transport repair was explicitly authorized after the preserved
 r10 stop. It does not relabel r10, consume or reset a counted-suite repair
@@ -246,12 +247,47 @@ controller retry, a corruption finding, or a download-button identity claim.
 The evidence does not distinguish symlink, junction, or non-file lifecycle
 states.
 
-Compiler v5 seals the exportable non-source outputs and final return into a
+That superseded compiler-v5 candidate sealed the exportable non-source outputs and final return into a
 fresh private transport directory from the same finalized in-memory bytes.
 Exact controller prompts export only those unexposed snapshots while wrappers
 keep their public basenames. Snapshot files are excluded from semantic
 artifacts, execution ledgers, compile output identities, and visible controls.
 The regular-file check remains strict, stale snapshot directories are refused,
-and any absent, linked, changed, or identity-mismatched snapshot remains a
-candidate failure. No fixture, oracle, score, Return Desk negative, or outcome
-classification is weakened.
+and any absent, linked, changed, or identity-mismatched snapshot remained a
+candidate failure. This is historical evidence, not an active instruction. No
+fixture, oracle, score, Return Desk negative, or outcome classification is
+weakened.
+
+## R27 live lifecycle failure and original-turn transport
+
+Candidate manifest
+`82a9cba5bc40d94cfc2d5145ad2e17321e6df4489d32e4833c014ff79db61495`
+passed all 49 isolated local gates. Its live canary then visibly ran the exact
+compiler-v5 private-snapshot command and returned the canonical handled block
+`transport snapshot directory must be one regular non-linked directory`.
+Only the parent-directory guard is established; symlink, junction, and missing
+or non-directory state are not distinguished. Artifact-byte change and
+browser/download corruption were not established.
+
+The canary step is `candidate_failed` with
+`transport_identity_unresolved`. The enclosing D01 development trial was not
+completed or scored and remains neither pass nor failure. A subsequent
+non-counted controller probe observed a message-bound interpreter-download and
+content-resource request for a generated control, but the supported interface
+provided no download event or exportable response body. Resource binding is
+not byte acquisition.
+
+Compiler v6 therefore creates one bounded deterministic multi-artifact
+transport container from the finalized in-memory bytes in the original
+compiler transaction, after `audit_return.json` is serialized. Its complete
+canonical no-terminal-LF stdout is preserved byte-for-byte in the original
+assistant response. Bundle integrity is always validated. Direct acquisition
+remains primary; a reconstructed member is selected only when direct bytes are
+unavailable, and both copies must match exactly when present. The controller
+binds an explicit per-file attempt outcome instead of inferring
+`no_download_event` from missing bytes. Reconstruction establishes the
+exported bundle received by the controller, never unavailable download-button
+identity. Candidate omission or mutation remains
+`candidate_failed`; controller loss or mutation of a block present in the raw
+response is `trial_invalid_controller`. No scientific oracle, fixture,
+checker boundary, score threshold, or negative expectation changes.

@@ -204,8 +204,18 @@ class GptEvalSuiteTests(unittest.TestCase):
             "inputs": [],
             "observed_output_controls": [],
             "observed_outputs": [],
-            "transport_attempts": [],
-            "wrapper_captures": [],
+            "direct_acquisition_attempts": [],
+            "compiler_transport_capture": {
+                "status": "missing",
+                "candidate_evidence": True,
+                "detail": (
+                    "no compiler-v6 stdout block was present in the completed response"
+                ),
+                "compiler_blocks": [],
+                "compiler": None,
+                "transport_version": None,
+            },
+            "reconstructed_outputs": [],
         }
 
     def score(

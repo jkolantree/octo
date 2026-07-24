@@ -16,12 +16,12 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
 
 1. For an independent reproduction or fork, open `https://chatgpt.com/gpts` and select **Create**. For an authorized update of the official GPT, open its existing editor and use **Edit/Configure**. A fork must not imply official status.
 2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.
-3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7500 characters and 7500 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
+3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7494 characters and 7494 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
 4. Upload these Knowledge files in this exact order:
-   1. `BSC_PROTOCOL.md` — 28792 bytes — SHA-256 `e246c64d1f385d22cd0e3789889a3d1c0a4e2ac62c08212a448f86904b425306` — Deterministic Knowledge wrapper containing the canonical normative protocol
+   1. `BSC_PROTOCOL.md` — 29176 bytes — SHA-256 `e348eaacd287d87ad2ad8bc8a7de06102807c1dc58f463b19784de7bcaffc049` — Deterministic Knowledge wrapper containing the canonical normative protocol
    2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 8328 bytes — SHA-256 `72ab8a1b62021b21df486daef48a2f29f649f30d3f6bf052aafe2d2cab32194f` — Research, evidence, gate, execution, deployment, and CLI status boundaries
-   3. `BSC_EXECUTION_AND_RECEIPTS.md` — 65425 bytes — SHA-256 `da7287b228005ca446af135b63e4178dadf00c0e9b15f92dc8263d7164555380` — Execution ledger and proof-adapter trust boundaries
-   4. `BSC_SUPPORTED_CHECKS.md` — 44039 bytes — SHA-256 `b35ecda808b3a76173d2bc13efc7ffe2a4d140792970fd72e9dab4c71a2c354c` — Implemented Python routes, schemas, findings, and limitations
+   3. `BSC_EXECUTION_AND_RECEIPTS.md` — 86315 bytes — SHA-256 `e634dfa57337f951d7144850759564725c863fb25d844be502da85a5aec76010` — Execution ledger and proof-adapter trust boundaries
+   4. `BSC_SUPPORTED_CHECKS.md` — 44350 bytes — SHA-256 `ceaef7942f4c3da5eda068c5e90364425d2b83ba0412cdf699bd9e2bf796528d` — Implemented Python routes, schemas, findings, and limitations
    5. `BSC_WORKED_EXAMPLES.md` — 30600 bytes — SHA-256 `4234439805e90b3e3a2637cd4ced4e7019c3ff7b0e7ab1950cf19a15f82b2c24` — Known-answer and adversarial examples without redefining the protocol
    6. `BSC_JAPANESE_INTERFACE.md` — 13025 bytes — SHA-256 `42e73b071b463446fff2ef3077e55cf27181561d378597172f0060914aac3f5d` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
 5. Enable **Web search** and **Code Interpreter & Data Analysis**. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.

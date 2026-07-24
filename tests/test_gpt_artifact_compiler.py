@@ -7,7 +7,7 @@ import sys
 import tempfile
 import unittest
 import zlib
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -19,22 +19,33 @@ from scripts.gpt_artifact_compiler import (
     BOUND_RETURN_ARTIFACT,
     BOUND_RUNTIME_ARTIFACT,
     CANONICAL_EXECUTION_ACTIVITIES,
+    COMPILE_RESULT_FIELDS,
     COMPILER_VERSION,
     EXPORT_CHUNK_FIELDS,
+    MAX_COMPILE_STDOUT_BYTES,
     REPORT_PROJECTION_MARKER,
+    SAME_RESPONSE_CHUNK_FIELDS,
+    SAME_RESPONSE_TRANSPORT_FIELDS,
+    SAME_RESPONSE_TRANSPORT_VERSION,
     TRANSPORT_CHUNK_BYTES,
     TRANSPORT_CHUNK_VERSION,
+    TRANSPORT_CONTAINER_MAGIC,
+    TRANSPORT_CONTAINER_VERSION,
     TRANSPORT_ENCODING,
-    TRANSPORT_SNAPSHOT_DIRECTORY,
     _stable_read_payload,
     _transport_chunks,
+    build_same_response_transport,
+    build_transport_container,
     canonical_json_bytes,
     canonical_transport_wrapper_bytes,
     export_payload_chunk,
     finalize_candidate_artifacts,
     main as compiler_main,
+    output_record,
+    parse_compile_transport_stdout,
+    parse_same_response_transport,
+    parse_transport_container,
     sha256_bytes,
-    transport_fallback_prompt,
 )
 
 
@@ -351,6 +362,69 @@ class GptArtifactCompilerTests(unittest.TestCase):
             )
         return chunks
 
+    def same_response_document(self):
+        finalized = self.finalize()
+        document = {
+            "compiler": COMPILER_VERSION,
+            "status": "pass",
+            "outputs": list(finalized.identities),
+            "return_serialized_last": True,
+            "transport": build_same_response_transport(
+                finalized.transport_files,
+            ),
+        }
+        return finalized, document
+
+    def prepare_compile_fixture(
+        self,
+        root: Path,
+    ) -> tuple[Path, Path, dict]:
+        source_root = root / "source"
+        output_root = root / "output"
+        source_root.mkdir()
+        output_root.mkdir()
+        frozen_paths: dict[str, str] = {}
+        for filename, data in self.frozen().items():
+            source = source_root / filename
+            destination = output_root / filename
+            source.write_bytes(data)
+            destination.write_bytes(data)
+            frozen_paths[filename] = str(source)
+        spec = {
+            "report_body": (
+                "# BSC audit report\n\n"
+                "The supplied bytes were checked through the deterministic "
+                "compiler transaction."
+            ),
+            "frozen_artifact_paths": frozen_paths,
+            "audit_return_template": self.template(),
+        }
+        spec_path = root / "compile-spec.json"
+        spec_path.write_bytes(canonical_json_bytes(spec))
+        return spec_path, output_root, spec
+
+    @staticmethod
+    def replace_same_response_encoded(
+        document: dict,
+        encoded: bytes,
+    ) -> None:
+        transport = document["transport"]
+        chunks = _transport_chunks(encoded)
+        transport["encoded_size_bytes"] = len(encoded)
+        transport["encoded_sha256"] = sha256_bytes(encoded)
+        transport["chunk_count"] = len(chunks)
+        transport["chunks"] = [
+            {
+                "chunk_index": index,
+                "chunk_count": len(chunks),
+                "offset_bytes": index * TRANSPORT_CHUNK_BYTES,
+                "chunk_size_bytes": len(chunk),
+                "chunk_sha256": sha256_bytes(chunk),
+                "base64": base64.b64encode(chunk).decode("ascii"),
+            }
+            for index, chunk in enumerate(chunks)
+        ]
+
     def test_export_chunks_reconstruct_exact_payload_and_preserve_terminal_lf(self):
         payload = (
             b"independently::aligned-quartet::ZW5k\n"
@@ -545,6 +619,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 status = compiler_main(
                     [
                         "export-chunk",
+                        "--offline-historical-v3",
                         str(payload_path),
                         "--chunk-index",
                         "0",
@@ -552,7 +627,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 )
             self.assertEqual(status, 0)
             wrapper = json.loads(output.getvalue())
-            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v5")
+            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v6")
             self.assertEqual(
                 output.getvalue().encode("utf-8"),
                 canonical_transport_wrapper_bytes(wrapper),
@@ -576,6 +651,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                     later_status = compiler_main(
                         [
                             "export-chunk",
+                            "--offline-historical-v3",
                             str(payload_path),
                             "--chunk-index",
                             "1",
@@ -605,11 +681,22 @@ class GptArtifactCompilerTests(unittest.TestCase):
     def test_export_chunk_cli_handled_failure_is_exact_no_lf_json_stdout(self):
         with tempfile.TemporaryDirectory() as temporary:
             missing = Path(temporary) / "missing.bin"
+            with redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    compiler_main(
+                        [
+                            "export-chunk",
+                            str(missing),
+                            "--chunk-index",
+                            "0",
+                        ]
+                    )
             output = io.StringIO()
             with redirect_stdout(output):
                 status = compiler_main(
                     [
                         "export-chunk",
+                        "--offline-historical-v3",
                         str(missing),
                         "--chunk-index",
                         "0",
@@ -621,7 +708,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 set(failure),
                 {"compiler", "error", "status"},
             )
-            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v5")
+            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v6")
             self.assertEqual(failure["status"], "blocked")
             self.assertTrue(failure["error"])
             self.assertEqual(
@@ -630,67 +717,296 @@ class GptArtifactCompilerTests(unittest.TestCase):
             )
             self.assertFalse(output.getvalue().endswith("\n"))
 
-    def test_transport_prompt_contains_exact_indexed_fresh_read_commands(self):
-        prompt = transport_fallback_prompt("audit_report.md", 0)
-        self.assertIn(
-            "python /mnt/data/gpt_artifact_compiler.py export-chunk "
-            "/mnt/data/.bsc-transport-v1/audit_report.md --chunk-index 0",
-            prompt,
+    def test_transport_container_is_deterministic_and_preserves_exact_bytes(self):
+        forward = {
+            "zeta.txt": b"aligned quartet ZW5k",
+            "alpha.txt": b"independently\x00exact\n",
+        }
+        reverse = dict(reversed(list(forward.items())))
+        first = build_transport_container(forward)
+        second = build_transport_container(reverse)
+        self.assertEqual(first, second)
+        self.assertTrue(first.startswith(TRANSPORT_CONTAINER_MAGIC))
+        reconstructed = parse_transport_container(first)
+        self.assertEqual(
+            reconstructed,
+            {
+                "alpha.txt": b"independently\x00exact\n",
+                "zeta.txt": b"aligned quartet ZW5k",
+            },
         )
-        self.assertIn("private unexposed transport snapshot", prompt)
-        self.assertIn("Use the enabled Data Analysis tool now", prompt)
-        self.assertIn(
-            "A visible Data Analysis invocation of the exact command below is "
-            "mandatory before any answer",
-            prompt,
-        )
-        self.assertIn("Do not read, trim, normalize, or encode", prompt)
-        self.assertIn("complete stdout byte-for-byte", prompt)
-        self.assertIn("compiler-generated blocked record", prompt)
-        self.assertIn("no trailing line feed", prompt)
-        self.assertIn("Never infer or emit export_failed", prompt)
-        self.assertNotIn("state export_failed", prompt)
-        self.assertNotIn("export-wrapper", prompt)
+        self.assertIn(b"independently", reconstructed["alpha.txt"])
+        self.assertIn(b"ZW5k", reconstructed["zeta.txt"])
 
-        payload_hash = "1" * 64
-        encoded_hash = "2" * 64
-        later = transport_fallback_prompt(
+    def test_finalizer_is_independent_of_frozen_mapping_order(self):
+        forward = self.frozen()
+        reverse = dict(reversed(list(forward.items())))
+        first = finalize_candidate_artifacts(
+            session_reported_runtime=RUNTIME,
+            report_body="# BSC audit report\n\nChecked from exact supplied bytes.",
+            frozen_artifacts=forward,
+            audit_return_template=self.template(),
+        )
+        second = finalize_candidate_artifacts(
+            session_reported_runtime=RUNTIME,
+            report_body="# BSC audit report\n\nChecked from exact supplied bytes.",
+            frozen_artifacts=reverse,
+            audit_return_template=self.template(),
+        )
+        self.assertEqual(first.files, second.files)
+        self.assertEqual(first.identities, second.identities)
+        self.assertEqual(first.transport_files, second.transport_files)
+        self.assertEqual(first.audit_return, second.audit_return)
+
+    def test_same_response_container_enforces_tight_member_and_aggregate_bounds(self):
+        with patch(
+            "scripts.gpt_artifact_compiler.MAX_SAME_RESPONSE_MEMBER_BYTES",
+            3,
+        ):
+            with self.assertRaisesRegex(ValueError, "payload exceeds"):
+                build_transport_container({"artifact.bin": b"four"})
+        with patch(
+            "scripts.gpt_artifact_compiler.MAX_TRANSPORT_CONTAINER_BYTES",
+            len(TRANSPORT_CONTAINER_MAGIC) + 4,
+        ):
+            with self.assertRaisesRegex(ValueError, "aggregate"):
+                build_transport_container({"artifact.bin": b"x"})
+
+    def test_same_response_transport_has_strict_schema_and_exact_public_roster(self):
+        finalized, document = self.same_response_document()
+        raw = canonical_transport_wrapper_bytes(document)
+        parsed, reconstructed = parse_compile_transport_stdout(
+            raw,
+            expected_untransported_files=finalized.files,
+            required_untransported_filenames=(
+                set(finalized.files) - set(finalized.transport_files)
+            ),
+        )
+        expected = [
             "audit_report.md",
-            1,
-            expected_payload_sha256=payload_hash,
-            expected_encoded_sha256=encoded_hash,
+            "audit_return.json",
+            "chatgpt_data_analysis_output.txt",
+            "claim_valid.json",
+            "defect_composition_valid.json",
+        ]
+        self.assertEqual(set(parsed), COMPILE_RESULT_FIELDS)
+        self.assertEqual(parsed["compiler"], "bsc-gpt-artifact-compiler-v6")
+        self.assertEqual(
+            set(parsed["transport"]),
+            SAME_RESPONSE_TRANSPORT_FIELDS,
         )
-        self.assertIn("--chunk-index 1", later)
-        self.assertIn(f"--expect-payload-sha256 {payload_hash}", later)
-        self.assertIn(f"--expect-encoded-sha256 {encoded_hash}", later)
-        with self.assertRaisesRegex(ValueError, "later transport chunks require"):
-            transport_fallback_prompt("audit_report.md", 1)
+        self.assertEqual(
+            parsed["transport"]["transport_version"],
+            SAME_RESPONSE_TRANSPORT_VERSION,
+        )
+        self.assertEqual(
+            parsed["transport"]["container_version"],
+            TRANSPORT_CONTAINER_VERSION,
+        )
+        self.assertEqual(parsed["transport"]["encoding"], TRANSPORT_ENCODING)
+        self.assertEqual(
+            [row["filename"] for row in parsed["transport"]["files"]],
+            expected,
+        )
+        self.assertEqual(list(reconstructed), expected)
+        self.assertEqual(reconstructed, finalized.transport_files)
+        self.assertLessEqual(len(raw), MAX_COMPILE_STDOUT_BYTES)
+        self.assertFalse(raw.endswith(b"\n"))
+        for chunk in parsed["transport"]["chunks"]:
+            self.assertEqual(set(chunk), SAME_RESPONSE_CHUNK_FIELDS)
 
-    def test_compile_cli_captures_runtime_once_and_rejects_model_override(self):
+    def test_aligned_base64_quartet_omission_is_detected(self):
+        finalized, document = self.same_response_document()
+        mutated = copy.deepcopy(document)
+        encoded_text = mutated["transport"]["chunks"][0]["base64"]
+        self.assertGreaterEqual(len(encoded_text), 12)
+        mutated["transport"]["chunks"][0]["base64"] = (
+            encoded_text[:4] + encoded_text[8:]
+        )
+        omitted = base64.b64decode(
+            mutated["transport"]["chunks"][0]["base64"],
+            validate=True,
+        )
+        self.assertNotEqual(
+            len(omitted),
+            mutated["transport"]["chunks"][0]["chunk_size_bytes"],
+        )
+        with self.assertRaisesRegex(ValueError, "chunk byte binding"):
+            parse_compile_transport_stdout(
+                canonical_transport_wrapper_bytes(mutated),
+                expected_untransported_files=finalized.files,
+                required_untransported_filenames=(
+                    set(finalized.files) - set(finalized.transport_files)
+                ),
+            )
+
+    def test_same_response_parser_rejects_roster_order_path_hash_and_size_mutations(self):
+        finalized, document = self.same_response_document()
+
+        missing_files = dict(finalized.transport_files)
+        missing_files.pop("claim_valid.json")
+        missing = copy.deepcopy(document)
+        missing["transport"] = build_same_response_transport(missing_files)
+
+        missing_return_files = dict(finalized.transport_files)
+        missing_return_files.pop(BOUND_RETURN_ARTIFACT)
+        missing_return = copy.deepcopy(document)
+        missing_return_container = build_transport_container(
+            missing_return_files
+        )
+        missing_return_transport = missing_return["transport"]
+        missing_return_transport["container_size_bytes"] = len(
+            missing_return_container
+        )
+        missing_return_transport["container_sha256"] = sha256_bytes(
+            missing_return_container
+        )
+        missing_return_transport["file_count"] = len(missing_return_files)
+        missing_return_transport["files"] = [
+            output_record(filename, data)
+            for filename, data in sorted(missing_return_files.items())
+        ]
+        self.replace_same_response_encoded(
+            missing_return,
+            zlib.compress(missing_return_container, level=9),
+        )
+
+        reversed_roster = copy.deepcopy(document)
+        reversed_roster["transport"]["files"].reverse()
+
+        unsafe_path = copy.deepcopy(document)
+        unsafe_path["transport"]["files"][0]["filename"] = "../audit_report.md"
+
+        file_hash = copy.deepcopy(document)
+        file_hash["transport"]["files"][0]["sha256"] = "0" * 64
+
+        file_size = copy.deepcopy(document)
+        file_size["transport"]["files"][0]["bytes"] += 1
+
+        container_hash = copy.deepcopy(document)
+        container_hash["transport"]["container_sha256"] = "0" * 64
+
+        container_size = copy.deepcopy(document)
+        container_size["transport"]["container_size_bytes"] += 1
+
+        phantom_output = copy.deepcopy(document)
+        phantom_output["outputs"].append(
+            {
+                "filename": "phantom.txt",
+                "bytes": 0,
+                "sha256": hashlib.sha256(b"").hexdigest(),
+            }
+        )
+        phantom_output["outputs"].sort(key=lambda item: item["filename"])
+
+        omitted_source_output = copy.deepcopy(document)
+        omitted_source_output["outputs"] = [
+            item
+            for item in omitted_source_output["outputs"]
+            if item["filename"] != "atomic_modulus_valid.json"
+        ]
+
+        source_output_hash = copy.deepcopy(document)
+        source_record = next(
+            item
+            for item in source_output_hash["outputs"]
+            if item["filename"] == "atomic_modulus_valid.json"
+        )
+        source_record["sha256"] = "0" * 64
+
+        source_output_size = copy.deepcopy(document)
+        source_size_record = next(
+            item
+            for item in source_output_size["outputs"]
+            if item["filename"] == "atomic_modulus_valid.json"
+        )
+        source_size_record["bytes"] += 1
+
+        mutations = {
+            "roster": missing,
+            "required_return": missing_return,
+            "order": reversed_roster,
+            "path": unsafe_path,
+            "file_hash": file_hash,
+            "file_size": file_size,
+            "container_hash": container_hash,
+            "container_size": container_size,
+            "phantom_output": phantom_output,
+            "omitted_source_output": omitted_source_output,
+            "source_output_hash": source_output_hash,
+            "source_output_size": source_output_size,
+        }
+        for label, mutated in mutations.items():
+            with self.subTest(label=label):
+                with self.assertRaises(ValueError):
+                    parse_compile_transport_stdout(
+                        canonical_transport_wrapper_bytes(mutated),
+                        expected_untransported_files=finalized.files,
+                        required_untransported_filenames=(
+                            set(finalized.files) - set(finalized.transport_files)
+                        ),
+                    )
+
+    def test_same_response_parser_rejects_rehashed_invalid_zlib_stream(self):
+        finalized, document = self.same_response_document()
+        mutated = copy.deepcopy(document)
+        encoded = b"".join(
+            base64.b64decode(chunk["base64"], validate=True)
+            for chunk in mutated["transport"]["chunks"]
+        )
+        corrupted = bytes([encoded[0] ^ 0xFF]) + encoded[1:]
+        self.replace_same_response_encoded(mutated, corrupted)
+        with self.assertRaisesRegex(ValueError, "zlib stream"):
+            parse_compile_transport_stdout(
+                canonical_transport_wrapper_bytes(mutated),
+                expected_untransported_files=finalized.files,
+                required_untransported_filenames=(
+                    set(finalized.files) - set(finalized.transport_files)
+                ),
+            )
+
+    def test_same_response_parser_rejects_source_omitted_from_execution_inputs(self):
+        finalized, document = self.same_response_document()
+        return_document = json.loads(
+            finalized.files[BOUND_RETURN_ARTIFACT].decode("utf-8")
+        )
+        for row in return_document["execution"]:
+            if row["activity"] in {
+                "model_reasoning",
+                "chatgpt_data_analysis",
+            }:
+                row["input_artifact_ids"].remove("artifact:source")
+        mutated_return = canonical_json_bytes(return_document)
+        mutated_files = dict(finalized.transport_files)
+        mutated_files[BOUND_RETURN_ARTIFACT] = mutated_return
+        mutated = copy.deepcopy(document)
+        mutated["transport"] = build_same_response_transport(mutated_files)
+        return_identity = next(
+            item
+            for item in mutated["outputs"]
+            if item["filename"] == BOUND_RETURN_ARTIFACT
+        )
+        return_identity.update(
+            bytes=len(mutated_return),
+            sha256=sha256_bytes(mutated_return),
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "model_reasoning must bind exactly request and sources",
+        ):
+            parse_compile_transport_stdout(
+                canonical_transport_wrapper_bytes(mutated),
+                expected_untransported_files=finalized.files,
+                required_untransported_filenames=(
+                    set(finalized.files) - set(finalized.transport_files)
+                ),
+            )
+
+    def test_compile_cli_emits_same_response_bytes_without_output_tree_dependence(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            source_root = root / "source"
-            output_root = root / "output"
-            source_root.mkdir()
-            output_root.mkdir()
-            frozen_paths: dict[str, str] = {}
-            for filename, data in self.frozen().items():
-                source = source_root / filename
-                destination = output_root / filename
-                source.write_bytes(data)
-                destination.write_bytes(data)
-                frozen_paths[filename] = str(source)
-            spec = {
-                "report_body": (
-                    "# BSC audit report\n\n"
-                    "The supplied bytes were checked through the deterministic "
-                    "compiler transaction."
-                ),
-                "frozen_artifact_paths": frozen_paths,
-                "audit_return_template": self.template(),
-            }
-            spec_path = root / "compile-spec.json"
-            spec_path.write_bytes(canonical_json_bytes(spec))
+            spec_path, output_root, spec = self.prepare_compile_fixture(root)
             output = io.StringIO()
             with redirect_stdout(output):
                 status = compiler_main(
@@ -703,6 +1019,26 @@ class GptArtifactCompilerTests(unittest.TestCase):
                     ]
                 )
             self.assertEqual(status, 0, output.getvalue())
+            raw = output.getvalue().encode("utf-8")
+            self.assertFalse(raw.endswith(b"\n"))
+            self.assertLessEqual(len(raw), MAX_COMPILE_STDOUT_BYTES)
+            exact_inputs = {
+                filename: Path(path).read_bytes()
+                for filename, path in spec["frozen_artifact_paths"].items()
+            }
+            compile_result, reconstructed = parse_compile_transport_stdout(
+                raw,
+                expected_untransported_files=exact_inputs,
+                required_untransported_filenames={
+                    "atomic_modulus_valid.json"
+                },
+            )
+            self.assertTrue(compile_result["return_serialized_last"])
+            self.assertEqual(
+                compile_result["compiler"],
+                "bsc-gpt-artifact-compiler-v6",
+            )
+
             ledger = (output_root / BOUND_RUNTIME_ARTIFACT).read_text(
                 encoding="utf-8"
             )
@@ -710,102 +1046,42 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 ledger.count(f"session_reported_runtime={sys.version}\n"),
                 1,
             )
-            document = json.loads(
+            return_document = json.loads(
                 (output_root / BOUND_RETURN_ARTIFACT).read_text(encoding="utf-8")
             )
             analysis = next(
                 row
-                for row in document["execution"]
+                for row in return_document["execution"]
                 if row["activity"] == "chatgpt_data_analysis"
             )
             self.assertEqual(analysis["version"], sys.version)
-            compile_result = json.loads(output.getvalue())
             self.assertEqual(
-                compile_result["compiler"],
-                "bsc-gpt-artifact-compiler-v5",
+                reconstructed[BOUND_RETURN_ARTIFACT],
+                (output_root / BOUND_RETURN_ARTIFACT).read_bytes(),
             )
-            self.assertNotIn(TRANSPORT_SNAPSHOT_DIRECTORY, output.getvalue())
-            self.assertNotIn(TRANSPORT_SNAPSHOT_DIRECTORY, ledger)
-            self.assertNotIn(
-                TRANSPORT_SNAPSHOT_DIRECTORY,
-                json.dumps(document, sort_keys=True),
-            )
-            self.assertTrue(
-                all(
-                    TRANSPORT_SNAPSHOT_DIRECTORY not in row["filename"]
-                    for row in compile_result["outputs"]
+            self.assertNotIn(".bsc-transport-v1", output.getvalue())
+            self.assertFalse(
+                any(
+                    path.name.startswith(".bsc-transport")
+                    for path in output_root.iterdir()
                 )
             )
-            snapshot_root = output_root / TRANSPORT_SNAPSHOT_DIRECTORY
-            self.assertTrue(snapshot_root.is_dir())
-            self.assertFalse(snapshot_root.is_symlink())
-            expected_transport = {
-                "claim_valid.json",
-                "defect_composition_valid.json",
-                BOUND_REPORT_ARTIFACT,
-                BOUND_RUNTIME_ARTIFACT,
-                BOUND_RETURN_ARTIFACT,
-            }
-            self.assertEqual(
-                {path.name for path in snapshot_root.iterdir()},
-                expected_transport,
-            )
-            original_transport = {
-                filename: (output_root / filename).read_bytes()
-                for filename in expected_transport
-            }
-            for filename, original in original_transport.items():
-                snapshot = snapshot_root / filename
-                self.assertTrue(snapshot.is_file())
-                self.assertFalse(snapshot.is_symlink())
-                self.assertEqual(snapshot.read_bytes(), original)
 
-            # Simulate ChatGPT replacing, deleting, or otherwise making every
-            # public output path unusable after the original response. The
-            # private compile-time snapshots remain the sole fallback source.
-            for filename in expected_transport:
+            captured = dict(reconstructed)
+            for filename in captured:
                 (output_root / filename).unlink()
-            for filename, original in original_transport.items():
-                wrappers: list[dict] = []
-                chunk_index = 0
-                expected_payload = None
-                expected_encoded = None
-                while True:
-                    chunk_output = io.StringIO()
-                    command = [
-                        "export-chunk",
-                        str(snapshot_root / filename),
-                        "--chunk-index",
-                        str(chunk_index),
-                    ]
-                    if expected_payload is not None:
-                        command.extend(
-                            [
-                                "--expect-payload-sha256",
-                                expected_payload,
-                                "--expect-encoded-sha256",
-                                expected_encoded,
-                            ]
-                        )
-                    with redirect_stdout(chunk_output):
-                        chunk_status = compiler_main(command)
-                    self.assertEqual(chunk_status, 0, chunk_output.getvalue())
-                    wrapper = json.loads(chunk_output.getvalue())
-                    self.assertEqual(wrapper["filename"], filename)
-                    wrappers.append(wrapper)
-                    if expected_payload is None:
-                        expected_payload = wrapper["payload_sha256"]
-                        expected_encoded = wrapper["encoded_sha256"]
-                    chunk_index += 1
-                    if chunk_index == wrapper["chunk_count"]:
-                        break
-                encoded = b"".join(
-                    base64.b64decode(wrapper["base64"], validate=True)
-                    for wrapper in wrappers
-                )
-                reconstructed = zlib.decompress(encoded)
-                self.assertEqual(reconstructed, original)
-                self.assertEqual(sha256_bytes(reconstructed), expected_payload)
+            _, replayed = parse_compile_transport_stdout(
+                raw,
+                expected_untransported_files=exact_inputs,
+                required_untransported_filenames={
+                    "atomic_modulus_valid.json"
+                },
+            )
+            self.assertEqual(replayed, captured)
+            self.assertIn(
+                b"compiler transaction",
+                replayed[BOUND_REPORT_ARTIFACT],
+            )
 
             injected = dict(spec)
             injected["session_reported_runtime"] = RUNTIME
@@ -827,72 +1103,40 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 "compiler spec fields differ from the strict contract",
                 injected_output.getvalue(),
             )
+            self.assertFalse(injected_output.getvalue().endswith("\n"))
 
-    def test_compile_refuses_stale_transport_snapshot_directory(self):
+    def test_compile_stdout_bound_blocks_without_partial_transport_or_outputs(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            source_root = root / "source"
-            output_root = root / "output"
-            source_root.mkdir()
-            output_root.mkdir()
-            (output_root / TRANSPORT_SNAPSHOT_DIRECTORY).mkdir()
-            frozen_paths: dict[str, str] = {}
-            for filename, data in self.frozen().items():
-                source = source_root / filename
-                destination = output_root / filename
-                source.write_bytes(data)
-                destination.write_bytes(data)
-                frozen_paths[filename] = str(source)
-            spec = {
-                "report_body": "# BSC audit report\n\nDeterministic transaction.",
-                "frozen_artifact_paths": frozen_paths,
-                "audit_return_template": self.template(),
-            }
-            spec_path = root / "compile-spec.json"
-            spec_path.write_bytes(canonical_json_bytes(spec))
+            spec_path, output_root, _ = self.prepare_compile_fixture(root)
             output = io.StringIO()
-            with redirect_stdout(output):
-                status = compiler_main(
-                    [
-                        "compile",
-                        "--spec",
-                        str(spec_path),
-                        "--output-dir",
-                        str(output_root),
-                    ]
-                )
+            with patch(
+                "scripts.gpt_artifact_compiler.MAX_COMPILE_STDOUT_BYTES",
+                256,
+            ):
+                with redirect_stdout(output):
+                    status = compiler_main(
+                        [
+                            "compile",
+                            "--spec",
+                            str(spec_path),
+                            "--output-dir",
+                            str(output_root),
+                        ]
+                    )
             self.assertEqual(status, 1)
-            self.assertIn(
-                "refusing to reuse a transport snapshot directory",
-                output.getvalue(),
-            )
-
-    def test_export_rejects_linked_transport_snapshot_directory_when_supported(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            real = root / "real"
-            real.mkdir()
-            (real / "audit_report.md").write_bytes(b"exact")
-            linked = root / TRANSPORT_SNAPSHOT_DIRECTORY
-            try:
-                linked.symlink_to(real, target_is_directory=True)
-            except (OSError, NotImplementedError):
-                self.skipTest("directory symlink creation is unavailable on this platform")
-            output = io.StringIO()
-            with redirect_stdout(output):
-                status = compiler_main(
-                    [
-                        "export-chunk",
-                        str(linked / "audit_report.md"),
-                        "--chunk-index",
-                        "0",
-                    ]
-                )
-            self.assertEqual(status, 1)
-            self.assertIn(
-                "transport snapshot directory must be one regular non-linked directory",
-                output.getvalue(),
-            )
+            failure = json.loads(output.getvalue())
+            self.assertEqual(set(failure), {"compiler", "error", "status"})
+            self.assertEqual(failure["compiler"], COMPILER_VERSION)
+            self.assertEqual(failure["status"], "blocked")
+            self.assertNotIn("transport", failure)
+            self.assertFalse(output.getvalue().endswith("\n"))
+            for filename in (
+                BOUND_REPORT_ARTIFACT,
+                BOUND_RUNTIME_ARTIFACT,
+                BOUND_RETURN_ARTIFACT,
+            ):
+                self.assertFalse((output_root / filename).exists())
 
     def test_compiler_does_not_mutate_the_supplied_template(self):
         template = self.template()

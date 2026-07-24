@@ -13,6 +13,7 @@ import base64
 import json
 import os
 import re
+import shlex
 import unicodedata
 import zlib
 from html.parser import HTMLParser
@@ -24,6 +25,7 @@ try:
         BOUND_REPORT_ARTIFACT,
         BOUND_RETURN_ARTIFACT,
         BOUND_RUNTIME_ARTIFACT,
+        COMPILER_VERSION,
         EXPORT_CHUNK_FIELDS,
         MAX_TRANSPORT_CHUNKS,
         MAX_TRANSPORT_ENCODED_BYTES,
@@ -31,6 +33,7 @@ try:
         REPORT_RUNTIME_REFERENCE,
         RUNTIME_BASIS_LINE,
         RUNTIME_PREFIX,
+        SAME_RESPONSE_TRANSPORT_VERSION,
         TRANSPORT_CHUNK_BYTES,
         TRANSPORT_CHUNK_VERSION,
         TRANSPORT_ENCODING,
@@ -40,16 +43,17 @@ try:
         extract_session_reported_runtime,
         finalize_candidate_artifacts,
         output_record,
+        parse_compile_transport_stdout,
         parse_runtime_ledger,
         runtime_ledger_text,
         sha256_bytes,
-        transport_fallback_prompt,
     )
 except ModuleNotFoundError:  # Direct execution from scripts/.
     from gpt_artifact_compiler import (  # type: ignore[no-redef]
         BOUND_REPORT_ARTIFACT,
         BOUND_RETURN_ARTIFACT,
         BOUND_RUNTIME_ARTIFACT,
+        COMPILER_VERSION,
         EXPORT_CHUNK_FIELDS,
         MAX_TRANSPORT_CHUNKS,
         MAX_TRANSPORT_ENCODED_BYTES,
@@ -57,6 +61,7 @@ except ModuleNotFoundError:  # Direct execution from scripts/.
         REPORT_RUNTIME_REFERENCE,
         RUNTIME_BASIS_LINE,
         RUNTIME_PREFIX,
+        SAME_RESPONSE_TRANSPORT_VERSION,
         TRANSPORT_CHUNK_BYTES,
         TRANSPORT_CHUNK_VERSION,
         TRANSPORT_ENCODING,
@@ -66,14 +71,14 @@ except ModuleNotFoundError:  # Direct execution from scripts/.
         extract_session_reported_runtime,
         finalize_candidate_artifacts,
         output_record,
+        parse_compile_transport_stdout,
         parse_runtime_ledger,
         runtime_ledger_text,
         sha256_bytes,
-        transport_fallback_prompt,
     )
 
 
-CONTROLLER_RECORD_VERSION = "3.0"
+CONTROLLER_RECORD_VERSION = "4.0"
 CONTROLLER_RECORD_FIELDS = {
     "controller_record_version",
     "case_id",
@@ -87,11 +92,42 @@ CONTROLLER_RECORD_FIELDS = {
     "inputs",
     "observed_output_controls",
     "observed_outputs",
-    "transport_attempts",
-    "wrapper_captures",
+    "direct_acquisition_attempts",
+    "compiler_transport_capture",
+    "reconstructed_outputs",
 }
 BYTE_RECORD_FIELDS = {"kind", "filename", "bytes", "sha256"}
 OUTPUT_RECORD_FIELDS = {"filename", "bytes", "sha256"}
+DIRECT_ACQUISITION_ATTEMPT_FIELDS = {"filename", "outcome"}
+DIRECT_ACQUISITION_OUTCOMES = {
+    "download_event",
+    "no_download_event",
+    "unavailable",
+}
+COMPILER_BLOCK_IDENTITY_FIELDS = {"code_block_index", "bytes", "sha256"}
+RECONSTRUCTED_OUTPUT_FIELDS = {
+    "filename",
+    "materialized_filename",
+    "bytes",
+    "sha256",
+}
+COMPILER_TRANSPORT_CAPTURE_FIELDS = {
+    "status",
+    "candidate_evidence",
+    "detail",
+    "compiler_blocks",
+    "compiler",
+    "transport_version",
+}
+COMPILER_TRANSPORT_STATUSES = {
+    "verified",
+    "missing",
+    "malformed",
+    "blocked",
+    "extra",
+    "duplicate",
+    "truncated",
+}
 WRAPPER_CAPTURE_FIELDS = {
     "payload_filename",
     "chunk_index",
@@ -151,6 +187,9 @@ OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES = (
 )
 
 RAW_RESPONSE_FILENAME = "raw/response.outerHTML.html"
+RECONSTRUCTED_OUTPUT_DIRECTORY = "reconstructed"
+ARTIFACT_TRANSPORT_VERSION = "3.0"
+SAME_RESPONSE_TRANSPORT_METHOD = "in_turn_compiler_bundle"
 
 CONTROLLER_VALID = "controller_valid"
 TRIAL_INVALID_CONTROLLER = "trial_invalid_controller"
@@ -369,6 +408,79 @@ def _assert_portable_unique_basenames(values: Iterable[object], label: str) -> N
         raise ValueError(f"{label} contains a normalized or case-insensitive collision")
 
 
+def _direct_acquisition_argument(value: str) -> tuple[str, str]:
+    """Parse one explicit ``FILENAME=OUTCOME`` controller observation."""
+
+    try:
+        filename, outcome = value.rsplit("=", 1)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "direct acquisition must use FILENAME=OUTCOME"
+        ) from exc
+    if not _portable_basename(filename):
+        raise argparse.ArgumentTypeError(
+            "direct acquisition filename must be a portable NFC basename"
+        )
+    if outcome not in DIRECT_ACQUISITION_OUTCOMES:
+        raise argparse.ArgumentTypeError(
+            "direct acquisition outcome must be download_event, "
+            "no_download_event, or unavailable"
+        )
+    return filename, outcome
+
+
+def _direct_acquisition_records(
+    attempts: Iterable[tuple[str, str]],
+) -> list[dict[str, str]]:
+    """Normalize caller-supplied direct-acquisition observations."""
+
+    records: list[dict[str, str]] = []
+    for attempt in attempts:
+        if (
+            not isinstance(attempt, (tuple, list))
+            or len(attempt) != 2
+            or not _portable_basename(attempt[0])
+            or attempt[1] not in DIRECT_ACQUISITION_OUTCOMES
+        ):
+            raise ValueError(
+                "direct acquisition attempts must be portable "
+                "(filename, outcome) pairs"
+            )
+        records.append({"filename": attempt[0], "outcome": attempt[1]})
+    records.sort(key=lambda item: item["filename"])
+    _assert_portable_unique_basenames(
+        (item["filename"] for item in records),
+        "direct acquisition filenames",
+    )
+    return records
+
+
+def _direct_acquisition_map(value: object) -> dict[str, str]:
+    """Validate and index the serialized direct-acquisition evidence."""
+
+    if not isinstance(value, list) or any(
+        not isinstance(item, dict)
+        or set(item) != DIRECT_ACQUISITION_ATTEMPT_FIELDS
+        or not _portable_basename(item.get("filename"))
+        or item.get("outcome") not in DIRECT_ACQUISITION_OUTCOMES
+        for item in value
+    ):
+        raise ValueError(
+            "direct acquisition attempts differ from the strict v4 contract"
+        )
+    records = [
+        {"filename": item["filename"], "outcome": item["outcome"]}
+        for item in value
+    ]
+    if records != sorted(records, key=lambda item: item["filename"]):
+        raise ValueError("direct acquisition attempts must be sorted by filename")
+    _assert_portable_unique_basenames(
+        (item["filename"] for item in records),
+        "direct acquisition filenames",
+    )
+    return {item["filename"]: item["outcome"] for item in records}
+
+
 INDEXED_WRAPPER_RE = re.compile(
     r"^(?P<payload>.+)\.export\.(?P<chunk_index>[0-9]{5})\.json$"
 )
@@ -413,6 +525,74 @@ def _transport_capture_names(
     )
 
 
+def _legacy_transport_fallback_prompt(
+    filename: str,
+    chunk_index: int = 0,
+    *,
+    expected_payload_sha256: str | None = None,
+    expected_encoded_sha256: str | None = None,
+) -> str:
+    """Reproduce a v3 prompt only when validating preserved historical evidence."""
+
+    if not _portable_basename(filename):
+        raise ValueError("transport payload filename must be a portable basename")
+    if (
+        isinstance(chunk_index, bool)
+        or not isinstance(chunk_index, int)
+        or not 0 <= chunk_index < MAX_TRANSPORT_CHUNKS
+    ):
+        raise ValueError("transport chunk index must be in 0..99999")
+    for value, label in (
+        (expected_payload_sha256, "expected payload SHA-256"),
+        (expected_encoded_sha256, "expected encoded SHA-256"),
+    ):
+        if value is not None and (
+            not isinstance(value, str)
+            or LOWER_SHA256_RE.fullmatch(value) is None
+        ):
+            raise ValueError(f"{label} must be lowercase hexadecimal")
+    if (expected_payload_sha256 is None) != (expected_encoded_sha256 is None):
+        raise ValueError("expected payload and encoded SHA-256 values must be paired")
+    if chunk_index > 0 and expected_payload_sha256 is None:
+        raise ValueError("later transport chunks require both expected SHA-256 values")
+    snapshot_path = f"/mnt/data/.bsc-transport-v1/{filename}"
+    command = (
+        "python /mnt/data/gpt_artifact_compiler.py export-chunk "
+        + shlex.quote(snapshot_path)
+        + f" --chunk-index {chunk_index}"
+    )
+    if expected_payload_sha256 is not None:
+        command += (
+            " --expect-payload-sha256 "
+            + expected_payload_sha256
+            + " --expect-encoded-sha256 "
+            + expected_encoded_sha256
+        )
+    return (
+        "TRANSPORT FALLBACK ONLY. The direct file control emitted no observable "
+        f"download event for {filename}. Requesting bounded chunk {chunk_index}. "
+        "Use the enabled Data Analysis tool now. A visible Data Analysis invocation "
+        "of the exact command below is mandatory before any answer; do not answer "
+        "from reasoning or infer that execution occurred. "
+        "The compiler sealed the final bytes in a private unexposed transport "
+        "snapshot during the original compile transaction. Do not regenerate or "
+        "alter that snapshot. "
+        "Do not read, trim, normalize, or encode the payload yourself. Execute this "
+        f"literal command exactly once: {command} . Return the command's complete "
+        "stdout byte-for-byte as the only strict JSON object in one code block, "
+        "whether it is a chunk wrapper or a compiler-generated blocked record. "
+        "The canonical stdout has no trailing line feed; do not reimplement it or "
+        "reuse a hash, size, ledger row, return field, or "
+        "prose value. The controller alone requests later chunk indices using the "
+        "payload and encoded SHA-256 values from chunk 0. If the command reports "
+        "a handled failure, return only its exact JSON stdout. If no invocation or "
+        "stdout occurs, emit no substitute token or prose. Never infer or emit "
+        "export_failed. This identifies only "
+        "the exported compressed chunk received here and its strictly reconstructed "
+        "payload, never unavailable download-button bytes."
+    )
+
+
 def _parse_indexed_name(
     name: str,
     pattern: re.Pattern[str],
@@ -429,11 +609,25 @@ def _parse_indexed_name(
 class _CodeBlockTextExtractor(HTMLParser):
     """Recover decoded DOM text from code elements in preserved outerHTML."""
 
+    _NON_CONTENT_TAGS = {
+        "button",
+        "noscript",
+        "script",
+        "style",
+        "svg",
+        "template",
+    }
+
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.blocks: list[str] = []
+        self.block_fenced: list[bool] = []
+        self.outside_text_positions: list[tuple[int, str]] = []
         self._code_depth = 0
+        self._pre_depth = 0
         self._current: list[str] | None = None
+        self._current_fenced = False
+        self._non_content_depth = 0
         self.invalid_nesting = False
 
     def handle_starttag(
@@ -442,16 +636,33 @@ class _CodeBlockTextExtractor(HTMLParser):
         attrs: list[tuple[str, str | None]],
     ) -> None:
         del attrs
-        if tag.casefold() != "code":
+        normalized = tag.casefold()
+        if normalized in self._NON_CONTENT_TAGS:
+            self._non_content_depth += 1
+        if normalized == "pre":
+            self._pre_depth += 1
+        if normalized != "code":
             return
         if self._code_depth:
             self.invalid_nesting = True
         else:
             self._current = []
+            self._current_fenced = self._pre_depth > 0
         self._code_depth += 1
 
     def handle_endtag(self, tag: str) -> None:
-        if tag.casefold() != "code":
+        normalized = tag.casefold()
+        if normalized in self._NON_CONTENT_TAGS:
+            if self._non_content_depth == 0:
+                self.invalid_nesting = True
+            else:
+                self._non_content_depth -= 1
+        if normalized == "pre":
+            if self._pre_depth == 0:
+                self.invalid_nesting = True
+            else:
+                self._pre_depth -= 1
+        if normalized != "code":
             return
         if self._code_depth == 0:
             self.invalid_nesting = True
@@ -460,11 +671,15 @@ class _CodeBlockTextExtractor(HTMLParser):
         if self._code_depth == 0:
             assert self._current is not None
             self.blocks.append("".join(self._current))
+            self.block_fenced.append(self._current_fenced)
             self._current = None
+            self._current_fenced = False
 
     def handle_data(self, data: str) -> None:
         if self._code_depth and self._current is not None:
             self._current.append(data)
+        elif self._non_content_depth == 0 and data.strip():
+            self.outside_text_positions.append((len(self.blocks), data))
 
 
 class _ResponseInspector(HTMLParser):
@@ -541,6 +756,205 @@ def _extract_single_code_block_bytes(response_outer_html: bytes) -> bytes:
             "transport response outerHTML must contain exactly one complete code block"
         )
     return parser.blocks[0].encode("utf-8")
+
+
+def _extract_code_block_bytes(
+    response_outer_html: bytes,
+) -> tuple[
+    list[bytes],
+    tuple[int, bytes] | None,
+    bool,
+    tuple[tuple[int, str], ...],
+    tuple[bool, ...],
+    bool,
+]:
+    """Return every complete code block and any exact unterminated final block."""
+
+    try:
+        html = response_outer_html.decode("utf-8", errors="strict")
+    except UnicodeError as exc:
+        raise ValueError("original response outerHTML is not strict UTF-8") from exc
+    parser = _CodeBlockTextExtractor()
+    try:
+        parser.feed(html)
+        parser.close()
+    except Exception as exc:
+        raise ValueError("original response outerHTML could not be parsed") from exc
+    blocks = [value.encode("utf-8") for value in parser.blocks]
+    partial = None
+    if parser._current is not None:
+        partial = (len(blocks), "".join(parser._current).encode("utf-8"))
+    return (
+        blocks,
+        partial,
+        parser.invalid_nesting,
+        tuple(parser.outside_text_positions),
+        tuple(parser.block_fenced),
+        parser._current_fenced,
+    )
+
+
+def _compiler_block_identity(index: int, data: bytes) -> dict[str, Any]:
+    return {
+        "code_block_index": index,
+        "bytes": len(data),
+        "sha256": sha256_bytes(data),
+    }
+
+
+def _candidate_transport_error_status(message: str) -> str:
+    lowered = message.casefold()
+    if any(token in lowered for token in ("duplicate", "collision", "not unique")):
+        return "duplicate"
+    if any(
+        token in lowered
+        for token in ("extra", "unexpected", "roster differs")
+    ):
+        return "extra"
+    return "malformed"
+
+
+def _capture_same_response_transport(
+    response_outer_html: bytes,
+    *,
+    expected_untransported_files: dict[str, bytes] | None = None,
+    required_untransported_filenames: Iterable[str] = (),
+) -> tuple[dict[str, Any], dict[str, bytes]]:
+    """Classify and verify the compiler-v6 block in the original response.
+
+    Candidate-emitted transport defects are returned as evidence states.  Only
+    loss or mutation of the original response itself raises a controller error.
+    """
+
+    (
+        blocks,
+        partial,
+        invalid_nesting,
+        outside_text_positions,
+        block_fenced,
+        partial_fenced,
+    ) = (
+        _extract_code_block_bytes(
+        response_outer_html
+        )
+    )
+    marker = COMPILER_VERSION.encode("utf-8")
+    candidates = [
+        (index, data)
+        for index, data in enumerate(blocks)
+        if marker in data
+    ]
+    partial_candidate = (
+        partial if partial is not None and marker in partial[1] else None
+    )
+    identities = [
+        _compiler_block_identity(index, data) for index, data in candidates
+    ]
+    if partial_candidate is not None:
+        identities.append(
+            _compiler_block_identity(partial_candidate[0], partial_candidate[1])
+        )
+
+    base: dict[str, Any] = {
+        "status": "missing",
+        "candidate_evidence": True,
+        "detail": "no compiler-v6 stdout block was present in the completed response",
+        "compiler_blocks": identities,
+        "compiler": None,
+        "transport_version": None,
+    }
+    if len(identities) > 1:
+        base["status"] = "duplicate"
+        base["detail"] = "more than one compiler-v6 stdout block was present"
+        return base, {}
+    if partial_candidate is not None:
+        base["status"] = "truncated"
+        base["detail"] = (
+            "the compiler-v6 stdout fenced code block was not complete"
+            if partial_fenced
+            else "the compiler-v6 stdout was not in a fenced code block"
+        )
+        base["compiler"] = COMPILER_VERSION
+        return base, {}
+    if not candidates:
+        if invalid_nesting:
+            base["status"] = "malformed"
+            base["detail"] = "response code-block nesting was malformed"
+        return base, {}
+
+    candidate_index, compiler_stdout = candidates[0]
+    base["compiler"] = COMPILER_VERSION
+    if not block_fenced[candidate_index]:
+        base["status"] = "malformed"
+        base["detail"] = "the compiler-v6 stdout was not in a fenced code block"
+        return base, {}
+    trailing_text = [
+        text
+        for completed_blocks, text in outside_text_positions
+        if completed_blocks > candidate_index
+    ]
+    if (
+        candidate_index != len(blocks) - 1
+        or (partial is not None and partial_candidate is None)
+        or trailing_text
+    ):
+        base["status"] = "extra"
+        base["detail"] = (
+            "the compiler-v6 stdout block was not the final response content"
+        )
+        return base, {}
+    try:
+        parsed = _strict_json_document(compiler_stdout, "compiler stdout")
+    except ValueError as exc:
+        base["status"] = "malformed"
+        base["detail"] = str(exc)
+        return base, {}
+    if not isinstance(parsed, dict):
+        base["status"] = "malformed"
+        base["detail"] = "compiler stdout must be one JSON object"
+        return base, {}
+    transport = parsed.get("transport")
+    if isinstance(transport, dict):
+        value = transport.get("transport_version")
+        if isinstance(value, str):
+            base["transport_version"] = value
+    if parsed.get("status") == "blocked":
+        if (
+            set(parsed) == {"compiler", "status", "error"}
+            and parsed.get("compiler") == COMPILER_VERSION
+            and isinstance(parsed.get("error"), str)
+            and parsed["error"]
+            and canonical_transport_wrapper_bytes(parsed) == compiler_stdout
+        ):
+            base["status"] = "blocked"
+            base["detail"] = parsed["error"]
+        else:
+            base["status"] = "malformed"
+            base["detail"] = "compiler blocked record differs from the canonical contract"
+        return base, {}
+    try:
+        _, reconstructed = parse_compile_transport_stdout(
+            compiler_stdout,
+            expected_untransported_files=expected_untransported_files,
+            required_untransported_filenames=required_untransported_filenames,
+        )
+    except (TypeError, ValueError) as exc:
+        base["status"] = _candidate_transport_error_status(str(exc))
+        base["detail"] = str(exc)
+        return base, {}
+    if invalid_nesting:
+        base["status"] = "malformed"
+        base["detail"] = "response code-block nesting was malformed"
+        return base, {}
+    base.update(
+        {
+            "status": "verified",
+            "candidate_evidence": False,
+            "detail": "canonical compiler-v6 same-response transport verified",
+            "transport_version": SAME_RESPONSE_TRANSPORT_VERSION,
+        }
+    )
+    return base, reconstructed
 
 
 def _strict_export_chunk(
@@ -843,7 +1257,10 @@ def validate_closed_evidence_layout(root: Path) -> None:
     for entry in root_entries:
         if _is_link_or_junction(entry):
             raise ValueError(f"evidence entry is a link or junction: {entry.name}")
-        if entry.is_dir() and entry.name != "raw":
+        if entry.is_dir() and entry.name not in {
+            "raw",
+            RECONSTRUCTED_OUTPUT_DIRECTORY,
+        }:
             raise ValueError(f"unexpected evidence directory: {entry.name}")
         if not entry.is_dir() and not entry.is_file():
             raise ValueError(f"evidence entry is not a regular file: {entry.name}")
@@ -912,6 +1329,40 @@ def validate_closed_evidence_layout(root: Path) -> None:
             "raw capture roster must equal response.outerHTML.html, every exact "
             "prompt/complete response pair, and every captured indexed wrapper"
         )
+    reconstructed_root = root / RECONSTRUCTED_OUTPUT_DIRECTORY
+    if reconstructed_root.exists():
+        if (
+            _is_link_or_junction(reconstructed_root)
+            or not reconstructed_root.is_dir()
+            or reconstructed_root.resolve(strict=True).parent
+            != root.resolve(strict=True)
+        ):
+            raise ValueError("reconstructed must be one real in-tree directory")
+        for entry in reconstructed_root.iterdir():
+            if (
+                _is_link_or_junction(entry)
+                or not entry.is_file()
+                or not _portable_basename(entry.name)
+                or entry.parent.resolve(strict=True)
+                != reconstructed_root.resolve(strict=True)
+            ):
+                raise ValueError(
+                    f"reconstructed output is not one regular portable file: {entry.name}"
+                )
+
+
+def _legacy_transport_evidence_names(root: Path) -> list[str]:
+    """Inventory well-formed historical v3 transport state in a v4 trial."""
+
+    names = [
+        path.name
+        for path in _discover_indexed_wrappers(root).values()
+    ]
+    raw_root = root / "raw"
+    prompts, responses = _discover_transport_attempt_files(raw_root)
+    names.extend(path.name for path in prompts.values())
+    names.extend(path.name for path in responses.values())
+    return sorted(set(names))
 
 
 def _issue(code: str, path: str, message: str) -> dict[str, str]:
@@ -1065,14 +1516,14 @@ def _capture_transport_inventory(
             )
 
         if chunk_index == 0:
-            expected_prompt = transport_fallback_prompt(payload, 0)
+            expected_prompt = _legacy_transport_fallback_prompt(payload, 0)
         else:
             first_identity = prompt_identities.get(payload)
             if first_identity is None:
                 raise ValueError(
                     f"later transport prompt lacks a captured chunk-0 identity: {key!r}"
                 )
-            expected_prompt = transport_fallback_prompt(
+            expected_prompt = _legacy_transport_fallback_prompt(
                 payload,
                 chunk_index,
                 expected_payload_sha256=first_identity[0],
@@ -1296,6 +1747,21 @@ def validate_controller_record(
                 "CONTROLLER_EVIDENCE_LAYOUT_INVALID",
                 "evidence:$",
                 str(exc),
+            )
+        )
+    try:
+        legacy_transport_names = _legacy_transport_evidence_names(root)
+    except ValueError:
+        legacy_transport_names = []
+    if legacy_transport_names:
+        issues.append(
+            _issue(
+                "CONTROLLER_LEGACY_TRANSPORT_EVIDENCE_FORBIDDEN",
+                "evidence:$",
+                (
+                    "controller-v4 trials forbid historical export-chunk prompts, "
+                    f"responses, or wrappers: {legacy_transport_names!r}"
+                ),
             )
         )
     if not isinstance(record, dict) or set(record) != CONTROLLER_RECORD_FIELDS:
@@ -1535,10 +2001,13 @@ def validate_controller_record(
 
     outputs = record.get("observed_outputs")
     expected_outputs: list[dict[str, Any]] = []
+    expected_direct_output_bytes: dict[str, bytes] = {}
     for filename in sorted(expected_output_filenames):
         path = _safe_file(root, filename)
         if path is not None:
-            expected_outputs.append(output_record(filename, path.read_bytes()))
+            data = _stable_read(path)
+            expected_direct_output_bytes[filename] = data
+            expected_outputs.append(output_record(filename, data))
     issues.extend(
         _validate_bound_roster(
             root=root,
@@ -1549,81 +2018,175 @@ def validate_controller_record(
             fields=OUTPUT_RECORD_FIELDS,
         )
     )
-    captures = record.get("wrapper_captures")
-    attempts = record.get("transport_attempts")
-    captures_contract_valid = isinstance(captures, list) and all(
-        isinstance(item, dict) and set(item) == WRAPPER_CAPTURE_FIELDS
-        for item in captures
+    capture = record.get("compiler_transport_capture")
+    capture_contract_valid = (
+        isinstance(capture, dict)
+        and set(capture) == COMPILER_TRANSPORT_CAPTURE_FIELDS
+        and capture.get("status") in COMPILER_TRANSPORT_STATUSES
+        and isinstance(capture.get("candidate_evidence"), bool)
+        and isinstance(capture.get("detail"), str)
+        and isinstance(capture.get("compiler_blocks"), list)
+        and all(
+            isinstance(item, dict)
+            and set(item) == COMPILER_BLOCK_IDENTITY_FIELDS
+            and isinstance(item.get("code_block_index"), int)
+            and not isinstance(item.get("code_block_index"), bool)
+            and item["code_block_index"] >= 0
+            and isinstance(item.get("bytes"), int)
+            and not isinstance(item.get("bytes"), bool)
+            and item["bytes"] >= 0
+            and isinstance(item.get("sha256"), str)
+            and LOWER_SHA256_RE.fullmatch(item["sha256"]) is not None
+            for item in capture.get("compiler_blocks", [])
+        )
+        and capture.get("compiler") in {None, COMPILER_VERSION}
+        and capture.get("transport_version")
+        in {None, SAME_RESPONSE_TRANSPORT_VERSION}
     )
-    attempts_contract_valid = isinstance(attempts, list) and all(
+    if not capture_contract_valid:
+        issues.append(
+            _issue(
+                "CONTROLLER_COMPILER_CAPTURE_INVALID",
+                "controller_record.json:$.compiler_transport_capture",
+                "compiler transport capture fields differ from the v4 contract",
+            )
+        )
+
+    expected_capture: dict[str, Any] | None = None
+    expected_reconstructed: dict[str, bytes] = {}
+    if raw_response_bytes is not None:
+        try:
+            expected_input_files: dict[str, bytes] = {}
+            required_input_names: set[str] = set()
+            for expected_input in expected_inputs:
+                filename = (
+                    expected_input.get("filename")
+                    if isinstance(expected_input, dict)
+                    else None
+                )
+                path = _safe_file(root, filename)
+                if isinstance(filename, str) and path is not None:
+                    expected_input_files[filename] = _stable_read(path)
+                    required_input_names.add(filename)
+            expected_capture, expected_reconstructed = (
+                _capture_same_response_transport(
+                    raw_response_bytes,
+                    expected_untransported_files=expected_input_files,
+                    required_untransported_filenames=required_input_names,
+                )
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            issues.append(
+                _issue(
+                    "CONTROLLER_COMPILER_CAPTURE_INVALID",
+                    "controller_record.json:$.compiler_transport_capture",
+                    str(exc),
+                )
+            )
+        else:
+            if capture_contract_valid and capture != expected_capture:
+                issues.append(
+                    _issue(
+                        "CONTROLLER_COMPILER_CAPTURE_MISMATCH",
+                        "controller_record.json:$.compiler_transport_capture",
+                        "compiler block identity or classification differs from the bound original response",
+                    )
+                )
+
+    reconstructed_outputs = record.get("reconstructed_outputs")
+    reconstructed_contract_valid = isinstance(
+        reconstructed_outputs, list
+    ) and all(
         isinstance(item, dict)
-        and set(item) == TRANSPORT_ATTEMPT_FIELDS
-        and item.get("response_outcome") in TRANSPORT_ATTEMPT_OUTCOMES
-        for item in attempts
+        and set(item) == RECONSTRUCTED_OUTPUT_FIELDS
+        for item in reconstructed_outputs
     )
-    if not captures_contract_valid:
+    if not reconstructed_contract_valid:
         issues.append(
             _issue(
-                "CONTROLLER_WRAPPER_CAPTURE_INVALID",
-                "controller_record.json:$.wrapper_captures",
-                "wrapper capture roster or fields differ from the strict contract",
+                "CONTROLLER_RECONSTRUCTED_OUTPUT_ROSTER_INVALID",
+                "controller_record.json:$.reconstructed_outputs",
+                "reconstructed output roster differs from the v4 contract",
             )
         )
-    if not attempts_contract_valid:
-        issues.append(
-            _issue(
-                "CONTROLLER_TRANSPORT_ATTEMPT_INVALID",
-                "controller_record.json:$.transport_attempts",
-                "transport attempt roster or fields differ from the strict contract",
+    else:
+        expected_records = [
+            _reconstructed_record(filename, data)
+            for filename, data in sorted(expected_reconstructed.items())
+        ]
+        for index, item in enumerate(reconstructed_outputs):
+            label = f"controller_record.json:$.reconstructed_outputs[{index}]"
+            filename = item.get("filename")
+            expected_materialized = (
+                f"{RECONSTRUCTED_OUTPUT_DIRECTORY}/{filename}"
+                if _portable_basename(filename)
+                else None
             )
-        )
+            if (
+                expected_materialized is None
+                or item.get("materialized_filename") != expected_materialized
+            ):
+                issues.append(
+                    _issue(
+                        "CONTROLLER_RECONSTRUCTED_OUTPUT_FILENAME_INVALID",
+                        label,
+                        "logical and materialized reconstructed filenames differ",
+                    )
+                )
+                continue
+            _, bound_issues = _read_bound_file(
+                root,
+                item,
+                path=label,
+                filename_field="materialized_filename",
+            )
+            issues.extend(bound_issues)
+        if reconstructed_outputs != expected_records:
+            issues.append(
+                _issue(
+                    "CONTROLLER_RECONSTRUCTED_OUTPUT_ROSTER_MISMATCH",
+                    "controller_record.json:$.reconstructed_outputs",
+                    "materialized roster differs from the compiler bundle reconstructed from the original response",
+                )
+            )
+
+    direct_acquisition_map: dict[str, str] | None = None
     try:
-        expected_captures, expected_attempts = _capture_transport_inventory(root)
-    except (OSError, ValueError, TypeError) as exc:
+        direct_acquisition_map = _direct_acquisition_map(
+            record.get("direct_acquisition_attempts")
+        )
+        expected_transport = _build_artifact_transport_record(
+            reconstructed=expected_reconstructed,
+            direct_outputs=expected_direct_output_bytes,
+            observed_output_controls=(
+                set(observed_controls)
+                if observed_controls_contract_valid
+                else set()
+            ),
+            direct_acquisition_attempts=direct_acquisition_map,
+        )
+    except (TypeError, ValueError) as exc:
         issues.append(
             _issue(
-                "CONTROLLER_TRANSPORT_CAPTURE_INVALID",
-                "controller_record.json:$.transport_attempts",
+                "CONTROLLER_DIRECT_ACQUISITION_INVALID",
+                "controller_record.json:$.direct_acquisition_attempts",
                 str(exc),
             )
         )
     else:
-        if captures_contract_valid and captures != expected_captures:
+        transport_path = _safe_file(root, "artifact_transport.json")
+        if (
+            transport_path is not None
+            and _stable_read(transport_path)
+            != canonical_json_bytes(expected_transport)
+        ):
             issues.append(
                 _issue(
-                    "CONTROLLER_WRAPPER_CAPTURE_ROSTER_MISMATCH",
-                    "controller_record.json:$.wrapper_captures",
-                    "wrapper captures differ from independently bound transport bytes",
+                    "CONTROLLER_ARTIFACT_TRANSPORT_MISMATCH",
+                    "artifact_transport.json:$",
+                    "transport selection differs from the explicit direct-acquisition observations and bound bytes",
                 )
             )
-        if attempts_contract_valid and attempts != expected_attempts:
-            issues.append(
-                _issue(
-                    "CONTROLLER_TRANSPORT_ATTEMPT_ROSTER_MISMATCH",
-                    "controller_record.json:$.transport_attempts",
-                    "transport attempts differ from exact prompt/response captures",
-                )
-            )
-        if observed_controls_contract_valid:
-            attempted_chunk_zero = {
-                item["payload_filename"]
-                for item in expected_attempts
-                if item["chunk_index"] == 0
-            }
-            missing_fallback_attempts = sorted(
-                set(observed_controls)
-                - set(expected_output_filenames)
-                - attempted_chunk_zero
-            )
-            if missing_fallback_attempts:
-                issues.append(
-                    _issue(
-                        "CONTROLLER_FALLBACK_ATTEMPT_MISSING",
-                        "controller_record.json:$.transport_attempts",
-                        "visible but unacquired output controls require a preserved "
-                        f"chunk-zero fallback attempt: {missing_fallback_attempts!r}",
-                    )
-                )
     return issues
 
 def _stable_read(path: Path) -> bytes:
@@ -1639,6 +2202,157 @@ def _stable_read(path: Path) -> bytes:
     return data
 
 
+def _reconstructed_record(filename: str, data: bytes) -> dict[str, Any]:
+    return {
+        "filename": filename,
+        "materialized_filename": (
+            f"{RECONSTRUCTED_OUTPUT_DIRECTORY}/{filename}"
+        ),
+        "bytes": len(data),
+        "sha256": sha256_bytes(data),
+    }
+
+
+def _materialize_reconstructed_outputs(
+    root: Path,
+    reconstructed: dict[str, bytes],
+) -> list[dict[str, Any]]:
+    """Create or verify the exact in-turn bundle members under one local root."""
+
+    _assert_portable_unique_basenames(
+        reconstructed,
+        "reconstructed output filenames",
+    )
+    destination_root = root / RECONSTRUCTED_OUTPUT_DIRECTORY
+    if destination_root.exists() and (
+        _is_link_or_junction(destination_root)
+        or not destination_root.is_dir()
+    ):
+        raise ValueError("reconstructed output root is linked or not a directory")
+    if destination_root.exists():
+        existing = {
+            path.name
+            for path in destination_root.iterdir()
+            if path.is_file() and not _is_link_or_junction(path)
+        }
+        if existing != set(reconstructed):
+            raise ValueError(
+                "reconstructed output roster differs from the verified in-turn bundle"
+            )
+    elif reconstructed:
+        destination_root.mkdir()
+
+    records: list[dict[str, Any]] = []
+    for filename, data in sorted(reconstructed.items()):
+        destination = destination_root / filename
+        if destination.exists() or destination.is_symlink():
+            if (
+                _is_link_or_junction(destination)
+                or not destination.is_file()
+                or _stable_read(destination) != data
+            ):
+                raise ValueError(
+                    f"materialized reconstructed output differs: {filename}"
+                )
+        else:
+            atomic_write(destination, data)
+        if _stable_read(destination) != data:
+            raise ValueError(
+                f"reconstructed output failed post-write verification: {filename}"
+            )
+        records.append(_reconstructed_record(filename, data))
+    return records
+
+
+def _write_or_verify_exact(path: Path, data: bytes) -> None:
+    """Create one controller artifact, or prove an existing copy is identical."""
+
+    if path.exists() or path.is_symlink():
+        if (
+            _is_link_or_junction(path)
+            or not path.is_file()
+            or _stable_read(path) != data
+        ):
+            raise ValueError(
+                f"refusing to overwrite a different controller artifact: {path.name}"
+            )
+        return
+    atomic_write(path, data)
+
+
+def _build_artifact_transport_record(
+    *,
+    reconstructed: dict[str, bytes],
+    direct_outputs: dict[str, bytes],
+    observed_output_controls: set[str],
+    direct_acquisition_attempts: dict[str, str],
+) -> dict[str, Any]:
+    """Derive v3 transport only from explicit controller-bound observations."""
+
+    _assert_portable_unique_basenames(
+        reconstructed,
+        "reconstructed transport filenames",
+    )
+    _assert_portable_unique_basenames(
+        direct_outputs,
+        "direct transport filenames",
+    )
+    _assert_portable_unique_basenames(
+        observed_output_controls,
+        "observed transport controls",
+    )
+    _assert_portable_unique_basenames(
+        direct_acquisition_attempts,
+        "direct acquisition filenames",
+    )
+    expected_attempt_names = (
+        set(reconstructed) | set(direct_outputs) | observed_output_controls
+    )
+    if set(direct_acquisition_attempts) != expected_attempt_names:
+        raise ValueError(
+            "direct acquisition attempts must exactly cover every visible "
+            "output control and every available direct or reconstructed output"
+        )
+    for filename in sorted(expected_attempt_names):
+        outcome = direct_acquisition_attempts[filename]
+        if filename in direct_outputs:
+            expected_outcome = "download_event"
+        elif filename in observed_output_controls:
+            expected_outcome = "no_download_event"
+        else:
+            expected_outcome = "unavailable"
+        if outcome != expected_outcome:
+            raise ValueError(
+                f"direct acquisition outcome for {filename} must be "
+                f"{expected_outcome}"
+            )
+
+    records: list[dict[str, Any]] = []
+    transported_names = set(reconstructed) | set(direct_outputs)
+    for filename in sorted(transported_names):
+        direct_data = direct_outputs.get(filename)
+        if direct_data is not None:
+            method = "direct_download"
+            data = direct_data
+        else:
+            method = SAME_RESPONSE_TRANSPORT_METHOD
+            data = reconstructed[filename]
+        records.append(
+            {
+                "filename": filename,
+                "method": method,
+                "direct_download_outcome": direct_acquisition_attempts[filename],
+                "bytes": len(data),
+                "sha256": sha256_bytes(data),
+                "export_chunks": None,
+            }
+        )
+    return {
+        "transport_version": ARTIFACT_TRANSPORT_VERSION,
+        "records": records,
+    }
+
+
 def build_controller_record(
     *,
     root: Path,
@@ -1650,6 +2364,7 @@ def build_controller_record(
     session_reference: str,
     observability_boundary: str,
     output_control_filenames: Iterable[str] = (),
+    direct_acquisition_attempts: Iterable[tuple[str, str]] = (),
 ) -> dict[str, Any]:
     """Capture an explicit, independent controller inventory.
 
@@ -1676,13 +2391,16 @@ def build_controller_record(
     input_specs = [("target", target_filename)]
     input_specs.extend(("knowledge", filename) for filename in KNOWLEDGE_FILENAMES)
     inputs: list[dict[str, Any]] = []
+    input_files: dict[str, bytes] = {}
     for kind, filename in input_specs:
         if not _portable_basename(filename):
             raise ValueError("input filenames must be portable basenames")
         path = _safe_file(root, filename)
         if path is None:
             raise ValueError(f"required input is unavailable: {filename}")
-        inputs.append(byte_record(kind, filename, _stable_read(path)))
+        data = _stable_read(path)
+        input_files[filename] = data
+        inputs.append(byte_record(kind, filename, data))
 
     candidate_identity: list[dict[str, Any]] = []
     for kind, filename in CANDIDATE_IDENTITY_FILENAMES:
@@ -1691,31 +2409,17 @@ def build_controller_record(
             raise ValueError(f"candidate identity is unavailable: {filename}")
         candidate_identity.append(byte_record(kind, filename, _stable_read(path)))
 
-    controller_artifacts: list[dict[str, Any]] = []
-    controller_names = list(CONTROLLER_ARTIFACT_FILENAMES)
-    controller_names.extend(
-        filename
-        for filename in OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES
-        if _safe_file(root, filename) is not None
-    )
-    for filename in controller_names:
-        path = _safe_file(root, filename)
-        if path is None:
-            raise ValueError(f"controller artifact is unavailable: {filename}")
-        controller_artifacts.append(
-            byte_record("controller", filename, _stable_read(path))
-        )
-
     output_names = list(output_filenames)
     _assert_portable_unique_basenames(output_names, "observed output filenames")
     outputs: list[dict[str, Any]] = []
+    output_files: dict[str, bytes] = {}
     for filename in sorted(output_names):
         path = _safe_file(root, filename)
         if path is None:
             raise ValueError(f"observed output is unavailable: {filename}")
-        outputs.append(output_record(filename, _stable_read(path)))
-
-    captures, attempts = _capture_transport_inventory(root)
+        data = _stable_read(path)
+        output_files[filename] = data
+        outputs.append(output_record(filename, data))
 
     prompt_path = _safe_file(root, "preview_prompt.txt")
     if prompt_path is None:
@@ -1730,6 +2434,11 @@ def build_controller_record(
     raw_response = _stable_read(raw_response_path)
     if not raw_response:
         raise ValueError("complete raw response capture must not be empty")
+    compiler_transport_capture, reconstructed = _capture_same_response_transport(
+        raw_response,
+        expected_untransported_files=input_files,
+        required_untransported_filenames=set(input_files),
+    )
     output_control_names = list(output_control_filenames)
     _assert_portable_unique_basenames(
         output_control_names,
@@ -1741,6 +2450,41 @@ def build_controller_record(
         raise ValueError(
             "observed output controls must equal the portable generated-file "
             "button aria-labels in the bound response"
+        )
+    direct_acquisition_records = _direct_acquisition_records(
+        direct_acquisition_attempts
+    )
+    direct_acquisition_map = _direct_acquisition_map(
+        direct_acquisition_records
+    )
+    transport_record = _build_artifact_transport_record(
+        reconstructed=reconstructed,
+        direct_outputs=output_files,
+        observed_output_controls=set(output_control_names),
+        direct_acquisition_attempts=direct_acquisition_map,
+    )
+    reconstructed_outputs = _materialize_reconstructed_outputs(
+        root,
+        reconstructed,
+    )
+    _write_or_verify_exact(
+        root / "artifact_transport.json",
+        canonical_json_bytes(transport_record),
+    )
+
+    controller_artifacts: list[dict[str, Any]] = []
+    controller_names = list(CONTROLLER_ARTIFACT_FILENAMES)
+    controller_names.extend(
+        filename
+        for filename in OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES
+        if _safe_file(root, filename) is not None
+    )
+    for filename in controller_names:
+        path = _safe_file(root, filename)
+        if path is None:
+            raise ValueError(f"controller artifact is unavailable: {filename}")
+        controller_artifacts.append(
+            byte_record("controller", filename, _stable_read(path))
         )
     return {
         "controller_record_version": CONTROLLER_RECORD_VERSION,
@@ -1760,8 +2504,9 @@ def build_controller_record(
         "inputs": inputs,
         "observed_output_controls": output_control_names,
         "observed_outputs": outputs,
-        "transport_attempts": attempts,
-        "wrapper_captures": captures,
+        "direct_acquisition_attempts": direct_acquisition_records,
+        "compiler_transport_capture": compiler_transport_capture,
+        "reconstructed_outputs": reconstructed_outputs,
     }
 
 
@@ -1845,7 +2590,10 @@ def _parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     build = subparsers.add_parser(
         "build-record",
-        help="capture exact inputs, candidate identity, outputs, and wrapper round trips",
+        help=(
+            "capture exact inputs, candidate identity, direct outputs, and the "
+            "compiler-v6 bundle in the original response"
+        ),
     )
     build.add_argument("evidence_directory", type=Path)
     build.add_argument("--case-id", required=True)
@@ -1869,13 +2617,35 @@ def _parser() -> argparse.ArgumentParser:
             "button aria-label; repeat for every observed control"
         ),
     )
+    build.add_argument(
+        "--direct-acquisition",
+        action="append",
+        default=[],
+        type=_direct_acquisition_argument,
+        dest="direct_acquisition_attempts",
+        metavar="FILENAME=OUTCOME",
+        help=(
+            "explicit per-file direct acquisition result; OUTCOME is "
+            "download_event, no_download_event, or unavailable; repeat for "
+            "every visible output control and every direct or reconstructed output"
+        ),
+    )
     build.add_argument("--session-reference", required=True)
     build.add_argument("--observability-boundary", required=True)
     transport = subparsers.add_parser(
         "transport-request",
         help=(
-            "emit one exact mandatory current-turn Data Analysis fallback prompt "
-            "without a newline"
+            "offline historical-v3 diagnostic only; forbidden as a v4 trial "
+            "transport or rescue path"
+        ),
+    )
+    transport.add_argument(
+        "--offline-historical-v3",
+        action="store_true",
+        required=True,
+        help=(
+            "acknowledge that the emitted bytes reproduce historical evidence "
+            "and must not be sent in a v4 Preview trial"
         ),
     )
     transport.add_argument(
@@ -1889,7 +2659,10 @@ def _parser() -> argparse.ArgumentParser:
     transport.add_argument("--expect-encoded-sha256")
     assemble = subparsers.add_parser(
         "assemble-chunks",
-        help="verify and assemble one complete ordered transport chunk sequence",
+        help=(
+            "offline historical-v3 diagnostic: verify and assemble one complete "
+            "ordered chunk sequence; never establishes download-button identity"
+        ),
     )
     assemble.add_argument("wrappers", nargs="+", type=Path)
     assemble.add_argument("--output", required=True, type=Path, dest="destination")
@@ -1900,7 +2673,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "transport-request":
         try:
-            prompt = transport_fallback_prompt(
+            prompt = _legacy_transport_fallback_prompt(
                 args.payload_filename,
                 args.chunk_index,
                 expected_payload_sha256=args.expect_payload_sha256,
@@ -1966,15 +2739,16 @@ def main(argv: list[str] | None = None) -> int:
             session_reference=args.session_reference,
             observability_boundary=args.observability_boundary,
             output_control_filenames=args.output_control_filenames,
+            direct_acquisition_attempts=args.direct_acquisition_attempts,
         )
         destination = args.evidence_directory / "controller_record.json"
-        atomic_write(destination, canonical_json_bytes(record))
+        _write_or_verify_exact(destination, canonical_json_bytes(record))
     except (OSError, ValueError, TypeError) as exc:
         print(
             json.dumps(
                 {
                     "controller": "build_record",
-                    "output_version": "3.0",
+                    "output_version": CONTROLLER_RECORD_VERSION,
                     "status": "blocked",
                     "error": str(exc),
                 },
@@ -1987,7 +2761,7 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(
             {
                 "controller": "build_record",
-                "output_version": "3.0",
+                "output_version": CONTROLLER_RECORD_VERSION,
                 "status": "pass",
                 "record": str(destination.resolve()),
                 "sha256": sha256_bytes(destination.read_bytes()),

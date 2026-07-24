@@ -56,7 +56,7 @@
     },
     "code_interpreter_and_data_analysis": {
       "enabled": true,
-      "instruction": "Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution. A controller transport fallback requires one visible Data Analysis invocation of its exact command; return only compiler stdout and never infer export_failed."
+      "instruction": "Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution. When the canonical compiler runs, preserve its complete canonical stdout byte-for-byte in one final fenced code block; its dormant in-turn transport bundle is fallback-only and never proves unavailable download-button bytes."
     },
     "image_generation": {
       "enabled": false
@@ -321,7 +321,7 @@
         {
           "id": "draft_machine_records",
           "severity": "fatal",
-          "text": "Machine=audit_request.txt(request)+audit_report.md(report)+audit_return.json. Compiler=/mnt/data/gpt_artifact_compiler.py; copy K3; RUN captures sys.version+freezes request/source/evidence+owns Ledger8/report/IDs/topology; return=LAST. No manual runtime/hash/size/Base64; block=>no return/pass/proven. Refs2way; pass=>no obligation; omit self; fatal IDs exact. Proven/strong/lemma=>all6K+S10+evidence/claim/run/pass-gate; else demote/omit. protocol.sha256=sha256:d694a2ee46466d9f7eaec3d44d7917322feec53b9c982331d53eb73ab9d948f1. Request/report!=source; request==target=>distinct bytes/IDs/digests. S7=compiler ledger. Fallback: visible DA MUST run exact export-chunk(file,index) once; sole verbatim JSON stdout; never author/infer export_failed/reuse/combine.",
+          "text": "Machine=audit_request.txt(request)+audit_report.md(report)+audit_return.json. K3 compiler=/mnt/data/gpt_artifact_compiler.py. RUN captures sys.version once, freezes request/source/evidence, owns Ledger8/report/IDs/topology; return LAST. Never author runtime/hash/size/Base64; block=>no return/pass/proven. Refs2way; pass=>no obligation; omit self; fatal IDs exact. Proven/strong/lemma=>all6K+S10+bound evidence/claim/run/pass-gates; else demote/omit. protocol.sha256=sha256:260803de04fcf8ee54b36f7e7147cf7f4c54fa6b15aa39e5e3cf72dd7b352bb2. Request/report!=source; request=target=>distinct IDs/digests. S7=compiler ledger. Final fenced block=exact compiler stdout; nothing follows. Bundle=fallback-only; never edit/claim unavailable button-byte identity.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#draft-machine-readable-output",
             "docs/SCHEMA.md#drafts-and-placeholders"

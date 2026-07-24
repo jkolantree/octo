@@ -119,26 +119,32 @@ These outcomes are a separate coordinate from research verdict, evidence maturit
 ## Preview transport boundary
 
 The evaluation controller first attempts the direct generated-file control.
-The original compile transaction seals the final exportable bytes in a fresh
-private directory that is never exposed as a file control or semantic
-artifact. If the interface exposes no direct download or no observable
-download event, the controller may issue its exact fallback prompt for one
-filename and one chunk index only. The candidate must execute the compiler's
-`export-chunk` command against that named private snapshot freshly for the
-requested index and return one strict JSON object in one code block, with no
-other prose. Each wrapper carries at most 2,048 decoded compressed bytes and
-repeats the complete payload and compressed-stream identities. The fixed
-fallback order is `audit_return.json`, `chatgpt_data_analysis_output.txt`, then
-each remaining generated output, with contiguous indices acquired one turn at a
-time.
+After serializing `audit_return.json`, the original compiler transaction
+constructs one deterministic bounded container from the same finalized
+in-memory generated-output bytes. It compresses and Base64-encodes that
+container once and includes the complete transport envelope in canonical
+no-terminal-LF compiler stdout. The candidate must append that complete stdout
+byte-for-byte in one final fenced code block, with no following prose. The
+bundle is transport-only: it is not a semantic artifact, execution output, or
+file control, and it never depends on a later `/mnt/data` path.
 
-The controller preserves each exact prompt, code-block text, parser input, and
-full transport-response `outerHTML` separately. It proves that every response
-contains exactly one requested wrapper, checks canonical Base64 and the
-per-chunk size/digest, requires contiguous indices with one repeated payload and
-compressed-stream identity, and only then decompresses and compares local
-bytes. Re-serializing a parsed object is not a raw transport record and makes
-the trial `trial_invalid_controller`. Those checks establish only the identity
-of the exported payload actually received. If the original download-button
-bytes remain unavailable, their identity is `transport_identity_unresolved`;
-neither identity nor corruption is established.
+The controller preserves the complete original response `outerHTML` and the
+exact compiler-block text. It requires one canonical compiler block, a sorted
+unique portable member roster, contiguous chunks, canonical Base64, bounded
+decompression, exact container framing, and matching container/member sizes
+and SHA-256 values before reconstructing local bytes. Bundle integrity is
+always validated. Direct acquisition remains the primary candidate-byte path;
+the reconstructed member is selected only when the interface exposes no
+direct bytes. When both copies exist, their exact bytes must match or the
+candidate fails. For every visible file control, the controller binds an
+explicit per-file attempt outcome; missing bytes alone never imply
+`no_download_event`. The controller derives `artifact_transport.json`
+deterministically from those bound observations and bytes.
+
+A completed response that omits, truncates, or mutates the bundle is
+`candidate_failed`. Controller loss or mutation of a block demonstrably
+present in the bound raw response is `trial_invalid_controller`. A valid
+bundle establishes only the exported payload actually received. If original
+download-button bytes remain unavailable, their identity is
+`transport_identity_unresolved`; neither identity nor corruption is
+established.

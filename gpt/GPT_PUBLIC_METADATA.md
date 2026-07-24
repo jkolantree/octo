@@ -31,7 +31,7 @@ Audits scientific and technical claims, separates evidence, assumptions, and exe
 - **Web Search:** `enabled`
   - Use when current source or citation verification is material, and disclose whether each decisive cited source was independently opened.
 - **Code Interpreter And Data Analysis:** `enabled`
-  - Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution. A controller transport fallback requires one visible Data Analysis invocation of its exact command; return only compiler stdout and never infer export_failed.
+  - Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution. When the canonical compiler runs, preserve its complete canonical stdout byte-for-byte in one final fenced code block; its dormant in-turn transport bundle is fallback-only and never proves unavailable download-button bytes.
 - **Image Generation:** `disabled`
 - **Apps:** `disabled`
 - **Actions:** `disabled`
