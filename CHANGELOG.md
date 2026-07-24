@@ -33,6 +33,7 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 - preserved the next controller-valid D01 candidate failure without relabeling its mathematical pass or unresolved download identity, then bounded the final repair to compiler ownership of the canonical eight-row execution ledger/report projection and a literal fresh-read fallback command; Return Desk negatives, wrapper mismatch failures, fixtures, oracles, rubrics, and thresholds remain unchanged.
 - preserved the following r10 result: D01 passed 20/20, while D02 exposed all five output controls but could not return required bytes after the unbounded report wrapper became another file control and the return fallback was blank; the 39-case suite and publication steps were not run.
 - replaced the generic unbounded whole-file fallback with stable-read, zlib-compressed, contiguous 2,048-byte transport chunks, and separated visible output controls from acquired byte identities without treating unresolved downloads as corruption or allowing transport state to rescue a candidate contradiction.
+- preserved r23 as a controller-valid candidate failure after all five literal fallback commands ran: two pre-existing payloads reconstructed exactly, while three compiler-created public paths no longer met the later-turn regular/non-linked contract; compiler v5 now seals private unexposed copies from the original final-byte transaction and exports those snapshots without following or weakening public links.
 
 ### Publication boundary
 

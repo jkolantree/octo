@@ -11,7 +11,7 @@
 - `schemas/README.md` — SHA-256 `2b6c6b3fcb6497c9a9524b26e5cbd7a36fbfbdbbc95eb2f322463b7024d5c21a`
 - `schemas/audit-return-v0.1.schema.json` — SHA-256 `25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799`
 - `docs/SCHEMA.md` — SHA-256 `ed42f2f65972f57d86c8e4d198eafc9a3d970db68012ce71a28eaf589b29b506`
-- `docs/AUDIT_RETURN_DESK.md` — SHA-256 `a69a67942ab4f1451a00e0c8168fd47a1b1f93eb5efec87342ddec4ed828795a`
+- `docs/AUDIT_RETURN_DESK.md` — SHA-256 `be43a059108ae5ecc7b8968bdab97e1b17215726c60045b3d9ac7d5b23d4dce9`
 - `docs/MATHEMATICS.md` — SHA-256 `25309fb738cb229230991ec556f8fbe5aa692cc67a264124732632a7159a7aec`
 - `docs/DERIVED_HOLONOMY.md` — SHA-256 `68e7938c55e88642e47824c7d92610014f606336697dc67983357eab9767e295`
 
@@ -542,12 +542,15 @@ These outcomes are a separate coordinate from research verdict, evidence maturit
 
 ## Preview transport boundary
 
-The evaluation controller first attempts the direct generated-file control. If
-the interface exposes no direct download or no observable download event, the
-controller may issue its exact fallback prompt for one filename and one chunk
-index only. The candidate must execute the compiler's `export-chunk` command
-freshly for that index and return one strict JSON object in one code block, with
-no other prose. Each wrapper carries at most 2,048 decoded compressed bytes and
+The evaluation controller first attempts the direct generated-file control.
+The original compile transaction seals the final exportable bytes in a fresh
+private directory that is never exposed as a file control or semantic
+artifact. If the interface exposes no direct download or no observable
+download event, the controller may issue its exact fallback prompt for one
+filename and one chunk index only. The candidate must execute the compiler's
+`export-chunk` command against that named private snapshot freshly for the
+requested index and return one strict JSON object in one code block, with no
+other prose. Each wrapper carries at most 2,048 decoded compressed bytes and
 repeats the complete payload and compressed-stream identities. The fixed
 fallback order is `audit_return.json`, `chatgpt_data_analysis_output.txt`, then
 each remaining generated output, with contiguous indices acquired one turn at a

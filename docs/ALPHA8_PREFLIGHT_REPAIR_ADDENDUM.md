@@ -224,3 +224,34 @@ chunk or a handled blocked record. Missing invocation or stdout is a candidate
 transport failure, and the model may never author or infer `export_failed`.
 No fixture, oracle, rubric, score threshold, controller-validity rule, or
 transport-identity boundary is relaxed.
+
+## R23 controller-valid D01 and private transport-snapshot repair
+
+The regenerated D01 run used frozen candidate manifest
+`d1c5aeb942f0ada6bf3bac00051103efb0bc930fa10ceb4afc0ab18ee6da9128`.
+Its controller record had SHA-256
+`fb90a8cf936ad6941f28374af8c0aeca5151035e79a9e1defc3a332e1b7176a2`.
+All five exact fallback commands visibly ran and returned canonical compiler
+stdout, so the prior missing-invocation defect was repaired and the controller
+was valid.
+
+`audit_request.txt` and `proof_reconstruction.md` reassembled exactly. The
+three paths created by the compiler transaction—`audit_report.md`,
+`audit_return.json`, and `chatgpt_data_analysis_output.txt`—instead returned
+the compiler's exact handled block because the later-turn paths no longer
+satisfied the regular, non-linked file contract. The preserved result is
+`candidate_failed` with `transport_identity_unresolved`. It does not establish
+which of the compiler's symlink, junction, or non-file predicates applied, and
+it does not establish download corruption.
+
+The newly authorized repair changes the lifecycle source, not the acceptance
+rule. Compiler v5 derives a private, unexposed transport roster from non-source
+artifact roles plus `audit_return.json` and atomically seals exact copies from
+the same final in-memory byte objects before reporting compile success. Later
+controller prompts run the unchanged bounded `export-chunk` operation against
+those private snapshots while every wrapper retains the public artifact
+basename. Snapshots never enter `audit_return.artifacts`, the execution ledger,
+the compile output roster, or assistant file controls. Public symlinks remain
+rejected, original download-button identity remains unresolved when
+unavailable, and any missing, changed, linked, or stale private snapshot still
+fails the candidate gate.

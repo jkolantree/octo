@@ -584,6 +584,15 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
             "fallback_stdout_contract": (
                 "verbatim_compiler_json_chunk_or_handled_blocked_record"
             ),
+            "fallback_payload_source": (
+                "private_compiler_sealed_final_byte_snapshot"
+            ),
+            "fallback_snapshot_created_in_original_compile_transaction": True,
+            "fallback_snapshot_visible_file_control": "forbidden",
+            "fallback_snapshot_semantic_artifact_or_execution_output": "forbidden",
+            "fallback_snapshot_stale_linked_missing_or_changed_action": (
+                "candidate_failed"
+            ),
             "model_authored_or_inferred_export_failed": "forbidden",
             "fallback_transport_encoding": "zlib_then_canonical_base64_chunks",
             "maximum_decoded_chunk_bytes": 2048,

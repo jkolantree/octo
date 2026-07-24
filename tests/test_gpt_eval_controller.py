@@ -148,7 +148,7 @@ class GptEvalControllerTests(unittest.TestCase):
         )
         self.assertIn(
             "python /mnt/data/gpt_artifact_compiler.py export-chunk "
-            "/mnt/data/audit_return.json --chunk-index 0",
+            "/mnt/data/.bsc-transport-v1/audit_return.json --chunk-index 0",
             output.getvalue(),
         )
         self.assertIn("complete stdout byte-for-byte", output.getvalue())

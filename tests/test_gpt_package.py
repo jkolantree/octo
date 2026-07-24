@@ -476,7 +476,7 @@ class CustomGptPackageTests(unittest.TestCase):
         )
         self.assertIn("`export_failed`", execution_knowledge)
         self.assertIn(
-            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v4"',
+            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v5"',
             execution_knowledge,
         )
         durable_knowledge = "\n".join(

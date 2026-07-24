@@ -227,3 +227,31 @@ model may not infer or author `export_failed`. Missing invocation, absent
 stdout, or a noncanonical response remains a candidate transport failure.
 Fixtures, oracles, scoring, Return Desk negatives, and controller validity are
 unchanged.
+
+## R23 valid D01 failure and sealed transport snapshots
+
+Candidate manifest
+`d1c5aeb942f0ada6bf3bac00051103efb0bc930fa10ceb4afc0ab18ee6da9128`
+produced five visible output controls. Controller record
+`fb90a8cf936ad6941f28374af8c0aeca5151035e79a9e1defc3a332e1b7176a2`
+bound the exact target, all six Knowledge files, every control, and every
+fallback prompt/response/parser capture. All five literal commands visibly
+executed and returned canonical compiler stdout.
+
+The request and proof payloads reconstructed exactly. The report, return, and
+execution-output paths created by the compiler no longer satisfied the
+regular, non-linked contract on the later turns. The trial is therefore
+`candidate_failed` with `transport_identity_unresolved`; it is not an invalid
+controller retry, a corruption finding, or a download-button identity claim.
+The evidence does not distinguish symlink, junction, or non-file lifecycle
+states.
+
+Compiler v5 seals the exportable non-source outputs and final return into a
+fresh private transport directory from the same finalized in-memory bytes.
+Exact controller prompts export only those unexposed snapshots while wrappers
+keep their public basenames. Snapshot files are excluded from semantic
+artifacts, execution ledgers, compile output identities, and visible controls.
+The regular-file check remains strict, stale snapshot directories are refused,
+and any absent, linked, changed, or identity-mismatched snapshot remains a
+candidate failure. No fixture, oracle, score, Return Desk negative, or outcome
+classification is weakened.

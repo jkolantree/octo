@@ -118,12 +118,15 @@ These outcomes are a separate coordinate from research verdict, evidence maturit
 
 ## Preview transport boundary
 
-The evaluation controller first attempts the direct generated-file control. If
-the interface exposes no direct download or no observable download event, the
-controller may issue its exact fallback prompt for one filename and one chunk
-index only. The candidate must execute the compiler's `export-chunk` command
-freshly for that index and return one strict JSON object in one code block, with
-no other prose. Each wrapper carries at most 2,048 decoded compressed bytes and
+The evaluation controller first attempts the direct generated-file control.
+The original compile transaction seals the final exportable bytes in a fresh
+private directory that is never exposed as a file control or semantic
+artifact. If the interface exposes no direct download or no observable
+download event, the controller may issue its exact fallback prompt for one
+filename and one chunk index only. The candidate must execute the compiler's
+`export-chunk` command against that named private snapshot freshly for the
+requested index and return one strict JSON object in one code block, with no
+other prose. Each wrapper carries at most 2,048 decoded compressed bytes and
 repeats the complete payload and compressed-stream identities. The fixed
 fallback order is `audit_return.json`, `chatgpt_data_analysis_output.txt`, then
 each remaining generated output, with contiguous indices acquired one turn at a
