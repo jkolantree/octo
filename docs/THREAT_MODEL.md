@@ -58,6 +58,16 @@ The three entry points do not share one privacy or execution boundary:
 
 For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
 
+The Custom GPT artifact-transport fallback is an execution request, not a
+reasoning question. For every exact controller-generated `export-chunk`
+request, the candidate must visibly invoke the enabled Data Analysis tool once
+with that literal command and may return only the compiler's exact JSON stdout.
+The compiler emits canonical no-terminal-LF JSON for either a chunk or a
+handled blocked record. The model must never infer or author
+`export_failed`. A missing invocation, absent stdout, or noncanonical response
+is a candidate transport failure while payload identity remains unresolved; it
+is not proof that unavailable download-button bytes are corrupt.
+
 ## Returned-output threats
 
 The alpha.8 Return Desk treats returned model output and every submitted receipt as untrusted. Its registered threats include:

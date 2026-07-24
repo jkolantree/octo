@@ -203,3 +203,27 @@ scientific verdict boundary. Parser mutation remains controller-invalid,
 substantive contradictions remain candidate failures, and unavailable original
 download bytes remain `transport_identity_unresolved`. Local gates and both
 development preflights restart on the regenerated candidate.
+
+## R20 valid D01 failure and mandatory fallback execution
+
+Candidate manifest
+`380f128c5b93f8fd6ef9d50d3168c54d96c240fe73baf678dfb59d80a20eeefd`
+produced five visible generated-file controls. Controller record
+`a2eb83d499efc6a8d9449aea32e79224ff6162d55688882dfd0d286247848546`
+bound the complete input roster and one exact chunk-zero request and response
+for every unacquired control, so the trial was controller-valid.
+
+All five fallback responses contained only model-authored `export_failed` and
+showed no Data Analysis invocation or command stdout. The result is
+`candidate_failed` with `transport_identity_unresolved`, not an invalid
+controller trial, a pass, a corruption finding, or a download-byte identity
+claim.
+
+The replacement contract is generic across every output and chunk index. It
+requires one visible current-turn Data Analysis invocation of the exact
+controller command and permits only the compiler's verbatim canonical
+no-terminal-LF JSON stdout for either a chunk or a handled blocked record. The
+model may not infer or author `export_failed`. Missing invocation, absent
+stdout, or a noncanonical response remains a candidate transport failure.
+Fixtures, oracles, scoring, Return Desk negatives, and controller validity are
+unchanged.

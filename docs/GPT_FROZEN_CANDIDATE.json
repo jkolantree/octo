@@ -39,7 +39,7 @@
       "bytes": 13672,
       "category": "browser_return_desk",
       "path": "pages/profile.js",
-      "sha256": "01648c5bcf9c188dbfb2978f537d77bc58ff645a8c427449c6e89c8132e858b9"
+      "sha256": "7d380096b397a84b20859ad1d3678723965359e727d3148fd7480b3e3f4be210"
     },
     {
       "bytes": 27738,
@@ -72,22 +72,22 @@
       "sha256": "124f6e24a480f4d492dfc23ce8192ce9334c21210fe3d77f4ef890a27de5935c"
     },
     {
-      "bytes": 7498,
+      "bytes": 7500,
       "category": "candidate",
       "path": "gpt/GPT_INSTRUCTIONS.md",
-      "sha256": "6373f4f0c556a491557d4cd1d823c6100a457ed748c5889796b5e309c8e31168"
+      "sha256": "a09cc2bd28f4f898e1550b743e637ea63fcc90189a45eb397abfc8a6f66233f6"
     },
     {
-      "bytes": 25825,
+      "bytes": 25986,
       "category": "candidate",
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "d1a9eff5ed8d759b7a13f497b90dccabfc0271ba13fda334a024ba90e74ec010"
+      "sha256": "bd4713465e988183673421b4c5a041656672c74c6785b3fa75781119946d46c6"
     },
     {
-      "bytes": 60667,
+      "bytes": 61982,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_EXECUTION_AND_RECEIPTS.md",
-      "sha256": "2bd30ab302d36e5f668a6dac2f2248657f05e653d0ff186f96e2feb32fc86115"
+      "sha256": "15d68a1647b5dfdba6aadf30af71b33e8d0a1194a8741a8442e6bad8f2e04681"
     },
     {
       "bytes": 13025,
@@ -138,22 +138,22 @@
       "sha256": "3ad0c6b44b1556ab8e88c907bb7901057cb73f067c698f68225d4fd8e578ca0d"
     },
     {
-      "bytes": 17113,
+      "bytes": 18372,
       "category": "evaluation",
       "path": "gpt/evals/GPT_EVAL_PROVENANCE.md",
-      "sha256": "02ed3b689c2ff204d9001ca806a58e389e03e17cacf795f72e691c83d5d126fc"
+      "sha256": "7c84e1e13c5565a1a43ea1078d4683ba7618516e7708e0da20abc95c937ffc82"
     },
     {
-      "bytes": 12490,
+      "bytes": 12717,
       "category": "evaluation",
       "path": "gpt/evals/GPT_FROZEN_EVALUATION_PROTOCOL.json",
-      "sha256": "a7bc8e7760c3a4098ed4b9ae8fc6e53cbe1aae0e349d8961d9281ab59812e1c9"
+      "sha256": "92e10185f2379f96adeb1fadcfd5fb2e0360789bdbd9133102f0215cf669bc2d"
     },
     {
-      "bytes": 14205,
+      "bytes": 14552,
       "category": "evaluation",
       "path": "gpt/evals/GPT_INVARIANT_ENFORCEMENT_MATRIX.md",
-      "sha256": "ae5c32212a95ecfd5c0db86fc875ad2936d578e0368ec3750c70d1141521f5a9"
+      "sha256": "8f969757b3d8be0043b6b74d2f8b286f9de68f1d971691e5e1d45a94f24948bf"
     },
     {
       "bytes": 5665,
@@ -402,10 +402,10 @@
       "sha256": "df91a7aae7f2d53351e98af5545cdc76127ae1c305a40af5011d4406ffc7c79e"
     },
     {
-      "bytes": 11591,
+      "bytes": 13035,
       "category": "protocol_and_provenance",
       "path": "docs/ALPHA8_PREFLIGHT_REPAIR_ADDENDUM.md",
-      "sha256": "1f9abae8e1c94cd4ef395b47a21906160d192408344e00163113d86cac490735"
+      "sha256": "f81cbcc810d6a75dd672dbcac043993a81fe9ffcad818d450ff14109ae99ffb7"
     },
     {
       "bytes": 2959,
@@ -414,22 +414,22 @@
       "sha256": "670f66b0e442e40239bd3b2c805e3e9fae4057a643a9845681bc4d27956c77f8"
     },
     {
-      "bytes": 17113,
+      "bytes": 18372,
       "category": "protocol_and_provenance",
       "path": "gpt/_source/GPT_EVAL_PROVENANCE.md",
-      "sha256": "02ed3b689c2ff204d9001ca806a58e389e03e17cacf795f72e691c83d5d126fc"
+      "sha256": "7c84e1e13c5565a1a43ea1078d4683ba7618516e7708e0da20abc95c937ffc82"
     },
     {
-      "bytes": 12490,
+      "bytes": 12717,
       "category": "protocol_and_provenance",
       "path": "gpt/_source/GPT_FROZEN_EVALUATION_PROTOCOL.json",
-      "sha256": "a7bc8e7760c3a4098ed4b9ae8fc6e53cbe1aae0e349d8961d9281ab59812e1c9"
+      "sha256": "92e10185f2379f96adeb1fadcfd5fb2e0360789bdbd9133102f0215cf669bc2d"
     },
     {
-      "bytes": 14205,
+      "bytes": 14552,
       "category": "protocol_and_provenance",
       "path": "gpt/_source/GPT_INVARIANT_ENFORCEMENT_MATRIX.md",
-      "sha256": "ae5c32212a95ecfd5c0db86fc875ad2936d578e0368ec3750c70d1141521f5a9"
+      "sha256": "8f969757b3d8be0043b6b74d2f8b286f9de68f1d971691e5e1d45a94f24948bf"
     },
     {
       "bytes": 4096,
@@ -684,22 +684,22 @@
       "sha256": "80ea451e7134953459052101ab3f14d12161aca2b28b3b8996df26e0cb209918"
     },
     {
-      "bytes": 28133,
+      "bytes": 29710,
       "category": "tests",
       "path": "tests/test_gpt_artifact_compiler.py",
-      "sha256": "caa54498d94854672e3282c738dbd04a102359abbbaf9abc46dbdeb6d7172376"
+      "sha256": "c93a4c3cb16fd3f4c3254bac6fa5cbff62d0ee0349093b9b1b9c39fe378a4c56"
     },
     {
-      "bytes": 95148,
+      "bytes": 97306,
       "category": "tests",
       "path": "tests/test_gpt_eval_bundle.py",
-      "sha256": "625cdf55efd96f4d994331f425a1508c4cd2bc3399b39ce24dd70401a8be29d4"
+      "sha256": "5339a2998676934901a0907f35511ff0179fac0837ca3bae73fc1c03cb791407"
     },
     {
-      "bytes": 45102,
+      "bytes": 45495,
       "category": "tests",
       "path": "tests/test_gpt_eval_controller.py",
-      "sha256": "142194b70d8d2ecee59e3f23cd5cb883f5dd3cfed4020fc9da534ac09b1d74a6"
+      "sha256": "7da4e52a806f0a604aa9f6eb7dc649f0691d6cdbad48b487ee7143195fe7fc12"
     },
     {
       "bytes": 41472,
@@ -714,10 +714,10 @@
       "sha256": "f9b65f30573731af2258436ac88879035e733ebaf3ff43a4f9b6d9954e8b0ca8"
     },
     {
-      "bytes": 48441,
+      "bytes": 49282,
       "category": "tests",
       "path": "tests/test_gpt_package.py",
-      "sha256": "53052850ff43e592744a5ab1aeb4d2f120aa456d43ad82c4e3bfbaf078d1395c"
+      "sha256": "3b4ec098825bbc57d44974b151e5ce89370fc571db9430f39c49c27da6682281"
     },
     {
       "bytes": 11575,
@@ -792,10 +792,10 @@
       "sha256": "f42bad65194814a2e3305177a3b3ff69cca8f8fc52f805664db3f3570959aa4b"
     },
     {
-      "bytes": 95519,
+      "bytes": 95802,
       "category": "tooling",
       "path": "scripts/build_gpt_package.py",
-      "sha256": "344001b63e0d690f4e47f76c5833943f5e0b3a2e29dbce5428e7d070d20f4cdf"
+      "sha256": "708e61a7d7d2fee727dd23f172bade7707588272b71cf058082eaa8d8144e94d"
     },
     {
       "bytes": 110141,
@@ -822,16 +822,16 @@
       "sha256": "4442206e4ddc7ed816c71104bdaacda8d7e25a39865a728e4d5694d3ca7aa655"
     },
     {
-      "bytes": 44890,
+      "bytes": 45542,
       "category": "tooling",
       "path": "scripts/gpt_artifact_compiler.py",
-      "sha256": "57c177bdcee8496a5484559d54045d67cb7486815b63c1d30cbffc9cbe3aa125"
+      "sha256": "04e431b4960928dc481aa97cb58dcf091904b3228feba635e9ca159c97ea6d1a"
     },
     {
-      "bytes": 72923,
+      "bytes": 72980,
       "category": "tooling",
       "path": "scripts/gpt_eval_controller.py",
-      "sha256": "bdf46f0f702a7f0ebfde68c459e1293eb7e7c3ad346356802c2a95b7cc8160da"
+      "sha256": "35ed279fbb4b259b49960b10df7a0361877bb948d2d5efe8a75a2952b101c5f2"
     },
     {
       "bytes": 3294,

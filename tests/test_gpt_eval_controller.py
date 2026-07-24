@@ -152,6 +152,13 @@ class GptEvalControllerTests(unittest.TestCase):
             output.getvalue(),
         )
         self.assertIn("complete stdout byte-for-byte", output.getvalue())
+        self.assertIn(
+            "A visible Data Analysis invocation of the exact command below is "
+            "mandatory before any answer",
+            output.getvalue(),
+        )
+        self.assertIn("Never infer or emit export_failed", output.getvalue())
+        self.assertNotIn("state export_failed", output.getvalue())
         self.assertFalse(output.getvalue().endswith("\n"))
 
     def transport_wrappers(self, filename: str, payload: bytes) -> list[bytes]:
@@ -577,13 +584,14 @@ class GptEvalControllerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "encoded payload identity"):
                 eval_controller.assemble_verified_chunks(mutated_wrappers)
 
-    def test_failed_exact_attempts_preserve_blank_and_file_control_outcomes(self):
+    def test_failed_exact_attempts_preserve_response_outcomes(self):
         variants = {
             "blank_response": "<article></article>",
             "file_control_only": (
                 '<article><button aria-label="noncanonical.wrapper.json">'
                 "noncanonical.wrapper.json</button></article>"
             ),
+            "invalid_response": "<article><p>export_failed</p></article>",
         }
         for expected, response in variants.items():
             with self.subTest(expected):

@@ -8,9 +8,9 @@
 
 ## Bound canonical sources
 
-- `docs/THREAT_MODEL.md` — SHA-256 `b70c626c23ededd1c29a0b72acf5fe8b78b80cb7249a7b6dda12ebf6b5bf2025`
+- `docs/THREAT_MODEL.md` — SHA-256 `5d35f3275821d6f7bd5f0874612c8eb769c07f135a500c968d349ef41f040f73`
 - `docs/PROOF_CARRYING_ADAPTERS.md` — SHA-256 `b8ad039964660b704a1076348c834af9201c9463e7d6ca1fabcec91c3213212c`
-- `scripts/gpt_artifact_compiler.py` — SHA-256 `57c177bdcee8496a5484559d54045d67cb7486815b63c1d30cbffc9cbe3aa125`
+- `scripts/gpt_artifact_compiler.py` — SHA-256 `04e431b4960928dc481aa97cb58dcf091904b3228feba635e9ca159c97ea6d1a`
 
 Source hashes bind the pre-upload repository bytes. They do not prove that ChatGPT preserves an identical internal index.
 
@@ -77,6 +77,16 @@ The three entry points do not share one privacy or execution boundary:
 3. The repository and Python engine run versioned finite checks locally or in the operator's selected environment. A GPT response or ChatGPT tool result is not BSC Python output unless the correct checker actually ran and its result is bound to the inputs.
 
 For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
+
+The Custom GPT artifact-transport fallback is an execution request, not a
+reasoning question. For every exact controller-generated `export-chunk`
+request, the candidate must visibly invoke the enabled Data Analysis tool once
+with that literal command and may return only the compiler's exact JSON stdout.
+The compiler emits canonical no-terminal-LF JSON for either a chunk or a
+handled blocked record. The model must never infer or author
+`export_failed`. A missing invocation, absent stdout, or noncanonical response
+is a candidate transport failure while payload identity remains unresolved; it
+is not proof that unavailable download-button bytes are corrupt.
 
 ## Returned-output threats
 
@@ -301,7 +311,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
-COMPILER_VERSION = "bsc-gpt-artifact-compiler-v3"
+COMPILER_VERSION = "bsc-gpt-artifact-compiler-v4"
 TRANSPORT_CHUNK_VERSION = "bsc-gpt-export-chunk-v1"
 TRANSPORT_ENCODING = "zlib+base64"
 TRANSPORT_CHUNK_BYTES = 2048
@@ -769,15 +779,21 @@ def transport_fallback_prompt(
     return (
         "TRANSPORT FALLBACK ONLY. The direct file control emitted no observable "
         f"download event for {filename}. Requesting bounded chunk {chunk_index}. "
+        "Use the enabled Data Analysis tool now. A visible Data Analysis invocation "
+        "of the exact command below is mandatory before any answer; do not answer "
+        "from reasoning or infer that execution occurred. "
         "Do not regenerate or alter that file. "
         "Do not read, trim, normalize, or encode the payload yourself. Execute this "
         f"literal command exactly once: {command} . Return the command's complete "
-        "stdout byte-for-byte as the only strict JSON object in one code block. "
+        "stdout byte-for-byte as the only strict JSON object in one code block, "
+        "whether it is a chunk wrapper or a compiler-generated blocked record. "
         "The canonical stdout has no trailing line feed; do not reimplement it or "
         "reuse a hash, size, ledger row, return field, or "
         "prose value. The controller alone requests later chunk indices using the "
         "payload and encoded SHA-256 values from chunk 0. If the command reports "
-        "any failure, emit no chunk and state export_failed. This identifies only "
+        "a handled failure, return only its exact JSON stdout. If no invocation or "
+        "stdout occurs, emit no substitute token or prose. Never infer or emit "
+        "export_failed. This identifies only "
         "the exported compressed chunk received here and its strictly reconstructed "
         "payload, never unavailable download-button bytes."
     )
@@ -1420,17 +1436,24 @@ def main(argv: list[str] | None = None) -> int:
                 expected_encoded_sha256=args.expect_encoded_sha256,
             )
     except (OSError, ValueError, TypeError, AssertionError) as exc:
-        print(
-            json.dumps(
-                {
-                    "compiler": COMPILER_VERSION,
-                    "status": "blocked",
-                    "error": str(exc),
-                },
-                sort_keys=True,
-                ensure_ascii=False,
+        failure = {
+            "compiler": COMPILER_VERSION,
+            "status": "blocked",
+            "error": str(exc),
+        }
+        if args.command == "export-chunk":
+            print(
+                canonical_transport_wrapper_bytes(failure).decode("utf-8"),
+                end="",
             )
-        )
+        else:
+            print(
+                json.dumps(
+                    failure,
+                    sort_keys=True,
+                    ensure_ascii=False,
+                )
+            )
         return 1
     print(canonical_transport_wrapper_bytes(result).decode("utf-8"), end="")
     return 0

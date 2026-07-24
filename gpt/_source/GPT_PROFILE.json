@@ -56,7 +56,7 @@
     },
     "code_interpreter_and_data_analysis": {
       "enabled": true,
-      "instruction": "Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution."
+      "instruction": "Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution. A controller transport fallback requires one visible Data Analysis invocation of its exact command; return only compiler stdout and never infer export_failed."
     },
     "image_generation": {
       "enabled": false
@@ -321,7 +321,7 @@
         {
           "id": "draft_machine_records",
           "severity": "fatal",
-          "text": "Machine=audit_request.txt(request)+audit_report.md(report)+audit_return.json. Compiler=/mnt/data/gpt_artifact_compiler.py; copy K3 unchanged; RUN; compiler captures sys.version; freeze request/source/evidence; compiler owns Ledger8/report/IDs/topology; return LAST. No manual runtime/hash/size/Base64; block=>no return/pass/proven. Refs 2-way; pass=>no obligation; omit self; fatal IDs exact. Proven/strong/lemma=>all6K+S10+evidence/claim/run/pass-gate; else demote/omit. protocol.sha256=sha256:df91a7aae7f2d53351e98af5545cdc76127ae1c305a40af5011d4406ffc7c79e. Request/report!=source; equal request/target=>distinct bytes+IDs/digests. Section7=compiler ledger. Fallback: RUN exact export-chunk(file,index); sole verbatim JSON stdout block; no reuse/combine.",
+          "text": "Machine=audit_request.txt(request)+audit_report.md(report)+audit_return.json. Compiler=/mnt/data/gpt_artifact_compiler.py; copy K3; RUN captures sys.version+freezes request/source/evidence+owns Ledger8/report/IDs/topology; return=LAST. No manual runtime/hash/size/Base64; block=>no return/pass/proven. Refs2way; pass=>no obligation; omit self; fatal IDs exact. Proven/strong/lemma=>all6K+S10+evidence/claim/run/pass-gate; else demote/omit. protocol.sha256=sha256:df91a7aae7f2d53351e98af5545cdc76127ae1c305a40af5011d4406ffc7c79e. Request/report!=source; request==target=>distinct bytes/IDs/digests. S7=compiler ledger. Fallback: visible DA MUST run exact export-chunk(file,index) once; sole verbatim JSON stdout; never author/infer export_failed/reuse/combine.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#draft-machine-readable-output",
             "docs/SCHEMA.md#drafts-and-placeholders"

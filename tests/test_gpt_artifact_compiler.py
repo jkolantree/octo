@@ -538,7 +538,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 )
             self.assertEqual(status, 0)
             wrapper = json.loads(output.getvalue())
-            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v3")
+            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v4")
             self.assertEqual(
                 output.getvalue().encode("utf-8"),
                 canonical_transport_wrapper_bytes(wrapper),
@@ -588,6 +588,34 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 )
                 self.assertFalse(later_output.getvalue().endswith("\n"))
 
+    def test_export_chunk_cli_handled_failure_is_exact_no_lf_json_stdout(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            missing = Path(temporary) / "missing.bin"
+            output = io.StringIO()
+            with redirect_stdout(output):
+                status = compiler_main(
+                    [
+                        "export-chunk",
+                        str(missing),
+                        "--chunk-index",
+                        "0",
+                    ]
+                )
+            self.assertEqual(status, 1)
+            failure = json.loads(output.getvalue())
+            self.assertEqual(
+                set(failure),
+                {"compiler", "error", "status"},
+            )
+            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v4")
+            self.assertEqual(failure["status"], "blocked")
+            self.assertTrue(failure["error"])
+            self.assertEqual(
+                output.getvalue().encode("utf-8"),
+                canonical_transport_wrapper_bytes(failure),
+            )
+            self.assertFalse(output.getvalue().endswith("\n"))
+
     def test_transport_prompt_contains_exact_indexed_fresh_read_commands(self):
         prompt = transport_fallback_prompt("audit_report.md", 0)
         self.assertIn(
@@ -595,9 +623,18 @@ class GptArtifactCompilerTests(unittest.TestCase):
             "/mnt/data/audit_report.md --chunk-index 0",
             prompt,
         )
+        self.assertIn("Use the enabled Data Analysis tool now", prompt)
+        self.assertIn(
+            "A visible Data Analysis invocation of the exact command below is "
+            "mandatory before any answer",
+            prompt,
+        )
         self.assertIn("Do not read, trim, normalize, or encode", prompt)
         self.assertIn("complete stdout byte-for-byte", prompt)
+        self.assertIn("compiler-generated blocked record", prompt)
         self.assertIn("no trailing line feed", prompt)
+        self.assertIn("Never infer or emit export_failed", prompt)
+        self.assertNotIn("state export_failed", prompt)
         self.assertNotIn("export-wrapper", prompt)
 
         payload_hash = "1" * 64

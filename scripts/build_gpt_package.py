@@ -579,7 +579,12 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
                 "chatgpt_data_analysis_output.txt",
                 "remaining_generated_outputs_one_file_and_index_at_a_time",
             ],
+            "fallback_data_analysis_invocation": "mandatory_observed_current_turn",
             "fallback_response_contract": "one_strict_json_object_in_one_code_block",
+            "fallback_stdout_contract": (
+                "verbatim_compiler_json_chunk_or_handled_blocked_record"
+            ),
+            "model_authored_or_inferred_export_failed": "forbidden",
             "fallback_transport_encoding": "zlib_then_canonical_base64_chunks",
             "maximum_decoded_chunk_bytes": 2048,
             "contiguous_chunk_indices_required": True,
