@@ -177,3 +177,29 @@ The additional transport repair was explicitly authorized after the preserved
 r10 stop. It does not relabel r10, consume or reset a counted-suite repair
 allowance, or weaken the rule that a second complete frozen candidate failure
 halts publication.
+
+## R16 invalid D01 and transport-representation repair
+
+Candidate manifest
+`cb3276d360f33f1cae0e8f3264a03630074940c16e16de9f0f0a96114bbb4e06`
+produced a complete visible D01 response and five generated-file controls. No
+observable download event was emitted for `audit_report.md`. The exact
+`audit_return.json` chunk-zero request returned a 3,222-byte code block with
+SHA-256
+`993de0547e40d051b49e6e9be22c5ce12850e22f30fa810226b21b2652a1fc3f`;
+the rendered block omitted the compiler stdout's terminal LF. The controller
+record SHA-256 was
+`fe5dfce5b1abe2a5509b8e93dadf533101c01d075c7a04a43f89e6e27f9be5a6`.
+Because four other visible, unacquired controls lacked chunk-zero attempts, the
+trial is `trial_invalid_controller`, was not scored, and establishes neither a
+candidate pass nor a candidate failure.
+
+The pre-freeze repair gives transport wrappers a dedicated canonical JSON form
+without a terminal LF while leaving canonical artifact bytes unchanged. It
+also validates the complete portable generated-control roster before applying
+the existing rule that every visible, unacquired control requires a fallback
+attempt. This changes no fixture, oracle, Return Desk rule, score threshold, or
+scientific verdict boundary. Parser mutation remains controller-invalid,
+substantive contradictions remain candidate failures, and unavailable original
+download bytes remain `transport_identity_unresolved`. Local gates and both
+development preflights restart on the regenerated candidate.

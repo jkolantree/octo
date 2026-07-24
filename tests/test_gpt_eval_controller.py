@@ -29,6 +29,7 @@ from scripts.gpt_eval_controller import (
     TRIAL_INVALID_CONTROLLER,
     _parser,
     canonical_json_bytes,
+    canonical_transport_wrapper_bytes,
     derive_disposition,
     extract_session_reported_runtime,
     finalize_candidate_artifacts,
@@ -112,6 +113,7 @@ class GptEvalControllerTests(unittest.TestCase):
     def test_controller_reexports_the_single_compiler_implementation(self):
         for name in (
             "canonical_json_bytes",
+            "canonical_transport_wrapper_bytes",
             "export_payload_chunk",
             "extract_session_reported_runtime",
             "finalize_candidate_artifacts",
@@ -165,7 +167,9 @@ class GptEvalControllerTests(unittest.TestCase):
                     expected_encoded_sha256=first["encoded_sha256"],
                 )
             )
-        return [canonical_json_bytes(document) for document in documents]
+        return [
+            canonical_transport_wrapper_bytes(document) for document in documents
+        ]
 
     def write_captured_wrappers(
         self,
@@ -214,19 +218,21 @@ class GptEvalControllerTests(unittest.TestCase):
         self,
         root: Path,
         *,
-        output_control: bool,
-        fallback_attempt: bool,
+        output_controls: tuple[str, ...],
+        fallback_attempts: tuple[str, ...],
     ) -> None:
         raw = root / "raw"
         raw.mkdir()
-        control = (
-            '<button aria-label="audit_report.md">audit_report.md</button>'
-            '<button aria-label="unrelated.plugin">unrelated.plugin</button>'
-            if output_control
-            else ""
+        controls = "".join(
+            f'<button aria-label="{filename}">{filename}</button>'
+            for filename in output_controls
         )
         (raw / "response.outerHTML.html").write_text(
-            f"<article>{control}terminal response</article>",
+            (
+                f"<article>{controls}"
+                '<button aria-label="Continue">Continue</button>'
+                "terminal response</article>"
+            ),
             encoding="utf-8",
             newline="",
         )
@@ -238,14 +244,14 @@ class GptEvalControllerTests(unittest.TestCase):
         (root / "artifact_transport.json").write_bytes(b"{}\n")
         (root / "visible_response_dom.txt").write_bytes(b"terminal response\n")
         (root / "preview_prompt.txt").write_bytes(b"prompt")
-        if fallback_attempt:
+        for filename in fallback_attempts:
             (
-                raw / "audit_report.md.transport.00000.prompt.txt"
+                raw / f"{filename}.transport.00000.prompt.txt"
             ).write_bytes(
-                transport_fallback_prompt("audit_report.md", 0).encode("utf-8")
+                transport_fallback_prompt(filename, 0).encode("utf-8")
             )
             (
-                raw / "audit_report.md.transport.00000.outerHTML.html"
+                raw / f"{filename}.transport.00000.outerHTML.html"
             ).write_text(
                 "<article></article>",
                 encoding="utf-8",
@@ -263,6 +269,40 @@ class GptEvalControllerTests(unittest.TestCase):
         self.assertEqual(filename, "audit_return.json")
         self.assertEqual(assembled, payload)
 
+    def test_transport_wrapper_no_lf_is_strict_for_validation_and_prompt_identity(self):
+        payload = b"independently\n"
+        wrapper = self.transport_wrappers("audit_return.json", payload)[0]
+        document = json.loads(wrapper)
+        self.assertEqual(
+            wrapper,
+            canonical_transport_wrapper_bytes(document),
+        )
+        self.assertFalse(wrapper.endswith(b"\n"))
+
+        parsed, _ = eval_controller._strict_export_chunk(
+            wrapper,
+            expected_filename="audit_return.json",
+            expected_chunk_index=0,
+        )
+        self.assertEqual(parsed, document)
+        self.assertEqual(
+            eval_controller._prompt_identity_from_canonical_wrapper(
+                wrapper,
+                expected_filename="audit_return.json",
+            ),
+            (document["payload_sha256"], document["encoded_sha256"]),
+        )
+
+        legacy_lf_wrapper = wrapper + b"\n"
+        with self.assertRaisesRegex(ValueError, "canonical compiler stdout"):
+            eval_controller._strict_export_chunk(legacy_lf_wrapper)
+        self.assertIsNone(
+            eval_controller._prompt_identity_from_canonical_wrapper(
+                legacy_lf_wrapper,
+                expected_filename="audit_return.json",
+            )
+        )
+
     def test_verified_chunk_assembly_detects_aligned_base64_quartet_omission(self):
         payload = b"independently\n" + b"".join(
             hashlib.sha256(index.to_bytes(4, "big")).digest()
@@ -273,7 +313,7 @@ class GptEvalControllerTests(unittest.TestCase):
         encoded = mutated["base64"]
         self.assertEqual(len(encoded) % 4, 0)
         mutated["base64"] = encoded[:8] + encoded[12:]
-        wrappers[1] = canonical_json_bytes(mutated)
+        wrappers[1] = canonical_transport_wrapper_bytes(mutated)
         with self.assertRaisesRegex(ValueError, "Base64 identity"):
             eval_controller.assemble_verified_chunks(wrappers)
 
@@ -298,7 +338,7 @@ class GptEvalControllerTests(unittest.TestCase):
             mixed = list(wrappers)
             document = json.loads(mixed[1])
             document["payload_sha256"] = "f" * 64
-            mixed[1] = canonical_json_bytes(document)
+            mixed[1] = canonical_transport_wrapper_bytes(document)
             with self.assertRaisesRegex(ValueError, "repeated payload identity"):
                 eval_controller.assemble_verified_chunks(mixed)
 
@@ -317,7 +357,7 @@ class GptEvalControllerTests(unittest.TestCase):
         wrappers = []
         for chunk_index, chunk in enumerate(chunks):
             wrappers.append(
-                canonical_json_bytes(
+                canonical_transport_wrapper_bytes(
                     {
                         "transport_version": artifact_compiler.TRANSPORT_CHUNK_VERSION,
                         "filename": "audit_report.md",
@@ -406,7 +446,7 @@ class GptEvalControllerTests(unittest.TestCase):
             self.transport_wrappers("audit_return.json", payload)[0]
         )
         wrapper["base64"] = wrapper["base64"][:-4]
-        wrapper_bytes = canonical_json_bytes(wrapper)
+        wrapper_bytes = canonical_transport_wrapper_bytes(wrapper)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             raw = root / "raw"
@@ -456,7 +496,7 @@ class GptEvalControllerTests(unittest.TestCase):
             self.assertGreater(len(wrappers), 2)
             document = json.loads(wrappers[1])
             document["offset_bytes"] += 1
-            mutated = canonical_json_bytes(document)
+            mutated = canonical_transport_wrapper_bytes(document)
             parser_name = "audit_return.json.export.00001.json"
             (root / parser_name).write_bytes(mutated)
             (root / "raw" / parser_name).write_bytes(mutated)
@@ -491,7 +531,7 @@ class GptEvalControllerTests(unittest.TestCase):
             for chunk_index, wrapper in enumerate(wrappers):
                 document = json.loads(wrapper)
                 document["encoded_sha256"] = encoded_sha256
-                mutated = canonical_json_bytes(document)
+                mutated = canonical_transport_wrapper_bytes(document)
                 mutated_wrappers.append(mutated)
                 parser_name = (
                     f"audit_return.json.export.{chunk_index:05d}.json"
@@ -609,8 +649,14 @@ class GptEvalControllerTests(unittest.TestCase):
             root = Path(temporary)
             self.make_minimal_controller_root(
                 root,
-                output_control=True,
-                fallback_attempt=True,
+                output_controls=(
+                    "audit_report.md",
+                    "proof_reconstruction.md",
+                ),
+                fallback_attempts=(
+                    "audit_report.md",
+                    "proof_reconstruction.md",
+                ),
             )
             record = eval_controller.build_controller_record(
                 root=root,
@@ -621,11 +667,14 @@ class GptEvalControllerTests(unittest.TestCase):
                 output_filenames=[],
                 session_reference="preview:test",
                 observability_boundary="Visible Preview response only.",
-                output_control_filenames=["audit_report.md"],
+                output_control_filenames=[
+                    "audit_report.md",
+                    "proof_reconstruction.md",
+                ],
             )
             self.assertEqual(
                 record["observed_output_controls"],
-                ["audit_report.md"],
+                ["audit_report.md", "proof_reconstruction.md"],
             )
             issues = eval_controller.validate_controller_record(
                 root=root,
@@ -640,7 +689,7 @@ class GptEvalControllerTests(unittest.TestCase):
             )
             self.assertEqual(issues, [])
             omitted = copy.deepcopy(record)
-            omitted["observed_output_controls"] = []
+            omitted["observed_output_controls"] = ["audit_report.md"]
             issues = eval_controller.validate_controller_record(
                 root=root,
                 record=omitted,
@@ -657,13 +706,43 @@ class GptEvalControllerTests(unittest.TestCase):
                 {issue["code"] for issue in issues},
             )
 
+    def test_record_builder_rejects_an_omitted_optional_generated_control(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.make_minimal_controller_root(
+                root,
+                output_controls=(
+                    "audit_report.md",
+                    "proof_reconstruction.md",
+                ),
+                fallback_attempts=(),
+            )
+            with self.assertRaisesRegex(
+                ValueError,
+                "observed output controls must equal",
+            ):
+                eval_controller.build_controller_record(
+                    root=root,
+                    case_id="known-true-induction",
+                    trial_id="D01",
+                    counting_state="preflight",
+                    target_filename="known_true_induction.txt",
+                    output_filenames=[],
+                    session_reference="preview:test",
+                    observability_boundary="Visible Preview response only.",
+                    output_control_filenames=["audit_report.md"],
+                )
+
     def test_unacquired_visible_control_requires_chunk_zero_attempt(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             self.make_minimal_controller_root(
                 root,
-                output_control=True,
-                fallback_attempt=False,
+                output_controls=(
+                    "audit_report.md",
+                    "proof_reconstruction.md",
+                ),
+                fallback_attempts=("audit_report.md",),
             )
             record = eval_controller.build_controller_record(
                 root=root,
@@ -674,7 +753,10 @@ class GptEvalControllerTests(unittest.TestCase):
                 output_filenames=[],
                 session_reference="preview:test",
                 observability_boundary="Visible Preview response only.",
-                output_control_filenames=["audit_report.md"],
+                output_control_filenames=[
+                    "audit_report.md",
+                    "proof_reconstruction.md",
+                ],
             )
             issues = eval_controller.validate_controller_record(
                 root=root,
@@ -691,16 +773,69 @@ class GptEvalControllerTests(unittest.TestCase):
                 "CONTROLLER_FALLBACK_ATTEMPT_MISSING",
                 {issue["code"] for issue in issues},
             )
+            fallback_issue = next(
+                issue
+                for issue in issues
+                if issue["code"] == "CONTROLLER_FALLBACK_ATTEMPT_MISSING"
+            )
+            self.assertIn("proof_reconstruction.md", fallback_issue["message"])
+            self.assertNotIn("'audit_report.md'", fallback_issue["message"])
 
-    def test_prefixed_file_control_is_normalized_and_unrelated_control_is_ignored(self):
+    def test_acquired_output_bytes_remain_separate_from_visible_controls(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.make_minimal_controller_root(
+                root,
+                output_controls=(
+                    "audit_report.md",
+                    "proof_reconstruction.md",
+                ),
+                fallback_attempts=("audit_report.md",),
+            )
+            (root / "proof_reconstruction.md").write_bytes(
+                b"independently acquired output bytes\n"
+            )
+            record = eval_controller.build_controller_record(
+                root=root,
+                case_id="known-true-induction",
+                trial_id="D01",
+                counting_state="preflight",
+                target_filename="known_true_induction.txt",
+                output_filenames=["proof_reconstruction.md"],
+                session_reference="preview:test",
+                observability_boundary="Visible Preview response only.",
+                output_control_filenames=[
+                    "audit_report.md",
+                    "proof_reconstruction.md",
+                ],
+            )
+            self.assertEqual(
+                record["observed_output_controls"],
+                ["audit_report.md", "proof_reconstruction.md"],
+            )
+            self.assertEqual(
+                [item["filename"] for item in record["observed_outputs"]],
+                ["proof_reconstruction.md"],
+            )
+            issues = eval_controller.validate_controller_record(
+                root=root,
+                record=record,
+                expected_case_id="known-true-induction",
+                expected_preview_prompt=b"prompt",
+                expected_inputs=record["inputs"],
+                expected_candidate_identity=record["candidate_identity"],
+                expected_output_filenames={"proof_reconstruction.md"},
+                required_output_filenames={"audit_report.md"},
+                repository_root=Path(__file__).resolve().parents[1],
+            )
+            self.assertEqual(issues, [])
+
+    def test_prefixed_file_control_is_normalized_and_non_file_control_is_ignored(self):
         response = (
             '<article><button aria-label="Download audit_report.md"></button>'
-            '<button aria-label="unrelated.plugin"></button></article>'
+            '<button aria-label="Continue"></button></article>'
         ).encode("utf-8")
-        _, controls = eval_controller._inspect_response_outer_html(
-            response,
-            allowed_file_controls={"audit_report.md"},
-        )
+        _, controls = eval_controller._inspect_response_outer_html(response)
         self.assertEqual(controls, ("audit_report.md",))
 
     def test_finalizer_uses_one_runtime_and_serializes_return_last(self):

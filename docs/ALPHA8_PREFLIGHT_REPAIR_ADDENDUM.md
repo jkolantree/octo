@@ -159,3 +159,42 @@ mutations retain their existing fail-closed classifications.
 This additional transport repair was expressly authorized after the preserved
 r10 stop; it does not retroactively change r10's failed release gate or reset a
 counted-suite repair allowance.
+
+## R16 invalid D01 and transport-representation repair
+
+The next D01 development run used candidate manifest
+`cb3276d360f33f1cae0e8f3264a03630074940c16e16de9f0f0a96114bbb4e06`,
+Instructions
+`6373f4f0c556a491557d4cd1d823c6100a457ed748c5889796b5e309c8e31168`,
+profile
+`d1a9eff5ed8d759b7a13f497b90dccabfc0271ba13fda334a024ba90e74ec010`,
+and evaluation source
+`24c4dd2960d1a7239ea08505a6ce52fdb4df29716280221b48dffe5ad075c4c5`.
+The complete visible mathematical response and assistant `outerHTML` were
+preserved. Five generated-file controls were visible. Clicking
+`audit_report.md` emitted no observable download event.
+
+The exact chunk-zero fallback for `audit_return.json` returned a 3,222-byte
+JSON code block with SHA-256
+`993de0547e40d051b49e6e9be22c5ce12850e22f30fa810226b21b2652a1fc3f`.
+It declared a 7,055-byte payload with SHA-256
+`fbfdcbb2230102eab2bb0cd15461dfe1dfe79f9633545c89abfdecee9474c5bc`,
+but the rendered code block omitted the compiler's required final LF. The
+controller record had SHA-256
+`fe5dfce5b1abe2a5509b8e93dadf533101c01d075c7a04a43f89e6e27f9be5a6`.
+Because the controller had not yet attempted fallback for the other four
+visible, unacquired controls, the preserved trial is
+`trial_invalid_controller` and was not scored. It makes no candidate-pass or
+candidate-failure claim.
+
+The pre-freeze repair changes the shared representation boundary rather than a
+case string, fixture, oracle, rubric, or verdict. Compiler transport wrappers
+now have a transport-specific canonical JSON form with no terminal LF, so the
+literal command stdout and the rendered code block can remain byte-identical;
+canonical JSON artifacts retain their existing final LF. Controller validation
+compares the recorded roster with every portable generated-file control in the
+bound response and still requires a chunk-zero attempt for every visible,
+unacquired output. Parser mutation remains invalid, candidate contradictions
+remain candidate failures, and unavailable download-button bytes remain
+`transport_identity_unresolved`. The package, all local gates, D01, and D02
+restart on the regenerated candidate.
