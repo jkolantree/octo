@@ -209,7 +209,7 @@ class GptEvalSuiteTests(unittest.TestCase):
                 "status": "missing",
                 "candidate_evidence": True,
                 "detail": (
-                    "no compiler-v7 stdout block was present in the completed response"
+                    "no compiler-v8 stdout block was present in the completed response"
                 ),
                 "compiler_blocks": [],
                 "compiler": None,

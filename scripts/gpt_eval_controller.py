@@ -876,7 +876,7 @@ def _capture_same_response_transport(
     expected_untransported_files: dict[str, bytes] | None = None,
     required_untransported_filenames: Iterable[str] = (),
 ) -> tuple[dict[str, Any], dict[str, bytes]]:
-    """Classify and verify the compiler-v7 block in the original response.
+    """Classify and verify the compiler-v8 block in the original response.
 
     Candidate-emitted transport defects are returned as evidence states.  Only
     loss or mutation of the original response itself raises a controller error.
@@ -928,7 +928,7 @@ def _capture_same_response_transport(
     base: dict[str, Any] = {
         "status": "missing",
         "candidate_evidence": True,
-        "detail": "no compiler-v7 stdout block was present in the completed response",
+        "detail": "no compiler-v8 stdout block was present in the completed response",
         "compiler_blocks": identities,
         "compiler": None,
         "transport_version": None,
@@ -936,14 +936,14 @@ def _capture_same_response_transport(
     }
     if len(identities) > 1:
         base["status"] = "duplicate"
-        base["detail"] = "more than one compiler-v7 stdout block was present"
+        base["detail"] = "more than one compiler-v8 stdout block was present"
         return base, {}
     if partial_candidate is not None:
         base["status"] = "truncated"
         base["detail"] = (
-            "the compiler-v7 stdout fenced code block was not complete"
+            "the compiler-v8 stdout fenced code block was not complete"
             if partial_fenced
-            else "the compiler-v7 stdout was not in a fenced code block"
+            else "the compiler-v8 stdout was not in a fenced code block"
         )
         base["compiler"] = COMPILER_VERSION
         return base, {}
@@ -957,7 +957,7 @@ def _capture_same_response_transport(
     base["compiler"] = COMPILER_VERSION
     if not block_fenced[candidate_index]:
         base["status"] = "malformed"
-        base["detail"] = "the compiler-v7 stdout was not in a fenced code block"
+        base["detail"] = "the compiler-v8 stdout was not in a fenced code block"
         return base, {}
     trailing_text = [
         text
@@ -971,7 +971,7 @@ def _capture_same_response_transport(
     ):
         base["status"] = "extra"
         base["detail"] = (
-            "the compiler-v7 stdout block was not the final response content"
+            "the compiler-v8 stdout block was not the final response content"
         )
         return base, {}
     try:
@@ -1024,10 +1024,10 @@ def _capture_same_response_transport(
             "status": "verified",
             "candidate_evidence": False,
             "detail": (
-                "compiler-v7 same-response transport verified"
+                "compiler-v8 same-response transport verified"
                 if recovery_receipt["state"] == RECOVERY_STATE_NOT_NEEDED
                 else (
-                    "compiler-v7 same-response transport verified with "
+                    "compiler-v8 same-response transport verified with "
                     f"bounded recovery state {recovery_receipt['state']}"
                 )
             ),
@@ -2685,7 +2685,7 @@ def _parser() -> argparse.ArgumentParser:
         "build-record",
         help=(
             "capture exact inputs, candidate identity, direct outputs, and the "
-            "compiler-v7 bundle in the original response"
+            "compiler-v8 bundle in the original response"
         ),
     )
     build.add_argument("evidence_directory", type=Path)

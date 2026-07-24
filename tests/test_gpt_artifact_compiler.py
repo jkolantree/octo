@@ -6,6 +6,7 @@ import json
 import sys
 import tempfile
 import unittest
+import unicodedata
 import zlib
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -222,6 +223,168 @@ class GptArtifactCompilerTests(unittest.TestCase):
             BOUND_RUNTIME_ARTIFACT,
         )
 
+    def test_report_preserves_unicode_math_and_literal_latex_backslashes(self):
+        report_body = (
+            "# BSC audit report\n\n"
+            "∀ n ∈ ℤ, n ≥ 1 ⇒ ∑_{k=1}^{n}(2k−1)=n².\n\n"
+            r"A literal LaTeX fallback remains byte-exact: \forall."
+        )
+        finalized = finalize_candidate_artifacts(
+            session_reported_runtime=RUNTIME,
+            report_body=report_body,
+            frozen_artifacts=self.frozen(),
+            audit_return_template=self.template(),
+        )
+        report = finalized.files[BOUND_REPORT_ARTIFACT].decode("utf-8")
+        self.assertIn("∀ n ∈ ℤ, n ≥ 1 ⇒ ∑_{k=1}^{n}(2k−1)=n²", report)
+        self.assertIn(r"\forall", report)
+        self.assertFalse(
+            any(
+                unicodedata.category(character) == "Cc"
+                and character != "\n"
+                for character in report
+            )
+        )
+
+    def test_report_body_rejects_interpreted_latex_control_escapes(self):
+        damaged_fragments = {
+            "alpha": "\a" + "lpha",
+            "beta": "\b" + "eta",
+            "forall": "\f" + "orall",
+            "theta": "\t" + "heta",
+            "rho": "\r" + "ho",
+            "varphi": "\v" + "arphi",
+            "unicode-c1": "\u0085",
+        }
+        for name, fragment in damaged_fragments.items():
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "report body contains prohibited Unicode controls",
+                ):
+                    finalize_candidate_artifacts(
+                        session_reported_runtime=RUNTIME,
+                        report_body=f"# Report\n\nDamaged {fragment}.",
+                        frozen_artifacts=self.frozen(),
+                        audit_return_template=self.template(),
+                    )
+
+    def test_return_template_and_generated_json_reject_controls(self):
+        template = self.template()
+        template["claims"][0]["statement"] = "Damaged " + "\n" + "abla."
+        with self.assertRaisesRegex(
+            ValueError,
+            "audit return template.*contains prohibited Unicode controls",
+        ):
+            finalize_candidate_artifacts(
+                session_reported_runtime=RUNTIME,
+                report_body="# Report\n\nControl-free body.",
+                frozen_artifacts=self.frozen(),
+                audit_return_template=template,
+            )
+
+        frozen = self.frozen()
+        frozen["defect_composition_valid.json"] = canonical_json_bytes(
+            {"statement": "Damaged " + "\f" + "orall."}
+        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "generated JSON artifact.*contains prohibited Unicode controls",
+        ):
+            finalize_candidate_artifacts(
+                session_reported_runtime=RUNTIME,
+                report_body="# Report\n\nControl-free body.",
+                frozen_artifacts=frozen,
+                audit_return_template=self.template(),
+            )
+
+    def test_all_textual_media_and_input_roles_reject_controls_before_hashing(self):
+        cases = (
+            ("request", "artifact:request", "application/json"),
+            ("source", "artifact:source", "application/json"),
+            ("problem-json", "artifact:evidence", "application/problem+json"),
+            ("yaml", "artifact:evidence", "application/yaml"),
+            ("javascript", "artifact:evidence", "application/javascript"),
+            ("mixed-case", "artifact:evidence", "TEXT/PLAIN; charset=UTF-8"),
+        )
+        for name, artifact_id, media_type in cases:
+            with self.subTest(name=name):
+                template = self.template()
+                artifact = next(
+                    row for row in template["artifacts"] if row["id"] == artifact_id
+                )
+                artifact["media_type"] = media_type
+                frozen = self.frozen()
+                frozen[artifact["filename"]] = b"damaged\x0cbytes"
+                with patch(
+                    "scripts.gpt_artifact_compiler.sha256_bytes"
+                ) as digest:
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "text artifact.*contains prohibited Unicode controls",
+                    ):
+                        finalize_candidate_artifacts(
+                            session_reported_runtime=RUNTIME,
+                            report_body="# Report\n\nControl-free body.",
+                            frozen_artifacts=frozen,
+                            audit_return_template=template,
+                        )
+                digest.assert_not_called()
+
+    def test_suffixed_generated_json_rejects_escaped_controls_before_hashing(self):
+        payloads = {
+            "value-form-feed": {"statement": "Damaged " + "\f" + "orall."},
+            "key-line-feed": {"Damaged " + "\n" + "abla": "value"},
+        }
+        for name, payload in payloads.items():
+            with self.subTest(name=name):
+                template = self.template()
+                artifact = next(
+                    row
+                    for row in template["artifacts"]
+                    if row["id"] == "artifact:evidence"
+                )
+                artifact["media_type"] = "application/problem+json; charset=utf-8"
+                frozen = self.frozen()
+                frozen[artifact["filename"]] = canonical_json_bytes(payload)
+                with patch(
+                    "scripts.gpt_artifact_compiler.sha256_bytes"
+                ) as digest:
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "generated JSON artifact.*contains prohibited Unicode controls",
+                    ):
+                        finalize_candidate_artifacts(
+                            session_reported_runtime=RUNTIME,
+                            report_body="# Report\n\nControl-free body.",
+                            frozen_artifacts=frozen,
+                            audit_return_template=template,
+                        )
+                digest.assert_not_called()
+
+    def test_textual_input_must_be_strict_utf8_before_hashing(self):
+        template = self.template()
+        artifact = next(
+            row
+            for row in template["artifacts"]
+            if row["id"] == "artifact:source"
+        )
+        artifact["media_type"] = "application/yaml"
+        frozen = self.frozen()
+        frozen[artifact["filename"]] = b"\xff"
+        with patch("scripts.gpt_artifact_compiler.sha256_bytes") as digest:
+            with self.assertRaisesRegex(
+                ValueError,
+                "text artifact must be strict UTF-8",
+            ):
+                finalize_candidate_artifacts(
+                    session_reported_runtime=RUNTIME,
+                    report_body="# Report\n\nControl-free body.",
+                    frozen_artifacts=frozen,
+                    audit_return_template=template,
+                )
+        digest.assert_not_called()
+
     def test_compiler_repairs_missing_request_and_incomplete_output_rosters(self):
         template = self.template()
         execution = {row["activity"]: row for row in template["execution"]}
@@ -431,11 +594,12 @@ class GptArtifactCompilerTests(unittest.TestCase):
             destination.write_bytes(data)
             frozen_paths[filename] = str(source)
         spec = {
-            "report_body": (
-                "# BSC audit report\n\n"
+            "report_body_lines": [
+                "# BSC audit report",
+                "",
                 "The supplied bytes were checked through the deterministic "
-                "compiler transaction."
-            ),
+                "compiler transaction.",
+            ],
             "frozen_artifact_paths": frozen_paths,
             "audit_return_template": self.template(),
         }
@@ -677,7 +841,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 )
             self.assertEqual(status, 0)
             wrapper = json.loads(output.getvalue())
-            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v7")
+            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v8")
             self.assertEqual(
                 output.getvalue().encode("utf-8"),
                 canonical_transport_wrapper_bytes(wrapper),
@@ -758,7 +922,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 set(failure),
                 {"compiler", "error", "status"},
             )
-            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v7")
+            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v8")
             self.assertEqual(failure["status"], "blocked")
             self.assertTrue(failure["error"])
             self.assertEqual(
@@ -840,7 +1004,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
             "defect_composition_valid.json",
         ]
         self.assertEqual(set(parsed), COMPILE_RESULT_FIELDS)
-        self.assertEqual(parsed["compiler"], "bsc-gpt-artifact-compiler-v7")
+        self.assertEqual(parsed["compiler"], "bsc-gpt-artifact-compiler-v8")
         self.assertEqual(
             set(parsed["transport"]),
             SAME_RESPONSE_TRANSPORT_FIELDS,
@@ -1372,7 +1536,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
             self.assertTrue(compile_result["return_serialized_last"])
             self.assertEqual(
                 compile_result["compiler"],
-                "bsc-gpt-artifact-compiler-v7",
+                "bsc-gpt-artifact-compiler-v8",
             )
 
             ledger = (output_root / BOUND_RUNTIME_ARTIFACT).read_text(
@@ -1467,6 +1631,104 @@ class GptArtifactCompilerTests(unittest.TestCase):
             self.assertEqual(failure["status"], "blocked")
             self.assertNotIn("transport", failure)
             self.assertFalse(output.getvalue().endswith("\n"))
+            for filename in (
+                BOUND_REPORT_ARTIFACT,
+                BOUND_RUNTIME_ARTIFACT,
+                BOUND_RETURN_ARTIFACT,
+            ):
+                self.assertFalse((output_root / filename).exists())
+
+    def test_compile_report_line_contract_blocks_every_latex_escape_collision(self):
+        damaged_fragments = {
+            "alpha": "\a" + "lpha",
+            "beta": "\b" + "eta",
+            "forall": "\f" + "orall",
+            "nabla": "\n" + "abla",
+            "theta": "\t" + "heta",
+            "rho": "\r" + "ho",
+            "varphi": "\v" + "arphi",
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            _, output_root, spec = self.prepare_compile_fixture(root)
+            for name, fragment in damaged_fragments.items():
+                with self.subTest(name=name):
+                    bad_spec = copy.deepcopy(spec)
+                    bad_spec["report_body_lines"] = [
+                        "# BSC audit report",
+                        "",
+                        f"Damaged {fragment}.",
+                    ]
+                    bad_path = root / f"compile-spec-{name}.json"
+                    bad_path.write_bytes(canonical_json_bytes(bad_spec))
+                    output = io.StringIO()
+                    with redirect_stdout(output):
+                        status = compiler_main(
+                            [
+                                "compile",
+                                "--spec",
+                                str(bad_path),
+                                "--output-dir",
+                                str(output_root),
+                            ]
+                        )
+                    self.assertEqual(status, 1)
+                    failure = json.loads(output.getvalue())
+                    self.assertEqual(failure["status"], "blocked")
+                    self.assertIn(
+                        "report_body_lines[2] contains prohibited controls",
+                        failure["error"],
+                    )
+                    for filename in (
+                        BOUND_REPORT_ARTIFACT,
+                        BOUND_RUNTIME_ARTIFACT,
+                        BOUND_RETURN_ARTIFACT,
+                    ):
+                        self.assertFalse((output_root / filename).exists())
+
+    def test_compile_textual_input_control_blocks_before_hash_transport_or_writes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            _, output_root, spec = self.prepare_compile_fixture(root)
+            request = next(
+                row
+                for row in spec["audit_return_template"]["artifacts"]
+                if row["id"] == "artifact:request"
+            )
+            request["media_type"] = "application/problem+json; charset=UTF-8"
+            Path(spec["frozen_artifact_paths"][request["filename"]]).write_bytes(
+                b"damaged\x0cbytes"
+            )
+            bad_path = root / "compile-spec-text-control.json"
+            bad_path.write_bytes(canonical_json_bytes(spec))
+            output = io.StringIO()
+            with (
+                patch(
+                    "scripts.gpt_artifact_compiler.sha256_bytes"
+                ) as digest,
+                patch(
+                    "scripts.gpt_artifact_compiler.build_same_response_transport"
+                ) as transport,
+                redirect_stdout(output),
+            ):
+                status = compiler_main(
+                    [
+                        "compile",
+                        "--spec",
+                        str(bad_path),
+                        "--output-dir",
+                        str(output_root),
+                    ]
+                )
+            self.assertEqual(status, 1)
+            failure = json.loads(output.getvalue())
+            self.assertEqual(failure["status"], "blocked")
+            self.assertIn(
+                "text artifact claim_valid.json contains prohibited Unicode controls",
+                failure["error"],
+            )
+            digest.assert_not_called()
+            transport.assert_not_called()
             for filename in (
                 BOUND_REPORT_ARTIFACT,
                 BOUND_RUNTIME_ARTIFACT,

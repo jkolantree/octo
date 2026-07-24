@@ -59,7 +59,7 @@ The three entry points do not share one privacy or execution boundary:
 For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
 
 The Custom GPT artifact-transport fallback is generated during the original
-Data Analysis compiler-v7 transaction, after `audit_return.json` is serialized.
+Data Analysis compiler-v8 transaction, after `audit_return.json` is serialized.
 Same-response transport v2 derives one deterministic bounded container from the
 same final in-memory output bytes, zlib-compresses it into contiguous data
 shards of at most 2,048 bytes, and adds one `xor_parity_v1` shard computed over

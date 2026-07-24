@@ -277,7 +277,7 @@ class GptEvalControllerTests(unittest.TestCase):
                 newline="",
             )
 
-    def compiler_v7_stdout(
+    def compiler_v8_stdout(
         self,
         *,
         extra_files: dict[str, bytes] | None = None,
@@ -498,7 +498,7 @@ class GptEvalControllerTests(unittest.TestCase):
         )
 
     def test_v5_reconstructs_one_original_response_bundle_with_unrelated_code(self):
-        stdout, files = self.compiler_v7_stdout()
+        stdout, files = self.compiler_v8_stdout()
         escaped = html.escape(stdout.decode("utf-8"), quote=False)
         response = (
             "<article><p>complete answer</p>"
@@ -576,7 +576,7 @@ class GptEvalControllerTests(unittest.TestCase):
             )
 
     def test_controller_v5_rejects_v4_label_and_old_capture_shape(self):
-        stdout, _ = self.compiler_v7_stdout()
+        stdout, _ = self.compiler_v8_stdout()
         response = (
             "<article><pre><code>"
             + html.escape(stdout.decode("utf-8"), quote=False)
@@ -611,7 +611,7 @@ class GptEvalControllerTests(unittest.TestCase):
     def test_v5_c001_inline_compiler_name_does_not_duplicate_final_fenced_stdout(
         self,
     ):
-        stdout, files = self.compiler_v7_stdout()
+        stdout, files = self.compiler_v8_stdout()
         escaped = html.escape(stdout.decode("utf-8"), quote=False)
         response = (
             "<article><p><span>The required formal-depth artifacts were "
@@ -644,7 +644,7 @@ class GptEvalControllerTests(unittest.TestCase):
             self.assertEqual(self.validate_v5_record(root, record), [])
 
     def test_v5_binds_and_recomputes_bounded_xor_recovery_receipts(self):
-        stdout, files = self.compiler_v7_stdout()
+        stdout, files = self.compiler_v8_stdout()
         pristine = json.loads(stdout)
         mutations = {
             artifact_compiler.RECOVERY_STATE_DATA_SHARD_RECOVERED: (
@@ -723,7 +723,7 @@ class GptEvalControllerTests(unittest.TestCase):
                     )
 
     def test_v5_unrecoverable_data_and_parity_fault_remains_candidate_failure(self):
-        stdout, _ = self.compiler_v7_stdout()
+        stdout, _ = self.compiler_v8_stdout()
         document = json.loads(stdout)
         for holder in (
             document["transport"]["chunks"][0],
@@ -758,7 +758,7 @@ class GptEvalControllerTests(unittest.TestCase):
     def test_v5_c001_inline_compiler_name_preserves_fenced_fail_closed_states(
         self,
     ):
-        stdout, _ = self.compiler_v7_stdout()
+        stdout, _ = self.compiler_v8_stdout()
         escaped = html.escape(stdout.decode("utf-8"), quote=False)
         inline_prefix = (
             "<article><p><span>The required formal-depth artifacts were "
@@ -806,7 +806,7 @@ class GptEvalControllerTests(unittest.TestCase):
                     self.assertEqual(record["reconstructed_outputs"], [])
 
     def test_v5_requires_every_knowledge_source_output_in_builder_and_validator(self):
-        valid_stdout, _ = self.compiler_v7_stdout()
+        valid_stdout, _ = self.compiler_v8_stdout()
         valid_document = json.loads(valid_stdout)
         valid_response = (
             "<article><pre><code>"
@@ -890,7 +890,7 @@ class GptEvalControllerTests(unittest.TestCase):
                     )
 
     def test_explicit_no_download_attempt_precedes_same_response_fallback(self):
-        stdout, files = self.compiler_v7_stdout()
+        stdout, files = self.compiler_v8_stdout()
         response = (
             '<article><button aria-label="Download audit_report.md"></button>'
             "<pre><code>"
@@ -931,7 +931,7 @@ class GptEvalControllerTests(unittest.TestCase):
             self.assertEqual(self.validate_v5_record(root, record), [])
 
     def test_direct_bytes_are_primary_without_hiding_a_bundle_contradiction(self):
-        stdout, files = self.compiler_v7_stdout()
+        stdout, files = self.compiler_v8_stdout()
         response = (
             '<article><button aria-label="Download audit_report.md"></button>'
             "<pre><code>"
@@ -972,7 +972,7 @@ class GptEvalControllerTests(unittest.TestCase):
             self.assertEqual(self.validate_v5_record(root, record), [])
 
     def test_v5_rejects_prose_or_code_after_the_compiler_block(self):
-        stdout, _ = self.compiler_v7_stdout()
+        stdout, _ = self.compiler_v8_stdout()
         escaped = html.escape(stdout.decode("utf-8"), quote=False)
         responses = {
             "prose": (
@@ -998,7 +998,7 @@ class GptEvalControllerTests(unittest.TestCase):
                     self.assertEqual(record["reconstructed_outputs"], [])
 
     def test_v5_requires_the_compiler_stdout_to_be_fenced(self):
-        stdout, _ = self.compiler_v7_stdout()
+        stdout, _ = self.compiler_v8_stdout()
         escaped = html.escape(stdout.decode("utf-8"), quote=False)
         with tempfile.TemporaryDirectory() as temporary:
             record = self.build_v5_record(
@@ -1015,7 +1015,7 @@ class GptEvalControllerTests(unittest.TestCase):
             self.assertEqual(record["reconstructed_outputs"], [])
 
     def test_aligned_base64_omission_is_candidate_evidence_not_controller_invalid(self):
-        stdout, _ = self.compiler_v7_stdout()
+        stdout, _ = self.compiler_v8_stdout()
         document = json.loads(stdout)
         encoded = document["transport"]["chunks"][0]["base64"]
         self.assertGreaterEqual(len(encoded), 12)
@@ -1039,7 +1039,7 @@ class GptEvalControllerTests(unittest.TestCase):
             self.assertEqual(self.validate_v5_record(root, record), [])
 
     def test_candidate_transport_states_cannot_be_relabeled_controller_invalid(self):
-        stdout, _ = self.compiler_v7_stdout(
+        stdout, _ = self.compiler_v8_stdout(
             extra_files={"unexpected.txt": b"extra\n"}
         )
         blocked = canonical_transport_wrapper_bytes(
@@ -1088,7 +1088,7 @@ class GptEvalControllerTests(unittest.TestCase):
                     self.assertEqual(self.validate_v5_record(root, record), [])
 
     def test_controller_mutation_is_invalid_but_candidate_defect_is_not(self):
-        stdout, _ = self.compiler_v7_stdout()
+        stdout, _ = self.compiler_v8_stdout()
         document = json.loads(stdout)
         document["transport"]["chunks"][0]["chunk_sha256"] = "0" * 64
         malformed = canonical_transport_wrapper_bytes(document)

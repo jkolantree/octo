@@ -14,7 +14,8 @@ This release replaces model-mediated artifact identity with one acyclic final-by
 - canonicalize all eight execution activities and the report-facing execution projection before any report, ledger, hash, or return bytes are derived;
 - keep Base64 outside the primary proof path and treat any fallback only as the identity of the exported payload actually received;
 - derive one deterministic bounded multi-artifact container from the compiler's same final in-memory output bytes after `audit_return.json` is serialized;
-- have compiler v7 split the zlib stream into contiguous data shards of at most 2,048 bytes and add one `xor_parity_v1` shard in same-response transport v2;
+- retain compiler v7's bounded-transport contract in compiler v8: split the zlib stream into contiguous data shards of at most 2,048 bytes and add one `xor_parity_v1` shard in same-response transport v2;
+- have compiler v8 accept explicit `report_body_lines`, reject every Unicode category `Cc` code point in each line and in every generated JSON key and value, join validated report lines with compiler-owned LF separators, and fail without stripping, splitting, substitution, or other auto-repair;
 - include that dormant zlib/Base64 transport envelope in the original canonical compiler stdout, eliminating every later-turn `/mnt/data` dependency.
 
 The evaluation controller now validates the exact target, all six canonical Knowledge files, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls and explicit per-file direct-acquisition outcomes separately from acquired bytes, never infers `no_download_event` from absence alone, validates the complete original-response compiler block and every container/member identity before local reconstruction, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`. Parity may recover exactly one content-faulted data shard only when its metadata and expected ASCII Base64 text length are intact and all other data plus parity are valid; the controller then reruns every aggregate, container, member, and topology check. Aligned-quartet omission, metadata mutation, multiple bad data, or bad data plus bad parity remains unrecoverable. Valid data with only exact-length bad parity records `parity_degraded_not_used`.
@@ -98,6 +99,38 @@ old freeze cannot be reused. All local gates and both preflights must pass, a
 new exact freeze must be recorded, and the full counted suite must restart from
 C001. No passing suite, live update, merge, tag, release, or publication is
 claimed here.
+
+## 2026-07-24 D01 control-byte boundary and compiler v8
+
+The next frozen candidate, commit
+`0f753a6d61f3e06ca35e95f6c5a3e25bf13c8544` and tree
+`977131ac08adab65a91d4eb25123ffd29d5b3079`, passed all 49 local deterministic
+gates. Fresh Preview attempt `D01-A01` was nevertheless
+`controller_valid` and `candidate_failed`, with
+`transport_identity_unresolved`, because artifact validation prohibited
+scoring. Exact compiler-v7 transport reconstructed the 13,194-byte
+`audit_report.md` and found ASCII form feed (`0x0C`) at zero-based offsets 3032
+and 3538. Both occur in contexts indicating intended `\forall`. Ordinary
+Python- or JSON-string `\f` escape decoding is the strong explanation, but the
+exact model-side construction layer was not preserved and is therefore not
+claimed as proven.
+
+The user explicitly authorized one additional consolidated root-cause repair
+cycle on 2026-07-24. Compiler v8 changes only the construction and validation
+contract: explicit `report_body_lines` must contain no Unicode category `Cc`
+characters, compiler-owned LF joins validated lines, and JSON keys and values
+must contain no `Cc`, including LF, TAB, and CR. It rejects rather than
+silently repairing invalid text. Regression coverage binds the ordinary-string
+collisions for `\forall`, `\theta`, `\rho`, and `\nabla` while accepting the
+corresponding Unicode mathematics and safely doubled literal backslashes.
+
+This second authorization does not rewrite the historical compiler-v7/C001
+failure or parity repair. Cases, fixtures, scientific expectations and
+oracles, scorers, rubrics, thresholds, automatic failures, and Return Desk
+negatives are unchanged. All local gates, a new exact freeze, D01 and D02 in
+fresh Preview sessions, and the complete 39-case suite from C001 must restart.
+The official GPT remains unchanged, Update was not clicked, and no push,
+merge, tag, Release, or publication is claimed.
 
 ## Authority and privacy boundary
 
