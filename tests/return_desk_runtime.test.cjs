@@ -836,6 +836,40 @@ test("unresolved obligations keep coherent claim, gate, and optional evidence sc
   assert.ok(codes(disjointResult).has("RETURN_OBLIGATION_SCOPE_MISMATCH"));
 });
 
+test("gate obligation cardinality is fail closed", () => {
+  const nonpassing = validRecord();
+  nonpassing.claims[0].research_verdict = "refuted";
+  nonpassing.evidence[0].result = "fail";
+  nonpassing.fatal_gates[0].state = "fail";
+  Object.assign(nonpassing.summary_projection, {
+    research_verdict: "refuted",
+    admission: "fail",
+  });
+  const nonpassingResult = inspect(nonpassing);
+  assert.equal(nonpassingResult.outcome, "blocked");
+  assert.ok(
+    codes(nonpassingResult).has("RETURN_UNRESOLVED_GATE_OBLIGATION_OMITTED"),
+  );
+
+  const passing = validRecord();
+  passing.fatal_gates[0].obligation_ids = ["obligation.unnecessarily-open"];
+  passing.unresolved_obligations = [{
+    id: "obligation.unnecessarily-open",
+    statement: "This obligation cannot remain behind a passing gate.",
+    claim_ids: ["claim.main"],
+    gate_ids: ["gate.structure"],
+    evidence_ids: ["evidence.analysis"],
+  }];
+  passing.summary_projection.unresolved_obligation_ids = [
+    "obligation.unnecessarily-open",
+  ];
+  const passingResult = inspect(passing);
+  assert.equal(passingResult.outcome, "blocked");
+  assert.ok(
+    codes(passingResult).has("RETURN_PASSED_GATE_HAS_OPEN_OBLIGATION"),
+  );
+});
+
 test("required human-semantic strings cannot be blank", () => {
   const cases = [];
   const claim = validRecord();

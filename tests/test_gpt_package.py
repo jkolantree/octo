@@ -212,7 +212,7 @@ class CustomGptPackageTests(unittest.TestCase):
         )
         self.assertEqual(
             protocol["protocol_schema"],
-            "bsc-gpt-frozen-evaluation/v5",
+            "bsc-gpt-frozen-evaluation/v6",
         )
         for obsolete_key in (
             "regression_trials",
@@ -242,8 +242,8 @@ class CustomGptPackageTests(unittest.TestCase):
                     "development_regressions_not_independent_evaluation_evidence"
                 ),
                 "run_order": "case_1_then_case_27",
-                "candidate_defect_repair_allowance": 2,
-                "repair_scope": "two_explicitly_authorized_consolidated_root_cause_repairs",
+                "candidate_defect_repair_allowance": 3,
+                "repair_scope": "three_explicitly_authorized_consolidated_root_cause_repairs",
                 "regenerate_all_candidate_artifacts": "required",
                 "rerun_all_local_gates": "required",
                 "restart_preflights": "both_from_case_1",
@@ -254,8 +254,8 @@ class CustomGptPackageTests(unittest.TestCase):
             {
                 "development_preflights": 2,
                 "counted_regressions_per_complete_suite": 39,
-                "maximum_post_suite_root_cause_repairs": 2,
-                "maximum_complete_counted_suites": 3,
+                "maximum_post_suite_root_cause_repairs": 3,
+                "maximum_complete_counted_suites": 4,
             },
         )
         self.assertEqual(
@@ -480,7 +480,7 @@ class CustomGptPackageTests(unittest.TestCase):
         )
         self.assertIn("`transport_identity_unresolved`", execution_knowledge)
         self.assertIn(
-            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v8"',
+            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v9"',
             execution_knowledge,
         )
         durable_knowledge = "\n".join(
@@ -545,15 +545,17 @@ class CustomGptPackageTests(unittest.TestCase):
             ),
             "draft_machine_records": (
                 "Machine=audit_request.txt+audit_report.md+audit_return.json. "
-                "K3=/mnt/data/gpt_artifact_compiler.py owns sys.version+frozen request/source/evidence+"
+                "K3=/mnt/data/gpt_artifact_compiler.py owns runtime+frozen I/O+"
                 "Ledger8/report/IDs/topology; return LAST. Text=control-free report_body_lines; prefer "
-                "Unicode/plain math. No ordinary Python/JSON LaTeX escapes or interpreted splitlines; use "
-                "raw string+json.dump. Cc=>block/regenerate, never delete/substitute/guess. No authored runtime/hash/size/"
-                "Base64; block=>no return/pass/proven. Refs2way; pass=>no obligation; no self; exact fatal IDs. "
-                "Proven/strong/lemma=>6K+S10+bound evidence/claim/run/pass-gates else demote. "
+                "Unicode; no ordinary-string LaTeX/interpreted splitlines; raw strings+json.dump. "
+                "Cc=>block/regenerate; never alter/guess. No authored runtime/hash/size/"
+                "Base64; block=>no return/pass/proven. Refs2way; pass=>0 obligations; "
+                "nonpass=>>=1 scoped obligation; refutation!=disposition; "
+                "summary=all; no self; exact fatal IDs. "
+                "High verdict/lemma=>6K+S10+bound evidence/claim/run/pass-gates else demote. "
                 "protocol.sha256=sha256:"
-                "ea944adbc535cd30dad9a1f4f3b93f63ad4bc89fbcfd023d125c6c8325e9a148. "
-                "Request/report/source IDs,digests distinct. Final=exact v8 stdout; nothing after. "
+                "1b587f18e4eb83be8d1ef50294b174f54f339d966f25d2d7b56d1b5b5fb94e31. "
+                "Request/report/source IDs,digests distinct. Final=exact v9 stdout; nothing after. "
                 "v2 parity=fallback-only; no unavailable-button identity."
             ),
             "execution_ledger": (

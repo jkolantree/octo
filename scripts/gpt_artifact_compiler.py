@@ -28,7 +28,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
-COMPILER_VERSION = "bsc-gpt-artifact-compiler-v8"
+COMPILER_VERSION = "bsc-gpt-artifact-compiler-v9"
 TRANSPORT_CHUNK_VERSION = "bsc-gpt-export-chunk-v1"
 SAME_RESPONSE_TRANSPORT_VERSION = "bsc-gpt-same-response-transport-v2"
 TRANSPORT_CONTAINER_VERSION = "bsc-gpt-multi-artifact-container-v1"
@@ -1507,7 +1507,7 @@ def _semantic_report_projection(document: dict[str, Any]) -> dict[str, Any]:
         "unresolved_obligations": [
             {
                 key: copy.deepcopy(obligation.get(key))
-                for key in ("id", "claim_ids", "gate_ids", "description")
+                for key in ("id", "statement", "claim_ids", "gate_ids", "evidence_ids")
             }
             for obligation in document.get("unresolved_obligations", [])
             if isinstance(obligation, dict)
@@ -1844,6 +1844,173 @@ def _validate_execution_contract(
                 )
 
 
+def _validate_obligation_contract(document: dict[str, Any]) -> None:
+    """Fail closed unless gate and open-obligation topology is complete."""
+
+    def index_records(field: str) -> dict[str, dict[str, Any]]:
+        rows = document.get(field)
+        if not isinstance(rows, list):
+            raise ValueError(f"return template {field} must be an array")
+        indexed: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            identifier = row.get("id") if isinstance(row, dict) else None
+            if (
+                not isinstance(identifier, str)
+                or not identifier
+                or identifier in indexed
+            ):
+                raise ValueError(
+                    f"return template {field} identifiers are invalid or duplicated"
+                )
+            indexed[identifier] = row
+        return indexed
+
+    def id_set(
+        record: dict[str, Any],
+        field: str,
+        *,
+        label: str,
+        required_nonempty: bool = False,
+    ) -> set[str]:
+        values = record.get(field)
+        if (
+            not isinstance(values, list)
+            or any(not isinstance(item, str) or not item for item in values)
+            or len(values) != len(set(values))
+            or (required_nonempty and not values)
+        ):
+            raise ValueError(f"{label} {field} must be a unique ID array")
+        return set(values)
+
+    claims = index_records("claims")
+    gates = index_records("fatal_gates")
+    evidence = index_records("evidence")
+    obligations = index_records("unresolved_obligations")
+    all_ids = [
+        *claims,
+        *gates,
+        *evidence,
+        *obligations,
+    ]
+    if len(all_ids) != len(set(all_ids)):
+        raise ValueError(
+            "claim, fatal-gate, evidence, and obligation identifiers must be globally unique"
+        )
+
+    gate_owners: dict[str, set[str]] = {gate_id: set() for gate_id in gates}
+    for claim_id, claim in claims.items():
+        claim_gate_ids = id_set(
+            claim,
+            "fatal_gate_ids",
+            label=f"claim {claim_id}",
+        )
+        unknown = claim_gate_ids - set(gates)
+        if unknown:
+            raise ValueError(
+                f"claim {claim_id} references unknown fatal gates: {sorted(unknown)}"
+            )
+        for gate_id in claim_gate_ids:
+            gate_owners[gate_id].add(claim_id)
+
+    reverse_obligations: dict[str, set[str]] = {gate_id: set() for gate_id in gates}
+    for obligation_id, obligation in obligations.items():
+        statement = obligation.get("statement")
+        if not isinstance(statement, str) or not statement.strip():
+            raise ValueError(
+                f"obligation {obligation_id} statement must be nonempty"
+            )
+        claim_ids = id_set(
+            obligation,
+            "claim_ids",
+            label=f"obligation {obligation_id}",
+            required_nonempty=True,
+        )
+        gate_ids = id_set(
+            obligation,
+            "gate_ids",
+            label=f"obligation {obligation_id}",
+            required_nonempty=True,
+        )
+        evidence_ids = id_set(
+            obligation,
+            "evidence_ids",
+            label=f"obligation {obligation_id}",
+        )
+        if claim_ids - set(claims) or gate_ids - set(gates) or evidence_ids - set(evidence):
+            raise ValueError(
+                f"obligation {obligation_id} contains an unresolved reference"
+            )
+        expected_claim_ids = set().union(
+            *(gate_owners[gate_id] for gate_id in gate_ids)
+        )
+        if claim_ids != expected_claim_ids:
+            raise ValueError(
+                f"obligation {obligation_id} claim scope differs from its gate owners"
+            )
+        for evidence_id in evidence_ids:
+            evidence_record = evidence[evidence_id]
+            evidence_claim_ids = id_set(
+                evidence_record,
+                "claim_ids",
+                label=f"evidence {evidence_id}",
+            )
+            evidence_gate_ids = id_set(
+                evidence_record,
+                "gate_ids",
+                label=f"evidence {evidence_id}",
+            )
+            if (
+                not claim_ids.issubset(evidence_claim_ids)
+                or not gate_ids.intersection(evidence_gate_ids)
+            ):
+                raise ValueError(
+                    f"obligation {obligation_id} cited evidence scope is incompatible"
+                )
+        for gate_id in gate_ids:
+            reverse_obligations[gate_id].add(obligation_id)
+    for gate_id, gate in gates.items():
+        if not gate_owners[gate_id]:
+            raise ValueError(f"fatal gate {gate_id} has no owning claim")
+        state = gate.get("state")
+        if state not in {"pass", "fail", "unrun", "conflict"}:
+            raise ValueError(f"fatal gate {gate_id} state is invalid")
+        gate_evidence_ids = id_set(
+            gate,
+            "evidence_ids",
+            label=f"fatal gate {gate_id}",
+        )
+        if gate_evidence_ids - set(evidence):
+            raise ValueError(f"fatal gate {gate_id} references unknown evidence")
+        forward_obligations = id_set(
+            gate,
+            "obligation_ids",
+            label=f"fatal gate {gate_id}",
+        )
+        if forward_obligations != reverse_obligations[gate_id]:
+            raise ValueError(
+                f"fatal gate {gate_id} obligation bindings are asymmetric"
+            )
+        if state == "pass" and forward_obligations:
+            raise ValueError(f"passing fatal gate {gate_id} has an open obligation")
+        if state != "pass" and not forward_obligations:
+            raise ValueError(
+                f"nonpassing fatal gate {gate_id} omits an open obligation"
+            )
+
+    summary = document.get("summary_projection")
+    if not isinstance(summary, dict):
+        raise ValueError("return template summary_projection must be an object")
+    summary_obligations = id_set(
+        summary,
+        "unresolved_obligation_ids",
+        label="summary projection",
+    )
+    if summary_obligations != set(obligations):
+        raise ValueError(
+            "summary projection must include every unresolved obligation exactly"
+        )
+
+
 @dataclass(frozen=True)
 class FinalizedArtifactSet:
     files: dict[str, bytes]
@@ -1969,6 +2136,7 @@ def finalize_candidate_artifacts(
             "audit_return strings must not copy a runtime outside execution.version"
         )
     _validate_execution_contract(document, artifacts_by_id)
+    _validate_obligation_contract(document)
 
     report_bytes = _render_report(report_body, document)
     prior_files = dict(frozen_artifacts)

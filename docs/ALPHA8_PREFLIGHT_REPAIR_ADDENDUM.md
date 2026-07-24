@@ -442,3 +442,51 @@ restart under a new exact freeze: D01 must pass in a new Preview session before
 D02 is consumed, and the complete 39-case counted suite must then restart at
 C001. The official GPT remains unchanged, Update was not clicked, and no push,
 merge, tag, Release, or publication follows from this repair record.
+
+## 2026-07-24 third consolidated repair: controller-valid C004 obligation topology
+
+The next frozen candidate was commit
+`b8461ca7ef4ac44e86e49bd3c4182872062b40ae`, tree
+`ab1e2e7e68306f7ba041fe8b1daead50b126ee0c`, with frozen-manifest SHA-256
+`26eaeb7012a0d9036caff3958c0b837fe4d0ae65cecbd3c172aa9d2721677f56`.
+All 49 local deterministic gates passed. Fresh Preview preflights D01 and D02
+passed 20/20, followed by counted C001, C002, and C003 at 20/20 under the same
+freeze.
+
+C004 `assumption-removed` retained two controller-invalid stalls before
+`C004-A03` completed. Its exact 4,915-byte controller record, SHA-256
+`ab6323f26310f19f440332595eea966312b2b1c246821e8e80f845190b3d844e`,
+was valid. The candidate nevertheless failed before scoring. Its exact
+7,364-byte `audit_return.json`, SHA-256
+`f43ac96311a47789871f7619a18651c327dc898fa6bec865b133b5cd4a869443`,
+correctly refuted the universal identity with x = -1, preserved the failing
+evidence, set the fatal gate and admission to `fail`, and supplied the correct
+repairs `sqrt(x^2)=abs(x)` or x >= 0. It omitted every open obligation.
+Return Desk therefore blocked it with
+`RETURN_UNRESOLVED_GATE_OBLIGATION_OMITTED`.
+
+The scientific result remains correct. Under the unchanged Return Desk
+contract, a nonpassing gate must retain a scoped workflow obligation even when
+no mathematical proof duty remains for an exact refutation. In this case that
+obligation is to retire, narrow, or amend the frozen failed claim before any
+admission. It does not demote or reopen `research_verdict: "refuted"`.
+
+On 2026-07-24 the user explicitly authorized a third consolidated root-cause
+repair cycle. The contract change advances the artifact compiler identity to
+v9. Compiler v9 validates obligation closure before rendering, hashing,
+serialization, or transport. It fails closed on pass-with-obligation,
+nonpass-without-obligation, duplicate identifiers, asymmetric bindings,
+claim-owner or evidence-scope mismatch, and incomplete summary projection.
+The deterministic report projection also uses schema field `statement`
+instead of the nonexistent `description` key. The compact controller now
+states the nonpassing-gate obligation invariant and distinguishes scientific
+refutation closure from admission disposition.
+
+This authorization preserves every historical attempt and does not change any
+evaluation case, fixture, scientific oracle or expectation, scorer, rubric,
+threshold, automatic-failure rule, or Return Desk negative. All local gates
+and both development preflights must restart under a new exact freeze, D01
+must pass before D02 is consumed, and the complete 39-case counted suite must
+then restart at C001. The official GPT remains unchanged, Update was not
+clicked, and no push, merge, tag, Release, or publication follows from this
+repair record.

@@ -381,3 +381,52 @@ must pass every local gate and restart D01 and D02 in fresh Preview sessions
 before the complete counted suite restarts at C001. The official GPT remains
 unchanged; Update was not clicked; D02 and all 39 counted cases were not
 consumed; and no push, merge, tag, Release, or publication is claimed.
+
+## 2026-07-24 controller-valid C004 obligation-topology failure and compiler-v9 repair
+
+The replacement candidate was commit
+`b8461ca7ef4ac44e86e49bd3c4182872062b40ae`, tree
+`ab1e2e7e68306f7ba041fe8b1daead50b126ee0c`, with frozen-manifest SHA-256
+`26eaeb7012a0d9036caff3958c0b837fe4d0ae65cecbd3c172aa9d2721677f56`.
+All 49 local deterministic gates passed. D01 and D02 then passed 20/20, and
+counted cases C001 through C003 passed 20/20 under that same freeze.
+
+C004 `assumption-removed` preserved two controller-invalid stalls before the
+permitted same-candidate attempt `C004-A03` reached a complete terminal
+response. Its controller record is 4,915 bytes with SHA-256
+`ab6323f26310f19f440332595eea966312b2b1c246821e8e80f845190b3d844e`.
+The controller was valid, but the candidate failed before scoring. The exact
+7,364-byte `audit_return.json`, SHA-256
+`f43ac96311a47789871f7619a18651c327dc898fa6bec865b133b5cd4a869443`,
+correctly recorded the universal claim as `refuted`, bound the exact
+counterexample at x = -1, set its fatal gate to `fail`, and set admission to
+`fail`. It nevertheless left both the gate's `obligation_ids` and the top-level
+`unresolved_obligations` empty. Return Desk therefore emitted blocking finding
+`RETURN_UNRESOLVED_GATE_OBLIGATION_OMITTED`: every nonpassing fatal gate must
+retain at least one scoped open obligation.
+
+This was a producer-side contract gap, not a scientific failure. The compact
+instruction stated `pass=>no obligation` but omitted the enforced converse.
+The compiler canonicalized execution topology but did not validate obligation
+closure, and its deterministic report projection also requested nonexistent
+obligation field `description` instead of schema field `statement`.
+
+On 2026-07-24 the user explicitly authorized a third consolidated root-cause
+repair cycle. Compiler v9 validates obligation closure before rendering,
+hashing, serialization, or transport. It rejects passing gates with open
+obligations; nonpassing gates without an obligation; asymmetric
+gate/obligation bindings; claim-owner or evidence-scope mismatches; duplicate
+IDs; and incomplete summary obligation projection. Its report projection uses
+`statement`. The compact instructions now require every `fail`, `unrun`, or
+`conflict` gate to retain a scoped open obligation and separate refutation
+closure from admission disposition: an exactly refuted frozen claim remains
+`refuted`, while its open workflow obligation is to retire, narrow, or amend
+the claim before admission.
+
+The repair does not alter any evaluation case, fixture, scientific oracle or
+expectation, scorer, rubric, threshold, automatic-failure rule, or Return Desk
+negative. C004-A03 and the prior failed attempts remain immutable negative
+evidence. The old freeze is not reusable. All local gates and both preflights
+must restart under a new exact freeze, D01 must pass before D02 is consumed,
+and the complete counted suite must then restart from C001. The live GPT,
+GitHub refs, tags, releases, and publication state remain unchanged.
