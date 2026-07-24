@@ -202,7 +202,9 @@ class GptEvalSuiteTests(unittest.TestCase):
                 )
             ],
             "inputs": [],
+            "observed_output_controls": [],
             "observed_outputs": [],
+            "transport_attempts": [],
             "wrapper_captures": [],
         }
 

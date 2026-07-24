@@ -4,8 +4,9 @@
 The Custom GPT must execute this compiler for any machine-record transaction.
 It freezes caller-supplied bytes, derives every identity from those bytes,
 builds the one runtime ledger, validates execution/evidence topology, and
-serializes ``audit_return.json`` last.  The Base64 command is a transport
-fallback only and derives every wrapper field from one freshly read byte value.
+serializes ``audit_return.json`` last.  The Base64 transport fallback compresses
+one stable-read payload and emits only fixed-bound chunks whose identities are
+derived from that same byte value.
 """
 
 from __future__ import annotations
@@ -18,13 +19,36 @@ import json
 import os
 import re
 import shlex
+import sys
 import unicodedata
+import zlib
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
-COMPILER_VERSION = "bsc-gpt-artifact-compiler-v2"
+COMPILER_VERSION = "bsc-gpt-artifact-compiler-v3"
+TRANSPORT_CHUNK_VERSION = "bsc-gpt-export-chunk-v1"
+TRANSPORT_ENCODING = "zlib+base64"
+TRANSPORT_CHUNK_BYTES = 2048
+MAX_TRANSPORT_PAYLOAD_BYTES = 64 * 1024 * 1024
+MAX_TRANSPORT_ENCODED_BYTES = 65 * 1024 * 1024
+MAX_TRANSPORT_CHUNKS = 100_000
+EXPORT_CHUNK_FIELDS = {
+    "transport_version",
+    "filename",
+    "encoding",
+    "payload_size_bytes",
+    "payload_sha256",
+    "encoded_size_bytes",
+    "encoded_sha256",
+    "chunk_index",
+    "chunk_count",
+    "offset_bytes",
+    "chunk_size_bytes",
+    "chunk_sha256",
+    "base64",
+}
 RUNTIME_PREFIX = "session_reported_runtime="
 RUNTIME_BASIS_LINE = "runtime_provenance=session_reported"
 BOUND_RUNTIME_ARTIFACT = "chatgpt_data_analysis_output.txt"
@@ -279,47 +303,199 @@ def extract_session_reported_runtime(text: str) -> str:
     return parse_runtime_ledger(text)[0]
 
 
-def export_payload_wrapper(filename: str, data: bytes) -> dict[str, Any]:
-    """Derive a fallback wrapper entirely from one exact byte object."""
+def _stable_read_payload(path: Path) -> bytes:
+    """Read one payload once and reject an identity change during the read."""
+
+    if isinstance(path, Path):
+        is_junction = getattr(path, "is_junction", None)
+        if (
+            path.is_symlink()
+            or (callable(is_junction) and is_junction())
+            or not path.is_file()
+        ):
+            raise ValueError(
+                f"export payload must be one regular non-linked file: {path.name}"
+            )
+    before = path.stat()
+    data = path.read_bytes()
+    after = path.stat()
+    identity_fields = (
+        "st_dev",
+        "st_ino",
+        "st_size",
+        "st_mtime_ns",
+        "st_ctime_ns",
+    )
+    before_identity = tuple(getattr(before, field, None) for field in identity_fields)
+    after_identity = tuple(getattr(after, field, None) for field in identity_fields)
+    if (
+        before_identity != after_identity
+        or isinstance(after.st_size, bool)
+        or after.st_size < 0
+        or len(data) != after.st_size
+    ):
+        raise ValueError(f"export payload changed during stable read: {path.name}")
+    return data
+
+
+def _transport_chunks(encoded: bytes) -> tuple[bytes, ...]:
+    """Split an encoded payload into a nonempty fixed-bound chunk sequence."""
+
+    if not isinstance(encoded, bytes):
+        raise ValueError("encoded transport payload must be exact bytes")
+    if not encoded:
+        return (b"",)
+    return tuple(
+        encoded[offset : offset + TRANSPORT_CHUNK_BYTES]
+        for offset in range(0, len(encoded), TRANSPORT_CHUNK_BYTES)
+    )
+
+
+def _validate_expected_hash(value: str | None, label: str) -> None:
+    if value is not None and (
+        not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None
+    ):
+        raise ValueError(f"{label} must be one lowercase SHA-256")
+
+
+def export_payload_chunk(
+    filename: str,
+    data: bytes,
+    chunk_index: int,
+    *,
+    expected_payload_sha256: str | None = None,
+    expected_encoded_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Derive one bounded fallback chunk from one exact payload byte object."""
 
     if not _portable_basename(filename):
         raise ValueError("export payload filename must be a portable basename")
     if not isinstance(data, bytes):
         raise ValueError("export payload must be exact bytes")
-    encoded = base64.b64encode(data).decode("ascii")
-    wrapper = {
-        "filename": filename,
-        "size_bytes": len(data),
-        "sha256": sha256_bytes(data),
-        "base64": encoded,
-    }
-    decoded = base64.b64decode(encoded, validate=True)
+    if len(data) > MAX_TRANSPORT_PAYLOAD_BYTES:
+        raise ValueError("export payload exceeds the bounded transport limit")
+    if isinstance(chunk_index, bool) or not isinstance(chunk_index, int) or chunk_index < 0:
+        raise ValueError("transport chunk index must be a nonnegative integer")
+    if chunk_index >= MAX_TRANSPORT_CHUNKS:
+        raise ValueError("transport chunk index exceeds the bounded transport limit")
+    _validate_expected_hash(
+        expected_payload_sha256,
+        "expected payload SHA-256",
+    )
+    _validate_expected_hash(
+        expected_encoded_sha256,
+        "expected encoded SHA-256",
+    )
+    if (expected_payload_sha256 is None) != (expected_encoded_sha256 is None):
+        raise ValueError("expected payload and encoded SHA-256 values must be paired")
+    if chunk_index > 0 and expected_payload_sha256 is None:
+        raise ValueError("later transport chunks require both expected SHA-256 values")
+
+    encoded = zlib.compress(data, level=9)
+    if len(encoded) > MAX_TRANSPORT_ENCODED_BYTES:
+        raise ValueError("encoded payload exceeds the bounded transport limit")
+    if zlib.decompress(encoded) != data:
+        raise AssertionError("compressed transport payload did not round trip")
+    payload_sha256 = sha256_bytes(data)
+    encoded_sha256 = sha256_bytes(encoded)
     if (
-        decoded != data
-        or len(decoded) != wrapper["size_bytes"]
-        or sha256_bytes(decoded) != wrapper["sha256"]
+        expected_payload_sha256 is not None
+        and expected_payload_sha256 != payload_sha256
     ):
-        raise AssertionError("derived fallback wrapper did not round trip")
+        raise ValueError("export payload SHA-256 differs from the expected first chunk")
+    if (
+        expected_encoded_sha256 is not None
+        and expected_encoded_sha256 != encoded_sha256
+    ):
+        raise ValueError("encoded payload SHA-256 differs from the expected first chunk")
+
+    chunks = _transport_chunks(encoded)
+    if len(chunks) > MAX_TRANSPORT_CHUNKS:
+        raise ValueError("transport chunk count exceeds the bounded transport limit")
+    if chunk_index >= len(chunks):
+        raise ValueError(
+            f"transport chunk index {chunk_index} is outside 0..{len(chunks) - 1}"
+        )
+    chunk = chunks[chunk_index]
+    chunk_base64 = base64.b64encode(chunk).decode("ascii")
+    wrapper = {
+        "transport_version": TRANSPORT_CHUNK_VERSION,
+        "filename": filename,
+        "encoding": TRANSPORT_ENCODING,
+        "payload_size_bytes": len(data),
+        "payload_sha256": payload_sha256,
+        "encoded_size_bytes": len(encoded),
+        "encoded_sha256": encoded_sha256,
+        "chunk_index": chunk_index,
+        "chunk_count": len(chunks),
+        "offset_bytes": chunk_index * TRANSPORT_CHUNK_BYTES,
+        "chunk_size_bytes": len(chunk),
+        "chunk_sha256": sha256_bytes(chunk),
+        "base64": chunk_base64,
+    }
+    if set(wrapper) != EXPORT_CHUNK_FIELDS:
+        raise AssertionError("derived transport chunk fields differ from the contract")
+    decoded = base64.b64decode(chunk_base64, validate=True)
+    if (
+        decoded != chunk
+        or len(decoded) != wrapper["chunk_size_bytes"]
+        or len(decoded) > TRANSPORT_CHUNK_BYTES
+        or sha256_bytes(decoded) != wrapper["chunk_sha256"]
+    ):
+        raise AssertionError("derived fallback chunk did not round trip")
     return wrapper
 
 
-def transport_fallback_prompt(filename: str) -> str:
+def transport_fallback_prompt(
+    filename: str,
+    chunk_index: int = 0,
+    *,
+    expected_payload_sha256: str | None = None,
+    expected_encoded_sha256: str | None = None,
+) -> str:
     if not _portable_basename(filename):
         raise ValueError("transport payload filename must be a portable basename")
-    command = (
-        "python /mnt/data/gpt_artifact_compiler.py export-wrapper "
-        + shlex.quote(f"/mnt/data/{filename}")
+    if isinstance(chunk_index, bool) or not isinstance(chunk_index, int) or chunk_index < 0:
+        raise ValueError("transport chunk index must be a nonnegative integer")
+    if chunk_index >= MAX_TRANSPORT_CHUNKS:
+        raise ValueError("transport chunk index exceeds the bounded transport limit")
+    _validate_expected_hash(
+        expected_payload_sha256,
+        "expected payload SHA-256",
     )
+    _validate_expected_hash(
+        expected_encoded_sha256,
+        "expected encoded SHA-256",
+    )
+    if (expected_payload_sha256 is None) != (expected_encoded_sha256 is None):
+        raise ValueError("expected payload and encoded SHA-256 values must be paired")
+    if chunk_index > 0 and expected_payload_sha256 is None:
+        raise ValueError("later transport chunks require both expected SHA-256 values")
+    command = (
+        "python /mnt/data/gpt_artifact_compiler.py export-chunk "
+        + shlex.quote(f"/mnt/data/{filename}")
+        + f" --chunk-index {chunk_index}"
+    )
+    if expected_payload_sha256 is not None:
+        command += (
+            " --expect-payload-sha256 "
+            + expected_payload_sha256
+            + " --expect-encoded-sha256 "
+            + expected_encoded_sha256
+        )
     return (
         "TRANSPORT FALLBACK ONLY. The direct file control emitted no observable "
-        f"download event for {filename}. Do not regenerate or alter that file. "
+        f"download event for {filename}. Requesting bounded chunk {chunk_index}. "
+        "Do not regenerate or alter that file. "
         "Do not read, trim, normalize, or encode the payload yourself. Execute this "
         f"literal command exactly once: {command} . Return the command's complete "
         "stdout byte-for-byte as the only strict JSON object in one code block; do "
         "not reimplement it or reuse a hash, size, ledger row, return field, or "
-        "prose value. If the command reports any failure, emit no wrapper and state "
-        "export_failed. This identifies only the exported payload received here, "
-        "never unavailable download-button bytes."
+        "prose value. The controller alone requests later chunk indices using the "
+        "payload and encoded SHA-256 values from chunk 0. If the command reports "
+        "any failure, emit no chunk and state export_failed. This identifies only "
+        "the exported compressed chunk received here and its strictly reconstructed "
+        "payload, never unavailable download-button bytes."
     )
 
 
@@ -856,8 +1032,12 @@ def _load_strict_json(path: Path) -> dict[str, Any]:
             value[key] = item
         return value
 
+    try:
+        text = _stable_read_payload(path).decode("utf-8", errors="strict")
+    except UnicodeError as exc:
+        raise ValueError("compiler spec must be strict UTF-8") from exc
     value = json.loads(
-        path.read_text(encoding="utf-8"),
+        text,
         object_pairs_hook=strict_object,
         parse_constant=lambda item: (_ for _ in ()).throw(
             ValueError(f"non-finite JSON number: {item}")
@@ -871,7 +1051,6 @@ def _load_strict_json(path: Path) -> dict[str, Any]:
 def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
     spec = _load_strict_json(spec_path)
     if set(spec) != {
-        "session_reported_runtime",
         "report_body",
         "frozen_artifact_paths",
         "audit_return_template",
@@ -884,9 +1063,12 @@ def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
     for filename, raw_path in paths.items():
         if not _portable_basename(filename) or not isinstance(raw_path, str):
             raise ValueError("frozen artifact path mapping is invalid")
-        frozen[filename] = Path(raw_path).read_bytes()
+        frozen[filename] = _stable_read_payload(Path(raw_path))
+    # The executed compiler owns the sole runtime capture.  The model-authored
+    # spec cannot supply, copy, or override this value.
+    session_reported_runtime = sys.version
     finalized = finalize_candidate_artifacts(
-        session_reported_runtime=spec["session_reported_runtime"],
+        session_reported_runtime=session_reported_runtime,
         report_body=spec["report_body"],
         frozen_artifacts=frozen,
         audit_return_template=spec["audit_return_template"],
@@ -895,7 +1077,7 @@ def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
     for filename, data in finalized.files.items():
         destination = output_dir / filename
         if filename in frozen:
-            if not destination.is_file() or destination.read_bytes() != data:
+            if not destination.is_file() or _stable_read_payload(destination) != data:
                 raise ValueError(f"frozen output path differs from source bytes: {filename}")
             continue
         temporary = output_dir / f".{filename}.{os.getpid()}.tmp"
@@ -913,7 +1095,7 @@ def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
             except FileNotFoundError:
                 pass
     for filename, data in finalized.files.items():
-        if (output_dir / filename).read_bytes() != data:
+        if _stable_read_payload(output_dir / filename) != data:
             raise ValueError(f"post-write verification failed: {filename}")
     return {
         "compiler": COMPILER_VERSION,
@@ -931,8 +1113,11 @@ def _parser() -> argparse.ArgumentParser:
     compile_command = commands.add_parser("compile")
     compile_command.add_argument("--spec", required=True, type=Path)
     compile_command.add_argument("--output-dir", required=True, type=Path)
-    export_command = commands.add_parser("export-wrapper")
+    export_command = commands.add_parser("export-chunk")
     export_command.add_argument("payload", type=Path)
+    export_command.add_argument("--chunk-index", required=True, type=int)
+    export_command.add_argument("--expect-payload-sha256")
+    export_command.add_argument("--expect-encoded-sha256")
     return parser
 
 
@@ -942,8 +1127,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "compile":
             result = _compile_from_spec(args.spec, args.output_dir)
         else:
-            payload = args.payload.read_bytes()
-            result = export_payload_wrapper(args.payload.name, payload)
+            payload = _stable_read_payload(args.payload)
+            result = export_payload_chunk(
+                args.payload.name,
+                payload,
+                args.chunk_index,
+                expected_payload_sha256=args.expect_payload_sha256,
+                expected_encoded_sha256=args.expect_encoded_sha256,
+            )
     except (OSError, ValueError, TypeError, AssertionError) as exc:
         print(
             json.dumps(

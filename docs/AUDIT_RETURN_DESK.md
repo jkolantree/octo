@@ -30,10 +30,11 @@ Custom GPT machine records must be finalized by the complete canonical
 `BSC_EXECUTION_AND_RECEIPTS.md`. The model must execute that source, not
 reproduce its behavior in prose or write a substitute finalizer.
 
-The compiler accepts the one captured session-reported runtime, exact frozen
-request/source/evidence bytes, a report body, and a structured return template.
-It finalizes the report, derives artifact identities and the runtime ledger from
-the final bytes, validates execution/evidence topology, writes
+The executed compiler captures its own full `sys.version` once; the
+model-authored spec cannot supply or override it. It accepts exact frozen
+request/source/evidence bytes, a report body, and a structured return template,
+then derives artifact identities and the runtime ledger from the final bytes,
+validates execution/evidence topology, writes
 `chatgpt_data_analysis_output.txt`, and serializes `audit_return.json` last. A
 compiler failure prohibits the return and every conclusion that depended on
 successful artifact production. A matching final snapshot does not, by itself,
@@ -119,18 +120,22 @@ These outcomes are a separate coordinate from research verdict, evidence maturit
 
 The evaluation controller first attempts the direct generated-file control. If
 the interface exposes no direct download or no observable download event, the
-controller may issue its exact fallback prompt for one filename only. The
-candidate must execute the compiler's `export-wrapper` command freshly for that
-file and return one strict JSON object in one code block, with no other prose.
-The fixed fallback order is `audit_return.json`,
-`chatgpt_data_analysis_output.txt`, then each remaining generated output in its
-own turn.
+controller may issue its exact fallback prompt for one filename and one chunk
+index only. The candidate must execute the compiler's `export-chunk` command
+freshly for that index and return one strict JSON object in one code block, with
+no other prose. Each wrapper carries at most 2,048 decoded compressed bytes and
+repeats the complete payload and compressed-stream identities. The fixed
+fallback order is `audit_return.json`, `chatgpt_data_analysis_output.txt`, then
+each remaining generated output, with contiguous indices acquired one turn at a
+time.
 
-The controller preserves the exact code-block text bytes and the full
-transport-response `outerHTML` separately, proves that the response contains
-exactly that one wrapper, and only then parses or decodes it. Re-serializing a parsed object is
-not a raw transport record and makes the trial `trial_invalid_controller`.
-Strict Base64, size, digest, and local-byte agreement establishes only the
-identity of the exported payload actually received. If the original
-download-button bytes remain unavailable, their identity is
-`transport_identity_unresolved`; neither identity nor corruption is established.
+The controller preserves each exact prompt, code-block text, parser input, and
+full transport-response `outerHTML` separately. It proves that every response
+contains exactly one requested wrapper, checks canonical Base64 and the
+per-chunk size/digest, requires contiguous indices with one repeated payload and
+compressed-stream identity, and only then decompresses and compares local
+bytes. Re-serializing a parsed object is not a raw transport record and makes
+the trial `trial_invalid_controller`. Those checks establish only the identity
+of the exported payload actually received. If the original download-button
+bytes remain unavailable, their identity is `transport_identity_unresolved`;
+neither identity nor corruption is established.

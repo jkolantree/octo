@@ -519,13 +519,14 @@ class CustomGptPackageTests(unittest.TestCase):
             ),
             "draft_machine_records": (
                 "Machine=audit_request.txt(request)+audit_report.md(report)+audit_return.json. Compiler=/mnt/"
-                "data/gpt_artifact_compiler.py; copy K3 source unchanged; RUN. Runtime once; freeze request/"
-                "source/evidence; compiler owns Ledger8/report/IDs/topology; return LAST. No manual runtime/"
-                "hash/size/Base64; block=>no return/pass/proven. Refs 2-way; pass=>no obligation; omit self; "
-                "fatal IDs exact. Proven/strong/lemma=>all6K+S10+evidence/claim/run/pass-gate; else demote/omit. "
-                "protocol.sha256=sha256:b9d70566fc9eaa2c3257f2f5c05dc1786ef7c473b6b3b44a5c679a64ea11f76e. "
-                "Request/report!=source; equal request/target=>distinct bytes+IDs/digests. Section7=compiler "
-                "ledger. Fallback: RUN controller literal command; return verbatim JSON stdout block; no reuse/"
+                "data/gpt_artifact_compiler.py; copy K3 unchanged; RUN; compiler captures sys.version; freeze "
+                "request/source/evidence; compiler owns Ledger8/"
+                "report/IDs/topology; return LAST. No manual runtime/hash/size/Base64; block=>no return/pass/"
+                "proven. Refs 2-way; pass=>no obligation; omit self; fatal IDs exact. Proven/strong/lemma=>"
+                "all6K+S10+evidence/claim/run/pass-gate; else demote/omit. protocol.sha256=sha256:"
+                "df91a7aae7f2d53351e98af5545cdc76127ae1c305a40af5011d4406ffc7c79e. Request/report!=source; "
+                "equal request/target=>distinct bytes+IDs/digests. Section7=compiler "
+                "ledger. Fallback: RUN exact export-chunk(file,index); sole verbatim JSON stdout block; no reuse/"
                 "combine."
             ),
             "execution_ledger": (
@@ -728,9 +729,10 @@ class CustomGptPackageTests(unittest.TestCase):
             positive_return["forbidden_behaviors"],
         )
         self.assertIn(
-            "Captures the full session-reported runtime once whenever Data Analysis writes or hashes files, then "
-            "deterministically creates exactly one chatgpt_data_analysis_output.txt role-execution_output "
-            "using the v2 header, one runtime line, one session-reported provenance line, and filename-sorted "
+            "Executes the canonical compiler, which reads its own full sys.version once whenever Data Analysis "
+            "writes or hashes files and rejects any model-authored runtime override, then deterministically "
+            "creates exactly one chatgpt_data_analysis_output.txt role-execution_output using the v2 header, "
+            "one runtime line, one session-reported provenance line, and filename-sorted "
             "`sha256  bytes  filename` rows derived from every earlier-frozen non-request/source output but "
             "never itself or audit_return.json.",
             positive_return["observable_behaviors"],

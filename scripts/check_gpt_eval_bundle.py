@@ -13,6 +13,7 @@ import json
 import re
 import sys
 import unicodedata
+import zlib
 from contextlib import redirect_stdout
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -76,18 +77,40 @@ if str(SRC) not in sys.path:
 
 from bsc_audit.cli import main as bsc_audit_main  # noqa: E402
 
+try:
+    from scripts.gpt_artifact_compiler import (  # noqa: E402
+        EXPORT_CHUNK_FIELDS,
+        MAX_TRANSPORT_ENCODED_BYTES,
+        MAX_TRANSPORT_PAYLOAD_BYTES,
+        TRANSPORT_CHUNK_BYTES,
+        TRANSPORT_CHUNK_VERSION,
+        TRANSPORT_ENCODING,
+    )
+except ModuleNotFoundError:  # Direct ``python scripts/check_gpt_eval_bundle.py``.
+    from gpt_artifact_compiler import (  # type: ignore[no-redef] # noqa: E402
+        EXPORT_CHUNK_FIELDS,
+        MAX_TRANSPORT_ENCODED_BYTES,
+        MAX_TRANSPORT_PAYLOAD_BYTES,
+        TRANSPORT_CHUNK_BYTES,
+        TRANSPORT_CHUNK_VERSION,
+        TRANSPORT_ENCODING,
+    )
 
-ACTIVE_EXPORT_SUFFIX = ".export.json"
+
+ACTIVE_EXPORT_SUFFIX = ".export."
 CONTROLLER_RECORD_NAME = "controller_record.json"
-EXPORT_FIELDS = {"filename", "size_bytes", "sha256", "base64"}
 TRANSPORT_RECORD_FIELDS = {
     "filename",
     "method",
     "direct_download_outcome",
     "bytes",
     "sha256",
-    "export_wrapper",
+    "export_chunks",
 }
+TRANSPORT_RECORD_VERSION = "2.0"
+TRANSPORT_CHUNK_FILENAME_RE = re.compile(
+    r"^(?P<payload>.+)\.export\.(?P<index>[0-9]{5})\.json$"
+)
 HASH_RE = re.compile(r"^(?:sha256:)?([0-9a-fA-F]{64})$")
 SYS_VERSION_RE = re.compile(
     r"\d+\.\d+\.\d+(?:[A-Za-z0-9.+-]*)? \([^\r\n()]+\) \[[^\r\n\[\]]+\]"
@@ -122,9 +145,9 @@ RESEARCH_PROJECTION_REQUIREMENTS = {
     STATUS_ONLY_RESEARCH_PROJECTION_EMPTY,
 }
 LIMITATION = (
-    "Strict Base64 decoding validates the exported payload encoding, declared size, digest, "
-    "and local-byte equality; it does not establish download-button identity or prove which "
-    "bytes a UI download button served."
+    "Strict chunk decoding and bounded decompression validate the exported payload encoding, "
+    "declared identities, and local-byte equality; they do not establish download-button "
+    "identity or prove which bytes a UI download button served."
 )
 TRANSPORT_LIMITATION = (
     "The transport record preserves the controller's observed download exposure/event outcome; "
@@ -608,7 +631,7 @@ def _actual_candidate_output_filenames(
     for path in root.iterdir():
         if (
             path.name in excluded
-            or path.name.endswith(ACTIVE_EXPORT_SUFFIX)
+            or TRANSPORT_CHUNK_FILENAME_RE.fullmatch(path.name) is not None
             or not path.is_file()
             or path.is_symlink()
         ):
@@ -677,12 +700,15 @@ def _load_controller_record(
 
 def _transport_identity_axis(
     records: dict[str, dict[str, Any]],
+    observed_output_controls: set[str],
+    *,
+    has_transport_attempts: bool,
 ) -> str:
-    if not records:
+    if not records and not observed_output_controls and not has_transport_attempts:
         return TRANSPORT_NOT_APPLICABLE
-    # A self-reported download event or Base64 export record preserves what the
-    # controller observed.  Neither independently authenticates download-button
-    # bytes, so this checker never upgrades it to resolved identity.
+    # File controls, self-reported download events, and reconstructed fallback
+    # payloads preserve different observations. None independently authenticates
+    # the bytes that a UI download button would have served.
     return TRANSPORT_IDENTITY_UNRESOLVED
 
 
@@ -691,7 +717,10 @@ def _verify_artifacts(
     audit_return: dict[str, Any],
     findings: list[dict[str, str]],
     checks: dict[str, dict[str, Any]],
+    *,
+    unavailable_filenames: set[str] | None = None,
 ) -> tuple[dict[str, tuple[Path, bytes, str | None]], tuple[Path, str] | None]:
+    unavailable = unavailable_filenames or set()
     artifacts_raw = audit_return.get("artifacts")
     if not isinstance(artifacts_raw, list):
         _add_finding(
@@ -725,6 +754,17 @@ def _verify_artifacts(
         filename = artifact.get("filename")
         local_path = _safe_file(root, filename)
         if local_path is None:
+            if isinstance(filename, str) and filename in unavailable:
+                _set_check(
+                    checks,
+                    "audit_return_artifacts",
+                    "not_run",
+                    (
+                        f"{filename}: file control was observed, but payload bytes "
+                        "were not acquired"
+                    ),
+                )
+                continue
             _add_finding(
                 findings,
                 "ARTIFACT_MISSING_OR_UNSAFE",
@@ -799,13 +839,6 @@ def _verify_artifacts(
     return artifacts, report
 
 
-def _report_wrapper_candidate(wrapper_path: Path, report_filename: str | None) -> bool:
-    return bool(
-        report_filename
-        and wrapper_path.name == f"{report_filename}{ACTIVE_EXPORT_SUFFIX}"
-    )
-
-
 def _audit_return_string_values(
     document: Any,
     *,
@@ -839,6 +872,7 @@ def _verify_transport_record(
     root: Path,
     audit_return: dict[str, Any] | None,
     expected_output_filenames: set[str],
+    controller_record: dict[str, Any],
     findings: list[dict[str, str]],
     checks: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
@@ -862,29 +896,18 @@ def _verify_transport_record(
         return {}
     if set(document) != {"transport_version", "records"} or document.get(
         "transport_version"
-    ) != "1.0":
+    ) != TRANSPORT_RECORD_VERSION:
         _add_finding(
             findings,
             "ARTIFACT_TRANSPORT_RECORD_INVALID",
             path.name,
-            "transport record must contain only transport_version=1.0 and records",
+            (
+                "transport record must contain only "
+                f"transport_version={TRANSPORT_RECORD_VERSION} and records"
+            ),
         )
         _set_check(checks, "artifact_transport", "blocked")
 
-    artifact_rows = [
-        item
-        for item in (
-            audit_return.get("artifacts", [])
-            if isinstance(audit_return, dict)
-            else []
-        )
-        if isinstance(item, dict)
-    ]
-    declared_by_filename = {
-        item.get("filename"): item
-        for item in artifact_rows
-        if isinstance(item.get("filename"), str)
-    }
     expected = set(expected_output_filenames)
     allowed = set(expected_output_filenames)
     records_raw = document.get("records")
@@ -899,6 +922,24 @@ def _verify_transport_record(
         return {}
 
     records: dict[str, dict[str, Any]] = {}
+    captured_chunks: dict[str, list[tuple[int, str]]] = {}
+    captures = controller_record.get("wrapper_captures")
+    if isinstance(captures, list):
+        for capture in captures:
+            if not isinstance(capture, dict):
+                continue
+            payload = capture.get("payload_filename")
+            chunk_index = capture.get("chunk_index")
+            parser_name = capture.get("parser_input_filename")
+            if (
+                isinstance(payload, str)
+                and isinstance(chunk_index, int)
+                and not isinstance(chunk_index, bool)
+                and isinstance(parser_name, str)
+            ):
+                captured_chunks.setdefault(payload, []).append(
+                    (chunk_index, parser_name)
+                )
     for index, item in enumerate(records_raw):
         label = f"{path.name}:$.records[{index}]"
         if not isinstance(item, dict) or set(item) != TRANSPORT_RECORD_FIELDS:
@@ -964,14 +1005,67 @@ def _verify_transport_record(
 
         method = item.get("method")
         outcome = item.get("direct_download_outcome")
-        wrapper = item.get("export_wrapper")
+        export_chunks = item.get("export_chunks")
         if method == "direct_download":
-            valid_method = outcome == "download_event" and wrapper is None
-        elif method == "base64_export":
+            valid_method = outcome == "download_event" and export_chunks is None
+        elif method == "chunked_base64_export":
             valid_method = (
                 outcome in {"unavailable", "no_download_event"}
-                and wrapper == f"{filename}{ACTIVE_EXPORT_SUFFIX}"
+                and isinstance(export_chunks, list)
+                and bool(export_chunks)
             )
+            if valid_method:
+                assert isinstance(export_chunks, list)
+                expected_chunks = [
+                    f"{filename}{ACTIVE_EXPORT_SUFFIX}{index:05d}.json"
+                    for index in range(len(export_chunks))
+                ]
+                if (
+                    export_chunks != expected_chunks
+                    or any(
+                        not isinstance(chunk_name, str)
+                        for chunk_name in export_chunks
+                    )
+                ):
+                    valid_method = False
+                else:
+                    for chunk_name in export_chunks:
+                        if _safe_file(root, chunk_name) is None:
+                            _add_finding(
+                                findings,
+                                "ARTIFACT_TRANSPORT_CHUNK_MISSING",
+                                label,
+                                (
+                                    "transport record references a missing, unsafe, "
+                                    f"or non-regular chunk wrapper: {chunk_name}"
+                                ),
+                            )
+                            _set_check(
+                                checks,
+                                "artifact_transport",
+                                "blocked",
+                                chunk_name,
+                            )
+                    captured_names = [
+                        name
+                        for _, name in sorted(captured_chunks.get(filename, []))
+                    ]
+                    if export_chunks != captured_names:
+                        _add_finding(
+                            findings,
+                            "ARTIFACT_TRANSPORT_CHUNK_ROSTER_MISMATCH",
+                            label,
+                            (
+                                "successful chunk transport record must exactly "
+                                "match the controller-bound indexed wrapper captures"
+                            ),
+                        )
+                        _set_check(
+                            checks,
+                            "artifact_transport",
+                            "blocked",
+                            filename,
+                        )
         else:
             valid_method = False
         if not valid_method:
@@ -979,7 +1073,11 @@ def _verify_transport_record(
                 findings,
                 "ARTIFACT_TRANSPORT_METHOD_INVALID",
                 label,
-                "direct download requires a captured event; Base64 requires unavailable/no-event evidence and its exact wrapper name",
+                (
+                    "direct download requires download_event and export_chunks=null; "
+                    "chunked Base64 requires unavailable/no_download_event and an "
+                    "ordered, contiguous list of indexed wrapper filenames"
+                ),
             )
             _set_check(checks, "artifact_transport", "blocked", filename)
 
@@ -992,196 +1090,386 @@ def _verify_transport_record(
             "every generated or returned artifact requires one transport record",
         )
         _set_check(checks, "artifact_transport", "blocked", f"missing={missing!r}")
+
     if checks["artifact_transport"]["status"] == "not_run":
         _set_check(checks, "artifact_transport", "pass")
     return records
 
 
-def _verify_export_wrappers(
+def _strict_chunk_hash(value: Any) -> str | None:
+    if isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value):
+        return value
+    return None
+
+
+def _bounded_zlib_decompress(
+    encoded: bytes,
+    *,
+    declared_size: int,
+) -> tuple[bytes | None, str | None]:
+    if declared_size > MAX_TRANSPORT_PAYLOAD_BYTES:
+        return None, "declared payload exceeds the bounded decompression limit"
+    try:
+        decompressor = zlib.decompressobj()
+        payload = decompressor.decompress(
+            encoded,
+            MAX_TRANSPORT_PAYLOAD_BYTES + 1,
+        )
+        if len(payload) > MAX_TRANSPORT_PAYLOAD_BYTES:
+            return None, "decompressed payload exceeds the bounded decompression limit"
+        if decompressor.unconsumed_tail:
+            return None, "compressed stream exceeds the bounded decompression limit"
+        payload += decompressor.flush(
+            MAX_TRANSPORT_PAYLOAD_BYTES + 1 - len(payload)
+        )
+    except zlib.error:
+        return None, "encoded aggregate is not one valid zlib stream"
+    if len(payload) > MAX_TRANSPORT_PAYLOAD_BYTES:
+        return None, "decompressed payload exceeds the bounded decompression limit"
+    if not decompressor.eof:
+        return None, "encoded aggregate ends before the zlib stream is complete"
+    if decompressor.unused_data:
+        return None, "encoded aggregate has trailing or concatenated stream bytes"
+    return payload, None
+
+
+def _verify_export_chunks(
     root: Path,
     report: tuple[Path, str] | None,
     transport_records: dict[str, dict[str, Any]],
+    controller_record: dict[str, Any],
     findings: list[dict[str, str]],
     checks: dict[str, dict[str, Any]],
 ) -> None:
-    wrapper_paths = sorted(root.glob(f"*{ACTIVE_EXPORT_SUFFIX}"))
     report_filename = report[0].name if report else None
-    report_wrapper_seen = False
-    expected_wrappers = {
-        str(record["export_wrapper"]): filename
-        for filename, record in transport_records.items()
-        if record.get("method") == "base64_export"
-        and isinstance(record.get("export_wrapper"), str)
-    }
-    seen_wrappers: set[str] = set()
+    captured_by_payload: dict[str, list[tuple[int, str]]] = {}
+    captures = controller_record.get("wrapper_captures")
+    if isinstance(captures, list):
+        for capture in captures:
+            if not isinstance(capture, dict):
+                continue
+            payload = capture.get("payload_filename")
+            chunk_index = capture.get("chunk_index")
+            parser_name = capture.get("parser_input_filename")
+            if (
+                isinstance(payload, str)
+                and isinstance(chunk_index, int)
+                and not isinstance(chunk_index, bool)
+                and isinstance(parser_name, str)
+            ):
+                captured_by_payload.setdefault(payload, []).append(
+                    (chunk_index, parser_name)
+                )
 
-    for wrapper_path in wrapper_paths:
-        if wrapper_path.name not in expected_wrappers:
-            _add_finding(
-                findings,
-                "EXPORT_WRAPPER_UNDECLARED",
-                wrapper_path.name,
-                "active export wrapper lacks a matching Base64 transport record",
-            )
-            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
-        else:
-            seen_wrappers.add(wrapper_path.name)
-        wrapper = _load_json_path(
-            root,
-            wrapper_path,
-            findings,
-            checks,
-            "export_wrappers",
-        )
-        named_report_wrapper = _report_wrapper_candidate(wrapper_path, report_filename)
-        if wrapper is None:
-            if named_report_wrapper:
+    attempts = controller_record.get("transport_attempts")
+    if isinstance(attempts, list):
+        for attempt in attempts:
+            if (
+                isinstance(attempt, dict)
+                and attempt.get("response_outcome") != "chunk_wrapper_captured"
+            ):
+                payload = attempt.get("payload_filename")
+                chunk_index = attempt.get("chunk_index")
+                outcome = attempt.get("response_outcome")
                 _add_finding(
                     findings,
-                    "REPORT_TRANSPORT_MISMATCH",
-                    wrapper_path.name,
-                    "the active report export wrapper could not be verified",
+                    "CANDIDATE_TRANSPORT_ATTEMPT_FAILED",
+                    (
+                        f"{payload}.transport.{chunk_index:05d}"
+                        if isinstance(payload, str)
+                        and isinstance(chunk_index, int)
+                        and not isinstance(chunk_index, bool)
+                        else "controller_record.json:$.transport_attempts"
+                    ),
+                    (
+                        "the exact fallback attempt completed without one captured "
+                        f"chunk wrapper (outcome={outcome!r}); payload identity "
+                        "remains unresolved"
+                    ),
                 )
+                _set_check(
+                    checks,
+                    "export_wrappers",
+                    "blocked",
+                    f"{payload}: {outcome}",
+                )
+
+    for payload_filename, indexed_names in sorted(captured_by_payload.items()):
+        indexed_names.sort()
+        captured_indices = [index for index, _ in indexed_names]
+        chunk_names = [name for _, name in indexed_names]
+        wrappers: list[tuple[str, dict[str, Any], bytes]] = []
+        expected_payload_size: int | None = None
+        expected_payload_hash: str | None = None
+        expected_encoded_size: int | None = None
+        expected_encoded_hash: str | None = None
+        expected_chunk_count: int | None = None
+        encoded_parts: list[bytes] = []
+
+        for position, chunk_name in enumerate(chunk_names):
+            if not isinstance(chunk_name, str):
+                continue
+            wrapper_path = _safe_file(root, chunk_name)
+            if wrapper_path is None:
+                continue
+            wrapper = _load_json_path(
+                root,
+                wrapper_path,
+                findings,
+                checks,
+                "export_wrappers",
+            )
+            if wrapper is None:
+                continue
+            if set(wrapper) != EXPORT_CHUNK_FIELDS:
+                _add_finding(
+                    findings,
+                    "EXPORT_CHUNK_FIELDS_INVALID",
+                    chunk_name,
+                    "export chunk fields differ from the strict chunk contract",
+                )
+                _set_check(checks, "export_wrappers", "blocked", chunk_name)
+            if (
+                wrapper.get("transport_version") != TRANSPORT_CHUNK_VERSION
+                or wrapper.get("encoding") != TRANSPORT_ENCODING
+                or wrapper.get("filename") != payload_filename
+            ):
+                _add_finding(
+                    findings,
+                    "EXPORT_CHUNK_IDENTITY_INVALID",
+                    chunk_name,
+                    "chunk transport version, encoding, or payload filename is invalid",
+                )
+                _set_check(checks, "export_wrappers", "blocked", chunk_name)
+
+            payload_size = wrapper.get("payload_size_bytes")
+            encoded_size = wrapper.get("encoded_size_bytes")
+            chunk_index = wrapper.get("chunk_index")
+            chunk_count = wrapper.get("chunk_count")
+            offset = wrapper.get("offset_bytes")
+            chunk_size = wrapper.get("chunk_size_bytes")
+            payload_hash = _strict_chunk_hash(wrapper.get("payload_sha256"))
+            encoded_hash = _strict_chunk_hash(wrapper.get("encoded_sha256"))
+            chunk_hash = _strict_chunk_hash(wrapper.get("chunk_sha256"))
+            encoded_size_valid = (
+                isinstance(encoded_size, int)
+                and not isinstance(encoded_size, bool)
+                and 0 < encoded_size <= MAX_TRANSPORT_ENCODED_BYTES
+            )
+            calculated_chunk_count = (
+                (encoded_size + TRANSPORT_CHUNK_BYTES - 1)
+                // TRANSPORT_CHUNK_BYTES
+                if encoded_size_valid
+                else None
+            )
+            calculated_chunk_size = (
+                min(
+                    TRANSPORT_CHUNK_BYTES,
+                    encoded_size - position * TRANSPORT_CHUNK_BYTES,
+                )
+                if encoded_size_valid
+                else None
+            )
+            integer_fields_valid = (
+                isinstance(payload_size, int)
+                and not isinstance(payload_size, bool)
+                and 0 <= payload_size <= MAX_TRANSPORT_PAYLOAD_BYTES
+                and encoded_size_valid
+                and isinstance(chunk_index, int)
+                and not isinstance(chunk_index, bool)
+                and chunk_index == position
+                and isinstance(chunk_count, int)
+                and not isinstance(chunk_count, bool)
+                and chunk_count == calculated_chunk_count
+                and position < chunk_count
+                and isinstance(offset, int)
+                and not isinstance(offset, bool)
+                and offset == position * TRANSPORT_CHUNK_BYTES
+                and isinstance(chunk_size, int)
+                and not isinstance(chunk_size, bool)
+                and chunk_size == calculated_chunk_size
+                and chunk_size > 0
+            )
+            if not integer_fields_valid or None in {
+                payload_hash,
+                encoded_hash,
+                chunk_hash,
+            }:
+                _add_finding(
+                    findings,
+                    "EXPORT_CHUNK_METADATA_INVALID",
+                    chunk_name,
+                    (
+                        "chunk indices, counts, offsets, bounded sizes, and lowercase "
+                        "SHA-256 values must match the strict chunk contract"
+                    ),
+                )
+                _set_check(checks, "export_wrappers", "blocked", chunk_name)
+
+            encoded_text = wrapper.get("base64")
+            decoded_chunk: bytes | None = None
+            max_base64_chars = ((TRANSPORT_CHUNK_BYTES + 2) // 3) * 4
+            if (
+                isinstance(encoded_text, str)
+                and encoded_text.isascii()
+                and len(encoded_text) <= max_base64_chars
+            ):
+                try:
+                    decoded_chunk = base64.b64decode(encoded_text, validate=True)
+                    if base64.b64encode(decoded_chunk).decode("ascii") != encoded_text:
+                        raise binascii.Error("non-canonical Base64")
+                except (binascii.Error, ValueError):
+                    decoded_chunk = None
+            if decoded_chunk is None:
+                _add_finding(
+                    findings,
+                    "EXPORT_CHUNK_BASE64_INVALID",
+                    chunk_name,
+                    "chunk Base64 must be strict and canonical",
+                )
+                _set_check(checks, "export_wrappers", "blocked", chunk_name)
+            elif (
+                not isinstance(chunk_size, int)
+                or isinstance(chunk_size, bool)
+                or chunk_size != len(decoded_chunk)
+                or chunk_hash != _sha256(decoded_chunk)
+                or (
+                    isinstance(calculated_chunk_size, int)
+                    and len(decoded_chunk) != calculated_chunk_size
+                )
+            ):
+                _add_finding(
+                    findings,
+                    "EXPORT_CHUNK_BYTE_BINDING_MISMATCH",
+                    chunk_name,
+                    "decoded chunk bytes differ from their declared size or digest",
+                )
+                _set_check(checks, "export_wrappers", "blocked", chunk_name)
+
+            if position == 0:
+                expected_payload_size = (
+                    payload_size
+                    if isinstance(payload_size, int)
+                    and not isinstance(payload_size, bool)
+                    else None
+                )
+                expected_payload_hash = payload_hash
+                expected_encoded_size = (
+                    encoded_size
+                    if encoded_size_valid
+                    else None
+                )
+                expected_encoded_hash = encoded_hash
+                expected_chunk_count = (
+                    chunk_count
+                    if isinstance(chunk_count, int)
+                    and not isinstance(chunk_count, bool)
+                    and chunk_count == calculated_chunk_count
+                    else None
+                )
+            elif (
+                payload_size != expected_payload_size
+                or payload_hash != expected_payload_hash
+                or encoded_size != expected_encoded_size
+                or encoded_hash != expected_encoded_hash
+            ):
+                _add_finding(
+                    findings,
+                    "EXPORT_CHUNK_REPEATED_IDENTITY_MISMATCH",
+                    chunk_name,
+                    (
+                        "every chunk must repeat one identical payload and encoded "
+                        "stream identity"
+                    ),
+                )
+                _set_check(checks, "export_wrappers", "blocked", chunk_name)
+
+            if decoded_chunk is not None:
+                encoded_parts.append(decoded_chunk)
+            wrappers.append((chunk_name, wrapper, decoded_chunk or b""))
+
+        if len(wrappers) != len(chunk_names):
             continue
-        if set(wrapper) != EXPORT_FIELDS:
+        sequence_complete = (
+            expected_chunk_count is not None
+            and captured_indices == list(range(expected_chunk_count))
+        )
+        if not sequence_complete:
+            # A valid captured prefix followed by an exact terminal failed attempt
+            # is candidate evidence, but it is not a false aggregate mismatch.
+            continue
+        encoded = b"".join(encoded_parts)
+        aggregate_valid = (
+            expected_encoded_size is not None
+            and expected_encoded_hash is not None
+            and len(encoded) == expected_encoded_size
+            and _sha256(encoded) == expected_encoded_hash
+        )
+        if not aggregate_valid:
             _add_finding(
                 findings,
-                "EXPORT_WRAPPER_FIELDS_INVALID",
-                wrapper_path.name,
-                "export wrapper fields must be exactly filename, size_bytes, sha256, and base64",
+                "EXPORT_ENCODED_AGGREGATE_MISMATCH",
+                payload_filename,
+                "concatenated compressed chunks differ from the repeated encoded identity",
             )
-            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+            _set_check(checks, "export_wrappers", "blocked", payload_filename)
 
-        filename = wrapper.get("filename")
-        is_report = bool(report_filename and filename == report_filename)
-        report_wrapper_seen = report_wrapper_seen or is_report
-        if (
-            isinstance(filename, str)
-            and wrapper_path.name != f"{filename}{ACTIVE_EXPORT_SUFFIX}"
+        payload: bytes | None = None
+        if aggregate_valid and expected_payload_size is not None:
+            payload, decompression_error = _bounded_zlib_decompress(
+                encoded,
+                declared_size=expected_payload_size,
+            )
+            if decompression_error is not None:
+                _add_finding(
+                    findings,
+                    "EXPORT_ZLIB_STREAM_INVALID",
+                    payload_filename,
+                    decompression_error,
+                )
+                _set_check(checks, "export_wrappers", "blocked", payload_filename)
+        if payload is not None and (
+            len(payload) != expected_payload_size
+            or expected_payload_hash is None
+            or _sha256(payload) != expected_payload_hash
         ):
             _add_finding(
                 findings,
-                "EXPORT_WRAPPER_NAME_MISMATCH",
-                wrapper_path.name,
-                "active export wrapper name must equal <filename>.export.json",
+                "EXPORT_PAYLOAD_IDENTITY_MISMATCH",
+                payload_filename,
+                "decompressed payload differs from the repeated payload identity",
             )
-            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
-            if is_report:
-                _add_finding(
-                    findings,
-                    "REPORT_TRANSPORT_MISMATCH",
-                    wrapper_path.name,
-                    "the active report wrapper name does not identify the bound report unambiguously",
-                )
-        local_path = _safe_file(root, filename)
-        if local_path is None:
-            _add_finding(
-                findings,
-                "EXPORT_LOCAL_FILE_MISSING_OR_UNSAFE",
-                wrapper_path.name,
-                "export wrapper filename does not resolve to a safe local file",
-            )
-            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
-            if is_report or named_report_wrapper:
-                _add_finding(
-                    findings,
-                    "REPORT_TRANSPORT_MISMATCH",
-                    wrapper_path.name,
-                    "the report export cannot be compared with a safe local report file",
-                )
-            continue
+            _set_check(checks, "export_wrappers", "blocked", payload_filename)
+            payload = None
 
-        encoded = wrapper.get("base64")
-        decoded: bytes | None = None
-        if not isinstance(encoded, str):
-            _add_finding(
-                findings,
-                "EXPORT_BASE64_INVALID",
-                wrapper_path.name,
-                "export wrapper base64 must be a string",
-            )
-            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
-        else:
-            try:
-                decoded = base64.b64decode(encoded, validate=True)
-                if base64.b64encode(decoded).decode("ascii") != encoded:
-                    raise binascii.Error("non-canonical Base64")
-            except (binascii.Error, ValueError):
-                _add_finding(
-                    findings,
-                    "EXPORT_BASE64_INVALID",
-                    wrapper_path.name,
-                    "export wrapper Base64 is not strict canonical Base64",
-                )
-                _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
-
-        if decoded is None:
-            if is_report or named_report_wrapper:
-                _add_finding(
-                    findings,
-                    "REPORT_TRANSPORT_MISMATCH",
-                    wrapper_path.name,
-                    "the report export payload could not be decoded",
-                )
-            continue
-
-        size = wrapper.get("size_bytes")
-        if isinstance(size, bool) or not isinstance(size, int) or size < 0 or size != len(decoded):
-            _add_finding(
-                findings,
-                "EXPORT_SIZE_MISMATCH",
-                wrapper_path.name,
-                "declared size_bytes does not equal the decoded payload length",
-            )
-            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
-        expected_hash = _digest(wrapper.get("sha256"))
-        observed_hash = _sha256(decoded)
-        if expected_hash is None or expected_hash != observed_hash:
-            _add_finding(
-                findings,
-                "EXPORT_HASH_MISMATCH",
-                wrapper_path.name,
-                "declared sha256 does not equal the decoded payload digest",
-            )
-            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+        local_path = _safe_file(root, payload_filename)
         try:
-            local_bytes = local_path.read_bytes()
+            local_bytes = local_path.read_bytes() if local_path is not None else None
         except OSError:
             local_bytes = None
-        if local_bytes is None or local_bytes != decoded:
-            code = "REPORT_TRANSPORT_MISMATCH" if is_report else "EXPORT_LOCAL_BYTE_MISMATCH"
-            message = (
-                "decoded report export bytes differ from the bound local report bytes"
-                if is_report
-                else "decoded export bytes differ from the local file bytes"
+        if payload is not None and local_bytes != payload:
+            code = (
+                "REPORT_TRANSPORT_MISMATCH"
+                if payload_filename == report_filename
+                else "EXPORT_LOCAL_BYTE_MISMATCH"
             )
-            _add_finding(findings, code, wrapper_path.name, message)
-            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
-        _decode_text(decoded, f"{wrapper_path.name}:decoded", findings, checks)
-
-    missing_wrappers = sorted(set(expected_wrappers) - seen_wrappers)
-    if missing_wrappers:
-        _add_finding(
-            findings,
-            "EXPORT_WRAPPER_MISSING",
-            ".",
-            "one or more Base64 transport records lack their active export wrapper",
-        )
-        _set_check(
-            checks,
-            "export_wrappers",
-            "blocked",
-            f"missing={missing_wrappers!r}",
-        )
-        expected_report_wrapper = (
-            f"{report_filename}{ACTIVE_EXPORT_SUFFIX}" if report_filename else None
-        )
-        if expected_report_wrapper in missing_wrappers:
             _add_finding(
                 findings,
-                "REPORT_EXPORT_WRAPPER_MISSING",
-                report_filename or "audit_report.md",
-                "the Base64-transported bound report lacks its active export wrapper",
+                code,
+                payload_filename,
+                (
+                    "reconstructed report bytes differ from the bound local report"
+                    if payload_filename == report_filename
+                    else "reconstructed payload differs from the local file bytes"
+                ),
+            )
+            _set_check(checks, "export_wrappers", "blocked", payload_filename)
+        if payload is not None:
+            _decode_text(
+                payload,
+                f"{payload_filename}:reconstructed",
+                findings,
+                checks,
             )
 
 
@@ -1898,6 +2186,7 @@ def check_bundle(
     candidate_axis = CANDIDATE_NOT_SCORED
     transport_axis = TRANSPORT_NOT_APPLICABLE
     transport_records: dict[str, dict[str, Any]] = {}
+    observed_output_controls: set[str] = set()
     controller_record: dict[str, Any] | None = None
     source_root = ROOT
     source_root_error: str | None = None
@@ -1961,6 +2250,12 @@ def check_bundle(
         actual_outputs: set[str] = set()
 
         if controller_record is not None:
+            controls = controller_record.get("observed_output_controls")
+            if (
+                isinstance(controls, list)
+                and all(isinstance(item, str) for item in controls)
+            ):
+                observed_output_controls = set(controls)
             selected_case_id = (
                 expected_case_id
                 if expected_case_id is not None
@@ -2026,8 +2321,11 @@ def check_bundle(
             _set_check(
                 parse_checks,
                 "audit_return_parse",
-                "blocked",
-                "frozen case required audit_return.json but candidate did not produce it",
+                "not_run",
+                (
+                    "required audit_return.json bytes were not acquired; output-control "
+                    "observation is classified after controller validation"
+                ),
             )
         else:
             _set_check(
@@ -2052,16 +2350,54 @@ def check_bundle(
                     expected_inputs=expected_inputs,
                     expected_candidate_identity=expected_identity,
                     expected_output_filenames=actual_outputs,
+                    required_output_filenames=required_outputs,
                     repository_root=source_root,
                 )
             )
+            attempts = controller_record.get("transport_attempts")
+            attempted_chunk_zero = (
+                {
+                    item["payload_filename"]
+                    for item in attempts
+                    if isinstance(item, dict)
+                    and item.get("chunk_index") == 0
+                    and isinstance(item.get("payload_filename"), str)
+                }
+                if isinstance(attempts, list)
+                else set()
+            )
+            missing_required_attempts = sorted(
+                (
+                    required_outputs
+                    & observed_output_controls
+                    - actual_outputs
+                )
+                - attempted_chunk_zero
+            )
+            if missing_required_attempts:
+                controller_issues.append(
+                    {
+                        "severity": "ERROR",
+                        "code": "CONTROLLER_TRANSPORT_ATTEMPT_MISSING",
+                        "path": f"{CONTROLLER_RECORD_NAME}:$.transport_attempts",
+                        "message": (
+                            "a required visible file control without acquired bytes "
+                            "requires one exact chunk-0 fallback attempt: "
+                            f"{missing_required_attempts!r}"
+                        ),
+                    }
+                )
             if audit_return is not None:
                 declared = _declared_candidate_outputs(
                     audit_return,
                     input_filenames={item["filename"] for item in expected_inputs},
                 )
                 if declared is not None:
-                    missing_capture = sorted(declared - actual_outputs)
+                    missing_capture = sorted(
+                        declared
+                        - actual_outputs
+                        - observed_output_controls
+                    )
                     if missing_capture:
                         controller_issues.append(
                             {
@@ -2124,6 +2460,7 @@ def check_bundle(
                 root,
                 audit_return,
                 actual_outputs,
+                controller_record,
                 transport_findings,
                 transport_checks,
             )
@@ -2229,13 +2566,29 @@ def check_bundle(
             findings.extend(parse_findings)
             candidate_finding_start = len(findings) - len(parse_findings)
 
-            missing_required = sorted(required_outputs - actual_outputs)
+            missing_required = sorted(
+                required_outputs
+                - actual_outputs
+                - observed_output_controls
+            )
             if missing_required:
                 _add_finding(
                     findings,
                     "CANDIDATE_REQUIRED_OUTPUT_MISSING",
                     ".",
                     f"frozen case required candidate outputs that were not produced: {missing_required!r}",
+                )
+            unavailable_controls = observed_output_controls - actual_outputs
+            if unavailable_controls:
+                _set_check(
+                    checks,
+                    "candidate_output_consistency",
+                    "not_run",
+                    (
+                        "visible file controls lacked acquired payload bytes; "
+                        f"transport identity remains unresolved: "
+                        f"{sorted(unavailable_controls)!r}"
+                    ),
                 )
                 _set_check(
                     checks,
@@ -2281,13 +2634,18 @@ def check_bundle(
                     audit_return,
                     findings,
                     checks,
+                    unavailable_filenames=unavailable_controls,
                 )
-                if checks["audit_return_artifacts"]["status"] == "not_run":
+                if (
+                    checks["audit_return_artifacts"]["status"] == "not_run"
+                    and not unavailable_controls
+                ):
                     _set_check(checks, "audit_return_artifacts", "pass")
-                _verify_export_wrappers(
+                _verify_export_chunks(
                     root,
                     report,
                     transport_records,
+                    controller_record,
                     findings,
                     checks,
                 )
@@ -2309,10 +2667,11 @@ def check_bundle(
                     checks,
                 )
             else:
-                _verify_export_wrappers(
+                _verify_export_chunks(
                     root,
                     None,
                     transport_records,
+                    controller_record,
                     findings,
                     checks,
                 )
@@ -2343,7 +2702,13 @@ def check_bundle(
                 if checks["candidate_output_consistency"]["status"] == "not_run":
                     _set_check(checks, "candidate_output_consistency", "pass")
 
-            transport_axis = _transport_identity_axis(transport_records)
+            transport_axis = _transport_identity_axis(
+                transport_records,
+                observed_output_controls,
+                has_transport_attempts=bool(
+                    controller_record.get("transport_attempts")
+                ),
+            )
             candidate_findings = findings[candidate_finding_start:]
             candidate_blocked = bool(candidate_findings) or any(
                 checks[name]["status"] == "blocked"
@@ -2448,7 +2813,8 @@ def check_bundle(
             LIMITATION,
             TRANSPORT_LIMITATION,
             (
-                f"Only active *{ACTIVE_EXPORT_SUFFIX} wrappers are transport-checked; "
+                "Only active <payload>.export.<index>.json chunk wrappers are "
+                "transport-checked; "
                 "archived mismatch captures remain preserved evidence."
             ),
         ],
