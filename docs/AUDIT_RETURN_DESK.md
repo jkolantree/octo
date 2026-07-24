@@ -32,7 +32,8 @@ reproduce its behavior in prose or write a substitute finalizer.
 
 The executed compiler captures its own full `sys.version` once; the
 model-authored spec cannot supply or override it. It accepts exact frozen
-request/source/evidence bytes, a report body, and a structured return template,
+request/source/evidence bytes, an explicit control-free `report_body_lines`
+array, and a structured return template,
 then derives artifact identities and the runtime ledger from the final bytes,
 validates execution/evidence topology, writes
 `chatgpt_data_analysis_output.txt`, and serializes `audit_return.json` last. A
@@ -119,7 +120,7 @@ These outcomes are a separate coordinate from research verdict, evidence maturit
 ## Preview transport boundary
 
 The evaluation controller first attempts the direct generated-file control.
-After serializing `audit_return.json`, the original compiler-v7 transaction
+After serializing `audit_return.json`, the original compiler-v8 transaction
 constructs one deterministic bounded container from the same finalized
 in-memory generated-output bytes. Same-response transport v2 compresses the
 container, splits the zlib stream into contiguous data shards of at most 2,048

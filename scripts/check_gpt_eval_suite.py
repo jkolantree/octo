@@ -1100,7 +1100,7 @@ def check_suite_ledger(path: Path) -> tuple[int, dict[str, Any]]:
         if (
             not isinstance(protocol_document, dict)
             or protocol_document.get("protocol_schema")
-            != "bsc-gpt-frozen-evaluation/v4"
+            != "bsc-gpt-frozen-evaluation/v5"
             or not isinstance(projection_oracle, dict)
             or projection_oracle.get("score_result_version") != "2.0"
             or projection_oracle.get("default_requirement")

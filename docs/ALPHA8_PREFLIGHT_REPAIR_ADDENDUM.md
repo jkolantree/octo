@@ -391,3 +391,54 @@ All local gates and both preflights must pass again, a new exact freeze is
 required, and the complete counted suite must restart at C001. R01 and every
 other preserved negative remain unchanged. This repair is not evidence of a
 passing suite, live binding, merge, tag, release, or publication.
+
+## 2026-07-24 second consolidated repair: controller-valid D01 text failure
+
+The next frozen candidate was commit
+`0f753a6d61f3e06ca35e95f6c5a3e25bf13c8544`, tree
+`977131ac08adab65a91d4eb25123ffd29d5b3079`, with frozen-manifest SHA-256
+`2d81bdb811edd94f1f014a038a70f96b5bbcba6aef47f88b557385eb934009f4`.
+All 49 local deterministic gates passed before D01. In fresh Preview attempt
+`D01-A01` for `known-true-induction`, the controller outcome was
+`controller_valid`, the candidate outcome was `candidate_failed`, and the
+transport outcome remained `transport_identity_unresolved`. Artifact
+validation failed before scoring, so this attempt is not a mathematical score
+and cannot be promoted by the otherwise correct induction analysis.
+
+Compiler-v7 same-response transport reconstructed the exact 13,194-byte
+`audit_report.md`, SHA-256
+`4776495706e8af3e158f8b9aaca26771bda801c5c65c100f7970a9122de5d086`,
+without invoking parity recovery. The report contained exactly two ASCII form
+feeds (`0x0C`): zero-based byte offset 3032 at line 48, one-based byte column
+19, and zero-based byte offset 3538 at line 56, one-based byte column 65. In
+both locations the byte occurs between `\(` and `orall`, where the surrounding
+mathematics indicates an intended `\forall`. This is strong evidence that an
+ordinary Python-string or JSON-string construction layer decoded the `\f`
+escape in `\forall`; it is not proof of which model-side construction layer
+introduced the byte because that exact source construction was not preserved.
+The exact reconstructed bytes and successful controller validation rule out
+silently relabeling this result as controller loss, parser damage, download
+corruption, or a passing candidate.
+
+On 2026-07-24 the user explicitly authorized one additional consolidated
+root-cause repair cycle for this boundary. The repair is a contract change and
+therefore advances the artifact compiler identity to v8 rather than modifying
+compiler v7 in place. Compiler v8 accepts the report body as explicit
+`report_body_lines`; rejects every Unicode category `Cc` code point in each
+line before joining the validated lines with compiler-owned LF separators; and
+rejects `Cc` in every generated JSON key and value, including LF, TAB, and CR.
+Only compiler-owned LF layout may occur in the complete generated text. The
+compiler must fail closed on any violation: it does not strip, substitute,
+split, or otherwise auto-repair model text. Regression coverage includes the
+ordinary-literal collision family `\forall`/form feed, `\theta`/tab,
+`\rho`/carriage return, and `\nabla`/line feed, plus positive Unicode
+`∀`, `θ`, `ρ`, and `∇` and safely doubled literal backslashes.
+
+This authorization does not spend or erase the historical compiler-v7/C001
+record above. It does not change any evaluation case, fixture, scientific
+oracle or expectation, scorer, rubric, threshold, automatic-failure rule, or
+Return Desk negative. All local gates and both development preflights must
+restart under a new exact freeze: D01 must pass in a new Preview session before
+D02 is consumed, and the complete 39-case counted suite must then restart at
+C001. The official GPT remains unchanged, Update was not clicked, and no push,
+merge, tag, Release, or publication follows from this repair record.

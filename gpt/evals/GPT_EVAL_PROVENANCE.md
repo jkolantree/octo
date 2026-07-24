@@ -336,3 +336,48 @@ All local gates and preflights must pass, a new exact freeze is required, and
 the counted suite must restart from C001. R01 and every other preserved
 negative remain unchanged. No live update, merge, tag, release, or publication
 claim follows from this repair.
+
+## 2026-07-24 controller-valid D01 failure and compiler-v8 repair
+
+The subsequent frozen candidate binds commit
+`0f753a6d61f3e06ca35e95f6c5a3e25bf13c8544`, tree
+`977131ac08adab65a91d4eb25123ffd29d5b3079`, and frozen-manifest SHA-256
+`2d81bdb811edd94f1f014a038a70f96b5bbcba6aef47f88b557385eb934009f4`.
+Its 49 local deterministic gates passed. Fresh Preview attempt `D01-A01`
+(`known-true-induction`) then produced independent outcomes
+`controller_valid`, `candidate_failed`, and
+`transport_identity_unresolved`. The controller prohibited scoring after
+artifact validation failed.
+
+The validated compiler-v7 transport reconstructed `audit_report.md` as 13,194
+bytes with SHA-256
+`4776495706e8af3e158f8b9aaca26771bda801c5c65c100f7970a9122de5d086`;
+the deterministic recovery state was `not_needed`. Exactly two ASCII form-feed
+bytes (`0x0C`) occur in that artifact: zero-based offset 3032, line 48,
+one-based byte column 19; and zero-based offset 3538, line 56, one-based byte
+column 65. Each lies between `\(` and `orall` in a context whose intended
+mathematics is `\forall`. The evidence strongly supports escape decoding of
+`\f` in an ordinary Python or JSON string construction, but the precise
+model-side construction source was not retained, so provenance cannot
+distinguish which construction layer introduced the bytes. Exact transport
+reconstruction shows that the controller did not manufacture or silently
+repair them.
+
+The user explicitly authorized a second consolidated root-cause repair cycle
+on 2026-07-24. Because the input and validation contract changes, the new
+identity is compiler v8; the historical compiler-v7 parity repair and C001
+record remain immutable. Compiler v8 takes explicit `report_body_lines`,
+rejects every Unicode category `Cc` character in each line, joins only
+validated lines with compiler-owned LF separators, and rejects `Cc` in every
+generated JSON key and value, including LF, TAB, and CR. No invalid text is
+stripped, substituted, split, or auto-repaired. Regressions cover
+`\forall`/form feed, `\theta`/tab, `\rho`/carriage return, and
+`\nabla`/line feed, together with accepted Unicode `∀`, `θ`, `ρ`, `∇` and
+safely doubled literal backslashes.
+
+No case, fixture, scientific expectation or oracle, scorer, rubric, threshold,
+automatic-failure boundary, or preserved negative changes. A new exact freeze
+must pass every local gate and restart D01 and D02 in fresh Preview sessions
+before the complete counted suite restarts at C001. The official GPT remains
+unchanged; Update was not clicked; D02 and all 39 counted cases were not
+consumed; and no push, merge, tag, Release, or publication is claimed.

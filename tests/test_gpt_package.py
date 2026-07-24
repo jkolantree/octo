@@ -212,7 +212,7 @@ class CustomGptPackageTests(unittest.TestCase):
         )
         self.assertEqual(
             protocol["protocol_schema"],
-            "bsc-gpt-frozen-evaluation/v4",
+            "bsc-gpt-frozen-evaluation/v5",
         )
         for obsolete_key in (
             "regression_trials",
@@ -242,8 +242,8 @@ class CustomGptPackageTests(unittest.TestCase):
                     "development_regressions_not_independent_evaluation_evidence"
                 ),
                 "run_order": "case_1_then_case_27",
-                "candidate_defect_repair_allowance": 1,
-                "repair_scope": "one_consolidated_root_cause_repair",
+                "candidate_defect_repair_allowance": 2,
+                "repair_scope": "two_explicitly_authorized_consolidated_root_cause_repairs",
                 "regenerate_all_candidate_artifacts": "required",
                 "rerun_all_local_gates": "required",
                 "restart_preflights": "both_from_case_1",
@@ -254,8 +254,8 @@ class CustomGptPackageTests(unittest.TestCase):
             {
                 "development_preflights": 2,
                 "counted_regressions_per_complete_suite": 39,
-                "maximum_post_suite_root_cause_repairs": 1,
-                "maximum_complete_counted_suites": 2,
+                "maximum_post_suite_root_cause_repairs": 2,
+                "maximum_complete_counted_suites": 3,
             },
         )
         self.assertEqual(
@@ -480,7 +480,7 @@ class CustomGptPackageTests(unittest.TestCase):
         )
         self.assertIn("`transport_identity_unresolved`", execution_knowledge)
         self.assertIn(
-            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v7"',
+            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v8"',
             execution_knowledge,
         )
         durable_knowledge = "\n".join(
@@ -544,25 +544,26 @@ class CustomGptPackageTests(unittest.TestCase):
                 "artifact IDs/source quotes; label translations."
             ),
             "draft_machine_records": (
-                "Machine=audit_request.txt(request)+audit_report.md(report)+audit_return.json. "
-                "K3 compiler=/mnt/data/gpt_artifact_compiler.py. RUN captures sys.version once, freezes "
-                "request/source/evidence, owns Ledger8/report/IDs/topology; return LAST. Never author "
-                "runtime/hash/size/Base64; block=>no return/pass/proven. Refs2way; pass=>no obligation; "
-                "omit self; fatal IDs exact. Proven/strong/lemma=>all6K+S10+bound evidence/claim/run/pass-gates; "
-                "else demote/omit. protocol.sha256=sha256:"
-                "f7036ad49643b0d4a7e7b1befa7f8cf9f6c905182dbcc64c8d860938abeda12a. "
-                "Request/report!=source; request=target=>distinct IDs/digests. S7=compiler ledger. "
-                "Final fenced block=exact v7 stdout; nothing follows. v2 parity bundle=fallback-only; "
-                "never edit/claim unavailable button-byte identity."
+                "Machine=audit_request.txt+audit_report.md+audit_return.json. "
+                "K3=/mnt/data/gpt_artifact_compiler.py owns sys.version+frozen request/source/evidence+"
+                "Ledger8/report/IDs/topology; return LAST. Text=control-free report_body_lines; prefer "
+                "Unicode/plain math. No ordinary Python/JSON LaTeX escapes or interpreted splitlines; use "
+                "raw string+json.dump. Cc=>block/regenerate, never delete/substitute/guess. No authored runtime/hash/size/"
+                "Base64; block=>no return/pass/proven. Refs2way; pass=>no obligation; no self; exact fatal IDs. "
+                "Proven/strong/lemma=>6K+S10+bound evidence/claim/run/pass-gates else demote. "
+                "protocol.sha256=sha256:"
+                "ea944adbc535cd30dad9a1f4f3b93f63ad4bc89fbcfd023d125c6c8325e9a148. "
+                "Request/report/source IDs,digests distinct. Final=exact v8 stdout; nothing after. "
+                "v2 parity=fallback-only; no unavailable-button identity."
             ),
             "execution_ledger": (
-                "Ledger8. file_read_only=>no output/receipt; !=independent_source_check. Topology: "
-                "model_reasoning in=request+target+6K,out=evidence+report,receipts=[]; DA "
-                "in=same,out=evidence+report+chatgpt_data_analysis_output.txt,receipts=[]. Ledger v2=one "
-                "session_reported runtime+provenance then filename-sorted final non-request/source outputs; no "
-                "self/return/extra; report refs it. Other ran(nonmodel)=>exact tool/version+bound I/O|receipt. "
-                "Validator=>bound version+schema/input hashes+result, else not_run/no pass. Evidence "
-                "run=>request+claim sources+cited outputs. BSC/external/empirical unrun=>not_run."
+                "Ledger8. file_read_only:no output/receipt, !=independent_source_check. "
+                "model_reasoning:in=request+target+6K,out=evidence+report,receipts=[]; DA:same inputs,"
+                "out+chatgpt_data_analysis_output.txt,receipts=[]. Ledger v2=one session_reported "
+                "runtime+provenance+sorted final non-input outputs; omit self/return. Other "
+                "ran=>exact tool/version+bound I/O|receipt. Validator=>bound version+schema/input hashes+result else "
+                "not_run/no pass. Evidence run binds request+claim sources+cited outputs. "
+                "BSC/external/empirical unrun=>not_run."
             ),
             "nonadmissive_receipts": (
                 "Receipt-only: sole research T=plausible_but_unresolved; no authorization/tool-run IDs, type/"

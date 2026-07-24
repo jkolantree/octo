@@ -28,7 +28,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
-COMPILER_VERSION = "bsc-gpt-artifact-compiler-v7"
+COMPILER_VERSION = "bsc-gpt-artifact-compiler-v8"
 TRANSPORT_CHUNK_VERSION = "bsc-gpt-export-chunk-v1"
 SAME_RESPONSE_TRANSPORT_VERSION = "bsc-gpt-same-response-transport-v2"
 TRANSPORT_CONTAINER_VERSION = "bsc-gpt-multi-artifact-container-v1"
@@ -114,6 +114,14 @@ RUNTIME_BASIS_LINE = "runtime_provenance=session_reported"
 BOUND_RUNTIME_ARTIFACT = "chatgpt_data_analysis_output.txt"
 BOUND_REPORT_ARTIFACT = "audit_report.md"
 BOUND_RETURN_ARTIFACT = "audit_return.json"
+TEXTUAL_APPLICATION_MEDIA_TYPES = {
+    "application/ecmascript",
+    "application/javascript",
+    "application/json",
+    "application/sql",
+    "application/xml",
+    "application/yaml",
+}
 REPORT_RUNTIME_REFERENCE = (
     "Session-reported runtime: see the bound execution-output artifact "
     f"`{BOUND_RUNTIME_ARTIFACT}`; this reference is not independent authentication."
@@ -202,6 +210,138 @@ def output_record(filename: str, data: bytes) -> dict[str, Any]:
         "bytes": len(data),
         "sha256": sha256_bytes(data),
     }
+
+
+def _generated_text_control_locations(
+    text: str,
+    *,
+    allow_lf: bool = True,
+) -> tuple[tuple[int, int], ...]:
+    r"""Return prohibited Unicode-control locations for generated text.
+
+    Compiler-authored Markdown and machine-record strings use LF line endings.
+    Other ``Cc`` characters are not accepted because ordinary Python literals
+    can silently turn LaTeX commands such as ``\theta`` and ``\rho`` into
+    controls. Structured JSON strings do not need LF and set ``allow_lf=False``.
+    """
+
+    return tuple(
+        (offset, codepoint)
+        for offset, character in enumerate(text)
+        if unicodedata.category(character) == "Cc"
+        and (not allow_lf or character != "\n")
+        for codepoint in (ord(character),)
+    )
+
+
+def _validate_generated_text(
+    text: object,
+    label: str,
+    *,
+    allow_lf: bool = True,
+) -> str:
+    if not isinstance(text, str):
+        raise ValueError(f"{label} must be text")
+    controls = _generated_text_control_locations(text, allow_lf=allow_lf)
+    if controls:
+        detail = ", ".join(
+            f"U+{codepoint:04X}@{offset}" for offset, codepoint in controls
+        )
+        raise ValueError(
+            f"{label} contains prohibited Unicode controls ({detail}); "
+            "regenerate it from Unicode/plain-text math or correctly escaped "
+            "source instead of deleting or substituting bytes"
+        )
+    return text
+
+
+def _report_body_from_lines(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        raise ValueError("report_body_lines must be a non-empty array")
+    lines: list[str] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str):
+            raise ValueError(f"report_body_lines[{index}] must be text")
+        controls = tuple(
+            (offset, codepoint)
+            for offset, character in enumerate(item)
+            if unicodedata.category(character) == "Cc"
+            for codepoint in (ord(character),)
+        )
+        if controls:
+            detail = ", ".join(
+                f"U+{codepoint:04X}@{offset}"
+                for offset, codepoint in controls
+            )
+            raise ValueError(
+                f"report_body_lines[{index}] contains prohibited controls "
+                f"({detail}); provide an explicit control-free line list, "
+                "prefer Unicode/plain-text math, and never split an already "
+                "interpreted ordinary string literal"
+            )
+        lines.append(item)
+    return "\n".join(lines)
+
+
+def _validate_generated_json_strings(value: object, label: str) -> None:
+    if isinstance(value, str):
+        _validate_generated_text(value, label, allow_lf=False)
+        return
+    if isinstance(value, list):
+        for index, item in enumerate(value):
+            _validate_generated_json_strings(item, f"{label}[{index}]")
+        return
+    if isinstance(value, dict):
+        for key, item in value.items():
+            _validate_generated_text(
+                key,
+                f"{label} object key",
+                allow_lf=False,
+            )
+            _validate_generated_json_strings(item, f"{label}.{key}")
+
+
+def _normalized_media_type(value: object) -> str:
+    if not isinstance(value, str):
+        return ""
+    return value.split(";", 1)[0].strip().lower()
+
+
+def _is_textual_media_type(value: object) -> bool:
+    media_type = _normalized_media_type(value)
+    return (
+        media_type.startswith("text/")
+        or media_type in TEXTUAL_APPLICATION_MEDIA_TYPES
+        or media_type.endswith(("+json", "+xml", "+yaml"))
+    )
+
+
+def _is_json_media_type(value: object) -> bool:
+    media_type = _normalized_media_type(value)
+    return media_type == "application/json" or media_type.endswith("+json")
+
+
+def _validate_text_artifact(text: str, label: str) -> None:
+    controls = tuple(
+        (offset, ord(character))
+        for offset, character in enumerate(text)
+        if unicodedata.category(character) == "Cc"
+        and character not in {"\t", "\n", "\r"}
+    )
+    if controls:
+        detail = ", ".join(
+            f"U+{codepoint:04X}@{offset}" for offset, codepoint in controls
+        )
+        raise ValueError(
+            f"{label} contains prohibited Unicode controls ({detail}); "
+            "text artifacts may contain only TAB, LF, and CR controls"
+        )
+
+
+def _is_generated_text_artifact(row: dict[str, Any]) -> bool:
+    media_type = row.get("media_type")
+    role = row.get("role")
+    return role not in {"request", "source"} and _is_textual_media_type(media_type)
 
 
 def _portable_basename(value: object) -> bool:
@@ -1379,6 +1519,7 @@ def _render_report(
     report_body: str,
     document: dict[str, Any],
 ) -> bytes:
+    _validate_generated_text(report_body, "report body")
     if REPORT_PROJECTION_MARKER in report_body:
         raise ValueError(
             "report body must not reproduce the compiler-owned semantic projection"
@@ -1399,6 +1540,7 @@ def _render_report(
         + REPORT_RUNTIME_REFERENCE
         + "\n"
     )
+    _validate_generated_text(report_text, "rendered report")
     return report_text.encode("utf-8")
 
 
@@ -1720,8 +1862,7 @@ def finalize_candidate_artifacts(
     """Finalize one acyclic artifact transaction and serialize the return last."""
 
     runtime = _validate_runtime(session_reported_runtime)
-    if not isinstance(report_body, str):
-        raise ValueError("report body must be text")
+    report_body = _validate_generated_text(report_body, "report body")
     if runtime in report_body or ANY_SYS_VERSION_RE.search(report_body):
         raise ValueError(
             "report body must reference the bound runtime output, not copy a runtime"
@@ -1741,6 +1882,7 @@ def finalize_candidate_artifacts(
     document = copy.deepcopy(audit_return_template)
     if not isinstance(document, dict):
         raise ValueError("return template must be an object")
+    _validate_generated_json_strings(document, "audit return template")
     if _contains_base64_key(document):
         raise ValueError("Base64 is prohibited from the primary finalization path")
     artifact_rows = document.get("artifacts")
@@ -1777,13 +1919,37 @@ def finalize_candidate_artifacts(
     if report_row.get("role") != "report" or ledger_row.get("role") != "execution_output":
         raise ValueError("report and runtime ledger roles are invalid")
     for filename, data in frozen_artifacts.items():
-        if artifacts_by_filename[filename].get("role") in {"request", "source"}:
-            continue
+        artifact_row = artifacts_by_filename[filename]
+        is_textual = _is_textual_media_type(artifact_row.get("media_type"))
         try:
             text = data.decode("utf-8", errors="strict")
-        except UnicodeError:
+        except UnicodeError as exc:
+            if is_textual:
+                raise ValueError(
+                    f"text artifact must be strict UTF-8: {filename}"
+                ) from exc
             continue
-        if ANY_SYS_VERSION_RE.search(text):
+        if is_textual:
+            _validate_text_artifact(text, f"text artifact {filename}")
+        if _is_generated_text_artifact(artifact_row):
+            _validate_generated_text(
+                text,
+                f"generated text artifact {filename}",
+            )
+            if _is_json_media_type(artifact_row.get("media_type")):
+                try:
+                    generated_json = json.loads(text)
+                except json.JSONDecodeError:
+                    pass
+                else:
+                    _validate_generated_json_strings(
+                        generated_json,
+                        f"generated JSON artifact {filename}",
+                    )
+        if (
+            artifact_row.get("role") not in {"request", "source"}
+            and ANY_SYS_VERSION_RE.search(text)
+        ):
             raise ValueError(
                 "generated text artifact must reference the bound runtime output, "
                 f"not copy a runtime: {filename}"
@@ -1876,7 +2042,7 @@ def _load_strict_json(path: Path) -> dict[str, Any]:
 def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
     spec = _load_strict_json(spec_path)
     if set(spec) != {
-        "report_body",
+        "report_body_lines",
         "frozen_artifact_paths",
         "audit_return_template",
     }:
@@ -1894,7 +2060,7 @@ def _compile_from_spec(spec_path: Path, output_dir: Path) -> dict[str, Any]:
     session_reported_runtime = sys.version
     finalized = finalize_candidate_artifacts(
         session_reported_runtime=session_reported_runtime,
-        report_body=spec["report_body"],
+        report_body=_report_body_from_lines(spec["report_body_lines"]),
         frozen_artifacts=frozen,
         audit_return_template=spec["audit_return_template"],
     )
