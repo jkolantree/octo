@@ -56,7 +56,7 @@
     },
     "code_interpreter_and_data_analysis": {
       "enabled": true,
-      "instruction": "Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution. When canonical compiler v8 runs, preserve its complete stdout byte-for-byte in one final fenced code block; its dormant transport-v2 parity bundle is fallback-only and never proves unavailable download-button bytes."
+      "instruction": "Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution. When canonical compiler v9 runs, preserve its complete stdout byte-for-byte in one final fenced code block; its dormant transport-v2 parity bundle is fallback-only and never proves unavailable download-button bytes."
     },
     "image_generation": {
       "enabled": false
@@ -321,7 +321,7 @@
         {
           "id": "draft_machine_records",
           "severity": "fatal",
-          "text": "Machine=audit_request.txt+audit_report.md+audit_return.json. K3=/mnt/data/gpt_artifact_compiler.py owns sys.version+frozen request/source/evidence+Ledger8/report/IDs/topology; return LAST. Text=control-free report_body_lines; prefer Unicode/plain math. No ordinary Python/JSON LaTeX escapes or interpreted splitlines; use raw string+json.dump. Cc=>block/regenerate, never delete/substitute/guess. No authored runtime/hash/size/Base64; block=>no return/pass/proven. Refs2way; pass=>no obligation; no self; exact fatal IDs. Proven/strong/lemma=>6K+S10+bound evidence/claim/run/pass-gates else demote. protocol.sha256=sha256:ea944adbc535cd30dad9a1f4f3b93f63ad4bc89fbcfd023d125c6c8325e9a148. Request/report/source IDs,digests distinct. Final=exact v8 stdout; nothing after. v2 parity=fallback-only; no unavailable-button identity.",
+          "text": "Machine=audit_request.txt+audit_report.md+audit_return.json. K3=/mnt/data/gpt_artifact_compiler.py owns runtime+frozen I/O+Ledger8/report/IDs/topology; return LAST. Text=control-free report_body_lines; prefer Unicode; no ordinary-string LaTeX/interpreted splitlines; raw strings+json.dump. Cc=>block/regenerate; never alter/guess. No authored runtime/hash/size/Base64; block=>no return/pass/proven. Refs2way; pass=>0 obligations; nonpass=>>=1 scoped obligation; refutation!=disposition; summary=all; no self; exact fatal IDs. High verdict/lemma=>6K+S10+bound evidence/claim/run/pass-gates else demote. protocol.sha256=sha256:1b587f18e4eb83be8d1ef50294b174f54f339d966f25d2d7b56d1b5b5fb94e31. Request/report/source IDs,digests distinct. Final=exact v9 stdout; nothing after. v2 parity=fallback-only; no unavailable-button identity.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#draft-machine-readable-output",
             "docs/SCHEMA.md#drafts-and-placeholders"

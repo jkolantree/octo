@@ -14,13 +14,14 @@ This release replaces model-mediated artifact identity with one acyclic final-by
 - canonicalize all eight execution activities and the report-facing execution projection before any report, ledger, hash, or return bytes are derived;
 - keep Base64 outside the primary proof path and treat any fallback only as the identity of the exported payload actually received;
 - derive one deterministic bounded multi-artifact container from the compiler's same final in-memory output bytes after `audit_return.json` is serialized;
-- retain compiler v7's bounded-transport contract in compiler v8: split the zlib stream into contiguous data shards of at most 2,048 bytes and add one `xor_parity_v1` shard in same-response transport v2;
-- have compiler v8 accept explicit `report_body_lines`, reject every Unicode category `Cc` code point in each line and in every generated JSON key and value, join validated report lines with compiler-owned LF separators, and fail without stripping, splitting, substitution, or other auto-repair;
+- retain compiler v7's bounded-transport contract through compiler v9: split the zlib stream into contiguous data shards of at most 2,048 bytes and add one `xor_parity_v1` shard in same-response transport v2;
+- retain compiler v8's explicit `report_body_lines` contract in compiler v9, reject every Unicode category `Cc` code point in each line and in every generated JSON key and value, join validated report lines with compiler-owned LF separators, and fail without stripping, splitting, substitution, or other auto-repair;
+- have compiler v9 validate the complete gate/obligation contract before rendering or hashing and project schema field `statement`, while keeping exact refutation closure separate from the open workflow duty to retire, narrow, or amend a failed claim before admission;
 - include that dormant zlib/Base64 transport envelope in the original canonical compiler stdout, eliminating every later-turn `/mnt/data` dependency.
 
 The evaluation controller now validates the exact target, all six canonical Knowledge files, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls and explicit per-file direct-acquisition outcomes separately from acquired bytes, never infers `no_download_event` from absence alone, validates the complete original-response compiler block and every container/member identity before local reconstruction, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`. Parity may recover exactly one content-faulted data shard only when its metadata and expected ASCII Base64 text length are intact and all other data plus parity are valid; the controller then reruns every aggregate, container, member, and topology check. Aligned-quartet omission, metadata mutation, multiple bad data, or bad data plus bad parity remains unrecoverable. Valid data with only exact-length bad parity records `parity_degraded_not_used`.
 
-The frozen-suite checker independently revalidates each trial's manifest-bound candidate snapshot and raw evidence, enforces fresh Preview-session identities and the exact `C001` through `C039` order, and encodes the one-repair/two-complete-suite release ceiling without allowing controller or transport states to rescue a substantive candidate contradiction.
+The frozen-suite checker independently revalidates each trial's manifest-bound candidate snapshot and raw evidence, enforces fresh Preview-session identities and the exact `C001` through `C039` order, and encodes the explicitly authorized three-repair/four-complete-suite release ceiling without allowing controller or transport states to rescue a substantive candidate contradiction.
 
 A pre-freeze synthetic audit found that the two official-status cases intentionally have no scientific verdict, while the prior checker required one for every case. The corrected score-result v2 contract makes every generated case explicit: scientific cases require a nonempty allowed projection, exact claim/verdict mappings are enforced where frozen, and status-only cases require `{}` with no scientific verdict. A real omission or invented verdict is `candidate_failed`; a forged scoring mode or derived flag is `trial_invalid_controller`.
 
@@ -131,6 +132,39 @@ negatives are unchanged. All local gates, a new exact freeze, D01 and D02 in
 fresh Preview sessions, and the complete 39-case suite from C001 must restart.
 The official GPT remains unchanged, Update was not clicked, and no push,
 merge, tag, Release, or publication is claimed.
+
+## 2026-07-24 C004 obligation boundary and compiler v9
+
+The following candidate at commit
+`b8461ca7ef4ac44e86e49bd3c4182872062b40ae` and tree
+`ab1e2e7e68306f7ba041fe8b1daead50b126ee0c` passed all 49 local gates, both
+development preflights at 20/20, and counted C001 through C003 at 20/20.
+`C004-A03` was controller-valid but candidate-failed before scoring. Its
+machine record correctly preserved x = -1 as a decisive counterexample,
+`research_verdict: "refuted"`, the fatal gate at `fail`, and admission at
+`fail`; it omitted the open obligation required for every nonpassing gate.
+Return Desk therefore blocked it with
+`RETURN_UNRESOLVED_GATE_OBLIGATION_OMITTED`.
+
+The user explicitly authorized a third consolidated root-cause repair cycle on
+2026-07-24. Compiler v9 validates unique claim, gate, evidence, and obligation
+identifiers; pass/nonpass obligation closure; exact bidirectional bindings;
+claim-owner and cited-evidence scope; and exact summary projection before any
+report, hash, serialization, or transport bytes are derived. It also corrects
+the deterministic report projection from nonexistent field `description` to
+schema field `statement`.
+
+The compact controller now requires every `fail`, `unrun`, or `conflict` gate
+to retain a scoped open obligation. For an exact counterexample, that
+obligation is workflow disposition—retire, narrow, or amend the frozen claim
+before admission—not scientific uncertainty. The `refuted` verdict and
+negative evidence remain unchanged.
+
+No case, fixture, scientific expectation or oracle, scorer, rubric, threshold,
+automatic-failure rule, or Return Desk negative changes. The failed freeze is
+not reusable. All local gates, both fresh preflights, and the complete counted
+suite from C001 must restart before any live Update, push, merge, tag, Release,
+or publication.
 
 ## Authority and privacy boundary
 

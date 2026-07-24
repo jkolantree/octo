@@ -11,7 +11,7 @@
 - `schemas/README.md` — SHA-256 `2b6c6b3fcb6497c9a9524b26e5cbd7a36fbfbdbbc95eb2f322463b7024d5c21a`
 - `schemas/audit-return-v0.1.schema.json` — SHA-256 `25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799`
 - `docs/SCHEMA.md` — SHA-256 `ed42f2f65972f57d86c8e4d198eafc9a3d970db68012ce71a28eaf589b29b506`
-- `docs/AUDIT_RETURN_DESK.md` — SHA-256 `2b39ba2f29755cd9b886ae88a5b9f2498836f5eb4c679def9f7017bf5506f9d0`
+- `docs/AUDIT_RETURN_DESK.md` — SHA-256 `cd373c0fb24717719a0684655cf409d10bbe2517f15d01c80e8177b1896e9023`
 - `docs/MATHEMATICS.md` — SHA-256 `25309fb738cb229230991ec556f8fbe5aa692cc67a264124732632a7159a7aec`
 - `docs/DERIVED_HOLONOMY.md` — SHA-256 `68e7938c55e88642e47824c7d92610014f606336697dc67983357eab9767e295`
 
@@ -544,7 +544,7 @@ These outcomes are a separate coordinate from research verdict, evidence maturit
 ## Preview transport boundary
 
 The evaluation controller first attempts the direct generated-file control.
-After serializing `audit_return.json`, the original compiler-v8 transaction
+After serializing `audit_return.json`, the original compiler-v9 transaction
 constructs one deterministic bounded container from the same finalized
 in-memory generated-output bytes. Same-response transport v2 compresses the
 container, splits the zlib stream into contiguous data shards of at most 2,048

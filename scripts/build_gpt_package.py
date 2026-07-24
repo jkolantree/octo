@@ -428,7 +428,7 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
         ]
     )
     expected_protocol = {
-        "protocol_schema": "bsc-gpt-frozen-evaluation/v5",
+        "protocol_schema": "bsc-gpt-frozen-evaluation/v6",
         "defined_before_counted_suite_output_inspection": True,
         "candidate_mutation_during_counted_suite": "forbidden",
         "provenance_basis": "gpt/evals/GPT_EVAL_PROVENANCE.md",
@@ -520,8 +520,8 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
                 "development_regressions_not_independent_evaluation_evidence"
             ),
             "run_order": "case_1_then_case_27",
-            "candidate_defect_repair_allowance": 2,
-            "repair_scope": "two_explicitly_authorized_consolidated_root_cause_repairs",
+            "candidate_defect_repair_allowance": 3,
+            "repair_scope": "three_explicitly_authorized_consolidated_root_cause_repairs",
             "regenerate_all_candidate_artifacts": "required",
             "rerun_all_local_gates": "required",
             "restart_preflights": "both_from_case_1",
@@ -544,8 +544,8 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
         "trial_counts": {
             "development_preflights": 2,
             "counted_regressions_per_complete_suite": 39,
-            "maximum_post_suite_root_cause_repairs": 2,
-            "maximum_complete_counted_suites": 3,
+            "maximum_post_suite_root_cause_repairs": 3,
+            "maximum_complete_counted_suites": 4,
         },
         "pass_criteria": {
             "minimum_score_each_counted_trial": 18,
@@ -611,7 +611,7 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
                 "one_final_fenced_code_block_with_no_following_prose"
             ),
             "model_transport_action": "byte_for_byte_copy_only",
-            "fallback_compiler_version": "bsc-gpt-artifact-compiler-v8",
+            "fallback_compiler_version": "bsc-gpt-artifact-compiler-v9",
             "fallback_transport_version": "bsc-gpt-same-response-transport-v2",
             "fallback_transport_encoding": (
                 "length_framed_container_then_zlib_then_2048_byte_data_shards_"
@@ -671,8 +671,8 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
             "mismatch_action": "stop_failed",
         },
         "repair_allowance": {
-            "maximum_root_cause_repairs_after_counted_suite_failure": 2,
-            "post_suite_root_cause_repairs_consumed": 2,
+            "maximum_root_cause_repairs_after_counted_suite_failure": 3,
+            "post_suite_root_cause_repairs_consumed": 3,
             "trigger": "candidate_failed",
             "old_freeze_c001_layered_record": (
                 "trial_invalid_controller_outer_with_candidate_failed_transport_beneath"
@@ -683,13 +683,20 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
             "second_repair_trigger": (
                 "controller_valid_D01_candidate_failed_report_control_bytes"
             ),
+            "third_repair_authorization": (
+                "explicit_user_authorization_2026-07-24"
+            ),
+            "third_repair_trigger": (
+                "controller_valid_C004_candidate_failed_nonpassing_gate_"
+                "obligation_omitted"
+            ),
             "old_freeze_reuse": "forbidden",
-            "repair_scope": "two_explicitly_authorized_consolidated_root_cause_repairs",
+            "repair_scope": "three_explicitly_authorized_consolidated_root_cause_repairs",
             "all_local_gates_before_new_freeze": "required",
             "new_freeze_required": True,
             "rerun_counted_suite": "all_39_from_case_1",
             "invalid_controller_retry_does_not_consume_repair": True,
-            "third_complete_candidate_failure_action": (
+            "fourth_complete_candidate_failure_action": (
                 "stop_fail_closed_without_publication"
             ),
         },
@@ -755,6 +762,10 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
         "explicitly authorized a second consolidated root-cause repair cycle",
         "Compiler v8 takes explicit `report_body_lines`",
         "rejects every Unicode category `Cc` character",
+        "controller-valid C004 obligation-topology failure",
+        "explicitly authorized a third consolidated root-cause repair cycle",
+        "Compiler v9 validates obligation closure before rendering",
+        "refutation closure from admission disposition",
     )
     if any(
         statement not in normalized_provenance
@@ -781,10 +792,11 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
         "`trial_invalid_controller`",
         "`transport_identity_unresolved`",
         "browser/download corruption was not established",
-        "Compiler v8 derives one deterministic bounded multi-artifact container",
+        "Compiler v9 derives one deterministic bounded multi-artifact container",
         "Controller-record v5 binds the complete raw response",
         "`xor_parity_v1`",
         "`parity_degraded_not_used`",
+        "Compiler v9 validates obligation closure before rendering",
     )
     if any(
         statement not in normalized_matrix for statement in required_matrix_statements

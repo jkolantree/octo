@@ -114,6 +114,33 @@ class GptArtifactCompilerTests(unittest.TestCase):
             audit_return_template=self.template() if template is None else template,
         )
 
+    def refuted_with_remediation(self) -> dict:
+        template = self.template()
+        template["claims"][0]["research_verdict"] = "refuted"
+        template["evidence"][0]["result"] = "fail"
+        template["fatal_gates"][0].update(
+            state="fail",
+            obligation_ids=["obligation:retire-or-amend"],
+        )
+        template["summary_projection"].update(
+            research_verdict="refuted",
+            admission="fail",
+            unresolved_obligation_ids=["obligation:retire-or-amend"],
+        )
+        template["unresolved_obligations"] = [
+            {
+                "id": "obligation:retire-or-amend",
+                "statement": (
+                    "Retire the refuted frozen claim or amend it, then audit the "
+                    "replacement separately; the refutation remains closed."
+                ),
+                "claim_ids": ["claim:fixture"],
+                "gate_ids": ["gate:structural-consistency"],
+                "evidence_ids": ["evidence:structural-check"],
+            }
+        ]
+        return template
+
     def replay(self, files: dict[str, bytes]) -> tuple[int, dict]:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -222,6 +249,106 @@ class GptArtifactCompilerTests(unittest.TestCase):
             projected_execution["chatgpt_data_analysis"]["version_reference"],
             BOUND_RUNTIME_ARTIFACT,
         )
+
+    def test_refuted_failure_retains_scoped_remediation_obligation(self):
+        finalized = self.finalize(self.refuted_with_remediation())
+        status, result = self.replay(finalized.files)
+        self.assertEqual(status, 0, result)
+        self.assertEqual(result["decision"], "no_blocking_findings")
+        self.assertEqual(
+            finalized.audit_return["claims"][0]["research_verdict"],
+            "refuted",
+        )
+        report = finalized.files[BOUND_REPORT_ARTIFACT].decode("utf-8")
+        projection_text = report.split("```json\n", 1)[1].split("```\n", 1)[0]
+        projection = json.loads(projection_text)
+        self.assertEqual(
+            projection["unresolved_obligations"][0]["statement"],
+            finalized.audit_return["unresolved_obligations"][0]["statement"],
+        )
+        self.assertNotIn(
+            "description",
+            projection["unresolved_obligations"][0],
+        )
+
+    def test_nonpassing_gate_without_obligation_is_rejected_before_render(self):
+        template = self.refuted_with_remediation()
+        template["fatal_gates"][0]["obligation_ids"] = []
+        template["summary_projection"]["unresolved_obligation_ids"] = []
+        template["unresolved_obligations"] = []
+        with self.assertRaisesRegex(
+            ValueError,
+            "nonpassing fatal gate .* omits an open obligation",
+        ):
+            self.finalize(template)
+
+    def test_passing_gate_with_obligation_is_rejected_before_render(self):
+        template = self.template()
+        template["fatal_gates"][0]["obligation_ids"] = [
+            "obligation:unnecessarily-open"
+        ]
+        template["summary_projection"]["unresolved_obligation_ids"] = [
+            "obligation:unnecessarily-open"
+        ]
+        template["unresolved_obligations"] = [
+            {
+                "id": "obligation:unnecessarily-open",
+                "statement": "This obligation must not remain behind a passing gate.",
+                "claim_ids": ["claim:fixture"],
+                "gate_ids": ["gate:structural-consistency"],
+                "evidence_ids": ["evidence:structural-check"],
+            }
+        ]
+        with self.assertRaisesRegex(
+            ValueError,
+            "passing fatal gate .* has an open obligation",
+        ):
+            self.finalize(template)
+
+    def test_gate_obligation_asymmetry_is_rejected_before_render(self):
+        template = self.refuted_with_remediation()
+        template["fatal_gates"][0]["obligation_ids"] = []
+        with self.assertRaisesRegex(
+            ValueError,
+            "obligation bindings are asymmetric",
+        ):
+            self.finalize(template)
+
+    def test_obligation_claim_owner_scope_is_rejected_before_render(self):
+        template = self.refuted_with_remediation()
+        unrelated = copy.deepcopy(template["claims"][0])
+        unrelated.update(
+            id="claim:unrelated",
+            fatal_gate_ids=[],
+            evidence_ids=[],
+        )
+        template["claims"].append(unrelated)
+        template["unresolved_obligations"][0]["claim_ids"].append(
+            "claim:unrelated"
+        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "claim scope differs from its gate owners",
+        ):
+            self.finalize(template)
+
+    def test_obligation_evidence_scope_is_rejected_before_render(self):
+        template = self.refuted_with_remediation()
+        template["evidence"][0]["claim_ids"] = []
+        with self.assertRaisesRegex(
+            ValueError,
+            "cited evidence scope is incompatible",
+        ):
+            self.finalize(template)
+
+    def test_summary_obligation_omission_is_rejected_before_render(self):
+        template = self.refuted_with_remediation()
+        template["summary_projection"]["unresolved_obligation_ids"] = []
+        with self.assertRaisesRegex(
+            ValueError,
+            "summary projection must include every unresolved obligation exactly",
+        ):
+            self.finalize(template)
 
     def test_report_preserves_unicode_math_and_literal_latex_backslashes(self):
         report_body = (
@@ -841,7 +968,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 )
             self.assertEqual(status, 0)
             wrapper = json.loads(output.getvalue())
-            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v8")
+            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v9")
             self.assertEqual(
                 output.getvalue().encode("utf-8"),
                 canonical_transport_wrapper_bytes(wrapper),
@@ -922,7 +1049,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 set(failure),
                 {"compiler", "error", "status"},
             )
-            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v8")
+            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v9")
             self.assertEqual(failure["status"], "blocked")
             self.assertTrue(failure["error"])
             self.assertEqual(
@@ -1004,7 +1131,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
             "defect_composition_valid.json",
         ]
         self.assertEqual(set(parsed), COMPILE_RESULT_FIELDS)
-        self.assertEqual(parsed["compiler"], "bsc-gpt-artifact-compiler-v8")
+        self.assertEqual(parsed["compiler"], "bsc-gpt-artifact-compiler-v9")
         self.assertEqual(
             set(parsed["transport"]),
             SAME_RESPONSE_TRANSPORT_FIELDS,
@@ -1536,7 +1663,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
             self.assertTrue(compile_result["return_serialized_last"])
             self.assertEqual(
                 compile_result["compiler"],
-                "bsc-gpt-artifact-compiler-v8",
+                "bsc-gpt-artifact-compiler-v9",
             )
 
             ledger = (output_root / BOUND_RUNTIME_ARTIFACT).read_text(

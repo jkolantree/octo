@@ -227,7 +227,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         include_controls: bool = True,
         direct_filenames: set[str] | None = None,
     ) -> None:
-        """Preserve one exact compiler-v8 result in the original response."""
+        """Preserve one exact compiler-v9 result in the original response."""
 
         generated = sorted(
             {

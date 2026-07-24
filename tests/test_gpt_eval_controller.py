@@ -90,6 +90,35 @@ def template() -> dict:
     ]
     return {
         "protocol": {"version": "0.3.0-alpha.8"},
+        "primary_claim_id": "claim:fixture",
+        "claims": [
+            {
+                "id": "claim:fixture",
+                "statement": "The finite fixture satisfies its declared control.",
+                "research_verdict": "plausible_but_unresolved",
+                "depends_on": [],
+                "source_ids": [],
+                "evidence_ids": [],
+                "fatal_gate_ids": ["gate:fixture"],
+            }
+        ],
+        "fatal_gates": [
+            {
+                "id": "gate:fixture",
+                "state": "pass",
+                "evidence_ids": [],
+                "obligation_ids": [],
+            }
+        ],
+        "summary_projection": {
+            "primary_claim_id": "claim:fixture",
+            "research_verdict": "plausible_but_unresolved",
+            "admission": "pass",
+            "deployment_status": "research_only",
+            "fatal_gate_ids": ["gate:fixture"],
+            "unresolved_obligation_ids": [],
+        },
+        "unresolved_obligations": [],
         "artifacts": artifacts,
         "execution": [
             {

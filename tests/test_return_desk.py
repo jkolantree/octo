@@ -847,6 +847,51 @@ class AuditReturnDeskTests(unittest.TestCase):
         self.assertIn("RETURN_INTERNALLY_CONSISTENT", codes)
         self.assertNotIn("RETURN_OBLIGATION_SCOPE_MISMATCH", codes)
 
+    def test_gate_obligation_cardinality_is_fail_closed(self):
+        nonpassing = self.valid()
+        nonpassing["claims"][0]["research_verdict"] = "refuted"
+        nonpassing["evidence"][0]["result"] = "fail"
+        nonpassing["fatal_gates"][0]["state"] = "fail"
+        nonpassing["summary_projection"].update(
+            research_verdict="refuted",
+            admission="fail",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            status, payload = self.invoke(
+                self.write_with_artifacts(directory, nonpassing)
+            )
+        self.assertEqual(status, 1)
+        self.assertIn(
+            "RETURN_UNRESOLVED_GATE_OBLIGATION_OMITTED",
+            {item["code"] for item in payload["findings"]},
+        )
+
+        passing = self.valid()
+        passing["fatal_gates"][0]["obligation_ids"] = [
+            "obligation:unnecessarily-open"
+        ]
+        passing["unresolved_obligations"] = [
+            {
+                "id": "obligation:unnecessarily-open",
+                "statement": "This obligation cannot remain behind a passing gate.",
+                "claim_ids": ["claim:fixture"],
+                "gate_ids": ["gate:structural-consistency"],
+                "evidence_ids": ["evidence:structural-check"],
+            }
+        ]
+        passing["summary_projection"]["unresolved_obligation_ids"] = [
+            "obligation:unnecessarily-open"
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            status, payload = self.invoke(
+                self.write_with_artifacts(directory, passing)
+            )
+        self.assertEqual(status, 1)
+        self.assertIn(
+            "RETURN_PASSED_GATE_HAS_OPEN_OBLIGATION",
+            {item["code"] for item in payload["findings"]},
+        )
+
     def test_obligation_claim_gate_and_evidence_scopes_are_closed(self):
         def scoped_unrun() -> dict:
             raw = self.valid()
