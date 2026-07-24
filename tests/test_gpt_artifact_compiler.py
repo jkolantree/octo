@@ -28,6 +28,7 @@ from scripts.gpt_artifact_compiler import (
     _stable_read_payload,
     _transport_chunks,
     canonical_json_bytes,
+    canonical_transport_wrapper_bytes,
     export_payload_chunk,
     finalize_candidate_artifacts,
     main as compiler_main,
@@ -516,7 +517,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "regular non-linked file"):
                 _stable_read_payload(link)
 
-    def test_export_chunk_cli_is_canonical_bounded_and_preserves_final_lf(self):
+    def test_export_chunk_cli_uses_no_lf_wrapper_and_preserves_payload_lf(self):
         with tempfile.TemporaryDirectory() as temporary:
             payload_path = Path(temporary) / "audit_report.md"
             original = (
@@ -540,7 +541,12 @@ class GptArtifactCompilerTests(unittest.TestCase):
             self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v3")
             self.assertEqual(
                 output.getvalue().encode("utf-8"),
+                canonical_transport_wrapper_bytes(wrapper),
+            )
+            self.assertFalse(output.getvalue().endswith("\n"))
+            self.assertEqual(
                 canonical_json_bytes(wrapper),
+                output.getvalue().encode("utf-8") + b"\n",
             )
             self.assertEqual(set(wrapper), EXPORT_CHUNK_FIELDS)
             decoded = base64.b64decode(wrapper["base64"], validate=True)
@@ -576,6 +582,11 @@ class GptArtifactCompilerTests(unittest.TestCase):
                     later_wrapper["encoded_sha256"],
                     wrapper["encoded_sha256"],
                 )
+                self.assertEqual(
+                    later_output.getvalue().encode("utf-8"),
+                    canonical_transport_wrapper_bytes(later_wrapper),
+                )
+                self.assertFalse(later_output.getvalue().endswith("\n"))
 
     def test_transport_prompt_contains_exact_indexed_fresh_read_commands(self):
         prompt = transport_fallback_prompt("audit_report.md", 0)
@@ -586,6 +597,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
         )
         self.assertIn("Do not read, trim, normalize, or encode", prompt)
         self.assertIn("complete stdout byte-for-byte", prompt)
+        self.assertIn("no trailing line feed", prompt)
         self.assertNotIn("export-wrapper", prompt)
 
         payload_hash = "1" * 64

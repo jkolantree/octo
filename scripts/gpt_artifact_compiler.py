@@ -127,6 +127,15 @@ def canonical_json_bytes(value: object) -> bytes:
     ).encode("utf-8")
 
 
+def canonical_transport_wrapper_bytes(value: object) -> bytes:
+    """Serialize a transport wrapper without Markdown-sensitive terminal LF."""
+
+    canonical = canonical_json_bytes(value)
+    if not canonical.endswith(b"\n"):
+        raise AssertionError("canonical JSON artifact bytes must end in LF")
+    return canonical[:-1]
+
+
 def output_record(filename: str, data: bytes) -> dict[str, Any]:
     return {
         "filename": filename,
@@ -489,8 +498,9 @@ def transport_fallback_prompt(
         "Do not regenerate or alter that file. "
         "Do not read, trim, normalize, or encode the payload yourself. Execute this "
         f"literal command exactly once: {command} . Return the command's complete "
-        "stdout byte-for-byte as the only strict JSON object in one code block; do "
-        "not reimplement it or reuse a hash, size, ledger row, return field, or "
+        "stdout byte-for-byte as the only strict JSON object in one code block. "
+        "The canonical stdout has no trailing line feed; do not reimplement it or "
+        "reuse a hash, size, ledger row, return field, or "
         "prose value. The controller alone requests later chunk indices using the "
         "payload and encoded SHA-256 values from chunk 0. If the command reports "
         "any failure, emit no chunk and state export_failed. This identifies only "
@@ -1148,7 +1158,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 1
-    print(canonical_json_bytes(result).decode("utf-8"), end="")
+    print(canonical_transport_wrapper_bytes(result).decode("utf-8"), end="")
     return 0
 
 

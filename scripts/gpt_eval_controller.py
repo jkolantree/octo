@@ -35,6 +35,7 @@ try:
         TRANSPORT_CHUNK_VERSION,
         TRANSPORT_ENCODING,
         canonical_json_bytes,
+        canonical_transport_wrapper_bytes,
         export_payload_chunk,
         extract_session_reported_runtime,
         finalize_candidate_artifacts,
@@ -60,6 +61,7 @@ except ModuleNotFoundError:  # Direct execution from scripts/.
         TRANSPORT_CHUNK_VERSION,
         TRANSPORT_ENCODING,
         canonical_json_bytes,
+        canonical_transport_wrapper_bytes,
         export_payload_chunk,
         extract_session_reported_runtime,
         finalize_candidate_artifacts,
@@ -504,8 +506,6 @@ class _ResponseInspector(HTMLParser):
 
 def _inspect_response_outer_html(
     response_outer_html: bytes,
-    *,
-    allowed_file_controls: set[str] | None = None,
 ) -> tuple[str, tuple[str, ...]]:
     try:
         html = response_outer_html.decode("utf-8", errors="strict")
@@ -517,10 +517,7 @@ def _inspect_response_outer_html(
         parser.close()
     except Exception as exc:
         raise ValueError("transport response outerHTML could not be parsed") from exc
-    controls = parser.file_controls
-    if allowed_file_controls is not None:
-        controls = controls & allowed_file_controls
-    return "".join(parser.text), tuple(sorted(controls))
+    return "".join(parser.text), tuple(sorted(parser.file_controls))
 
 
 def _extract_single_code_block_bytes(response_outer_html: bytes) -> bytes:
@@ -557,7 +554,7 @@ def _strict_export_chunk(
     document = _strict_json_document(data, "transport chunk wrapper")
     if not isinstance(document, dict) or set(document) != EXPORT_CHUNK_FIELDS:
         raise ValueError("transport chunk wrapper fields differ from the contract")
-    if canonical_json_bytes(document) != data:
+    if canonical_transport_wrapper_bytes(document) != data:
         raise ValueError("transport chunk wrapper is not canonical compiler stdout")
 
     filename = document.get("filename")
@@ -647,7 +644,7 @@ def _prompt_identity_from_canonical_wrapper(
         return None
     if (
         not isinstance(document, dict)
-        or canonical_json_bytes(document) != data
+        or canonical_transport_wrapper_bytes(document) != data
         or document.get("filename") != expected_filename
         or document.get("chunk_index") != 0
         or not isinstance(document.get("payload_sha256"), str)
@@ -1432,13 +1429,7 @@ def validate_controller_record(
         )
     elif raw_response_bytes is not None:
         try:
-            _, response_controls = _inspect_response_outer_html(
-                raw_response_bytes,
-                allowed_file_controls=(
-                    set(expected_output_filenames)
-                    | set(required_output_filenames or set())
-                ),
-            )
+            _, response_controls = _inspect_response_outer_html(raw_response_bytes)
         except ValueError as exc:
             issues.append(
                 _issue(
@@ -1745,10 +1736,7 @@ def build_controller_record(
         "observed output-control filenames",
     )
     output_control_names = sorted(output_control_names)
-    _, response_controls = _inspect_response_outer_html(
-        raw_response,
-        allowed_file_controls=set(output_names) | set(output_control_names),
-    )
+    _, response_controls = _inspect_response_outer_html(raw_response)
     if output_control_names != list(response_controls):
         raise ValueError(
             "observed output controls must equal the portable generated-file "

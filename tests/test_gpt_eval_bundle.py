@@ -16,7 +16,7 @@ from scripts.check_gpt_eval_bundle import (
     main,
 )
 from scripts.gpt_artifact_compiler import (
-    canonical_json_bytes as compiler_json_bytes,
+    canonical_transport_wrapper_bytes as compiler_transport_bytes,
     export_payload_chunk,
     transport_fallback_prompt,
 )
@@ -91,7 +91,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             self.write_wrapper_capture_bytes(
                 root,
                 filename,
-                compiler_json_bytes(wrapper),
+                compiler_transport_bytes(wrapper),
                 chunk_index=chunk_index,
                 expected_payload_sha256=(
                     first["payload_sha256"] if chunk_index else None
@@ -770,7 +770,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             path = root / "audit_report.md.export.00000.json"
             wrapper = json.loads(path.read_text(encoding="utf-8"))
             wrapper["base64"] += "*"
-            mutated = compiler_json_bytes(wrapper)
+            mutated = compiler_transport_bytes(wrapper)
             self.write_wrapper_capture_bytes(root, "audit_report.md", mutated)
             status, payload = self.invoke(root)
 
@@ -1159,7 +1159,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             path = root / "audit_report.md.export.00000.json"
             wrapper = json.loads(path.read_text(encoding="utf-8"))
             wrapper["base64"] = wrapper["base64"][:-4]
-            mutated = compiler_json_bytes(wrapper)
+            mutated = compiler_transport_bytes(wrapper)
             self.write_wrapper_capture_bytes(root, "audit_report.md", mutated)
             status, payload = self.invoke(root)
 
@@ -1181,9 +1181,9 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             self.assertGreaterEqual(len(encoded), 8)
             wrapper_with_omission = dict(wrapper)
             wrapper_with_omission["base64"] = encoded[:4] + encoded[8:]
-            raw = compiler_json_bytes(wrapper)
+            raw = compiler_transport_bytes(wrapper)
             self.assertIn(b"independently", payload_bytes)
-            parser_input = compiler_json_bytes(wrapper_with_omission)
+            parser_input = compiler_transport_bytes(wrapper_with_omission)
             self.assertNotEqual(raw, parser_input)
             self.write_wrapper_capture_bytes(root, "audit_report.md", raw)
             (root / "audit_report.md.export.00000.json").write_bytes(parser_input)
@@ -1219,7 +1219,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             self.assertGreaterEqual(len(encoded), 8)
             wrapper["base64"] = encoded[:4] + encoded[8:]
             self.assertIn(b"independently", payload_bytes)
-            self_consistent_capture = compiler_json_bytes(wrapper)
+            self_consistent_capture = compiler_transport_bytes(wrapper)
             self.write_wrapper_capture_bytes(
                 root,
                 "audit_report.md",
@@ -1257,7 +1257,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 self.write_wrapper_capture_bytes(
                     root,
                     "audit_report.md",
-                    compiler_json_bytes(wrapper),
+                    compiler_transport_bytes(wrapper),
                 )
                 status, payload = self.invoke(root)
 
@@ -1481,7 +1481,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 self.write_wrapper_capture_bytes(
                     root,
                     "audit_report.md",
-                    compiler_json_bytes(later),
+                    compiler_transport_bytes(later),
                     chunk_index=last_index,
                     expected_payload_sha256=first["payload_sha256"],
                     expected_encoded_sha256=first["encoded_sha256"],
@@ -1988,7 +1988,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             self.write_wrapper_capture_bytes(
                 root,
                 "audit_report.md",
-                compiler_json_bytes(first),
+                compiler_transport_bytes(first),
             )
             self.write_failed_transport_attempt(
                 root,
@@ -2048,7 +2048,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             self.write_wrapper_capture_bytes(
                 root,
                 "audit_report.md",
-                compiler_json_bytes(first),
+                compiler_transport_bytes(first),
             )
             with self.assertRaisesRegex(
                 ValueError,
