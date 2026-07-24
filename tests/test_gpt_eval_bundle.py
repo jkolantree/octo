@@ -17,6 +17,8 @@ from scripts.check_gpt_eval_bundle import (
 )
 from scripts.gpt_artifact_compiler import (
     COMPILER_VERSION,
+    RECOVERY_STATE_DATA_SHARD_RECOVERED,
+    RECOVERY_STATE_PARITY_DEGRADED_NOT_USED,
     SAME_RESPONSE_TRANSPORT_VERSION,
     build_same_response_transport,
     canonical_transport_wrapper_bytes as compiler_transport_bytes,
@@ -225,7 +227,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         include_controls: bool = True,
         direct_filenames: set[str] | None = None,
     ) -> None:
-        """Preserve one exact compiler-v6 result in the original response."""
+        """Preserve one exact compiler-v7 result in the original response."""
 
         generated = sorted(
             {
@@ -1067,6 +1069,174 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         self.assertIn("CANDIDATE_COMPILER_TRANSPORT_MALFORMED", codes)
         self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
         self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+
+    def test_bounded_xor_recovery_passes_without_claiming_download_identity(self):
+        for expected_state, location in (
+            (RECOVERY_STATE_DATA_SHARD_RECOVERED, "data"),
+            (RECOVERY_STATE_PARITY_DEGRADED_NOT_USED, "parity"),
+        ):
+            with self.subTest(state=expected_state), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                record, _ = self.make_bundle(root)
+                document = self.compiler_document(root)
+                holder = (
+                    document["transport"]["chunks"][0]
+                    if location == "data"
+                    else document["transport"]["parity"]
+                )
+                encoded = holder["base64"]
+                holder["base64"] = (
+                    ("A" if encoded[0] != "A" else "B") + encoded[1:]
+                )
+                self.write_compiler_document(
+                    root,
+                    document,
+                    clear_transport_records=True,
+                )
+                self.write_controller_record(root, record)
+                controller = json.loads(
+                    (root / "controller_record.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                self.assertEqual(
+                    controller["compiler_transport_capture"][
+                        "recovery_receipt"
+                    ]["state"],
+                    expected_state,
+                )
+                status, payload = self.invoke(
+                    root,
+                    refresh_record=False,
+                )
+
+            self.assertEqual(status, 0)
+            self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+            self.assertNotEqual(payload["outcomes"]["candidate"], "candidate_failed")
+            self.assertEqual(
+                payload["outcomes"]["transport"],
+                "transport_identity_unresolved",
+            )
+            self.assertIn(
+                f"recovery state={expected_state}",
+                "\n".join(
+                    payload["checks"]["export_wrappers"].get(
+                        "details",
+                        [],
+                    )
+                ),
+            )
+
+    def test_forged_recovery_receipt_invalidates_controller_not_candidate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            record, _ = self.make_bundle(root)
+            document = self.compiler_document(root)
+            encoded = document["transport"]["chunks"][0]["base64"]
+            document["transport"]["chunks"][0]["base64"] = (
+                ("A" if encoded[0] != "A" else "B") + encoded[1:]
+            )
+            self.write_compiler_document(
+                root,
+                document,
+                clear_transport_records=True,
+            )
+            self.write_controller_record(root, record)
+            controller_path = root / "controller_record.json"
+            controller = json.loads(controller_path.read_text(encoding="utf-8"))
+            controller["compiler_transport_capture"]["recovery_receipt"][
+                "received_base64_sha256"
+            ] = "0" * 64
+            controller_path.write_bytes(canonical_json_bytes(controller))
+            status, payload = self.invoke(root, refresh_record=False)
+
+        self.assertEqual(status, 1)
+        self.assertEqual(
+            payload["outcomes"]["disposition"],
+            "trial_invalid_controller",
+        )
+        self.assertIn(
+            "CONTROLLER_COMPILER_CAPTURE_MISMATCH",
+            self.finding_codes(payload),
+        )
+
+    def test_recovered_data_shard_cannot_rescue_return_desk_contradiction(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            record, _ = self.make_bundle(root)
+            record["protocol"]["sha256"] = "sha256:" + "0" * 64
+            self.write_return(root, record)
+            self.write_same_response_transport(root, record)
+            document = self.compiler_document(root)
+            encoded = document["transport"]["chunks"][0]["base64"]
+            document["transport"]["chunks"][0]["base64"] = (
+                ("A" if encoded[0] != "A" else "B") + encoded[1:]
+            )
+            self.write_compiler_document(
+                root,
+                document,
+                clear_transport_records=True,
+            )
+            self.write_controller_record(root, record)
+            controller = json.loads(
+                (root / "controller_record.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                controller["compiler_transport_capture"][
+                    "recovery_receipt"
+                ]["state"],
+                RECOVERY_STATE_DATA_SHARD_RECOVERED,
+            )
+            status, payload = self.invoke(root, refresh_record=False)
+
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+        self.assertEqual(
+            payload["outcomes"]["transport"],
+            "transport_identity_unresolved",
+        )
+        self.assertIn("RETURN_DESK_BLOCKED", self.finding_codes(payload))
+        self.assertIn(
+            "RETURN_PROTOCOL_HASH_MISMATCH",
+            {
+                finding["code"]
+                for finding in payload["return_desk"]["findings"]
+            },
+        )
+
+    def test_data_and_parity_fault_remains_candidate_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            record, _ = self.make_bundle(root)
+            document = self.compiler_document(root)
+            for holder in (
+                document["transport"]["chunks"][0],
+                document["transport"]["parity"],
+            ):
+                encoded = holder["base64"]
+                holder["base64"] = (
+                    ("A" if encoded[0] != "A" else "B") + encoded[1:]
+                )
+            self.write_compiler_document(
+                root,
+                document,
+                clear_transport_records=True,
+            )
+            self.write_controller_record(root, record)
+            status, payload = self.invoke(root, refresh_record=False)
+
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+        self.assertEqual(
+            payload["outcomes"]["transport"],
+            "transport_identity_unresolved",
+        )
+        self.assertIn(
+            "CANDIDATE_COMPILER_TRANSPORT_MALFORMED",
+            self.finding_codes(payload),
+        )
 
     def test_utf8_control_sanitation_includes_visible_capture(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -2416,7 +2586,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         self.assertNotIn("EXPORT_CHUNK_METADATA_INVALID", codes)
         self.assertNotIn("EXPORT_ENCODED_AGGREGATE_MISMATCH", codes)
 
-    def test_missing_followup_attempt_is_not_a_v4_controller_omission(self):
+    def test_missing_followup_attempt_is_not_a_v5_controller_omission(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.make_prose_only_bundle(
@@ -2685,7 +2855,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             check_status, payload = self.invoke(root, refresh_record=False)
 
         self.assertEqual(status, 0)
-        self.assertEqual(result["output_version"], "4.0")
+        self.assertEqual(result["output_version"], "5.0")
         self.assertEqual(check_status, 0)
         self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
 

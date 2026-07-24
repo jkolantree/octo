@@ -23,8 +23,14 @@ from scripts.gpt_artifact_compiler import (
     COMPILER_VERSION,
     EXPORT_CHUNK_FIELDS,
     MAX_COMPILE_STDOUT_BYTES,
+    RECOVERY_STATE_DATA_SHARD_RECOVERED,
+    RECOVERY_STATE_NOT_NEEDED,
+    RECOVERY_STATE_PARITY_DEGRADED_NOT_USED,
     REPORT_PROJECTION_MARKER,
     SAME_RESPONSE_CHUNK_FIELDS,
+    SAME_RESPONSE_PARITY_FIELDS,
+    SAME_RESPONSE_RECOVERY_RECEIPT_FIELDS,
+    SAME_RESPONSE_RECOVERY_STATES,
     SAME_RESPONSE_TRANSPORT_FIELDS,
     SAME_RESPONSE_TRANSPORT_VERSION,
     TRANSPORT_CHUNK_BYTES,
@@ -32,8 +38,10 @@ from scripts.gpt_artifact_compiler import (
     TRANSPORT_CONTAINER_MAGIC,
     TRANSPORT_CONTAINER_VERSION,
     TRANSPORT_ENCODING,
+    XOR_PARITY_SCHEME,
     _stable_read_payload,
     _transport_chunks,
+    _xor_parity_shard,
     build_same_response_transport,
     build_transport_container,
     canonical_json_bytes,
@@ -43,7 +51,9 @@ from scripts.gpt_artifact_compiler import (
     main as compiler_main,
     output_record,
     parse_compile_transport_stdout,
+    parse_compile_transport_stdout_with_receipt,
     parse_same_response_transport,
+    parse_same_response_transport_with_receipt,
     parse_transport_container,
     sha256_bytes,
 )
@@ -375,6 +385,36 @@ class GptArtifactCompilerTests(unittest.TestCase):
         }
         return finalized, document
 
+    @staticmethod
+    def parse_same_response_document_with_receipt(
+        finalized,
+        document: dict,
+    ):
+        return parse_compile_transport_stdout_with_receipt(
+            canonical_transport_wrapper_bytes(document),
+            expected_untransported_files=finalized.files,
+            required_untransported_filenames=(
+                set(finalized.files) - set(finalized.transport_files)
+            ),
+        )
+
+    @staticmethod
+    def mutate_valid_base64_payload(encoded_text: str) -> str:
+        data = bytearray(base64.b64decode(encoded_text, validate=True))
+        if not data:
+            raise AssertionError("synthetic Base64 payload must not be empty")
+        data[len(data) // 2] ^= 0x01
+        mutated = base64.b64encode(data).decode("ascii")
+        if len(mutated) != len(encoded_text) or mutated == encoded_text:
+            raise AssertionError("synthetic Base64 mutation changed text length")
+        return mutated
+
+    @staticmethod
+    def mutate_invalid_base64_payload(encoded_text: str) -> str:
+        if not encoded_text or encoded_text[0] == "!":
+            raise AssertionError("synthetic Base64 text cannot be mutated")
+        return "!" + encoded_text[1:]
+
     def prepare_compile_fixture(
         self,
         root: Path,
@@ -424,6 +464,16 @@ class GptArtifactCompilerTests(unittest.TestCase):
             }
             for index, chunk in enumerate(chunks)
         ]
+        shard_size = (
+            TRANSPORT_CHUNK_BYTES if len(chunks) > 1 else len(encoded)
+        )
+        parity = _xor_parity_shard(chunks, shard_size)
+        transport["parity"] = {
+            "scheme": XOR_PARITY_SCHEME,
+            "shard_size_bytes": shard_size,
+            "parity_sha256": sha256_bytes(parity),
+            "base64": base64.b64encode(parity).decode("ascii"),
+        }
 
     def test_export_chunks_reconstruct_exact_payload_and_preserve_terminal_lf(self):
         payload = (
@@ -627,7 +677,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 )
             self.assertEqual(status, 0)
             wrapper = json.loads(output.getvalue())
-            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v6")
+            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v7")
             self.assertEqual(
                 output.getvalue().encode("utf-8"),
                 canonical_transport_wrapper_bytes(wrapper),
@@ -708,7 +758,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
                 set(failure),
                 {"compiler", "error", "status"},
             )
-            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v6")
+            self.assertEqual(failure["compiler"], "bsc-gpt-artifact-compiler-v7")
             self.assertEqual(failure["status"], "blocked")
             self.assertTrue(failure["error"])
             self.assertEqual(
@@ -790,7 +840,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
             "defect_composition_valid.json",
         ]
         self.assertEqual(set(parsed), COMPILE_RESULT_FIELDS)
-        self.assertEqual(parsed["compiler"], "bsc-gpt-artifact-compiler-v6")
+        self.assertEqual(parsed["compiler"], "bsc-gpt-artifact-compiler-v7")
         self.assertEqual(
             set(parsed["transport"]),
             SAME_RESPONSE_TRANSPORT_FIELDS,
@@ -814,6 +864,292 @@ class GptArtifactCompilerTests(unittest.TestCase):
         self.assertFalse(raw.endswith(b"\n"))
         for chunk in parsed["transport"]["chunks"]:
             self.assertEqual(set(chunk), SAME_RESPONSE_CHUNK_FIELDS)
+        self.assertEqual(
+            set(parsed["transport"]["parity"]),
+            SAME_RESPONSE_PARITY_FIELDS,
+        )
+        self.assertEqual(
+            parsed["transport"]["parity"]["scheme"],
+            XOR_PARITY_SCHEME,
+        )
+
+    def test_same_response_xor_parity_is_deterministic_for_known_bytes(self):
+        parts = (
+            bytes([0x01, 0x02, 0x03]),
+            bytes([0x04]),
+            bytes([0x08, 0x10, 0x20, 0x40]),
+        )
+        expected = bytes([0x0D, 0x12, 0x23, 0x40])
+        self.assertEqual(_xor_parity_shard(parts, 4), expected)
+        self.assertEqual(_xor_parity_shard(parts, 4), expected)
+
+        finalized = self.finalize()
+        first = build_same_response_transport(finalized.transport_files)
+        second = build_same_response_transport(finalized.transport_files)
+        self.assertEqual(first, second)
+        parity = first["parity"]
+        self.assertEqual(set(parity), SAME_RESPONSE_PARITY_FIELDS)
+        self.assertEqual(parity["scheme"], XOR_PARITY_SCHEME)
+        parity_bytes = base64.b64decode(parity["base64"], validate=True)
+        self.assertEqual(len(parity_bytes), parity["shard_size_bytes"])
+        self.assertEqual(
+            sha256_bytes(parity_bytes),
+            parity["parity_sha256"],
+        )
+
+    def test_same_response_pristine_roundtrip_returns_exact_no_recovery_receipt(
+        self,
+    ):
+        finalized, document = self.same_response_document()
+        parsed, reconstructed, receipt = (
+            self.parse_same_response_document_with_receipt(
+                finalized,
+                document,
+            )
+        )
+        self.assertEqual(parsed, document)
+        self.assertEqual(reconstructed, finalized.transport_files)
+        self.assertEqual(set(receipt), SAME_RESPONSE_RECOVERY_RECEIPT_FIELDS)
+        self.assertEqual(
+            set(SAME_RESPONSE_RECOVERY_STATES),
+            {
+                RECOVERY_STATE_NOT_NEEDED,
+                RECOVERY_STATE_DATA_SHARD_RECOVERED,
+                RECOVERY_STATE_PARITY_DEGRADED_NOT_USED,
+            },
+        )
+        self.assertEqual(
+            receipt,
+            {
+                "scheme": XOR_PARITY_SCHEME,
+                "state": RECOVERY_STATE_NOT_NEEDED,
+                "recovered_chunk_index": None,
+                "received_base64_sha256": None,
+                "reconstructed_chunk_sha256": None,
+            },
+        )
+        self.assertEqual(
+            parse_same_response_transport(
+                document["transport"],
+                expected_transport_filenames=finalized.transport_files,
+            ),
+            finalized.transport_files,
+        )
+
+    def test_same_response_recovers_one_same_length_valid_base64_data_shard(
+        self,
+    ):
+        finalized, document = self.same_response_document()
+        mutated = copy.deepcopy(document)
+        chunk = mutated["transport"]["chunks"][0]
+        received = self.mutate_valid_base64_payload(chunk["base64"])
+        chunk["base64"] = received
+
+        _, reconstructed, receipt = (
+            self.parse_same_response_document_with_receipt(
+                finalized,
+                mutated,
+            )
+        )
+        self.assertEqual(reconstructed, finalized.transport_files)
+        self.assertEqual(
+            receipt,
+            {
+                "scheme": XOR_PARITY_SCHEME,
+                "state": RECOVERY_STATE_DATA_SHARD_RECOVERED,
+                "recovered_chunk_index": 0,
+                "received_base64_sha256": sha256_bytes(
+                    received.encode("ascii")
+                ),
+                "reconstructed_chunk_sha256": chunk["chunk_sha256"],
+            },
+        )
+
+    def test_same_response_recovers_one_exact_length_invalid_base64_data_shard(
+        self,
+    ):
+        finalized, document = self.same_response_document()
+        mutated = copy.deepcopy(document)
+        chunk = mutated["transport"]["chunks"][0]
+        received = self.mutate_invalid_base64_payload(chunk["base64"])
+        chunk["base64"] = received
+
+        _, reconstructed, receipt = (
+            self.parse_same_response_document_with_receipt(
+                finalized,
+                mutated,
+            )
+        )
+        self.assertEqual(reconstructed, finalized.transport_files)
+        self.assertEqual(
+            receipt["state"],
+            RECOVERY_STATE_DATA_SHARD_RECOVERED,
+        )
+        self.assertEqual(receipt["recovered_chunk_index"], 0)
+        self.assertEqual(
+            receipt["received_base64_sha256"],
+            sha256_bytes(received.encode("ascii")),
+        )
+        self.assertEqual(
+            receipt["reconstructed_chunk_sha256"],
+            chunk["chunk_sha256"],
+        )
+
+    def test_same_response_accepts_parity_only_payload_degradation_with_receipt(
+        self,
+    ):
+        finalized, document = self.same_response_document()
+        mutated = copy.deepcopy(document)
+        parity = mutated["transport"]["parity"]
+        received = self.mutate_valid_base64_payload(parity["base64"])
+        parity["base64"] = received
+
+        _, reconstructed, receipt = (
+            self.parse_same_response_document_with_receipt(
+                finalized,
+                mutated,
+            )
+        )
+        self.assertEqual(reconstructed, finalized.transport_files)
+        self.assertEqual(
+            receipt,
+            {
+                "scheme": XOR_PARITY_SCHEME,
+                "state": RECOVERY_STATE_PARITY_DEGRADED_NOT_USED,
+                "recovered_chunk_index": None,
+                "received_base64_sha256": sha256_bytes(
+                    received.encode("ascii")
+                ),
+                "reconstructed_chunk_sha256": None,
+            },
+        )
+
+    def test_same_response_recovery_rejects_data_and_parity_failure_combinations(
+        self,
+    ):
+        finalized, document = self.same_response_document()
+        self.assertGreaterEqual(len(document["transport"]["chunks"]), 2)
+
+        two_bad_data = copy.deepcopy(document)
+        for chunk in two_bad_data["transport"]["chunks"][:2]:
+            chunk["base64"] = self.mutate_invalid_base64_payload(
+                chunk["base64"]
+            )
+
+        bad_data_and_parity = copy.deepcopy(document)
+        bad_data_and_parity["transport"]["chunks"][0]["base64"] = (
+            self.mutate_invalid_base64_payload(
+                bad_data_and_parity["transport"]["chunks"][0]["base64"]
+            )
+        )
+        bad_data_and_parity["transport"]["parity"]["base64"] = (
+            self.mutate_invalid_base64_payload(
+                bad_data_and_parity["transport"]["parity"]["base64"]
+            )
+        )
+
+        wrong_declared_data_hash = copy.deepcopy(document)
+        wrong_declared_data_hash["transport"]["chunks"][0]["base64"] = (
+            self.mutate_valid_base64_payload(
+                wrong_declared_data_hash["transport"]["chunks"][0]["base64"]
+            )
+        )
+        wrong_declared_data_hash["transport"]["chunks"][0][
+            "chunk_sha256"
+        ] = "0" * 64
+
+        cases = {
+            "two_bad_data": (
+                two_bad_data,
+                "more than one invalid data shard",
+            ),
+            "bad_data_and_parity": (
+                bad_data_and_parity,
+                "data and parity shards are both invalid",
+            ),
+            "wrong_declared_data_hash": (
+                wrong_declared_data_hash,
+                "reconstructed data shard identity",
+            ),
+        }
+        for label, (mutated, message) in cases.items():
+            with self.subTest(label=label):
+                with self.assertRaisesRegex(ValueError, message):
+                    self.parse_same_response_document_with_receipt(
+                        finalized,
+                        mutated,
+                    )
+
+    def test_same_response_recovery_rejects_chunk_and_parity_metadata_mutation(
+        self,
+    ):
+        finalized, document = self.same_response_document()
+
+        chunk_size = copy.deepcopy(document)
+        chunk_size["transport"]["chunks"][0]["chunk_size_bytes"] -= 1
+
+        chunk_hash = copy.deepcopy(document)
+        chunk_hash["transport"]["chunks"][0]["chunk_sha256"] = "0" * 64
+
+        parity_missing_field = copy.deepcopy(document)
+        parity_missing_field["transport"]["parity"].pop("base64")
+
+        parity_scheme = copy.deepcopy(document)
+        parity_scheme["transport"]["parity"]["scheme"] = "wrong"
+
+        parity_size = copy.deepcopy(document)
+        parity_size["transport"]["parity"]["shard_size_bytes"] -= 1
+
+        parity_hash = copy.deepcopy(document)
+        parity_hash["transport"]["parity"]["parity_sha256"] = "0" * 64
+
+        cases = {
+            "chunk_size": chunk_size,
+            "chunk_hash": chunk_hash,
+            "parity_missing_field": parity_missing_field,
+            "parity_scheme": parity_scheme,
+            "parity_size": parity_size,
+            "parity_hash": parity_hash,
+        }
+        for label, mutated in cases.items():
+            with self.subTest(label=label):
+                with self.assertRaises(ValueError):
+                    self.parse_same_response_document_with_receipt(
+                        finalized,
+                        mutated,
+                    )
+
+    def test_same_response_recovery_rejects_non_ascii_and_identity_mutations(
+        self,
+    ):
+        finalized, document = self.same_response_document()
+
+        non_ascii_data = copy.deepcopy(document)
+        original = non_ascii_data["transport"]["chunks"][0]["base64"]
+        non_ascii_data["transport"]["chunks"][0]["base64"] = "é" + original[1:]
+
+        encoded_hash = copy.deepcopy(document)
+        encoded_hash["transport"]["encoded_sha256"] = "0" * 64
+
+        container_hash = copy.deepcopy(document)
+        container_hash["transport"]["container_sha256"] = "0" * 64
+
+        member_hash = copy.deepcopy(document)
+        member_hash["transport"]["files"][0]["sha256"] = "0" * 64
+
+        cases = {
+            "non_ascii_data": non_ascii_data,
+            "encoded_hash": encoded_hash,
+            "container_hash": container_hash,
+            "member_hash": member_hash,
+        }
+        for label, mutated in cases.items():
+            with self.subTest(label=label):
+                with self.assertRaises(ValueError):
+                    self.parse_same_response_document_with_receipt(
+                        finalized,
+                        mutated,
+                    )
 
     def test_aligned_base64_quartet_omission_is_detected(self):
         finalized, document = self.same_response_document()
@@ -831,7 +1167,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
             len(omitted),
             mutated["transport"]["chunks"][0]["chunk_size_bytes"],
         )
-        with self.assertRaisesRegex(ValueError, "chunk byte binding"):
+        with self.assertRaisesRegex(ValueError, "chunk metadata"):
             parse_compile_transport_stdout(
                 canonical_transport_wrapper_bytes(mutated),
                 expected_untransported_files=finalized.files,
@@ -1036,7 +1372,7 @@ class GptArtifactCompilerTests(unittest.TestCase):
             self.assertTrue(compile_result["return_serialized_last"])
             self.assertEqual(
                 compile_result["compiler"],
-                "bsc-gpt-artifact-compiler-v6",
+                "bsc-gpt-artifact-compiler-v7",
             )
 
             ledger = (output_root / BOUND_RUNTIME_ARTIFACT).read_text(

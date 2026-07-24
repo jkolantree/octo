@@ -31,12 +31,18 @@ try:
         MAX_TRANSPORT_ENCODED_BYTES,
         MAX_TRANSPORT_PAYLOAD_BYTES,
         REPORT_RUNTIME_REFERENCE,
+        RECOVERY_STATE_DATA_SHARD_RECOVERED,
+        RECOVERY_STATE_NOT_NEEDED,
+        RECOVERY_STATE_PARITY_DEGRADED_NOT_USED,
         RUNTIME_BASIS_LINE,
         RUNTIME_PREFIX,
+        SAME_RESPONSE_RECOVERY_RECEIPT_FIELDS,
+        SAME_RESPONSE_RECOVERY_STATES,
         SAME_RESPONSE_TRANSPORT_VERSION,
         TRANSPORT_CHUNK_BYTES,
         TRANSPORT_CHUNK_VERSION,
         TRANSPORT_ENCODING,
+        XOR_PARITY_SCHEME,
         canonical_json_bytes,
         canonical_transport_wrapper_bytes,
         export_payload_chunk,
@@ -44,6 +50,7 @@ try:
         finalize_candidate_artifacts,
         output_record,
         parse_compile_transport_stdout,
+        parse_compile_transport_stdout_with_receipt,
         parse_runtime_ledger,
         runtime_ledger_text,
         sha256_bytes,
@@ -59,12 +66,18 @@ except ModuleNotFoundError:  # Direct execution from scripts/.
         MAX_TRANSPORT_ENCODED_BYTES,
         MAX_TRANSPORT_PAYLOAD_BYTES,
         REPORT_RUNTIME_REFERENCE,
+        RECOVERY_STATE_DATA_SHARD_RECOVERED,
+        RECOVERY_STATE_NOT_NEEDED,
+        RECOVERY_STATE_PARITY_DEGRADED_NOT_USED,
         RUNTIME_BASIS_LINE,
         RUNTIME_PREFIX,
+        SAME_RESPONSE_RECOVERY_RECEIPT_FIELDS,
+        SAME_RESPONSE_RECOVERY_STATES,
         SAME_RESPONSE_TRANSPORT_VERSION,
         TRANSPORT_CHUNK_BYTES,
         TRANSPORT_CHUNK_VERSION,
         TRANSPORT_ENCODING,
+        XOR_PARITY_SCHEME,
         canonical_json_bytes,
         canonical_transport_wrapper_bytes,
         export_payload_chunk,
@@ -72,13 +85,14 @@ except ModuleNotFoundError:  # Direct execution from scripts/.
         finalize_candidate_artifacts,
         output_record,
         parse_compile_transport_stdout,
+        parse_compile_transport_stdout_with_receipt,
         parse_runtime_ledger,
         runtime_ledger_text,
         sha256_bytes,
     )
 
 
-CONTROLLER_RECORD_VERSION = "4.0"
+CONTROLLER_RECORD_VERSION = "5.0"
 CONTROLLER_RECORD_FIELDS = {
     "controller_record_version",
     "case_id",
@@ -118,6 +132,7 @@ COMPILER_TRANSPORT_CAPTURE_FIELDS = {
     "compiler_blocks",
     "compiler",
     "transport_version",
+    "recovery_receipt",
 }
 COMPILER_TRANSPORT_STATUSES = {
     "verified",
@@ -466,7 +481,7 @@ def _direct_acquisition_map(value: object) -> dict[str, str]:
         for item in value
     ):
         raise ValueError(
-            "direct acquisition attempts differ from the strict v4 contract"
+            "direct acquisition attempts differ from the strict v5 contract"
         )
     records = [
         {"filename": item["filename"], "outcome": item["outcome"]}
@@ -499,6 +514,47 @@ FILE_CONTROL_PREFIXES = (
     "Download ",
     "File: ",
 )
+
+
+def _recovery_receipt_contract_valid(value: object) -> bool:
+    if (
+        not isinstance(value, dict)
+        or set(value) != SAME_RESPONSE_RECOVERY_RECEIPT_FIELDS
+        or value.get("scheme") != XOR_PARITY_SCHEME
+        or value.get("state") not in SAME_RESPONSE_RECOVERY_STATES
+    ):
+        return False
+    recovered_index = value.get("recovered_chunk_index")
+    received_digest = value.get("received_base64_sha256")
+    reconstructed_digest = value.get("reconstructed_chunk_sha256")
+    for digest in (received_digest, reconstructed_digest):
+        if digest is not None and (
+            not isinstance(digest, str)
+            or LOWER_SHA256_RE.fullmatch(digest) is None
+        ):
+            return False
+    state = value["state"]
+    if state == RECOVERY_STATE_NOT_NEEDED:
+        return (
+            recovered_index is None
+            and received_digest is None
+            and reconstructed_digest is None
+        )
+    if state == RECOVERY_STATE_DATA_SHARD_RECOVERED:
+        return (
+            isinstance(recovered_index, int)
+            and not isinstance(recovered_index, bool)
+            and recovered_index >= 0
+            and received_digest is not None
+            and reconstructed_digest is not None
+        )
+    if state == RECOVERY_STATE_PARITY_DEGRADED_NOT_USED:
+        return (
+            recovered_index is None
+            and received_digest is not None
+            and reconstructed_digest is None
+        )
+    return False
 
 
 def _transport_parser_name(payload: str, chunk_index: int) -> str:
@@ -820,7 +876,7 @@ def _capture_same_response_transport(
     expected_untransported_files: dict[str, bytes] | None = None,
     required_untransported_filenames: Iterable[str] = (),
 ) -> tuple[dict[str, Any], dict[str, bytes]]:
-    """Classify and verify the compiler-v6 block in the original response.
+    """Classify and verify the compiler-v7 block in the original response.
 
     Candidate-emitted transport defects are returned as evidence states.  Only
     loss or mutation of the original response itself raises a controller error.
@@ -839,13 +895,27 @@ def _capture_same_response_transport(
         )
     )
     marker = COMPILER_VERSION.encode("utf-8")
+    compiler_stdout_prefix = re.compile(
+        rb'^\s*\{\s*"compiler"\s*:\s*"'
+        + re.escape(marker)
+        + rb'"'
+    )
+
+    def looks_like_compiler_stdout(data: bytes) -> bool:
+        return compiler_stdout_prefix.match(data) is not None
+
     candidates = [
         (index, data)
         for index, data in enumerate(blocks)
-        if marker in data
+        if looks_like_compiler_stdout(data)
     ]
     partial_candidate = (
-        partial if partial is not None and marker in partial[1] else None
+        partial
+        if (
+            partial is not None
+            and looks_like_compiler_stdout(partial[1])
+        )
+        else None
     )
     identities = [
         _compiler_block_identity(index, data) for index, data in candidates
@@ -858,21 +928,22 @@ def _capture_same_response_transport(
     base: dict[str, Any] = {
         "status": "missing",
         "candidate_evidence": True,
-        "detail": "no compiler-v6 stdout block was present in the completed response",
+        "detail": "no compiler-v7 stdout block was present in the completed response",
         "compiler_blocks": identities,
         "compiler": None,
         "transport_version": None,
+        "recovery_receipt": None,
     }
     if len(identities) > 1:
         base["status"] = "duplicate"
-        base["detail"] = "more than one compiler-v6 stdout block was present"
+        base["detail"] = "more than one compiler-v7 stdout block was present"
         return base, {}
     if partial_candidate is not None:
         base["status"] = "truncated"
         base["detail"] = (
-            "the compiler-v6 stdout fenced code block was not complete"
+            "the compiler-v7 stdout fenced code block was not complete"
             if partial_fenced
-            else "the compiler-v6 stdout was not in a fenced code block"
+            else "the compiler-v7 stdout was not in a fenced code block"
         )
         base["compiler"] = COMPILER_VERSION
         return base, {}
@@ -886,7 +957,7 @@ def _capture_same_response_transport(
     base["compiler"] = COMPILER_VERSION
     if not block_fenced[candidate_index]:
         base["status"] = "malformed"
-        base["detail"] = "the compiler-v6 stdout was not in a fenced code block"
+        base["detail"] = "the compiler-v7 stdout was not in a fenced code block"
         return base, {}
     trailing_text = [
         text
@@ -900,7 +971,7 @@ def _capture_same_response_transport(
     ):
         base["status"] = "extra"
         base["detail"] = (
-            "the compiler-v6 stdout block was not the final response content"
+            "the compiler-v7 stdout block was not the final response content"
         )
         return base, {}
     try:
@@ -933,10 +1004,12 @@ def _capture_same_response_transport(
             base["detail"] = "compiler blocked record differs from the canonical contract"
         return base, {}
     try:
-        _, reconstructed = parse_compile_transport_stdout(
-            compiler_stdout,
-            expected_untransported_files=expected_untransported_files,
-            required_untransported_filenames=required_untransported_filenames,
+        _, reconstructed, recovery_receipt = (
+            parse_compile_transport_stdout_with_receipt(
+                compiler_stdout,
+                expected_untransported_files=expected_untransported_files,
+                required_untransported_filenames=required_untransported_filenames,
+            )
         )
     except (TypeError, ValueError) as exc:
         base["status"] = _candidate_transport_error_status(str(exc))
@@ -950,8 +1023,16 @@ def _capture_same_response_transport(
         {
             "status": "verified",
             "candidate_evidence": False,
-            "detail": "canonical compiler-v6 same-response transport verified",
+            "detail": (
+                "compiler-v7 same-response transport verified"
+                if recovery_receipt["state"] == RECOVERY_STATE_NOT_NEEDED
+                else (
+                    "compiler-v7 same-response transport verified with "
+                    f"bounded recovery state {recovery_receipt['state']}"
+                )
+            ),
             "transport_version": SAME_RESPONSE_TRANSPORT_VERSION,
+            "recovery_receipt": recovery_receipt,
         }
     )
     return base, reconstructed
@@ -1352,7 +1433,7 @@ def validate_closed_evidence_layout(root: Path) -> None:
 
 
 def _legacy_transport_evidence_names(root: Path) -> list[str]:
-    """Inventory well-formed historical v3 transport state in a v4 trial."""
+    """Inventory well-formed historical v3 transport state in a v5 trial."""
 
     names = [
         path.name
@@ -1759,7 +1840,7 @@ def validate_controller_record(
                 "CONTROLLER_LEGACY_TRANSPORT_EVIDENCE_FORBIDDEN",
                 "evidence:$",
                 (
-                    "controller-v4 trials forbid historical export-chunk prompts, "
+                    "controller-v5 trials forbid historical export-chunk prompts, "
                     f"responses, or wrappers: {legacy_transport_names!r}"
                 ),
             )
@@ -2042,13 +2123,25 @@ def validate_controller_record(
         and capture.get("compiler") in {None, COMPILER_VERSION}
         and capture.get("transport_version")
         in {None, SAME_RESPONSE_TRANSPORT_VERSION}
+        and (
+            (
+                capture.get("status") == "verified"
+                and _recovery_receipt_contract_valid(
+                    capture.get("recovery_receipt")
+                )
+            )
+            or (
+                capture.get("status") != "verified"
+                and capture.get("recovery_receipt") is None
+            )
+        )
     )
     if not capture_contract_valid:
         issues.append(
             _issue(
                 "CONTROLLER_COMPILER_CAPTURE_INVALID",
                 "controller_record.json:$.compiler_transport_capture",
-                "compiler transport capture fields differ from the v4 contract",
+                "compiler transport capture fields differ from the v5 contract",
             )
         )
 
@@ -2106,7 +2199,7 @@ def validate_controller_record(
             _issue(
                 "CONTROLLER_RECONSTRUCTED_OUTPUT_ROSTER_INVALID",
                 "controller_record.json:$.reconstructed_outputs",
-                "reconstructed output roster differs from the v4 contract",
+                "reconstructed output roster differs from the v5 contract",
             )
         )
     else:
@@ -2592,7 +2685,7 @@ def _parser() -> argparse.ArgumentParser:
         "build-record",
         help=(
             "capture exact inputs, candidate identity, direct outputs, and the "
-            "compiler-v6 bundle in the original response"
+            "compiler-v7 bundle in the original response"
         ),
     )
     build.add_argument("evidence_directory", type=Path)
@@ -2635,7 +2728,7 @@ def _parser() -> argparse.ArgumentParser:
     transport = subparsers.add_parser(
         "transport-request",
         help=(
-            "offline historical-v3 diagnostic only; forbidden as a v4 trial "
+            "offline historical-v3 diagnostic only; forbidden as a v5 trial "
             "transport or rescue path"
         ),
     )
@@ -2645,7 +2738,7 @@ def _parser() -> argparse.ArgumentParser:
         required=True,
         help=(
             "acknowledge that the emitted bytes reproduce historical evidence "
-            "and must not be sent in a v4 Preview trial"
+            "and must not be sent in a v5 Preview trial"
         ),
     )
     transport.add_argument(

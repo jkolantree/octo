@@ -212,7 +212,7 @@ class CustomGptPackageTests(unittest.TestCase):
         )
         self.assertEqual(
             protocol["protocol_schema"],
-            "bsc-gpt-frozen-evaluation/v3",
+            "bsc-gpt-frozen-evaluation/v4",
         )
         for obsolete_key in (
             "regression_trials",
@@ -471,12 +471,16 @@ class CustomGptPackageTests(unittest.TestCase):
             execution_knowledge,
         )
         self.assertIn(
-            "copy that complete stdout byte-for-byte",
+            "The candidate must copy that stdout",
+            execution_knowledge,
+        )
+        self.assertIn(
+            "byte-for-byte into one final fenced code block",
             execution_knowledge,
         )
         self.assertIn("`transport_identity_unresolved`", execution_knowledge)
         self.assertIn(
-            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v6"',
+            'COMPILER_VERSION = "bsc-gpt-artifact-compiler-v7"',
             execution_knowledge,
         )
         durable_knowledge = "\n".join(
@@ -546,9 +550,9 @@ class CustomGptPackageTests(unittest.TestCase):
                 "runtime/hash/size/Base64; block=>no return/pass/proven. Refs2way; pass=>no obligation; "
                 "omit self; fatal IDs exact. Proven/strong/lemma=>all6K+S10+bound evidence/claim/run/pass-gates; "
                 "else demote/omit. protocol.sha256=sha256:"
-                "260803de04fcf8ee54b36f7e7147cf7f4c54fa6b15aa39e5e3cf72dd7b352bb2. "
+                "f7036ad49643b0d4a7e7b1befa7f8cf9f6c905182dbcc64c8d860938abeda12a. "
                 "Request/report!=source; request=target=>distinct IDs/digests. S7=compiler ledger. "
-                "Final fenced block=exact compiler stdout; nothing follows. Bundle=fallback-only; "
+                "Final fenced block=exact v7 stdout; nothing follows. v2 parity bundle=fallback-only; "
                 "never edit/claim unavailable button-byte identity."
             ),
             "execution_ledger": (

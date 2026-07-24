@@ -11,7 +11,7 @@
 - `schemas/README.md` — SHA-256 `2b6c6b3fcb6497c9a9524b26e5cbd7a36fbfbdbbc95eb2f322463b7024d5c21a`
 - `schemas/audit-return-v0.1.schema.json` — SHA-256 `25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799`
 - `docs/SCHEMA.md` — SHA-256 `ed42f2f65972f57d86c8e4d198eafc9a3d970db68012ce71a28eaf589b29b506`
-- `docs/AUDIT_RETURN_DESK.md` — SHA-256 `507429bba910cdf5b026779daab286f68fc4d8c6ad0107e98b6d0d621be4713f`
+- `docs/AUDIT_RETURN_DESK.md` — SHA-256 `54c161fbd1e122080dafdbd4bd0fb68afedf7cbe4208bca3c9f018bd72c0d974`
 - `docs/MATHEMATICS.md` — SHA-256 `25309fb738cb229230991ec556f8fbe5aa692cc67a264124732632a7159a7aec`
 - `docs/DERIVED_HOLONOMY.md` — SHA-256 `68e7938c55e88642e47824c7d92610014f606336697dc67983357eab9767e295`
 
@@ -543,35 +543,50 @@ These outcomes are a separate coordinate from research verdict, evidence maturit
 ## Preview transport boundary
 
 The evaluation controller first attempts the direct generated-file control.
-After serializing `audit_return.json`, the original compiler transaction
+After serializing `audit_return.json`, the original compiler-v7 transaction
 constructs one deterministic bounded container from the same finalized
-in-memory generated-output bytes. It compresses and Base64-encodes that
-container once and includes the complete transport envelope in canonical
-no-terminal-LF compiler stdout. The candidate must append that complete stdout
-byte-for-byte in one final fenced code block, with no following prose. The
-bundle is transport-only: it is not a semantic artifact, execution output, or
-file control, and it never depends on a later `/mnt/data` path.
+in-memory generated-output bytes. Same-response transport v2 compresses the
+container, splits the zlib stream into contiguous data shards of at most 2,048
+bytes, and adds one `xor_parity_v1` shard: the bytewise XOR of every data shard
+padded with zero bytes to the maximum shard width. The compiler includes the
+complete envelope in canonical no-terminal-LF stdout. The candidate must append
+that complete stdout byte-for-byte in one final fenced code block, with no
+following prose. The bundle is transport-only: it is not a semantic artifact,
+execution output, or file control, and it never depends on a later `/mnt/data`
+path.
 
 The controller preserves the complete original response `outerHTML` and the
 exact compiler-block text. It requires one canonical compiler block, a sorted
-unique portable member roster, contiguous chunks, canonical Base64, bounded
+unique portable member roster, contiguous shards, canonical Base64, bounded
 decompression, exact container framing, and matching container/member sizes
-and SHA-256 values before reconstructing local bytes. Bundle integrity is
-always validated. Direct acquisition remains the primary candidate-byte path;
-the reconstructed member is selected only when the interface exposes no
-direct bytes. When both copies exist, their exact bytes must match or the
-candidate fails. For every visible file control, the controller binds an
-explicit per-file attempt outcome; missing bytes alone never imply
-`no_download_event`. The controller derives `artifact_transport.json`
-deterministically from those bound observations and bytes.
+and SHA-256 values before reconstructing local bytes. It may recover exactly
+one data shard only when its metadata and expected ASCII Base64 text length are
+intact, its content fails decoding or its declared byte binding, and all other
+data shards and parity are valid. Every aggregate, container, member, and
+topology check is then rerun, and deterministic receipt state
+`data_shard_recovered` is recorded; a pristine bundle records `not_needed`.
+Aligned-quartet omission, metadata mutation, more than one bad data shard, or
+bad data plus bad parity is unrecoverable. When all data shards are valid and
+only exact-length parity content is bad, parity is not used and the receipt
+state is `parity_degraded_not_used`.
 
-A completed response that omits, truncates, or mutates the bundle is
-`candidate_failed`. Controller loss or mutation of a block demonstrably
-present in the bound raw response is `trial_invalid_controller`. A valid
-bundle establishes only the exported payload actually received. If original
-download-button bytes remain unavailable, their identity is
-`transport_identity_unresolved`; neither identity nor corruption is
-established.
+Bundle integrity is always validated. Direct acquisition remains the primary
+candidate-byte path; the reconstructed member is selected only when the
+interface exposes no direct bytes. When both copies exist, their exact bytes
+must match or the candidate fails. For every visible file control, the
+controller binds an explicit per-file attempt outcome; missing bytes alone
+never imply `no_download_event`. The controller derives
+`artifact_transport.json` deterministically from those bound observations and
+bytes, and binds the deterministic recovery receipt in
+`controller_record.json`.
+
+A completed response that omits or truncates the bundle, or leaves a mutation
+outside the one permitted recovery, is `candidate_failed`. Controller loss or
+mutation of a block demonstrably present in the bound raw response is
+`trial_invalid_controller`. A valid or validly recovered bundle establishes
+only the exported payload actually received. If original download-button bytes
+remain unavailable, their identity is `transport_identity_unresolved`; neither
+identity nor corruption is established.
 
 
 ---

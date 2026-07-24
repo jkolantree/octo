@@ -346,3 +346,48 @@ unavailable, reconstructs the already-preserved container without any later
 unavailable download-button bytes. No fixture, oracle, scorer, verdict
 boundary, 18/20 threshold, automatic-failure rule, or negative Return Desk
 case is weakened.
+
+## Old-freeze C001 layered failure and one-cycle parity repair
+
+The first counted C001 attempt used the old freeze identified by prefix
+`2593db7d`. The preserved response mentioned the compiler version once in
+inline prose and then contained the required canonical stdout in its final
+fenced code block. The old controller mistook the inline occurrence for a
+second compiler block. That false-duplicate result is preserved as the outer
+`trial_invalid_controller` layer and is not converted into a scored trial.
+
+The corrected block recognizer replayed the exact preserved fence rather than
+reserializing it. The fence is 10,470 bytes with SHA-256
+`5c5001e261333f2f27d4dc1189fd30a1cf349f4f0f67bc9ed1d4400e9d3b06cc`.
+Chunk 0 decoded to its declared 2,048 bytes but had actual SHA-256
+`03db73735fdaed7ea1e3f7ed1b6e415204ea0f5f5c42fd389d6ffa772d3abbab`
+instead of declared
+`90468d82f4c2e48af82cb5c6d5e4f9c58cc3433b4cac3d3b61ab47920c9f0401`.
+Chunks 1 and 2 matched. The 5,444-byte decoded aggregate therefore had actual
+SHA-256
+`7ef6294f376ecf59b48d5877900d3742b7316cba9d6def6348f75a068ec5a59f`
+instead of declared
+`5923a7cb8499316e363833803a2c6f6b150212b49386ebc3b6edb86e2984d281`.
+The completed candidate response thus contains a genuine
+`candidate_failed` transport result beneath the controller-invalid outer
+layer. Neither layer establishes the identity or corruption of unavailable
+download-button bytes; that axis remains `transport_identity_unresolved`.
+
+This counted-suite candidate failure consumes the single post-suite
+root-cause-repair allowance. Compiler v7 keeps the 2,048-byte zlib data shards,
+same-response transport v2 adds one `xor_parity_v1` shard, and controller-record
+v5 binds the deterministic recovery receipt. The parity shard is defined as the
+bytewise XOR of every data shard padded with zero bytes to the maximum width.
+The controller may recover exactly one content-faulted data shard only when
+its metadata and expected ASCII Base64 text length are intact and every other
+data shard and parity are valid. It then reruns every aggregate, container,
+member, and topology check. Aligned-quartet omission, metadata mutation,
+multiple bad data, or bad data plus bad parity remains unrecoverable. Valid
+data with only exact-length bad parity is accepted without using parity and
+records deterministic state `parity_degraded_not_used`.
+
+Because the candidate and controller changed, the old freeze is not reusable.
+All local gates and both preflights must pass again, a new exact freeze is
+required, and the complete counted suite must restart at C001. R01 and every
+other preserved negative remain unchanged. This repair is not evidence of a
+passing suite, live binding, merge, tag, release, or publication.

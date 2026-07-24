@@ -14,9 +14,10 @@ This release replaces model-mediated artifact identity with one acyclic final-by
 - canonicalize all eight execution activities and the report-facing execution projection before any report, ledger, hash, or return bytes are derived;
 - keep Base64 outside the primary proof path and treat any fallback only as the identity of the exported payload actually received;
 - derive one deterministic bounded multi-artifact container from the compiler's same final in-memory output bytes after `audit_return.json` is serialized;
+- have compiler v7 split the zlib stream into contiguous data shards of at most 2,048 bytes and add one `xor_parity_v1` shard in same-response transport v2;
 - include that dormant zlib/Base64 transport envelope in the original canonical compiler stdout, eliminating every later-turn `/mnt/data` dependency.
 
-The evaluation controller now validates the exact target, all six canonical Knowledge files, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls and explicit per-file direct-acquisition outcomes separately from acquired bytes, never infers `no_download_event` from absence alone, validates the complete original-response compiler block and every container/member identity before local reconstruction, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`.
+The evaluation controller now validates the exact target, all six canonical Knowledge files, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls and explicit per-file direct-acquisition outcomes separately from acquired bytes, never infers `no_download_event` from absence alone, validates the complete original-response compiler block and every container/member identity before local reconstruction, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`. Parity may recover exactly one content-faulted data shard only when its metadata and expected ASCII Base64 text length are intact and all other data plus parity are valid; the controller then reruns every aggregate, container, member, and topology check. Aligned-quartet omission, metadata mutation, multiple bad data, or bad data plus bad parity remains unrecoverable. Valid data with only exact-length bad parity records `parity_degraded_not_used`.
 
 The frozen-suite checker independently revalidates each trial's manifest-bound candidate snapshot and raw evidence, enforces fresh Preview-session identities and the exact `C001` through `C039` order, and encodes the one-repair/two-complete-suite release ceiling without allowing controller or transport states to rescue a substantive candidate contradiction.
 
@@ -76,6 +77,27 @@ D01 trial was not completed or scored. Compiler v6 replaces that environmental
 assumption with the original-turn container described above. Direct
 acquisition remains primary, and valid fallback reconstruction still does not
 authenticate unavailable download-button bytes.
+
+The first counted C001 attempt under the old freeze identified by prefix
+`2593db7d` is also preserved without collapsing two different failures. The
+controller falsely treated an inline compiler-version mention as a second
+transport block, so the outer trial remains `trial_invalid_controller`.
+Exact-fence replay after that parser repair found that chunk 0 retained its
+declared 2,048-byte size but had a different SHA-256 while chunks 1 and 2
+matched; the aggregate identity consequently failed too. The candidate
+transport is therefore `candidate_failed` beneath the controller-invalid outer
+layer, with unavailable download-button identity still
+`transport_identity_unresolved`.
+
+That candidate failure consumes the one post-suite repair allowance. The
+compiler-v7/transport-v2 parity change, strict controller-record v5 recovery
+receipt, and frozen-evaluation protocol v4 are the bounded repair; they do not
+alter fixtures, scientific oracles,
+scoring, Return Desk negatives, thresholds, or the preserved R01 result. The
+old freeze cannot be reused. All local gates and both preflights must pass, a
+new exact freeze must be recorded, and the full counted suite must restart from
+C001. No passing suite, live update, merge, tag, release, or publication is
+claimed here.
 
 ## Authority and privacy boundary
 
