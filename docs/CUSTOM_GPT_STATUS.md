@@ -29,7 +29,7 @@ The final `0.3.0-alpha.8` candidate:
 - presents the official GPT first, with reproduction, evaluation, and forks as open-source capabilities;
 - adds Japanese human-facing guidance while preserving canonical machine tokens;
 - expands the generated evaluation suite for Japanese behavior and the corrected evidence boundaries.
-- captures one session-reported runtime and derives artifact identities through one acyclic final-byte transaction instead of model-copied runtime, hash, size, or Base64 fields;
+- has the executed compiler capture its own session runtime once, reject model-authored overrides, and derive artifact identities through one acyclic final-byte transaction instead of model-copied runtime, hash, size, or Base64 fields;
 - requires the exact target, all six Knowledge files, and generated outputs before controller replay or scoring;
 - keeps `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved` separate;
 - preserves the R01 mathematical pass, execution/representation failure, incomplete replay, exact downstream decode, and unresolved download identity in a non-destructive forensic addendum.

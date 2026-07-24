@@ -1,9 +1,14 @@
+import base64
 import copy
 import hashlib
+import html
 import io
 import json
+import tempfile
 import unittest
+import zlib
 from contextlib import redirect_stdout
+from pathlib import Path
 
 import scripts.gpt_artifact_compiler as artifact_compiler
 import scripts.gpt_eval_controller as eval_controller
@@ -107,7 +112,7 @@ class GptEvalControllerTests(unittest.TestCase):
     def test_controller_reexports_the_single_compiler_implementation(self):
         for name in (
             "canonical_json_bytes",
-            "export_payload_wrapper",
+            "export_payload_chunk",
             "extract_session_reported_runtime",
             "finalize_candidate_artifacts",
             "output_record",
@@ -122,11 +127,17 @@ class GptEvalControllerTests(unittest.TestCase):
                 name,
             )
 
-    def test_transport_request_cli_emits_exact_one_file_prompt_without_newline(self):
+    def test_transport_request_cli_emits_exact_one_index_prompt_without_newline(self):
         output = io.StringIO()
         with redirect_stdout(output):
             status = controller_main(
-                ["transport-request", "--output", "audit_return.json"]
+                [
+                    "transport-request",
+                    "--output",
+                    "audit_return.json",
+                    "--chunk-index",
+                    "0",
+                ]
             )
         self.assertEqual(status, 0)
         self.assertEqual(
@@ -134,12 +145,563 @@ class GptEvalControllerTests(unittest.TestCase):
             transport_fallback_prompt("audit_return.json"),
         )
         self.assertIn(
-            "python /mnt/data/gpt_artifact_compiler.py export-wrapper "
-            "/mnt/data/audit_return.json",
+            "python /mnt/data/gpt_artifact_compiler.py export-chunk "
+            "/mnt/data/audit_return.json --chunk-index 0",
             output.getvalue(),
         )
         self.assertIn("complete stdout byte-for-byte", output.getvalue())
         self.assertFalse(output.getvalue().endswith("\n"))
+
+    def transport_wrappers(self, filename: str, payload: bytes) -> list[bytes]:
+        first = artifact_compiler.export_payload_chunk(filename, payload, 0)
+        documents = [first]
+        for chunk_index in range(1, first["chunk_count"]):
+            documents.append(
+                artifact_compiler.export_payload_chunk(
+                    filename,
+                    payload,
+                    chunk_index,
+                    expected_payload_sha256=first["payload_sha256"],
+                    expected_encoded_sha256=first["encoded_sha256"],
+                )
+            )
+        return [canonical_json_bytes(document) for document in documents]
+
+    def write_captured_wrappers(
+        self,
+        root: Path,
+        filename: str,
+        payload: bytes,
+    ) -> list[bytes]:
+        wrappers = self.transport_wrappers(filename, payload)
+        raw = root / "raw"
+        raw.mkdir()
+        (raw / "response.outerHTML.html").write_text(
+            "<article>terminal candidate response</article>",
+            encoding="utf-8",
+            newline="",
+        )
+        first = json.loads(wrappers[0])
+        for chunk_index, wrapper in enumerate(wrappers):
+            parser_name = f"{filename}.export.{chunk_index:05d}.json"
+            (root / parser_name).write_bytes(wrapper)
+            (raw / parser_name).write_bytes(wrapper)
+            if chunk_index == 0:
+                prompt = transport_fallback_prompt(filename, 0)
+            else:
+                prompt = transport_fallback_prompt(
+                    filename,
+                    chunk_index,
+                    expected_payload_sha256=first["payload_sha256"],
+                    expected_encoded_sha256=first["encoded_sha256"],
+                )
+            (
+                raw / f"{filename}.transport.{chunk_index:05d}.prompt.txt"
+            ).write_bytes(prompt.encode("utf-8"))
+            escaped = html.escape(wrapper.decode("utf-8"), quote=False)
+            (
+                raw
+                / f"{filename}.transport.{chunk_index:05d}.outerHTML.html"
+            ).write_text(
+                f"<article><pre><code>{escaped}</code></pre></article>",
+                encoding="utf-8",
+                newline="",
+            )
+        (root / filename).write_bytes(payload)
+        return wrappers
+
+    def make_minimal_controller_root(
+        self,
+        root: Path,
+        *,
+        output_control: bool,
+        fallback_attempt: bool,
+    ) -> None:
+        raw = root / "raw"
+        raw.mkdir()
+        control = (
+            '<button aria-label="audit_report.md">audit_report.md</button>'
+            '<button aria-label="unrelated.plugin">unrelated.plugin</button>'
+            if output_control
+            else ""
+        )
+        (raw / "response.outerHTML.html").write_text(
+            f"<article>{control}terminal response</article>",
+            encoding="utf-8",
+            newline="",
+        )
+        (root / "known_true_induction.txt").write_bytes(b"target\n")
+        for filename in eval_controller.KNOWLEDGE_FILENAMES:
+            (root / filename).write_bytes(f"{filename}\n".encode("utf-8"))
+        for _, filename in eval_controller.CANDIDATE_IDENTITY_FILENAMES:
+            (root / filename).write_bytes(f"{filename}\n".encode("utf-8"))
+        (root / "artifact_transport.json").write_bytes(b"{}\n")
+        (root / "visible_response_dom.txt").write_bytes(b"terminal response\n")
+        (root / "preview_prompt.txt").write_bytes(b"prompt")
+        if fallback_attempt:
+            (
+                raw / "audit_report.md.transport.00000.prompt.txt"
+            ).write_bytes(
+                transport_fallback_prompt("audit_report.md", 0).encode("utf-8")
+            )
+            (
+                raw / "audit_report.md.transport.00000.outerHTML.html"
+            ).write_text(
+                "<article></article>",
+                encoding="utf-8",
+                newline="",
+            )
+
+    def test_verified_chunk_assembly_round_trips_known_bytes(self):
+        payload = b"independently\n" + b"".join(
+            hashlib.sha256(index.to_bytes(4, "big")).digest()
+            for index in range(400)
+        )
+        wrappers = self.transport_wrappers("audit_return.json", payload)
+        self.assertGreater(len(wrappers), 2)
+        filename, assembled = eval_controller.assemble_verified_chunks(wrappers)
+        self.assertEqual(filename, "audit_return.json")
+        self.assertEqual(assembled, payload)
+
+    def test_verified_chunk_assembly_detects_aligned_base64_quartet_omission(self):
+        payload = b"independently\n" + b"".join(
+            hashlib.sha256(index.to_bytes(4, "big")).digest()
+            for index in range(300)
+        )
+        wrappers = self.transport_wrappers("audit_return.json", payload)
+        mutated = json.loads(wrappers[1])
+        encoded = mutated["base64"]
+        self.assertEqual(len(encoded) % 4, 0)
+        mutated["base64"] = encoded[:8] + encoded[12:]
+        wrappers[1] = canonical_json_bytes(mutated)
+        with self.assertRaisesRegex(ValueError, "Base64 identity"):
+            eval_controller.assemble_verified_chunks(wrappers)
+
+    def test_verified_chunk_assembly_rejects_missing_reordered_and_mixed_identity(self):
+        payload = b"".join(
+            hashlib.sha256(index.to_bytes(4, "big")).digest()
+            for index in range(300)
+        )
+        wrappers = self.transport_wrappers("audit_return.json", payload)
+        self.assertGreater(len(wrappers), 2)
+        with self.subTest("missing"):
+            with self.assertRaisesRegex(ValueError, "complete, contiguous"):
+                eval_controller.assemble_verified_chunks(
+                    wrappers[:1] + wrappers[2:]
+                )
+        with self.subTest("reordered"):
+            with self.assertRaisesRegex(ValueError, "complete, contiguous"):
+                eval_controller.assemble_verified_chunks(
+                    [wrappers[1], wrappers[0], *wrappers[2:]]
+                )
+        with self.subTest("mixed_identity"):
+            mixed = list(wrappers)
+            document = json.loads(mixed[1])
+            document["payload_sha256"] = "f" * 64
+            mixed[1] = canonical_json_bytes(document)
+            with self.assertRaisesRegex(ValueError, "repeated payload identity"):
+                eval_controller.assemble_verified_chunks(mixed)
+
+    def test_assembler_accepts_one_valid_cross_runtime_zlib_stream(self):
+        payload = (b"cross-runtime-zlib\n" * 5000) + b"independently\n"
+        compressor = zlib.compressobj(level=9, strategy=zlib.Z_HUFFMAN_ONLY)
+        encoded = compressor.compress(payload) + compressor.flush()
+        chunks = [
+            encoded[offset : offset + artifact_compiler.TRANSPORT_CHUNK_BYTES]
+            for offset in range(
+                0,
+                len(encoded),
+                artifact_compiler.TRANSPORT_CHUNK_BYTES,
+            )
+        ]
+        wrappers = []
+        for chunk_index, chunk in enumerate(chunks):
+            wrappers.append(
+                canonical_json_bytes(
+                    {
+                        "transport_version": artifact_compiler.TRANSPORT_CHUNK_VERSION,
+                        "filename": "audit_report.md",
+                        "encoding": artifact_compiler.TRANSPORT_ENCODING,
+                        "payload_size_bytes": len(payload),
+                        "payload_sha256": digest(payload),
+                        "encoded_size_bytes": len(encoded),
+                        "encoded_sha256": digest(encoded),
+                        "chunk_index": chunk_index,
+                        "chunk_count": len(chunks),
+                        "offset_bytes": (
+                            chunk_index * artifact_compiler.TRANSPORT_CHUNK_BYTES
+                        ),
+                        "chunk_size_bytes": len(chunk),
+                        "chunk_sha256": digest(chunk),
+                        "base64": base64.b64encode(chunk).decode("ascii"),
+                    }
+                )
+            )
+        self.assertNotEqual(zlib.compress(payload, level=9), encoded)
+        self.assertEqual(
+            eval_controller.assemble_verified_chunks(wrappers),
+            ("audit_report.md", payload),
+        )
+
+    def test_assembler_refuses_to_overwrite_a_different_payload(self):
+        payload = b"exact acquired bytes\n"
+        wrappers = self.transport_wrappers("audit_return.json", payload)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = []
+            for index, wrapper in enumerate(wrappers):
+                path = root / f"audit_return.json.export.{index:05d}.json"
+                path.write_bytes(wrapper)
+                paths.append(path)
+            destination = root / "audit_return.json"
+            destination.write_bytes(b"different\n")
+            with self.assertRaisesRegex(ValueError, "different payload"):
+                eval_controller.assemble_verified_chunk_files(paths, destination)
+            self.assertEqual(destination.read_bytes(), b"different\n")
+            destination.unlink()
+            result = eval_controller.assemble_verified_chunk_files(
+                paths,
+                destination,
+            )
+            self.assertEqual(result["write_state"], "created")
+            self.assertEqual(destination.read_bytes(), payload)
+            result = eval_controller.assemble_verified_chunk_files(
+                paths,
+                destination,
+            )
+            self.assertEqual(result["write_state"], "verified_unchanged")
+
+    def test_controller_inventory_binds_complete_indexed_transport(self):
+        payload = b"independently\n" + b"".join(
+            hashlib.sha256(index.to_bytes(4, "big")).digest()
+            for index in range(250)
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            wrappers = self.write_captured_wrappers(
+                root,
+                "audit_return.json",
+                payload,
+            )
+            captures, attempts = eval_controller._capture_transport_inventory(root)
+            self.assertEqual(len(captures), len(wrappers))
+            self.assertEqual(
+                [item["chunk_index"] for item in captures],
+                list(range(len(wrappers))),
+            )
+            self.assertTrue(
+                all(
+                    item["response_outcome"] == "chunk_wrapper_captured"
+                    for item in attempts
+                )
+            )
+            self.assertEqual(
+                captures[0]["parser_input_filename"],
+                "audit_return.json.export.00000.json",
+            )
+
+    def test_semantically_bad_exact_wrapper_is_candidate_evidence_not_controller_error(self):
+        payload = b"independently\n" + b"x" * 5000
+        wrapper = json.loads(
+            self.transport_wrappers("audit_return.json", payload)[0]
+        )
+        wrapper["base64"] = wrapper["base64"][:-4]
+        wrapper_bytes = canonical_json_bytes(wrapper)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            raw = root / "raw"
+            raw.mkdir()
+            (raw / "response.outerHTML.html").write_text(
+                "<article>terminal response</article>",
+                encoding="utf-8",
+                newline="",
+            )
+            parser_name = "audit_return.json.export.00000.json"
+            (root / parser_name).write_bytes(wrapper_bytes)
+            (raw / parser_name).write_bytes(wrapper_bytes)
+            (
+                raw / "audit_return.json.transport.00000.prompt.txt"
+            ).write_bytes(
+                transport_fallback_prompt("audit_return.json", 0).encode("utf-8")
+            )
+            escaped = html.escape(wrapper_bytes.decode("utf-8"), quote=False)
+            (
+                raw / "audit_return.json.transport.00000.outerHTML.html"
+            ).write_text(
+                f"<article><pre><code>{escaped}</code></pre></article>",
+                encoding="utf-8",
+                newline="",
+            )
+            captures, attempts = eval_controller._capture_transport_inventory(root)
+            self.assertEqual(len(captures), 1)
+            self.assertEqual(
+                attempts[0]["response_outcome"],
+                "chunk_wrapper_captured",
+            )
+            with self.assertRaises(ValueError):
+                eval_controller.assemble_verified_chunks([wrapper_bytes])
+
+    def test_attempt_after_semantically_bad_wrapper_invalidates_controller(self):
+        payload = b"".join(
+            hashlib.sha256(index.to_bytes(4, "big")).digest()
+            for index in range(300)
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            wrappers = self.write_captured_wrappers(
+                root,
+                "audit_return.json",
+                payload,
+            )
+            self.assertGreater(len(wrappers), 2)
+            document = json.loads(wrappers[1])
+            document["offset_bytes"] += 1
+            mutated = canonical_json_bytes(document)
+            parser_name = "audit_return.json.export.00001.json"
+            (root / parser_name).write_bytes(mutated)
+            (root / "raw" / parser_name).write_bytes(mutated)
+            escaped = html.escape(mutated.decode("utf-8"), quote=False)
+            (
+                root
+                / "raw"
+                / "audit_return.json.transport.00001.outerHTML.html"
+            ).write_text(
+                f"<article><pre><code>{escaped}</code></pre></article>",
+                encoding="utf-8",
+                newline="",
+            )
+            with self.assertRaisesRegex(ValueError, "must be terminal"):
+                eval_controller._capture_transport_inventory(root)
+
+    def test_aggregate_stream_contradiction_does_not_invalidate_exact_capture(self):
+        payload = b"".join(
+            hashlib.sha256(index.to_bytes(4, "big")).digest()
+            for index in range(300)
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            wrappers = self.write_captured_wrappers(
+                root,
+                "audit_return.json",
+                payload,
+            )
+            mutated_wrappers: list[bytes] = []
+            payload_sha256 = json.loads(wrappers[0])["payload_sha256"]
+            encoded_sha256 = "f" * 64
+            for chunk_index, wrapper in enumerate(wrappers):
+                document = json.loads(wrapper)
+                document["encoded_sha256"] = encoded_sha256
+                mutated = canonical_json_bytes(document)
+                mutated_wrappers.append(mutated)
+                parser_name = (
+                    f"audit_return.json.export.{chunk_index:05d}.json"
+                )
+                (root / parser_name).write_bytes(mutated)
+                (root / "raw" / parser_name).write_bytes(mutated)
+                if chunk_index > 0:
+                    prompt = transport_fallback_prompt(
+                        "audit_return.json",
+                        chunk_index,
+                        expected_payload_sha256=payload_sha256,
+                        expected_encoded_sha256=encoded_sha256,
+                    )
+                    (
+                        root
+                        / "raw"
+                        / (
+                            "audit_return.json.transport."
+                            f"{chunk_index:05d}.prompt.txt"
+                        )
+                    ).write_bytes(prompt.encode("utf-8"))
+                escaped = html.escape(mutated.decode("utf-8"), quote=False)
+                (
+                    root
+                    / "raw"
+                    / (
+                        "audit_return.json.transport."
+                        f"{chunk_index:05d}.outerHTML.html"
+                    )
+                ).write_text(
+                    f"<article><pre><code>{escaped}</code></pre></article>",
+                    encoding="utf-8",
+                    newline="",
+                )
+            captures, attempts = eval_controller._capture_transport_inventory(root)
+            self.assertEqual(len(captures), len(mutated_wrappers))
+            self.assertTrue(
+                all(
+                    item["response_outcome"] == "chunk_wrapper_captured"
+                    for item in attempts
+                )
+            )
+            with self.assertRaisesRegex(ValueError, "encoded payload identity"):
+                eval_controller.assemble_verified_chunks(mutated_wrappers)
+
+    def test_failed_exact_attempts_preserve_blank_and_file_control_outcomes(self):
+        variants = {
+            "blank_response": "<article></article>",
+            "file_control_only": (
+                '<article><button aria-label="noncanonical.wrapper.json">'
+                "noncanonical.wrapper.json</button></article>"
+            ),
+        }
+        for expected, response in variants.items():
+            with self.subTest(expected):
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    raw = root / "raw"
+                    raw.mkdir()
+                    (raw / "response.outerHTML.html").write_text(
+                        "<article>terminal response</article>",
+                        encoding="utf-8",
+                        newline="",
+                    )
+                    (
+                        raw / "audit_return.json.transport.00000.prompt.txt"
+                    ).write_bytes(
+                        transport_fallback_prompt(
+                            "audit_return.json",
+                            0,
+                        ).encode("utf-8")
+                    )
+                    (
+                        raw
+                        / "audit_return.json.transport.00000.outerHTML.html"
+                    ).write_text(response, encoding="utf-8", newline="")
+                    captures, attempts = (
+                        eval_controller._capture_transport_inventory(root)
+                    )
+                    self.assertEqual(captures, [])
+                    self.assertEqual(attempts[0]["response_outcome"], expected)
+                    if expected == "file_control_only":
+                        self.assertEqual(
+                            attempts[0]["response_file_controls"],
+                            ["noncanonical.wrapper.json"],
+                        )
+
+    def test_single_code_block_without_raw_parser_capture_invalidates_controller(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            raw = root / "raw"
+            raw.mkdir()
+            (raw / "response.outerHTML.html").write_text(
+                "<article>terminal response</article>",
+                encoding="utf-8",
+                newline="",
+            )
+            (
+                raw / "audit_return.json.transport.00000.prompt.txt"
+            ).write_bytes(
+                transport_fallback_prompt("audit_return.json", 0).encode("utf-8")
+            )
+            (
+                raw / "audit_return.json.transport.00000.outerHTML.html"
+            ).write_text(
+                "<article><pre><code>{}</code></pre></article>",
+                encoding="utf-8",
+                newline="",
+            )
+            with self.assertRaisesRegex(ValueError, "raw/parser"):
+                eval_controller._capture_transport_inventory(root)
+
+    def test_output_controls_are_exact_raw_verified_observations(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.make_minimal_controller_root(
+                root,
+                output_control=True,
+                fallback_attempt=True,
+            )
+            record = eval_controller.build_controller_record(
+                root=root,
+                case_id="known-true-induction",
+                trial_id="D01",
+                counting_state="preflight",
+                target_filename="known_true_induction.txt",
+                output_filenames=[],
+                session_reference="preview:test",
+                observability_boundary="Visible Preview response only.",
+                output_control_filenames=["audit_report.md"],
+            )
+            self.assertEqual(
+                record["observed_output_controls"],
+                ["audit_report.md"],
+            )
+            issues = eval_controller.validate_controller_record(
+                root=root,
+                record=record,
+                expected_case_id="known-true-induction",
+                expected_preview_prompt=b"prompt",
+                expected_inputs=record["inputs"],
+                expected_candidate_identity=record["candidate_identity"],
+                expected_output_filenames=set(),
+                required_output_filenames={"audit_report.md"},
+                repository_root=Path(__file__).resolve().parents[1],
+            )
+            self.assertEqual(issues, [])
+            omitted = copy.deepcopy(record)
+            omitted["observed_output_controls"] = []
+            issues = eval_controller.validate_controller_record(
+                root=root,
+                record=omitted,
+                expected_case_id="known-true-induction",
+                expected_preview_prompt=b"prompt",
+                expected_inputs=record["inputs"],
+                expected_candidate_identity=record["candidate_identity"],
+                expected_output_filenames=set(),
+                required_output_filenames={"audit_report.md"},
+                repository_root=Path(__file__).resolve().parents[1],
+            )
+            self.assertIn(
+                "CONTROLLER_OUTPUT_CONTROL_ROSTER_MISMATCH",
+                {issue["code"] for issue in issues},
+            )
+
+    def test_unacquired_visible_control_requires_chunk_zero_attempt(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.make_minimal_controller_root(
+                root,
+                output_control=True,
+                fallback_attempt=False,
+            )
+            record = eval_controller.build_controller_record(
+                root=root,
+                case_id="known-true-induction",
+                trial_id="D01",
+                counting_state="preflight",
+                target_filename="known_true_induction.txt",
+                output_filenames=[],
+                session_reference="preview:test",
+                observability_boundary="Visible Preview response only.",
+                output_control_filenames=["audit_report.md"],
+            )
+            issues = eval_controller.validate_controller_record(
+                root=root,
+                record=record,
+                expected_case_id="known-true-induction",
+                expected_preview_prompt=b"prompt",
+                expected_inputs=record["inputs"],
+                expected_candidate_identity=record["candidate_identity"],
+                expected_output_filenames=set(),
+                required_output_filenames={"audit_report.md"},
+                repository_root=Path(__file__).resolve().parents[1],
+            )
+            self.assertIn(
+                "CONTROLLER_FALLBACK_ATTEMPT_MISSING",
+                {issue["code"] for issue in issues},
+            )
+
+    def test_prefixed_file_control_is_normalized_and_unrelated_control_is_ignored(self):
+        response = (
+            '<article><button aria-label="Download audit_report.md"></button>'
+            '<button aria-label="unrelated.plugin"></button></article>'
+        ).encode("utf-8")
+        _, controls = eval_controller._inspect_response_outer_html(
+            response,
+            allowed_file_controls={"audit_report.md"},
+        )
+        self.assertEqual(controls, ("audit_report.md",))
 
     def test_finalizer_uses_one_runtime_and_serializes_return_last(self):
         original = template()

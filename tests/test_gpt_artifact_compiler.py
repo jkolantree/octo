@@ -1,11 +1,16 @@
 import base64
 import copy
+import hashlib
 import io
 import json
+import sys
 import tempfile
 import unittest
+import zlib
 from contextlib import redirect_stdout
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from bsc_audit.cli import main as bsc_main
 from bsc_audit.return_desk import CANONICAL_ACTIVITIES
@@ -14,8 +19,16 @@ from scripts.gpt_artifact_compiler import (
     BOUND_RETURN_ARTIFACT,
     BOUND_RUNTIME_ARTIFACT,
     CANONICAL_EXECUTION_ACTIVITIES,
+    COMPILER_VERSION,
+    EXPORT_CHUNK_FIELDS,
     REPORT_PROJECTION_MARKER,
-    export_payload_wrapper,
+    TRANSPORT_CHUNK_BYTES,
+    TRANSPORT_CHUNK_VERSION,
+    TRANSPORT_ENCODING,
+    _stable_read_payload,
+    _transport_chunks,
+    canonical_json_bytes,
+    export_payload_chunk,
     finalize_candidate_artifacts,
     main as compiler_main,
     sha256_bytes,
@@ -301,63 +314,368 @@ class GptArtifactCompilerTests(unittest.TestCase):
             )
         )
 
-    def test_export_wrapper_fields_derive_from_one_payload_and_detect_omission(self):
-        payload = b"independently::aligned-quartet::end"
-        wrapper = export_payload_wrapper("audit_report.md", payload)
-        decoded = base64.b64decode(wrapper["base64"], validate=True)
-        self.assertEqual(decoded, payload)
-        self.assertEqual(wrapper["size_bytes"], len(decoded))
-        self.assertEqual(wrapper["sha256"], sha256_bytes(decoded))
-
-        quartet = wrapper["base64"][4:8]
-        omitted = wrapper["base64"].replace(quartet, "", 1)
-        mutated = base64.b64decode(omitted, validate=True)
-        self.assertNotEqual(mutated, payload)
-        self.assertTrue(
-            len(mutated) != wrapper["size_bytes"]
-            or sha256_bytes(mutated) != wrapper["sha256"]
+    @staticmethod
+    def incompressible_payload(blocks: int = 320) -> bytes:
+        return b"".join(
+            hashlib.sha256(index.to_bytes(4, "big")).digest()
+            for index in range(blocks)
         )
 
-    def test_export_wrapper_cli_fresh_reads_and_preserves_terminal_lf(self):
+    def export_all_chunks(self, filename: str, payload: bytes) -> list[dict]:
+        first = export_payload_chunk(filename, payload, 0)
+        chunks = [first]
+        for index in range(1, first["chunk_count"]):
+            chunks.append(
+                export_payload_chunk(
+                    filename,
+                    payload,
+                    index,
+                    expected_payload_sha256=first["payload_sha256"],
+                    expected_encoded_sha256=first["encoded_sha256"],
+                )
+            )
+        return chunks
+
+    def test_export_chunks_reconstruct_exact_payload_and_preserve_terminal_lf(self):
+        payload = (
+            b"independently::aligned-quartet::ZW5k\n"
+            + self.incompressible_payload()
+            + b"\n"
+        )
+        chunks = self.export_all_chunks("audit_report.md", payload)
+        encoded_parts = []
+        for index, wrapper in enumerate(chunks):
+            self.assertEqual(set(wrapper), EXPORT_CHUNK_FIELDS)
+            self.assertEqual(wrapper["transport_version"], TRANSPORT_CHUNK_VERSION)
+            self.assertEqual(wrapper["encoding"], TRANSPORT_ENCODING)
+            self.assertEqual(wrapper["chunk_index"], index)
+            self.assertEqual(wrapper["chunk_count"], len(chunks))
+            self.assertEqual(
+                wrapper["offset_bytes"],
+                index * TRANSPORT_CHUNK_BYTES,
+            )
+            decoded = base64.b64decode(wrapper["base64"], validate=True)
+            self.assertEqual(len(decoded), wrapper["chunk_size_bytes"])
+            self.assertLessEqual(len(decoded), TRANSPORT_CHUNK_BYTES)
+            self.assertEqual(sha256_bytes(decoded), wrapper["chunk_sha256"])
+            if index == 0 and len(wrapper["base64"]) >= 12:
+                omitted = (
+                    wrapper["base64"][:4]
+                    + wrapper["base64"][8:]
+                )
+                omitted_bytes = base64.b64decode(omitted, validate=True)
+                self.assertTrue(
+                    len(omitted_bytes) != wrapper["chunk_size_bytes"]
+                    or sha256_bytes(omitted_bytes) != wrapper["chunk_sha256"]
+                )
+            encoded_parts.append(decoded)
+
+        encoded = b"".join(encoded_parts)
+        self.assertEqual(len(encoded), chunks[0]["encoded_size_bytes"])
+        self.assertEqual(sha256_bytes(encoded), chunks[0]["encoded_sha256"])
+        reconstructed = zlib.decompress(encoded)
+        self.assertEqual(reconstructed, payload)
+        self.assertTrue(reconstructed.endswith(b"\n"))
+        self.assertIn(b"independently", reconstructed)
+        self.assertIn(b"ZW5k", reconstructed)
+        self.assertEqual(len(reconstructed), chunks[0]["payload_size_bytes"])
+        self.assertEqual(sha256_bytes(reconstructed), chunks[0]["payload_sha256"])
+
+    def test_transport_splitter_handles_empty_exact_boundary_and_final_short_chunk(self):
+        self.assertEqual(_transport_chunks(b""), (b"",))
+        exact = _transport_chunks(b"x" * TRANSPORT_CHUNK_BYTES)
+        self.assertEqual(len(exact), 1)
+        self.assertEqual(len(exact[0]), TRANSPORT_CHUNK_BYTES)
+        final_short = _transport_chunks(b"x" * (TRANSPORT_CHUNK_BYTES + 1))
+        self.assertEqual(
+            tuple(len(chunk) for chunk in final_short),
+            (TRANSPORT_CHUNK_BYTES, 1),
+        )
+
+    def test_empty_payload_export_round_trips_through_one_compressed_chunk(self):
+        wrapper = export_payload_chunk("empty.bin", b"", 0)
+        self.assertEqual(wrapper["payload_size_bytes"], 0)
+        self.assertEqual(wrapper["payload_sha256"], sha256_bytes(b""))
+        self.assertEqual(wrapper["chunk_count"], 1)
+        encoded = base64.b64decode(wrapper["base64"], validate=True)
+        self.assertEqual(len(encoded), wrapper["encoded_size_bytes"])
+        self.assertEqual(sha256_bytes(encoded), wrapper["encoded_sha256"])
+        self.assertEqual(zlib.decompress(encoded), b"")
+
+    def test_transport_splitter_preserves_zw5k_across_chunk_boundary(self):
+        encoded = b"x" * (TRANSPORT_CHUNK_BYTES - 2) + b"ZW5k" + b"tail"
+        chunks = _transport_chunks(encoded)
+        self.assertEqual(b"".join(chunks), encoded)
+        self.assertTrue(chunks[0].endswith(b"ZW"))
+        self.assertTrue(chunks[1].startswith(b"5k"))
+        omitted = chunks[0][:-2] + chunks[1][2:]
+        self.assertNotEqual(sha256_bytes(omitted), sha256_bytes(encoded))
+
+    def test_export_chunk_rejects_invalid_indices_and_missing_later_hashes(self):
+        payload = self.incompressible_payload()
+        first = export_payload_chunk("audit_report.md", payload, 0)
+        self.assertGreater(first["chunk_count"], 1)
+        with self.assertRaisesRegex(ValueError, "chunk index"):
+            export_payload_chunk("audit_report.md", payload, -1)
+        with self.assertRaisesRegex(ValueError, "chunk index"):
+            export_payload_chunk(
+                "audit_report.md",
+                payload,
+                first["chunk_count"],
+                expected_payload_sha256=first["payload_sha256"],
+                expected_encoded_sha256=first["encoded_sha256"],
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "later transport chunks require",
+        ):
+            export_payload_chunk("audit_report.md", payload, 1)
+
+    def test_later_chunk_blocks_on_payload_or_encoded_hash_mismatch(self):
+        payload = self.incompressible_payload()
+        first = export_payload_chunk("audit_report.md", payload, 0)
+        self.assertGreater(first["chunk_count"], 1)
+        with self.assertRaisesRegex(ValueError, "payload SHA-256 differs"):
+            export_payload_chunk(
+                "audit_report.md",
+                payload + b"changed",
+                1,
+                expected_payload_sha256=first["payload_sha256"],
+                expected_encoded_sha256=first["encoded_sha256"],
+            )
+        with self.assertRaisesRegex(ValueError, "encoded payload SHA-256 differs"):
+            export_payload_chunk(
+                "audit_report.md",
+                payload,
+                1,
+                expected_payload_sha256=first["payload_sha256"],
+                expected_encoded_sha256="0" * 64,
+            )
+
+    def test_stable_read_rejects_mutation_during_payload_read(self):
+        stable = SimpleNamespace(
+            st_dev=1,
+            st_ino=2,
+            st_size=4,
+            st_mtime_ns=10,
+            st_ctime_ns=20,
+        )
+        changed = SimpleNamespace(
+            st_dev=1,
+            st_ino=2,
+            st_size=4,
+            st_mtime_ns=11,
+            st_ctime_ns=20,
+        )
+
+        class MutatingPayload:
+            name = "audit_report.md"
+
+            def __init__(self):
+                self.stats = iter((stable, changed))
+
+            def stat(self):
+                return next(self.stats)
+
+            def read_bytes(self):
+                return b"data"
+
+        with self.assertRaisesRegex(ValueError, "changed during stable read"):
+            _stable_read_payload(MutatingPayload())
+
+    def test_export_chunk_enforces_shared_payload_encoded_and_index_bounds(self):
+        with patch(
+            "scripts.gpt_artifact_compiler.MAX_TRANSPORT_PAYLOAD_BYTES",
+            3,
+        ):
+            with self.assertRaisesRegex(ValueError, "payload exceeds"):
+                export_payload_chunk("payload.bin", b"four", 0)
+        with patch(
+            "scripts.gpt_artifact_compiler.MAX_TRANSPORT_ENCODED_BYTES",
+            1,
+        ):
+            with self.assertRaisesRegex(ValueError, "encoded payload exceeds"):
+                export_payload_chunk("payload.bin", b"x", 0)
+        with patch(
+            "scripts.gpt_artifact_compiler.MAX_TRANSPORT_CHUNKS",
+            1,
+        ):
+            with self.assertRaisesRegex(ValueError, "chunk index exceeds"):
+                export_payload_chunk("payload.bin", b"x", 1)
+
+    def test_stable_read_rejects_linked_payload_when_supported(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            target = root / "target.bin"
+            link = root / "linked.bin"
+            target.write_bytes(b"exact")
+            try:
+                link.symlink_to(target)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlink creation is unavailable on this platform")
+            with self.assertRaisesRegex(ValueError, "regular non-linked file"):
+                _stable_read_payload(link)
+
+    def test_export_chunk_cli_is_canonical_bounded_and_preserves_final_lf(self):
         with tempfile.TemporaryDirectory() as temporary:
             payload_path = Path(temporary) / "audit_report.md"
-            original = b"independently::aligned-quartet::ZW5k\n\n"
+            original = (
+                b"independently::aligned-quartet::ZW5k\n"
+                + self.incompressible_payload()
+                + b"\n"
+            )
             payload_path.write_bytes(original)
             output = io.StringIO()
             with redirect_stdout(output):
-                status = compiler_main(["export-wrapper", str(payload_path)])
+                status = compiler_main(
+                    [
+                        "export-chunk",
+                        str(payload_path),
+                        "--chunk-index",
+                        "0",
+                    ]
+                )
             self.assertEqual(status, 0)
             wrapper = json.loads(output.getvalue())
+            self.assertEqual(COMPILER_VERSION, "bsc-gpt-artifact-compiler-v3")
             self.assertEqual(
-                base64.b64decode(wrapper["base64"], validate=True),
-                original,
+                output.getvalue().encode("utf-8"),
+                canonical_json_bytes(wrapper),
             )
-            self.assertEqual(wrapper["size_bytes"], len(original))
-            self.assertEqual(wrapper["sha256"], sha256_bytes(original))
-
-            changed = original[:-1]
-            payload_path.write_bytes(changed)
-            output = io.StringIO()
-            with redirect_stdout(output):
-                status = compiler_main(["export-wrapper", str(payload_path)])
-            self.assertEqual(status, 0)
-            changed_wrapper = json.loads(output.getvalue())
+            self.assertEqual(set(wrapper), EXPORT_CHUNK_FIELDS)
+            decoded = base64.b64decode(wrapper["base64"], validate=True)
+            self.assertLessEqual(len(decoded), TRANSPORT_CHUNK_BYTES)
             self.assertEqual(
-                base64.b64decode(changed_wrapper["base64"], validate=True),
-                changed,
+                len(decoded),
+                wrapper["chunk_size_bytes"],
             )
-            self.assertNotEqual(changed_wrapper["sha256"], wrapper["sha256"])
-            self.assertEqual(changed_wrapper["size_bytes"], len(changed))
+            self.assertEqual(sha256_bytes(decoded), wrapper["chunk_sha256"])
+            if wrapper["chunk_count"] > 1:
+                later_output = io.StringIO()
+                with redirect_stdout(later_output):
+                    later_status = compiler_main(
+                        [
+                            "export-chunk",
+                            str(payload_path),
+                            "--chunk-index",
+                            "1",
+                            "--expect-payload-sha256",
+                            wrapper["payload_sha256"],
+                            "--expect-encoded-sha256",
+                            wrapper["encoded_sha256"],
+                        ]
+                    )
+                self.assertEqual(later_status, 0)
+                later_wrapper = json.loads(later_output.getvalue())
+                self.assertEqual(later_wrapper["chunk_index"], 1)
+                self.assertEqual(
+                    later_wrapper["payload_sha256"],
+                    wrapper["payload_sha256"],
+                )
+                self.assertEqual(
+                    later_wrapper["encoded_sha256"],
+                    wrapper["encoded_sha256"],
+                )
 
-    def test_transport_prompt_contains_literal_fresh_read_command(self):
-        prompt = transport_fallback_prompt("audit_report.md")
+    def test_transport_prompt_contains_exact_indexed_fresh_read_commands(self):
+        prompt = transport_fallback_prompt("audit_report.md", 0)
         self.assertIn(
-            "python /mnt/data/gpt_artifact_compiler.py export-wrapper "
-            "/mnt/data/audit_report.md",
+            "python /mnt/data/gpt_artifact_compiler.py export-chunk "
+            "/mnt/data/audit_report.md --chunk-index 0",
             prompt,
         )
         self.assertIn("Do not read, trim, normalize, or encode", prompt)
         self.assertIn("complete stdout byte-for-byte", prompt)
+        self.assertNotIn("export-wrapper", prompt)
+
+        payload_hash = "1" * 64
+        encoded_hash = "2" * 64
+        later = transport_fallback_prompt(
+            "audit_report.md",
+            1,
+            expected_payload_sha256=payload_hash,
+            expected_encoded_sha256=encoded_hash,
+        )
+        self.assertIn("--chunk-index 1", later)
+        self.assertIn(f"--expect-payload-sha256 {payload_hash}", later)
+        self.assertIn(f"--expect-encoded-sha256 {encoded_hash}", later)
+        with self.assertRaisesRegex(ValueError, "later transport chunks require"):
+            transport_fallback_prompt("audit_report.md", 1)
+
+    def test_compile_cli_captures_runtime_once_and_rejects_model_override(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source_root = root / "source"
+            output_root = root / "output"
+            source_root.mkdir()
+            output_root.mkdir()
+            frozen_paths: dict[str, str] = {}
+            for filename, data in self.frozen().items():
+                source = source_root / filename
+                destination = output_root / filename
+                source.write_bytes(data)
+                destination.write_bytes(data)
+                frozen_paths[filename] = str(source)
+            spec = {
+                "report_body": (
+                    "# BSC audit report\n\n"
+                    "The supplied bytes were checked through the deterministic "
+                    "compiler transaction."
+                ),
+                "frozen_artifact_paths": frozen_paths,
+                "audit_return_template": self.template(),
+            }
+            spec_path = root / "compile-spec.json"
+            spec_path.write_bytes(canonical_json_bytes(spec))
+            output = io.StringIO()
+            with redirect_stdout(output):
+                status = compiler_main(
+                    [
+                        "compile",
+                        "--spec",
+                        str(spec_path),
+                        "--output-dir",
+                        str(output_root),
+                    ]
+                )
+            self.assertEqual(status, 0, output.getvalue())
+            ledger = (output_root / BOUND_RUNTIME_ARTIFACT).read_text(
+                encoding="utf-8"
+            )
+            self.assertEqual(
+                ledger.count(f"session_reported_runtime={sys.version}\n"),
+                1,
+            )
+            document = json.loads(
+                (output_root / BOUND_RETURN_ARTIFACT).read_text(encoding="utf-8")
+            )
+            analysis = next(
+                row
+                for row in document["execution"]
+                if row["activity"] == "chatgpt_data_analysis"
+            )
+            self.assertEqual(analysis["version"], sys.version)
+
+            injected = dict(spec)
+            injected["session_reported_runtime"] = RUNTIME
+            injected_path = root / "compile-spec-injected.json"
+            injected_path.write_bytes(canonical_json_bytes(injected))
+            injected_output = io.StringIO()
+            with redirect_stdout(injected_output):
+                injected_status = compiler_main(
+                    [
+                        "compile",
+                        "--spec",
+                        str(injected_path),
+                        "--output-dir",
+                        str(output_root),
+                    ]
+                )
+            self.assertEqual(injected_status, 1)
+            self.assertIn(
+                "compiler spec fields differ from the strict contract",
+                injected_output.getvalue(),
+            )
 
     def test_compiler_does_not_mutate_the_supplied_template(self):
         template = self.template()

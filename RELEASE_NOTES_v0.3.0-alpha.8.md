@@ -6,15 +6,16 @@ Alpha.8 is a public research preview of the BSC Audit Engine and the repository-
 
 This release replaces model-mediated artifact identity with one acyclic final-byte transaction:
 
-- capture the Data Analysis runtime once and label it session-reported, not independently authenticated;
+- have the executed compiler capture its own Data Analysis `sys.version` once, reject model-authored overrides, and label the value session-reported rather than independently authenticated;
 - finalize request, source, evidence, and report bytes before deriving hashes and sizes;
 - generate one bound `chatgpt_data_analysis_output.txt` from that captured value and frozen metadata;
 - have the report reference the bound output rather than manually recopying the runtime;
 - serialize `audit_return.json` only after every referenced artifact is final;
 - canonicalize all eight execution activities and the report-facing execution projection before any report, ledger, hash, or return bytes are derived;
-- keep Base64 outside the primary proof path and treat any fallback only as the identity of the exported payload actually received.
+- keep Base64 outside the primary proof path and treat any fallback only as the identity of the exported payload actually received;
+- replace unbounded whole-file fallback responses with stable-read, zlib-compressed, fixed-size indexed chunks whose decoded transport payload is capped at 2,048 bytes per response.
 
-The evaluation controller now validates the exact target, all six canonical Knowledge files, and generated outputs before Return Desk replay or candidate scoring. It preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`.
+The evaluation controller now validates the exact target, all six canonical Knowledge files, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls separately from acquired bytes, validates every chunk prompt/response/parser binding before reassembly, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`.
 
 The frozen-suite checker independently revalidates each trial's manifest-bound candidate snapshot and raw evidence, enforces fresh Preview-session identities and the exact `C001` through `C039` order, and encodes the one-repair/two-complete-suite release ceiling without allowing controller or transport states to rescue a substantive candidate contradiction.
 
@@ -48,6 +49,14 @@ the existing compiler own the complete execution ledger/report projection and
 made the fallback invoke the existing one-file fresh-read exporter literally;
 it did not relax any candidate, controller, transport, Return Desk, fixture,
 oracle, rubric, or promotion boundary.
+
+The subsequent r10 candidate passed D01 at 20/20 but did not pass D02. D02
+visibly exposed all five declared output controls, while no original button
+bytes were acquired. Its unbounded report fallback was surfaced as another
+downloadable wrapper file and the following return fallback was blank. The
+negative result is preserved without calling unavailable bytes corrupt or
+pretending the counted suite ran. The fixed-size chunk transport repairs that
+generic response-size assumption; it does not weaken the D02 artifact gate.
 
 ## Authority and privacy boundary
 

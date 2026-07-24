@@ -21,13 +21,13 @@
     },
     {
       "source": "docs/AUDIT_RETURN_DESK.md",
-      "source_sha256": "b9c74b7e9d11c7350b8aee758a4631d87e289a839d331b3f2c5874cb5f8171a7",
+      "source_sha256": "a69a67942ab4f1451a00e0c8168fd47a1b1f93eb5efec87342ddec4ed828795a",
       "target": "docs/ja/AUDIT_RETURN_DESK.md",
-      "target_sha256": "f9d42bfaf3cf8a48afa2025bc00f94f4c014aefc0777cd6314f8fb24d1a59b57"
+      "target_sha256": "f3190731bfd20db234913fff762dabbb994c4dfb8798b6dab379c691add9d555"
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "5a7781af149e4f9483e7f33069fc5acdff4965ad7635ed79456847d7aa33ec2f",
+      "source_sha256": "14cb759a7b9a735fe69f374688d386dd76040dd77c20d4f88aa1a79fd9ffae1e",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
       "target_sha256": "bd569d114258db33633c419c147169e4175aafbc8abe54e5bcae1a1f2a533253"
     },
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "38b550539c09ead3fbaea00ed5d2158119ccc964953896cd269fc05e6871e711"
+  "manifest_payload_sha256": "938f59efa52bd0bc951e5dc1a205144bd9d4c50d92e0956e5a49745fc22701a7"
 }

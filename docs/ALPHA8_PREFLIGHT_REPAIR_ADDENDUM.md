@@ -113,3 +113,49 @@ derived, and makes the controller fallback spell out the existing fresh-read
 one-file export command. Missing or contradictory execution bindings still
 block, wrapper size/hash mismatches remain candidate failures, and the package,
 local gates, editor binding, D01, and D02 restart on the regenerated candidate.
+
+## Pushed r10 preflight result and transport repair boundary
+
+The next regenerated candidate used frozen manifest
+`765f4a05c2e34c74dfd9555d23fba1844e6d0c14ebe300fb80e98e5ca2cfe2e2`,
+Instructions
+`322ba066bdfd5810be6744b70ee4b1e25295c034418aff03e9efa741e6a91dcd`,
+profile
+`eeb1e57cf69790d33ff168498ff0117ce66127a07e7ef4ade7e36a8d2885e9e4`,
+and evaluation source
+`e1c71255591526ea462939896a52760c4fd799d09ecbee50405bbdaf51648a2e`.
+Its exact tested tree was later pushed as commit
+`9a9e5b2af545767b96d7cbd8b4b7303430fdf8c9`.
+
+D01 was controller-valid, scored 20/20, and had no automatic failure. D02
+correctly reconstructed the supplied induction proof and visibly exposed file
+controls for all five declared outputs. The controller acquired none of those
+button bytes. Its first whole-file fallback would have required more than
+19,900 Base64 characters before JSON overhead for the 14,927-byte report;
+ChatGPT exposed a new wrapper-file control instead of the required inline code
+block. The following return fallback ended with a blank assistant response.
+Required artifact bytes therefore remained unavailable and D02 did not pass.
+The counted 39-case suite, live Update, merge, tag, and release were not run.
+
+This evidence does not establish that the visible output controls lacked files,
+that their unavailable bytes were corrupt, or that a wrapper-file button had
+the same bytes as any local artifact. It establishes that the controller and
+candidate transport contract incorrectly assumed an unbounded whole-file
+wrapper would remain inline, and that the controller record conflated a visible
+output control with an acquired output.
+
+The replacement transport is generic rather than Case-27-specific. Direct
+controls remain primary. A fallback uses exact, controller-generated
+`export-chunk` commands over a stable-read payload. The compiler compresses the
+unchanged payload, emits at most 2,048 decoded transport bytes per indexed
+wrapper, and repeats the full payload and compressed-stream identities in every
+chunk. The controller separately records visible controls and acquired bytes,
+binds every exact prompt, complete response, code block, and parser input,
+requires contiguous indices, and reassembles only after all chunk and aggregate
+checks pass. Unavailable original download bytes remain
+`transport_identity_unresolved`; candidate contradictions and controller
+mutations retain their existing fail-closed classifications.
+
+This additional transport repair was expressly authorized after the preserved
+r10 stop; it does not retroactively change r10's failed release gate or reset a
+counted-suite repair allowance.

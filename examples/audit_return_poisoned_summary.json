@@ -4,7 +4,7 @@
   "draft": true,
   "protocol": {
     "version": "0.3.0-alpha.8",
-    "sha256": "sha256:b9d70566fc9eaa2c3257f2f5c05dc1786ef7c473b6b3b44a5c679a64ea11f76e"
+    "sha256": "sha256:df91a7aae7f2d53351e98af5545cdc76127ae1c305a40af5011d4406ffc7c79e"
   },
   "bindings": {
     "request_artifact_id": "artifact:request",

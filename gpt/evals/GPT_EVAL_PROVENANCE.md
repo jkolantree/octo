@@ -144,3 +144,36 @@ validates all eight execution rows plus the report projection before deriving
 bytes. The fallback prompt supplies the literal existing fresh-read exporter
 command. Return Desk negatives, wrapper mismatch failures, fixtures, oracles,
 rubrics, and the counted-suite threshold are unchanged.
+
+## R10 D01 pass, D02 transport failure, and bounded-chunk repair
+
+Candidate manifest
+`765f4a05c2e34c74dfd9555d23fba1844e6d0c14ebe300fb80e98e5ca2cfe2e2`
+passed D01 at 20/20 with a valid controller and no automatic failure. D02
+reconstructed the induction proof and visibly exposed five declared output
+controls, but the controller acquired no original button bytes. The 14,927-byte
+report required more than 19,900 Base64 characters before wrapper overhead.
+ChatGPT surfaced that fallback as another file control instead of the required
+inline code block; the following return fallback was blank. D02 did not pass,
+and the counted suite did not start.
+
+The preserved controls establish output observability, not byte identity. The
+failed acquisition leaves original download bytes
+`transport_identity_unresolved`; it does not establish corruption or equality
+with a local file. The controller's prior `observed_outputs` field also
+incorrectly conflated a visible file control with locally acquired bytes.
+
+The replacement protocol uses exact one-file, one-index `export-chunk`
+commands. The stable-read compiler zlib-compresses the unchanged payload and
+emits at most 2,048 decoded transport bytes per response, repeating the full
+payload and encoded-stream identities in every wrapper. Controller v3 records
+visible controls separately from acquired outputs, binds every prompt,
+response, raw block, and parser input, and requires contiguous indices before
+reassembly. This is a generic transport repair; it changes no fixture, oracle,
+scientific verdict, Return Desk rule, score threshold, or candidate-failure
+boundary.
+
+The additional transport repair was explicitly authorized after the preserved
+r10 stop. It does not relabel r10, consume or reset a counted-suite repair
+allowance, or weaken the rule that a second complete frozen candidate failure
+halts publication.

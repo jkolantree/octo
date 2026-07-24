@@ -9,10 +9,12 @@ it is validated before Return Desk or any candidate scorer may run.
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import re
 import unicodedata
+import zlib
 from html.parser import HTMLParser
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
@@ -22,11 +24,18 @@ try:
         BOUND_REPORT_ARTIFACT,
         BOUND_RETURN_ARTIFACT,
         BOUND_RUNTIME_ARTIFACT,
+        EXPORT_CHUNK_FIELDS,
+        MAX_TRANSPORT_CHUNKS,
+        MAX_TRANSPORT_ENCODED_BYTES,
+        MAX_TRANSPORT_PAYLOAD_BYTES,
         REPORT_RUNTIME_REFERENCE,
         RUNTIME_BASIS_LINE,
         RUNTIME_PREFIX,
+        TRANSPORT_CHUNK_BYTES,
+        TRANSPORT_CHUNK_VERSION,
+        TRANSPORT_ENCODING,
         canonical_json_bytes,
-        export_payload_wrapper,
+        export_payload_chunk,
         extract_session_reported_runtime,
         finalize_candidate_artifacts,
         output_record,
@@ -40,11 +49,18 @@ except ModuleNotFoundError:  # Direct execution from scripts/.
         BOUND_REPORT_ARTIFACT,
         BOUND_RETURN_ARTIFACT,
         BOUND_RUNTIME_ARTIFACT,
+        EXPORT_CHUNK_FIELDS,
+        MAX_TRANSPORT_CHUNKS,
+        MAX_TRANSPORT_ENCODED_BYTES,
+        MAX_TRANSPORT_PAYLOAD_BYTES,
         REPORT_RUNTIME_REFERENCE,
         RUNTIME_BASIS_LINE,
         RUNTIME_PREFIX,
+        TRANSPORT_CHUNK_BYTES,
+        TRANSPORT_CHUNK_VERSION,
+        TRANSPORT_ENCODING,
         canonical_json_bytes,
-        export_payload_wrapper,
+        export_payload_chunk,
         extract_session_reported_runtime,
         finalize_candidate_artifacts,
         output_record,
@@ -55,7 +71,7 @@ except ModuleNotFoundError:  # Direct execution from scripts/.
     )
 
 
-CONTROLLER_RECORD_VERSION = "2.0"
+CONTROLLER_RECORD_VERSION = "3.0"
 CONTROLLER_RECORD_FIELDS = {
     "controller_record_version",
     "case_id",
@@ -67,13 +83,16 @@ CONTROLLER_RECORD_FIELDS = {
     "candidate_identity",
     "controller_artifacts",
     "inputs",
+    "observed_output_controls",
     "observed_outputs",
+    "transport_attempts",
     "wrapper_captures",
 }
 BYTE_RECORD_FIELDS = {"kind", "filename", "bytes", "sha256"}
 OUTPUT_RECORD_FIELDS = {"filename", "bytes", "sha256"}
 WRAPPER_CAPTURE_FIELDS = {
     "payload_filename",
+    "chunk_index",
     "raw_filename",
     "parser_input_filename",
     "raw_bytes",
@@ -84,6 +103,25 @@ WRAPPER_CAPTURE_FIELDS = {
     "transport_response_filename",
     "transport_response_bytes",
     "transport_response_sha256",
+}
+TRANSPORT_ATTEMPT_FIELDS = {
+    "payload_filename",
+    "chunk_index",
+    "transport_prompt_filename",
+    "transport_prompt_bytes",
+    "transport_prompt_sha256",
+    "transport_response_filename",
+    "transport_response_bytes",
+    "transport_response_sha256",
+    "response_outcome",
+    "response_file_controls",
+    "parser_input_filename",
+}
+TRANSPORT_ATTEMPT_OUTCOMES = {
+    "chunk_wrapper_captured",
+    "blank_response",
+    "file_control_only",
+    "invalid_response",
 }
 
 KNOWLEDGE_FILENAMES = (
@@ -329,14 +367,61 @@ def _assert_portable_unique_basenames(values: Iterable[object], label: str) -> N
         raise ValueError(f"{label} contains a normalized or case-insensitive collision")
 
 
-def _transport_capture_names(payload: str) -> tuple[str, str, str]:
+INDEXED_WRAPPER_RE = re.compile(
+    r"^(?P<payload>.+)\.export\.(?P<chunk_index>[0-9]{5})\.json$"
+)
+TRANSPORT_PROMPT_RE = re.compile(
+    r"^(?P<payload>.+)\.transport\.(?P<chunk_index>[0-9]{5})\.prompt\.txt$"
+)
+TRANSPORT_RESPONSE_RE = re.compile(
+    r"^(?P<payload>.+)\.transport\.(?P<chunk_index>[0-9]{5})"
+    r"\.outerHTML\.html$"
+)
+LOWER_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+FILE_CONTROL_PREFIXES = (
+    "Download file: ",
+    "Download file ",
+    "Download: ",
+    "Download ",
+    "File: ",
+)
+
+
+def _transport_parser_name(payload: str, chunk_index: int) -> str:
     if not _portable_basename(payload):
         raise ValueError("transport payload filename must be a portable basename")
+    if (
+        isinstance(chunk_index, bool)
+        or not isinstance(chunk_index, int)
+        or not 0 <= chunk_index < MAX_TRANSPORT_CHUNKS
+    ):
+        raise ValueError("transport chunk index must be in 0..99999")
+    return f"{payload}.export.{chunk_index:05d}.json"
+
+
+def _transport_capture_names(
+    payload: str,
+    chunk_index: int,
+) -> tuple[str, str, str]:
+    parser_name = _transport_parser_name(payload, chunk_index)
     return (
-        f"raw/{payload}.export.json",
-        f"raw/{payload}.transport.prompt.txt",
-        f"raw/{payload}.transport.outerHTML.html",
+        f"raw/{parser_name}",
+        f"raw/{payload}.transport.{chunk_index:05d}.prompt.txt",
+        f"raw/{payload}.transport.{chunk_index:05d}.outerHTML.html",
     )
+
+
+def _parse_indexed_name(
+    name: str,
+    pattern: re.Pattern[str],
+) -> tuple[str, int] | None:
+    match = pattern.fullmatch(name)
+    if match is None:
+        return None
+    payload = match.group("payload")
+    if not _portable_basename(payload):
+        return None
+    return payload, int(match.group("chunk_index"))
 
 
 class _CodeBlockTextExtractor(HTMLParser):
@@ -380,6 +465,64 @@ class _CodeBlockTextExtractor(HTMLParser):
             self._current.append(data)
 
 
+class _ResponseInspector(HTMLParser):
+    """Inspect response text and explicit generated-file button labels."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.text: list[str] = []
+        self.file_controls: set[str] = set()
+
+    def handle_starttag(
+        self,
+        tag: str,
+        attrs: list[tuple[str, str | None]],
+    ) -> None:
+        if tag.casefold() != "button":
+            return
+        attributes = {
+            key.casefold(): value
+            for key, value in attrs
+            if isinstance(key, str) and value is not None
+        }
+        label = attributes.get("aria-label")
+        if not isinstance(label, str):
+            return
+        for prefix in FILE_CONTROL_PREFIXES:
+            if not label.startswith(prefix):
+                continue
+            filename = label[len(prefix) :]
+            if _portable_basename(filename):
+                self.file_controls.add(filename)
+            return
+        if "." in label and _portable_basename(label):
+            self.file_controls.add(label)
+
+    def handle_data(self, data: str) -> None:
+        self.text.append(data)
+
+
+def _inspect_response_outer_html(
+    response_outer_html: bytes,
+    *,
+    allowed_file_controls: set[str] | None = None,
+) -> tuple[str, tuple[str, ...]]:
+    try:
+        html = response_outer_html.decode("utf-8", errors="strict")
+    except UnicodeError as exc:
+        raise ValueError("transport response outerHTML is not strict UTF-8") from exc
+    parser = _ResponseInspector()
+    try:
+        parser.feed(html)
+        parser.close()
+    except Exception as exc:
+        raise ValueError("transport response outerHTML could not be parsed") from exc
+    controls = parser.file_controls
+    if allowed_file_controls is not None:
+        controls = controls & allowed_file_controls
+    return "".join(parser.text), tuple(sorted(controls))
+
+
 def _extract_single_code_block_bytes(response_outer_html: bytes) -> bytes:
     try:
         html = response_outer_html.decode("utf-8", errors="strict")
@@ -401,6 +544,181 @@ def _extract_single_code_block_bytes(response_outer_html: bytes) -> bytes:
             "transport response outerHTML must contain exactly one complete code block"
         )
     return parser.blocks[0].encode("utf-8")
+
+
+def _strict_export_chunk(
+    data: bytes,
+    *,
+    expected_filename: str | None = None,
+    expected_chunk_index: int | None = None,
+) -> tuple[dict[str, Any], bytes]:
+    """Parse and verify one compiler-emitted canonical transport chunk."""
+
+    document = _strict_json_document(data, "transport chunk wrapper")
+    if not isinstance(document, dict) or set(document) != EXPORT_CHUNK_FIELDS:
+        raise ValueError("transport chunk wrapper fields differ from the contract")
+    if canonical_json_bytes(document) != data:
+        raise ValueError("transport chunk wrapper is not canonical compiler stdout")
+
+    filename = document.get("filename")
+    payload_size = document.get("payload_size_bytes")
+    payload_sha256 = document.get("payload_sha256")
+    encoded_size = document.get("encoded_size_bytes")
+    encoded_sha256 = document.get("encoded_sha256")
+    chunk_index = document.get("chunk_index")
+    chunk_count = document.get("chunk_count")
+    offset = document.get("offset_bytes")
+    chunk_size = document.get("chunk_size_bytes")
+    chunk_sha256 = document.get("chunk_sha256")
+    encoded_base64 = document.get("base64")
+    integer_values = (
+        payload_size,
+        encoded_size,
+        chunk_index,
+        chunk_count,
+        offset,
+        chunk_size,
+    )
+    if (
+        not _portable_basename(filename)
+        or document.get("transport_version") != TRANSPORT_CHUNK_VERSION
+        or document.get("encoding") != TRANSPORT_ENCODING
+        or any(isinstance(value, bool) or not isinstance(value, int) for value in integer_values)
+        or payload_size < 0
+        or payload_size > MAX_TRANSPORT_PAYLOAD_BYTES
+        or encoded_size <= 0
+        or encoded_size > MAX_TRANSPORT_ENCODED_BYTES
+        or chunk_index < 0
+        or chunk_count <= 0
+        or offset < 0
+        or chunk_size <= 0
+        or not isinstance(payload_sha256, str)
+        or LOWER_SHA256_RE.fullmatch(payload_sha256) is None
+        or not isinstance(encoded_sha256, str)
+        or LOWER_SHA256_RE.fullmatch(encoded_sha256) is None
+        or not isinstance(chunk_sha256, str)
+        or LOWER_SHA256_RE.fullmatch(chunk_sha256) is None
+        or not isinstance(encoded_base64, str)
+        or not encoded_base64.isascii()
+    ):
+        raise ValueError("transport chunk wrapper values differ from the contract")
+    if expected_filename is not None and filename != expected_filename:
+        raise ValueError("transport chunk payload filename differs from its capture name")
+    if expected_chunk_index is not None and chunk_index != expected_chunk_index:
+        raise ValueError("transport chunk index differs from its capture name")
+
+    expected_count = (encoded_size + TRANSPORT_CHUNK_BYTES - 1) // TRANSPORT_CHUNK_BYTES
+    expected_size = min(
+        TRANSPORT_CHUNK_BYTES,
+        encoded_size - chunk_index * TRANSPORT_CHUNK_BYTES,
+    )
+    if (
+        chunk_count != expected_count
+        or not 0 <= chunk_index < chunk_count
+        or offset != chunk_index * TRANSPORT_CHUNK_BYTES
+        or expected_size <= 0
+        or chunk_size != expected_size
+        or chunk_size > TRANSPORT_CHUNK_BYTES
+    ):
+        raise ValueError("transport chunk geometry is invalid")
+    try:
+        chunk = base64.b64decode(encoded_base64, validate=True)
+    except (ValueError, TypeError) as exc:
+        raise ValueError("transport chunk Base64 is invalid") from exc
+    if (
+        base64.b64encode(chunk).decode("ascii") != encoded_base64
+        or len(chunk) != chunk_size
+        or sha256_bytes(chunk) != chunk_sha256
+    ):
+        raise ValueError("transport chunk Base64 identity is invalid")
+    return document, chunk
+
+
+def _prompt_identity_from_canonical_wrapper(
+    data: bytes,
+    *,
+    expected_filename: str,
+) -> tuple[str, str] | None:
+    """Extract only the two first-chunk values needed for the next exact prompt."""
+
+    try:
+        document = _strict_json_document(data, "transport chunk wrapper")
+    except ValueError:
+        return None
+    if (
+        not isinstance(document, dict)
+        or canonical_json_bytes(document) != data
+        or document.get("filename") != expected_filename
+        or document.get("chunk_index") != 0
+        or not isinstance(document.get("payload_sha256"), str)
+        or LOWER_SHA256_RE.fullmatch(document["payload_sha256"]) is None
+        or not isinstance(document.get("encoded_sha256"), str)
+        or LOWER_SHA256_RE.fullmatch(document["encoded_sha256"]) is None
+    ):
+        return None
+    return document["payload_sha256"], document["encoded_sha256"]
+
+
+def assemble_verified_chunks(wrapper_bytes: Iterable[bytes]) -> tuple[str, bytes]:
+    """Verify an ordered complete chunk sequence and return its exact payload."""
+
+    parsed = [_strict_export_chunk(data) for data in wrapper_bytes]
+    if not parsed:
+        raise ValueError("at least one transport chunk wrapper is required")
+    documents = [item[0] for item in parsed]
+    chunks = [item[1] for item in parsed]
+    first = documents[0]
+    repeated_fields = (
+        "transport_version",
+        "filename",
+        "encoding",
+        "payload_size_bytes",
+        "payload_sha256",
+        "encoded_size_bytes",
+        "encoded_sha256",
+        "chunk_count",
+    )
+    for document in documents[1:]:
+        if any(document[field] != first[field] for field in repeated_fields):
+            raise ValueError("transport chunks disagree on repeated payload identity")
+    expected_indices = list(range(first["chunk_count"]))
+    observed_indices = [document["chunk_index"] for document in documents]
+    if observed_indices != expected_indices:
+        raise ValueError(
+            "transport chunk indices must be complete, contiguous, and ordered"
+        )
+
+    encoded = b"".join(chunks)
+    if (
+        len(encoded) != first["encoded_size_bytes"]
+        or sha256_bytes(encoded) != first["encoded_sha256"]
+    ):
+        raise ValueError("reassembled encoded payload identity is invalid")
+    decompressor = zlib.decompressobj()
+    try:
+        payload = decompressor.decompress(
+            encoded,
+            first["payload_size_bytes"] + 1,
+        )
+        if len(payload) > first["payload_size_bytes"] or decompressor.unconsumed_tail:
+            raise ValueError("reassembled payload exceeds its declared bounded size")
+        payload += decompressor.flush(
+            first["payload_size_bytes"] + 1 - len(payload)
+        )
+    except zlib.error as exc:
+        raise ValueError("reassembled encoded payload is not valid zlib") from exc
+    if (
+        not decompressor.eof
+        or decompressor.unused_data
+        or decompressor.unconsumed_tail
+    ):
+        raise ValueError("reassembled payload is not one complete bounded zlib stream")
+    if (
+        len(payload) != first["payload_size_bytes"]
+        or sha256_bytes(payload) != first["payload_sha256"]
+    ):
+        raise ValueError("reassembled final payload identity is invalid")
+    return first["filename"], payload
 
 
 def _files_are_pairwise_distinct(paths: Iterable[Path | None]) -> bool:
@@ -471,6 +789,51 @@ def _is_link_or_junction(path: Path) -> bool:
         return True
 
 
+def _discover_indexed_wrappers(root: Path) -> dict[tuple[str, int], Path]:
+    wrappers: dict[tuple[str, int], Path] = {}
+    for path in root.iterdir():
+        if not path.is_file():
+            continue
+        name = path.name
+        parsed = _parse_indexed_name(name, INDEXED_WRAPPER_RE)
+        if parsed is None:
+            if name.endswith(".export.json") or (
+                ".export." in name and name.endswith(".json")
+            ):
+                raise ValueError(
+                    f"active wrapper filename is not canonical indexed transport: {name}"
+                )
+            continue
+        if _is_link_or_junction(path) or parsed in wrappers:
+            raise ValueError(f"active wrapper is unsafe or duplicated: {name}")
+        wrappers[parsed] = path
+    return wrappers
+
+
+def _discover_transport_attempt_files(
+    raw_root: Path,
+) -> tuple[
+    dict[tuple[str, int], Path],
+    dict[tuple[str, int], Path],
+]:
+    prompts: dict[tuple[str, int], Path] = {}
+    responses: dict[tuple[str, int], Path] = {}
+    for path in raw_root.iterdir():
+        if not path.is_file():
+            continue
+        parsed_prompt = _parse_indexed_name(path.name, TRANSPORT_PROMPT_RE)
+        parsed_response = _parse_indexed_name(path.name, TRANSPORT_RESPONSE_RE)
+        if parsed_prompt is not None:
+            if parsed_prompt in prompts:
+                raise ValueError(f"duplicate transport prompt: {path.name}")
+            prompts[parsed_prompt] = path
+        if parsed_response is not None:
+            if parsed_response in responses:
+                raise ValueError(f"duplicate transport response: {path.name}")
+            responses[parsed_response] = path
+    return prompts, responses
+
+
 def validate_closed_evidence_layout(root: Path) -> None:
     """Reject hidden trial state outside the one closed raw-capture directory."""
 
@@ -495,17 +858,37 @@ def validate_closed_evidence_layout(root: Path) -> None:
         or raw_root.resolve(strict=True).parent != root.resolve(strict=True)
     ):
         raise ValueError("raw must be one real in-tree capture directory")
-    active_wrappers = {
-        entry.name
-        for entry in root_entries
-        if entry.is_file() and entry.name.endswith(".export.json")
-    }
-    _assert_portable_unique_basenames(active_wrappers, "active wrapper filenames")
+    active_wrappers = _discover_indexed_wrappers(root)
+    _assert_portable_unique_basenames(
+        (path.name for path in active_wrappers.values()),
+        "active wrapper filenames",
+    )
+    prompts, responses = _discover_transport_attempt_files(raw_root)
+    attempt_keys = set(prompts) | set(responses)
+    if set(prompts) != set(responses):
+        raise ValueError(
+            "every exact transport prompt requires one complete response outerHTML"
+        )
+    if not set(active_wrappers).issubset(attempt_keys):
+        raise ValueError(
+            "every active indexed wrapper requires its exact prompt and complete response"
+        )
     expected_raw = {PurePosixPath(RAW_RESPONSE_FILENAME).name}
-    for wrapper in active_wrappers:
-        payload = wrapper[: -len(".export.json")]
+    for payload, chunk_index in attempt_keys:
+        _, transport_prompt, transport_response = _transport_capture_names(
+            payload,
+            chunk_index,
+        )
+        expected_raw.update(
+            {
+                PurePosixPath(transport_prompt).name,
+                PurePosixPath(transport_response).name,
+            }
+        )
+    for payload, chunk_index in active_wrappers:
         raw_wrapper, transport_prompt, transport_response = _transport_capture_names(
-            payload
+            payload,
+            chunk_index,
         )
         expected_raw.update(
             {
@@ -529,8 +912,8 @@ def validate_closed_evidence_layout(root: Path) -> None:
         actual_raw.add(entry.name)
     if actual_raw != expected_raw:
         raise ValueError(
-            "raw capture roster must equal response.outerHTML.html plus each active "
-            "wrapper, controller prompt, and complete transport response"
+            "raw capture roster must equal response.outerHTML.html, every exact "
+            "prompt/complete response pair, and every captured indexed wrapper"
         )
 
 
@@ -649,6 +1032,250 @@ def _validate_bound_roster(
     return issues
 
 
+def _capture_transport_inventory(
+    root: Path,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Bind every exact prompt/response attempt and every successful wrapper."""
+
+    validate_closed_evidence_layout(root)
+    wrappers = _discover_indexed_wrappers(root)
+    prompts, responses = _discover_transport_attempt_files(root / "raw")
+    captures: list[dict[str, Any]] = []
+    attempts: list[dict[str, Any]] = []
+    captured_provenance_keys: set[tuple[str, int]] = set()
+    semantic_invalid_keys: set[tuple[str, int]] = set()
+    prompt_identities: dict[str, tuple[str, str]] = {}
+    wrapper_documents: dict[tuple[str, int], dict[str, Any]] = {}
+    wrapper_bytes: dict[tuple[str, int], bytes] = {}
+
+    for payload, chunk_index in sorted(prompts):
+        key = (payload, chunk_index)
+        raw_name, prompt_name, response_name = _transport_capture_names(
+            payload,
+            chunk_index,
+        )
+        prompt_path = _safe_file(root, prompt_name)
+        response_path = _safe_file(root, response_name)
+        if prompt_path is None or response_path is None:
+            raise ValueError(
+                f"transport prompt/response capture is missing or unsafe: {key!r}"
+            )
+        prompt = _stable_read(prompt_path)
+        response = _stable_read(response_path)
+        if not response:
+            raise ValueError(
+                f"complete transport response outerHTML is empty: {key!r}"
+            )
+
+        if chunk_index == 0:
+            expected_prompt = transport_fallback_prompt(payload, 0)
+        else:
+            first_identity = prompt_identities.get(payload)
+            if first_identity is None:
+                raise ValueError(
+                    f"later transport prompt lacks a captured chunk-0 identity: {key!r}"
+                )
+            expected_prompt = transport_fallback_prompt(
+                payload,
+                chunk_index,
+                expected_payload_sha256=first_identity[0],
+                expected_encoded_sha256=first_identity[1],
+            )
+        if prompt != expected_prompt.encode("utf-8"):
+            raise ValueError(
+                f"transport prompt differs from the exact controller output: {key!r}"
+            )
+
+        _, response_file_controls = _inspect_response_outer_html(response)
+        parser_path = wrappers.get(key)
+        parser_name: str | None = None
+        response_outcome: str
+        if parser_path is not None:
+            parser_name = _transport_parser_name(payload, chunk_index)
+            raw_path = _safe_file(root, raw_name)
+            if not _files_are_pairwise_distinct(
+                (parser_path, raw_path, prompt_path, response_path)
+            ):
+                raise ValueError(
+                    f"wrapper provenance files are missing or not distinct: {key!r}"
+                )
+            assert raw_path is not None
+            parser = _stable_read(parser_path)
+            raw = _stable_read(raw_path)
+            if parser != raw:
+                raise ValueError(
+                    f"raw wrapper differs from the parser input: {key!r}"
+                )
+            try:
+                code = _extract_single_code_block_bytes(response)
+            except ValueError as exc:
+                raise ValueError(
+                    f"captured wrapper response is not one complete code block: {key!r}"
+                ) from exc
+            if code != raw or code != parser:
+                raise ValueError(
+                    f"response code block differs from raw/parser bytes: {key!r}"
+                )
+            captured_provenance_keys.add(key)
+            if chunk_index == 0:
+                prompt_identity = _prompt_identity_from_canonical_wrapper(
+                    parser,
+                    expected_filename=payload,
+                )
+                if prompt_identity is not None:
+                    prompt_identities[payload] = prompt_identity
+            try:
+                document, _ = _strict_export_chunk(
+                    parser,
+                    expected_filename=payload,
+                    expected_chunk_index=chunk_index,
+                )
+            except (ValueError, TypeError):
+                semantic_invalid_keys.add(key)
+            else:
+                wrapper_documents[key] = document
+                wrapper_bytes[key] = parser
+            response_outcome = "chunk_wrapper_captured"
+            captures.append(
+                {
+                    "payload_filename": payload,
+                    "chunk_index": chunk_index,
+                    "raw_filename": raw_name,
+                    "parser_input_filename": parser_name,
+                    "raw_bytes": len(raw),
+                    "raw_sha256": sha256_bytes(raw),
+                    "transport_prompt_filename": prompt_name,
+                    "transport_prompt_bytes": len(prompt),
+                    "transport_prompt_sha256": sha256_bytes(prompt),
+                    "transport_response_filename": response_name,
+                    "transport_response_bytes": len(response),
+                    "transport_response_sha256": sha256_bytes(response),
+                }
+            )
+        else:
+            try:
+                _extract_single_code_block_bytes(response)
+                has_code_block = True
+            except ValueError:
+                has_code_block = False
+            if has_code_block:
+                raise ValueError(
+                    f"response code block lacks bound raw/parser captures: {key!r}"
+                )
+            visible_text, _ = _inspect_response_outer_html(response)
+            if not has_code_block and not visible_text.strip() and not response_file_controls:
+                response_outcome = "blank_response"
+            elif not has_code_block and response_file_controls:
+                response_outcome = "file_control_only"
+            else:
+                response_outcome = "invalid_response"
+        attempts.append(
+            {
+                "payload_filename": payload,
+                "chunk_index": chunk_index,
+                "transport_prompt_filename": prompt_name,
+                "transport_prompt_bytes": len(prompt),
+                "transport_prompt_sha256": sha256_bytes(prompt),
+                "transport_response_filename": response_name,
+                "transport_response_bytes": len(response),
+                "transport_response_sha256": sha256_bytes(response),
+                "response_outcome": response_outcome,
+                "response_file_controls": list(response_file_controls),
+                "parser_input_filename": parser_name,
+            }
+        )
+
+    by_payload: dict[str, list[dict[str, Any]]] = {}
+    for attempt in attempts:
+        by_payload.setdefault(attempt["payload_filename"], []).append(attempt)
+    for payload, payload_attempts in by_payload.items():
+        indices = [attempt["chunk_index"] for attempt in payload_attempts]
+        if indices != list(range(len(indices))):
+            raise ValueError(
+                f"transport attempts must be contiguous from chunk zero: {payload}"
+            )
+        first = wrapper_documents.get((payload, 0))
+        if first is None:
+            if (payload, 0) not in semantic_invalid_keys and len(payload_attempts) != 1:
+                raise ValueError(
+                    f"failed chunk-zero attempt must be terminal: {payload}"
+                )
+            continue
+        repeated_fields = (
+            "transport_version",
+            "filename",
+            "encoding",
+            "payload_size_bytes",
+            "payload_sha256",
+            "encoded_size_bytes",
+            "encoded_sha256",
+            "chunk_count",
+        )
+        semantic_invalid = {
+            index
+            for candidate_payload, index in semantic_invalid_keys
+            if candidate_payload == payload
+        }
+        for index in indices[1:]:
+            document = wrapper_documents.get((payload, index))
+            if document is not None and any(
+                document[field] != first[field] for field in repeated_fields
+            ):
+                semantic_invalid.add(index)
+        if semantic_invalid:
+            if (
+                len(semantic_invalid) != 1
+                or next(iter(semantic_invalid)) != indices[-1]
+            ):
+                raise ValueError(
+                    f"semantically invalid captured wrapper must be terminal: {payload}"
+                )
+            continue
+        chunk_count = first["chunk_count"]
+        if any(index >= chunk_count for index in indices):
+            raise ValueError(f"transport attempt exceeds declared chunk count: {payload}")
+        failed = [
+            attempt
+            for attempt in payload_attempts
+            if attempt["response_outcome"] != "chunk_wrapper_captured"
+        ]
+        if failed:
+            first_failed_index = failed[0]["chunk_index"]
+            if (
+                len(failed) != 1
+                or first_failed_index != indices[-1]
+                or any(
+                    attempt["chunk_index"] > first_failed_index
+                    for attempt in payload_attempts
+                )
+            ):
+                raise ValueError(
+                    f"failed transport attempt must be the terminal attempt: {payload}"
+                )
+            continue
+        if indices != list(range(chunk_count)):
+            raise ValueError(
+                f"complete transport capture is missing declared chunks: {payload}"
+            )
+        ordered = [wrapper_bytes[(payload, index)] for index in indices]
+        try:
+            assembled_filename, _ = assemble_verified_chunks(ordered)
+        except (ValueError, TypeError):
+            # Exact byte provenance is valid. Aggregate, decompression, and final
+            # payload contradictions remain candidate failures for the checker.
+            continue
+        if assembled_filename != payload:
+            raise AssertionError("verified assembler changed the payload filename")
+        if _safe_file(root, payload) is None:
+            raise ValueError(
+                f"complete transport payload was not assembled locally: {payload}"
+            )
+
+    if captured_provenance_keys != set(wrappers):
+        raise ValueError("active wrapper roster differs from captured wrapper attempts")
+    return captures, attempts
+
+
 def validate_controller_record(
     *,
     root: Path,
@@ -760,6 +1387,7 @@ def validate_controller_record(
                 )
             )
 
+    raw_response_bytes: bytes | None = None
     raw_response = record.get("raw_response")
     if not isinstance(raw_response, dict) or set(raw_response) != OUTPUT_RECORD_FIELDS:
         issues.append(
@@ -770,7 +1398,7 @@ def validate_controller_record(
             )
         )
     else:
-        raw_bytes, raw_issues = _read_bound_file(
+        raw_response_bytes, raw_issues = _read_bound_file(
             root,
             raw_response,
             path="controller_record.json:$.raw_response",
@@ -778,7 +1406,7 @@ def validate_controller_record(
         issues.extend(raw_issues)
         if (
             raw_response.get("filename") != RAW_RESPONSE_FILENAME
-            or not raw_bytes
+            or not raw_response_bytes
         ):
             issues.append(
                 _issue(
@@ -787,6 +1415,48 @@ def validate_controller_record(
                     "complete raw assistant outerHTML must be preserved at raw/response.outerHTML.html",
                 )
             )
+
+    observed_controls = record.get("observed_output_controls")
+    observed_controls_contract_valid = not (
+        not isinstance(observed_controls, list)
+        or any(not _portable_basename(item) for item in observed_controls)
+        or observed_controls != sorted(set(observed_controls))
+    )
+    if not observed_controls_contract_valid:
+        issues.append(
+            _issue(
+                "CONTROLLER_OUTPUT_CONTROL_ROSTER_INVALID",
+                "controller_record.json:$.observed_output_controls",
+                "observed file-control names must be sorted unique portable filenames",
+            )
+        )
+    elif raw_response_bytes is not None:
+        try:
+            _, response_controls = _inspect_response_outer_html(
+                raw_response_bytes,
+                allowed_file_controls=(
+                    set(expected_output_filenames)
+                    | set(required_output_filenames or set())
+                ),
+            )
+        except ValueError as exc:
+            issues.append(
+                _issue(
+                    "CONTROLLER_OUTPUT_CONTROL_CAPTURE_INVALID",
+                    "controller_record.json:$.observed_output_controls",
+                    str(exc),
+                )
+            )
+        else:
+            if observed_controls != list(response_controls):
+                issues.append(
+                    _issue(
+                        "CONTROLLER_OUTPUT_CONTROL_ROSTER_MISMATCH",
+                        "controller_record.json:$.observed_output_controls",
+                        "observed controls must equal the portable generated-file "
+                        "button aria-labels in the bound response",
+                    )
+                )
 
     conversation = record.get("fresh_conversation")
     if not isinstance(conversation, dict) or set(conversation) != FRESH_CONVERSATION_FIELDS:
@@ -888,214 +1558,82 @@ def validate_controller_record(
             fields=OUTPUT_RECORD_FIELDS,
         )
     )
-    missing_required_outputs = sorted(
-        (required_output_filenames or set()) - expected_output_filenames
-    )
-    if missing_required_outputs:
-        issues.append(
-            _issue(
-                "CONTROLLER_REQUIRED_OUTPUT_MISSING",
-                "controller_record.json:$.observed_outputs",
-                f"frozen case requires outputs that were not captured: {missing_required_outputs!r}",
-            )
-        )
-
     captures = record.get("wrapper_captures")
-    if not isinstance(captures, list):
+    attempts = record.get("transport_attempts")
+    captures_contract_valid = isinstance(captures, list) and all(
+        isinstance(item, dict) and set(item) == WRAPPER_CAPTURE_FIELDS
+        for item in captures
+    )
+    attempts_contract_valid = isinstance(attempts, list) and all(
+        isinstance(item, dict)
+        and set(item) == TRANSPORT_ATTEMPT_FIELDS
+        and item.get("response_outcome") in TRANSPORT_ATTEMPT_OUTCOMES
+        for item in attempts
+    )
+    if not captures_contract_valid:
         issues.append(
             _issue(
                 "CONTROLLER_WRAPPER_CAPTURE_INVALID",
                 "controller_record.json:$.wrapper_captures",
-                "wrapper capture roster must be an array",
+                "wrapper capture roster or fields differ from the strict contract",
             )
         )
-        captures = []
-    active_wrappers = {
-        path.name for path in root.glob("*.export.json") if path.is_file()
-    }
-    captured_parser_inputs: list[str] = []
-    seen_payloads: set[str] = set()
-    seen_capture_paths: set[str] = set()
-    for index, item in enumerate(captures):
-        label = f"controller_record.json:$.wrapper_captures[{index}]"
-        if not isinstance(item, dict) or set(item) != WRAPPER_CAPTURE_FIELDS:
-            issues.append(
-                _issue(
-                    "CONTROLLER_WRAPPER_CAPTURE_INVALID",
-                    label,
-                    "wrapper capture fields differ from the strict contract",
-                )
-            )
-            continue
-        payload = item.get("payload_filename")
-        raw_filename = item.get("raw_filename")
-        parser_filename = item.get("parser_input_filename")
-        prompt_filename = item.get("transport_prompt_filename")
-        response_filename = item.get("transport_response_filename")
-        canonical_names: tuple[str, str, str] | None = None
-        if isinstance(payload, str) and _portable_basename(payload):
-            canonical_names = _transport_capture_names(payload)
-        capture_paths = [
-            value
-            for value in (
-                raw_filename,
-                prompt_filename,
-                response_filename,
-                parser_filename,
-            )
-            if isinstance(value, str)
-        ]
-        if (
-            not _portable_basename(payload)
-            or not _portable_basename(parser_filename)
-            or parser_filename != f"{payload}.export.json"
-            or canonical_names is None
-            or (
-                raw_filename,
-                prompt_filename,
-                response_filename,
-            )
-            != canonical_names
-            or payload in seen_payloads
-            or parser_filename in captured_parser_inputs
-            or any(value in seen_capture_paths for value in capture_paths)
-        ):
-            issues.append(
-                _issue(
-                    "CONTROLLER_WRAPPER_CAPTURE_INVALID",
-                    label,
-                    "wrapper, controller prompt, complete response, and parser paths "
-                    "must be canonical and unique",
-                )
-            )
-        if isinstance(payload, str):
-            seen_payloads.add(payload)
-        seen_capture_paths.update(capture_paths)
-        if isinstance(parser_filename, str):
-            captured_parser_inputs.append(parser_filename)
-        raw_bytes, raw_issues = _read_bound_file(
-            root,
-            item,
-            path=label,
-            filename_field="raw_filename",
-            bytes_field="raw_bytes",
-            sha256_field="raw_sha256",
-        )
-        issues.extend(raw_issues)
-        prompt_bytes, prompt_issues = _read_bound_file(
-            root,
-            item,
-            path=label,
-            filename_field="transport_prompt_filename",
-            bytes_field="transport_prompt_bytes",
-            sha256_field="transport_prompt_sha256",
-        )
-        issues.extend(prompt_issues)
-        response_bytes, response_issues = _read_bound_file(
-            root,
-            item,
-            path=label,
-            filename_field="transport_response_filename",
-            bytes_field="transport_response_bytes",
-            sha256_field="transport_response_sha256",
-        )
-        issues.extend(response_issues)
-        parser_path = _safe_file(root, parser_filename)
-        raw_path = _safe_file(root, raw_filename)
-        prompt_path = _safe_file(root, prompt_filename)
-        response_path = _safe_file(root, response_filename)
-        if parser_path is None:
-            issues.append(
-                _issue(
-                    "CONTROLLER_PARSER_INPUT_MISSING_OR_UNSAFE",
-                    label,
-                    "parser input wrapper is missing or unsafe",
-                )
-            )
-        if not _files_are_pairwise_distinct(
-            (parser_path, raw_path, prompt_path, response_path)
-        ):
-            issues.append(
-                _issue(
-                    "CONTROLLER_RAW_CAPTURE_NOT_DISTINCT",
-                    label,
-                    "parser input, raw wrapper, controller prompt, and transport "
-                    "outerHTML must be four distinct regular files",
-                )
-            )
-        parser_bytes: bytes | None = None
-        if parser_path is not None:
-            try:
-                parser_bytes = parser_path.read_bytes()
-            except OSError:
-                pass
-        if parser_path is not None and parser_bytes is None:
-            issues.append(
-                _issue(
-                    "CONTROLLER_PARSER_INPUT_UNREADABLE",
-                    label,
-                    "parser input wrapper is unreadable",
-                )
-            )
-        if raw_bytes is not None and raw_bytes != parser_bytes:
-            issues.append(
-                _issue(
-                    "CONTROLLER_PARSER_ROUND_TRIP_MISMATCH",
-                    label,
-                    "parser input bytes differ from the preserved raw wrapper bytes",
-                )
-            )
-        if (
-            isinstance(payload, str)
-            and _portable_basename(payload)
-            and prompt_bytes is not None
-            and prompt_bytes != transport_fallback_prompt(payload).encode("utf-8")
-        ):
-            issues.append(
-                _issue(
-                    "CONTROLLER_TRANSPORT_PROMPT_MISMATCH",
-                    label,
-                    "preserved transport prompt differs from the exact "
-                    "controller-generated one-file prompt",
-                )
-            )
-        code_bytes: bytes | None = None
-        if response_bytes is not None:
-            try:
-                code_bytes = _extract_single_code_block_bytes(response_bytes)
-            except ValueError as exc:
-                issues.append(
-                    _issue(
-                        "CONTROLLER_TRANSPORT_RESPONSE_INVALID",
-                        label,
-                        str(exc),
-                    )
-                )
-        if code_bytes is not None and (
-            raw_bytes is None
-            or parser_bytes is None
-            or code_bytes != raw_bytes
-            or code_bytes != parser_bytes
-        ):
-            issues.append(
-                _issue(
-                    "CONTROLLER_TRANSPORT_PROVENANCE_MISMATCH",
-                    label,
-                    "the one browser code block does not equal both the preserved "
-                    "raw wrapper and parser input byte-for-byte",
-                )
-            )
-    if set(captured_parser_inputs) != active_wrappers:
+    if not attempts_contract_valid:
         issues.append(
             _issue(
-                "CONTROLLER_WRAPPER_CAPTURE_ROSTER_MISMATCH",
-                "controller_record.json:$.wrapper_captures",
-                "every active Base64 wrapper requires one exact prompt, complete "
-                "response, raw code-text, and parser-input capture",
+                "CONTROLLER_TRANSPORT_ATTEMPT_INVALID",
+                "controller_record.json:$.transport_attempts",
+                "transport attempt roster or fields differ from the strict contract",
             )
         )
+    try:
+        expected_captures, expected_attempts = _capture_transport_inventory(root)
+    except (OSError, ValueError, TypeError) as exc:
+        issues.append(
+            _issue(
+                "CONTROLLER_TRANSPORT_CAPTURE_INVALID",
+                "controller_record.json:$.transport_attempts",
+                str(exc),
+            )
+        )
+    else:
+        if captures_contract_valid and captures != expected_captures:
+            issues.append(
+                _issue(
+                    "CONTROLLER_WRAPPER_CAPTURE_ROSTER_MISMATCH",
+                    "controller_record.json:$.wrapper_captures",
+                    "wrapper captures differ from independently bound transport bytes",
+                )
+            )
+        if attempts_contract_valid and attempts != expected_attempts:
+            issues.append(
+                _issue(
+                    "CONTROLLER_TRANSPORT_ATTEMPT_ROSTER_MISMATCH",
+                    "controller_record.json:$.transport_attempts",
+                    "transport attempts differ from exact prompt/response captures",
+                )
+            )
+        if observed_controls_contract_valid:
+            attempted_chunk_zero = {
+                item["payload_filename"]
+                for item in expected_attempts
+                if item["chunk_index"] == 0
+            }
+            missing_fallback_attempts = sorted(
+                set(observed_controls)
+                - set(expected_output_filenames)
+                - attempted_chunk_zero
+            )
+            if missing_fallback_attempts:
+                issues.append(
+                    _issue(
+                        "CONTROLLER_FALLBACK_ATTEMPT_MISSING",
+                        "controller_record.json:$.transport_attempts",
+                        "visible but unacquired output controls require a preserved "
+                        f"chunk-zero fallback attempt: {missing_fallback_attempts!r}",
+                    )
+                )
     return issues
-
 
 def _stable_read(path: Path) -> bytes:
     before = path.stat()
@@ -1120,6 +1658,7 @@ def build_controller_record(
     output_filenames: Iterable[str],
     session_reference: str,
     observability_boundary: str,
+    output_control_filenames: Iterable[str] = (),
 ) -> dict[str, Any]:
     """Capture an explicit, independent controller inventory.
 
@@ -1185,64 +1724,7 @@ def build_controller_record(
             raise ValueError(f"observed output is unavailable: {filename}")
         outputs.append(output_record(filename, _stable_read(path)))
 
-    captures: list[dict[str, Any]] = []
-    for parser_path in sorted(root.glob("*.export.json")):
-        if not parser_path.is_file() or parser_path.is_symlink():
-            raise ValueError(f"active wrapper is unsafe: {parser_path.name}")
-        payload = parser_path.name[: -len(".export.json")]
-        if not _portable_basename(payload):
-            raise ValueError(f"wrapper payload name is unsafe: {payload}")
-        raw_name, transport_prompt_name, transport_response_name = (
-            _transport_capture_names(payload)
-        )
-        raw_path = _safe_file(root, raw_name)
-        transport_prompt_path = _safe_file(root, transport_prompt_name)
-        transport_response_path = _safe_file(root, transport_response_name)
-        if not _files_are_pairwise_distinct(
-            (
-                parser_path,
-                raw_path,
-                transport_prompt_path,
-                transport_response_path,
-            )
-        ):
-            raise ValueError(
-                f"distinct fallback provenance files are unavailable for: {payload}"
-            )
-        assert raw_path is not None
-        assert transport_prompt_path is not None
-        assert transport_response_path is not None
-        raw = _stable_read(raw_path)
-        parser = _stable_read(parser_path)
-        transport_prompt = _stable_read(transport_prompt_path)
-        transport_response = _stable_read(transport_response_path)
-        expected_transport_prompt = transport_fallback_prompt(payload).encode("utf-8")
-        if transport_prompt != expected_transport_prompt:
-            raise ValueError(
-                f"transport prompt differs from controller output: {payload}"
-            )
-        if raw != parser:
-            raise ValueError(f"raw/parser round trip differs: {parser_path.name}")
-        code_bytes = _extract_single_code_block_bytes(transport_response)
-        if code_bytes != raw or code_bytes != parser:
-            raise ValueError(
-                f"transport code block differs from raw/parser bytes: {payload}"
-            )
-        captures.append(
-            {
-                "payload_filename": payload,
-                "raw_filename": raw_name,
-                "parser_input_filename": parser_path.name,
-                "raw_bytes": len(raw),
-                "raw_sha256": sha256_bytes(raw),
-                "transport_prompt_filename": transport_prompt_name,
-                "transport_prompt_bytes": len(transport_prompt),
-                "transport_prompt_sha256": sha256_bytes(transport_prompt),
-                "transport_response_filename": transport_response_name,
-                "transport_response_bytes": len(transport_response),
-                "transport_response_sha256": sha256_bytes(transport_response),
-            }
-        )
+    captures, attempts = _capture_transport_inventory(root)
 
     prompt_path = _safe_file(root, "preview_prompt.txt")
     if prompt_path is None:
@@ -1257,6 +1739,21 @@ def build_controller_record(
     raw_response = _stable_read(raw_response_path)
     if not raw_response:
         raise ValueError("complete raw response capture must not be empty")
+    output_control_names = list(output_control_filenames)
+    _assert_portable_unique_basenames(
+        output_control_names,
+        "observed output-control filenames",
+    )
+    output_control_names = sorted(output_control_names)
+    _, response_controls = _inspect_response_outer_html(
+        raw_response,
+        allowed_file_controls=set(output_names) | set(output_control_names),
+    )
+    if output_control_names != list(response_controls):
+        raise ValueError(
+            "observed output controls must equal the portable generated-file "
+            "button aria-labels in the bound response"
+        )
     return {
         "controller_record_version": CONTROLLER_RECORD_VERSION,
         "case_id": case_id,
@@ -1273,7 +1770,9 @@ def build_controller_record(
         "candidate_identity": candidate_identity,
         "controller_artifacts": controller_artifacts,
         "inputs": inputs,
+        "observed_output_controls": output_control_names,
         "observed_outputs": outputs,
+        "transport_attempts": attempts,
         "wrapper_captures": captures,
     }
 
@@ -1300,6 +1799,56 @@ def atomic_write(path: Path, data: bytes) -> None:
             pass
 
 
+def assemble_verified_chunk_files(
+    wrapper_paths: Iterable[Path],
+    destination: Path,
+) -> dict[str, Any]:
+    """Assemble verified wrappers and create, or verify, one exact payload file."""
+
+    paths = list(wrapper_paths)
+    if not paths:
+        raise ValueError("at least one wrapper path is required")
+    data: list[bytes] = []
+    parsed_names: list[tuple[str, int]] = []
+    for path in paths:
+        if _is_link_or_junction(path) or not path.is_file():
+            raise ValueError(f"wrapper path is missing, linked, or not a file: {path}")
+        parsed = _parse_indexed_name(path.name, INDEXED_WRAPPER_RE)
+        if parsed is None:
+            raise ValueError(f"wrapper path name is not canonical indexed transport: {path}")
+        parsed_names.append(parsed)
+        data.append(_stable_read(path))
+    filename, payload = assemble_verified_chunks(data)
+    if parsed_names != [
+        (filename, index)
+        for index in range(len(parsed_names))
+    ]:
+        raise ValueError(
+            "wrapper path names must match one payload in contiguous index order"
+        )
+    if destination.name != filename:
+        raise ValueError(
+            "assembly output basename must equal the wrapper payload filename"
+        )
+    write_state = "created"
+    if destination.exists() or destination.is_symlink():
+        if _is_link_or_junction(destination) or not destination.is_file():
+            raise ValueError("refusing to replace a linked or non-file payload")
+        if _stable_read(destination) != payload:
+            raise ValueError("refusing to overwrite an existing different payload")
+        write_state = "verified_unchanged"
+    else:
+        atomic_write(destination, payload)
+    if _stable_read(destination) != payload:
+        raise ValueError("assembled payload failed post-write verification")
+    return {
+        "filename": filename,
+        "bytes": len(payload),
+        "sha256": sha256_bytes(payload),
+        "write_state": write_state,
+    }
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="gpt_eval_controller.py",
@@ -1322,11 +1871,21 @@ def _parser() -> argparse.ArgumentParser:
         dest="output_filenames",
         help="independently observed candidate output basename; repeat for every output",
     )
+    build.add_argument(
+        "--observed-control",
+        action="append",
+        default=[],
+        dest="output_control_filenames",
+        help=(
+            "portable filename explicitly observed in a matching file-control "
+            "button aria-label; repeat for every observed control"
+        ),
+    )
     build.add_argument("--session-reference", required=True)
     build.add_argument("--observability-boundary", required=True)
     transport = subparsers.add_parser(
         "transport-request",
-        help="emit the exact one-file fallback prompt with no trailing newline",
+        help="emit one exact one-file/one-index fallback prompt without a newline",
     )
     transport.add_argument(
         "--output",
@@ -1334,6 +1893,15 @@ def _parser() -> argparse.ArgumentParser:
         dest="payload_filename",
         help="one finalized output basename to acquire through the fallback",
     )
+    transport.add_argument("--chunk-index", required=True, type=int)
+    transport.add_argument("--expect-payload-sha256")
+    transport.add_argument("--expect-encoded-sha256")
+    assemble = subparsers.add_parser(
+        "assemble-chunks",
+        help="verify and assemble one complete ordered transport chunk sequence",
+    )
+    assemble.add_argument("wrappers", nargs="+", type=Path)
+    assemble.add_argument("--output", required=True, type=Path, dest="destination")
     return parser
 
 
@@ -1341,13 +1909,18 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "transport-request":
         try:
-            prompt = transport_fallback_prompt(args.payload_filename)
+            prompt = transport_fallback_prompt(
+                args.payload_filename,
+                args.chunk_index,
+                expected_payload_sha256=args.expect_payload_sha256,
+                expected_encoded_sha256=args.expect_encoded_sha256,
+            )
         except (ValueError, TypeError) as exc:
             print(
                 json.dumps(
                     {
                         "controller": "transport_request",
-                        "output_version": "2.0",
+                        "output_version": "3.0",
                         "status": "blocked",
                         "error": str(exc),
                     },
@@ -1357,6 +1930,39 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 1
         print(prompt, end="")
+        return 0
+    if args.command == "assemble-chunks":
+        try:
+            result = assemble_verified_chunk_files(
+                args.wrappers,
+                args.destination,
+            )
+        except (OSError, ValueError, TypeError) as exc:
+            print(
+                json.dumps(
+                    {
+                        "controller": "assemble_chunks",
+                        "output_version": "3.0",
+                        "status": "blocked",
+                        "error": str(exc),
+                    },
+                    sort_keys=True,
+                    ensure_ascii=False,
+                )
+            )
+            return 1
+        print(
+            json.dumps(
+                {
+                    "controller": "assemble_chunks",
+                    "output_version": "3.0",
+                    "status": "pass",
+                    **result,
+                },
+                sort_keys=True,
+                ensure_ascii=False,
+            )
+        )
         return 0
     try:
         record = build_controller_record(
@@ -1368,6 +1974,7 @@ def main(argv: list[str] | None = None) -> int:
             output_filenames=args.output_filenames,
             session_reference=args.session_reference,
             observability_boundary=args.observability_boundary,
+            output_control_filenames=args.output_control_filenames,
         )
         destination = args.evidence_directory / "controller_record.json"
         atomic_write(destination, canonical_json_bytes(record))
@@ -1376,7 +1983,7 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(
                 {
                     "controller": "build_record",
-                    "output_version": "2.0",
+                    "output_version": "3.0",
                     "status": "blocked",
                     "error": str(exc),
                 },
@@ -1389,7 +1996,7 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(
             {
                 "controller": "build_record",
-                "output_version": "2.0",
+                "output_version": "3.0",
                 "status": "pass",
                 "record": str(destination.resolve()),
                 "sha256": sha256_bytes(destination.read_bytes()),

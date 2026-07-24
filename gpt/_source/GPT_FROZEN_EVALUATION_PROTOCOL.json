@@ -149,16 +149,20 @@
     "direct_download_event_or_unavailability_record_required": true,
     "model_mediated_base64_primary_proof_path": "forbidden",
     "base64_fallback_only_when_direct_download_is_unavailable_or_emits_no_download_event": true,
-    "fallback_prompt_source": "controller_generated_exact_one_file_request",
+    "fallback_prompt_source": "controller_generated_exact_one_file_one_index_request",
     "fallback_order": [
       "audit_return.json",
       "chatgpt_data_analysis_output.txt",
-      "remaining_generated_outputs_one_at_a_time"
+      "remaining_generated_outputs_one_file_and_index_at_a_time"
     ],
     "fallback_response_contract": "one_strict_json_object_in_one_code_block",
+    "fallback_transport_encoding": "zlib_then_canonical_base64_chunks",
+    "maximum_decoded_chunk_bytes": 2048,
+    "contiguous_chunk_indices_required": true,
+    "repeated_payload_and_encoded_identity_required": true,
     "raw_wrapper_bytes_source": "exact_code_block_text_bytes_not_reserialized",
     "transport_response_binding": "full_transport_response_outer_html",
-    "one_wrapper_per_transport_response": true,
+    "one_chunk_wrapper_per_transport_response": true,
     "base64_identity_scope": "exported_payload_actually_received",
     "base64_declared_size_and_sha256_must_match_decoded_bytes": true,
     "download_button_identity_from_base64": "forbidden",
