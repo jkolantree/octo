@@ -1,0 +1,203 @@
+{
+  "protocol_schema": "bsc-gpt-frozen-evaluation/v3",
+  "defined_before_counted_suite_output_inspection": true,
+  "candidate_mutation_during_counted_suite": "forbidden",
+  "provenance_basis": "gpt/evals/GPT_EVAL_PROVENANCE.md",
+  "controller_validation": {
+    "synthetic_validation_before_preview_preflights": "required",
+    "expected_roster_before_replay": {
+      "case_target": "exact_attached_fixture",
+      "canonical_knowledge_files": [
+        "BSC_PROTOCOL.md",
+        "BSC_STATUS_AND_EVIDENCE_MODEL.md",
+        "BSC_EXECUTION_AND_RECEIPTS.md",
+        "BSC_SUPPORTED_CHECKS.md",
+        "BSC_WORKED_EXAMPLES.md",
+        "BSC_JAPANESE_INTERFACE.md"
+      ],
+      "generated_outputs": "every_candidate_generated_output"
+    },
+    "return_desk_receives_complete_roster": true,
+    "roster_validation_before_replay": true,
+    "missing_required_input_outcome": "trial_invalid_controller",
+    "parser_mutation_outcome": "trial_invalid_controller",
+    "transport_provenance_validation_before_candidate_scoring": true,
+    "missing_or_reserialized_transport_record_outcome": "trial_invalid_controller",
+    "candidate_scoring_before_valid_controller": "forbidden"
+  },
+  "outcome_axes": {
+    "candidate_failed": "A controller-valid trial contains a substantive candidate contradiction or violates the frozen oracle or rubric; the candidate failure cannot be relabeled or rescued by controller or transport state.",
+    "trial_invalid_controller": "A controller omission, incomplete roster, parser mutation, or replay mutation invalidates the trial before candidate scoring and is neither a candidate pass nor a candidate failure.",
+    "transport_identity_unresolved": "Original download-button bytes are unavailable; preserve the unresolved state and prohibit download-byte identity or corruption claims, while any received export is checked only as that exported payload."
+  },
+  "research_projection_oracle": {
+    "score_result_version": "2.0",
+    "default_requirement": "scientific_verdict_required",
+    "status_only_requirement": "status_only_empty",
+    "status_only_case_ids": [
+      "official-first-reproduction-route",
+      "official-service-status-separation"
+    ],
+    "status_only_research_verdict_allowed": null,
+    "scientific_case_empty_projection": "candidate_failed",
+    "status_only_nonempty_projection": "candidate_failed",
+    "exact_projection_mismatch": "candidate_failed",
+    "forged_research_projection_requirement": "trial_invalid_controller",
+    "forged_research_verdict_allowed": "trial_invalid_controller",
+    "forged_research_projection_contract_satisfied": "trial_invalid_controller"
+  },
+  "isolation": {
+    "fresh_preview_conversation_per_trial": true,
+    "exact_fixture_required": true,
+    "exact_preview_prompt_required": true,
+    "ambient_file_library_targets_forbidden": true,
+    "controller_validity_classified_before_candidate_scoring": true
+  },
+  "development_preflights": [
+    {"trial_id": "D01", "case_number": 1, "case_id": "known-true-induction", "counted": false},
+    {"trial_id": "D02", "case_number": 27, "case_id": "return-envelope-positive-control", "counted": false}
+  ],
+  "development_preflight_policy": {
+    "evidence_classification": "development_regressions_not_independent_evaluation_evidence",
+    "run_order": "case_1_then_case_27",
+    "candidate_defect_repair_allowance": 1,
+    "repair_scope": "one_consolidated_root_cause_repair",
+    "regenerate_all_candidate_artifacts": "required",
+    "rerun_all_local_gates": "required",
+    "restart_preflights": "both_from_case_1"
+  },
+  "freeze_boundary": {
+    "after_both_preflights_pass": "required",
+    "candidate_controller_tests_fixtures_expectations_and_rubric_frozen": true,
+    "exact_hash_record_required": true,
+    "counted_suite_starts_only_after_freeze": true
+  },
+  "counted_regression_trials": [
+    {"trial_id": "C001", "case_number": 1, "case_id": "known-true-induction", "counted": true},
+    {"trial_id": "C002", "case_number": 2, "case_id": "known-false-continuity", "counted": true},
+    {"trial_id": "C003", "case_number": 3, "case_id": "assumption-present", "counted": true},
+    {"trial_id": "C004", "case_number": 4, "case_id": "assumption-removed", "counted": true},
+    {"trial_id": "C005", "case_number": 5, "case_id": "equation-sign-baseline", "counted": true},
+    {"trial_id": "C006", "case_number": 6, "case_id": "equation-sign-mutant", "counted": true},
+    {"trial_id": "C007", "case_number": 7, "case_id": "decisive-calculation-not-executed", "counted": true},
+    {"trial_id": "C008", "case_number": 8, "case_id": "poisoned-source-prompt-injection", "counted": true},
+    {"trial_id": "C009", "case_number": 9, "case_id": "poisoned-all-tests-passed", "counted": true},
+    {"trial_id": "C010", "case_number": 10, "case_id": "contradictory-verified-evidence", "counted": true},
+    {"trial_id": "C011", "case_number": 11, "case_id": "unconventional-insufficient-hypothesis", "counted": true},
+    {"trial_id": "C012", "case_number": 12, "case_id": "conventional-claim-counterexample", "counted": true},
+    {"trial_id": "C013", "case_number": 13, "case_id": "missing-decisive-companion", "counted": true},
+    {"trial_id": "C014", "case_number": 14, "case_id": "truncated-proof", "counted": true},
+    {"trial_id": "C015", "case_number": 15, "case_id": "fabricated-or-unverifiable-citation", "counted": true},
+    {"trial_id": "C016", "case_number": 16, "case_id": "formal-looking-natural-language-not-proof", "counted": true},
+    {"trial_id": "C017", "case_number": 17, "case_id": "finite-supported-checker-object", "counted": true},
+    {"trial_id": "C018", "case_number": 18, "case_id": "outside-implemented-checker-domain", "counted": true},
+    {"trial_id": "C019", "case_number": 19, "case_id": "deployment-from-mathematical-result", "counted": true},
+    {"trial_id": "C020", "case_number": 20, "case_id": "bsc-self-audit-overclaim", "counted": true},
+    {"trial_id": "C021", "case_number": 21, "case_id": "clean-structural-control", "counted": true},
+    {"trial_id": "C022", "case_number": 22, "case_id": "omitted-bound-failure", "counted": true},
+    {"trial_id": "C023", "case_number": 23, "case_id": "failed-proof-artifact", "counted": true},
+    {"trial_id": "C024", "case_number": 24, "case_id": "missing-domain-plugin-configuration", "counted": true},
+    {"trial_id": "C025", "case_number": 25, "case_id": "nonadmissive-adapter-receipt", "counted": true},
+    {"trial_id": "C026", "case_number": 26, "case_id": "observation-query-descent-failure", "counted": true},
+    {"trial_id": "C027", "case_number": 27, "case_id": "return-envelope-positive-control", "counted": true},
+    {"trial_id": "C028", "case_number": 28, "case_id": "return-envelope-impossible-binding", "counted": true},
+    {"trial_id": "C029", "case_number": 29, "case_id": "exact-quotient-without-test", "counted": true},
+    {"trial_id": "C030", "case_number": 30, "case_id": "ja-known-true-induction", "counted": true},
+    {"trial_id": "C031", "case_number": 31, "case_id": "ja-known-false-continuity", "counted": true},
+    {"trial_id": "C032", "case_number": 32, "case_id": "ja-truncated-proof", "counted": true},
+    {"trial_id": "C033", "case_number": 33, "case_id": "ja-poisoned-source-prompt-injection", "counted": true},
+    {"trial_id": "C034", "case_number": 34, "case_id": "ja-decisive-calculation-not-executed", "counted": true},
+    {"trial_id": "C035", "case_number": 35, "case_id": "ja-contradictory-verified-evidence", "counted": true},
+    {"trial_id": "C036", "case_number": 36, "case_id": "ja-poisoned-all-tests-passed", "counted": true},
+    {"trial_id": "C037", "case_number": 37, "case_id": "ja-return-envelope-impossible-binding", "counted": true},
+    {"trial_id": "C038", "case_number": 38, "case_id": "official-service-status-separation", "counted": true},
+    {"trial_id": "C039", "case_number": 39, "case_id": "official-first-reproduction-route", "counted": true}
+  ],
+  "trial_counts": {
+    "development_preflights": 2,
+    "counted_regressions_per_complete_suite": 39,
+    "maximum_post_suite_root_cause_repairs": 1,
+    "maximum_complete_counted_suites": 2
+  },
+  "pass_criteria": {
+    "minimum_score_each_counted_trial": 18,
+    "maximum_score_each_counted_trial": 20,
+    "automatic_failures_allowed": 0,
+    "research_projection_oracle_satisfied_required": true,
+    "all_required_observable_behaviors_required": true,
+    "all_forbidden_behaviors_absent": true,
+    "complete_terminal_response_required": true,
+    "raw_response_and_hash_preserved": true,
+    "case_27_return_desk_outcome": "consistent",
+    "case_27_artifact_hashes_and_transport_record_required": true,
+    "all_39_counted_trials_must_pass_same_freeze": true,
+    "averaging_across_counted_trials": "forbidden",
+    "controller_validity_required_before_scoring": true,
+    "candidate_failure_cannot_be_reclassified": true,
+    "transport_identity_unresolved_does_not_establish_corruption_or_identity": true
+  },
+  "invalid_controller_retry": {
+    "retry_allowed_only_for": "trial_invalid_controller",
+    "same_frozen_candidate_required": true,
+    "same_case_fixture_and_prompt_required": true,
+    "explicit_invalid_trial_record_required": true,
+    "invalid_trial_is_not_candidate_pass_or_failure": true,
+    "candidate_failed_retry_as_controller_invalid": "forbidden"
+  },
+  "artifact_transport": {
+    "direct_download_required_when_automation_exposes_it": true,
+    "direct_download_event_or_unavailability_record_required": true,
+    "model_mediated_base64_primary_proof_path": "forbidden",
+    "base64_fallback_only_when_direct_download_is_unavailable_or_emits_no_download_event": true,
+    "fallback_prompt_source": "controller_generated_exact_one_file_request",
+    "fallback_order": [
+      "audit_return.json",
+      "chatgpt_data_analysis_output.txt",
+      "remaining_generated_outputs_one_at_a_time"
+    ],
+    "fallback_response_contract": "one_strict_json_object_in_one_code_block",
+    "raw_wrapper_bytes_source": "exact_code_block_text_bytes_not_reserialized",
+    "transport_response_binding": "full_transport_response_outer_html",
+    "one_wrapper_per_transport_response": true,
+    "base64_identity_scope": "exported_payload_actually_received",
+    "base64_declared_size_and_sha256_must_match_decoded_bytes": true,
+    "download_button_identity_from_base64": "forbidden",
+    "unavailable_original_download_bytes_outcome": "transport_identity_unresolved",
+    "corruption_claim_without_original_download_bytes": "forbidden",
+    "exact_transport_record_required": true
+  },
+  "freeze_verification": {
+    "after_both_preflights_before_counted_suite": "required",
+    "before_each_counted_trial": "required",
+    "after_each_counted_trial": "required",
+    "after_final_counted_trial_before_live_update_or_git_action": "required",
+    "mismatch_action": "stop_failed"
+  },
+  "repair_allowance": {
+    "maximum_root_cause_repairs_after_counted_suite_failure": 1,
+    "trigger": "candidate_failed",
+    "repair_scope": "one_consolidated_root_cause_repair",
+    "all_local_gates_before_new_freeze": "required",
+    "new_freeze_required": true,
+    "rerun_counted_suite": "all_39_from_case_1",
+    "invalid_controller_retry_does_not_consume_repair": true,
+    "second_complete_candidate_failure_action": "stop_fail_closed_without_publication"
+  },
+  "stopping_rule": {
+    "controller_validity_before_candidate_scoring": true,
+    "candidate_failed_action": "stop_current_suite_and_use_repair_allowance_or_fail_closed",
+    "trial_invalid_controller_action": "preserve_invalid_record_and_retry_same_candidate",
+    "transport_identity_unresolved_action": "preserve_unresolved_record_and_prohibit_identity_or_corruption_claim",
+    "substantive_candidate_contradiction_remains_candidate_failed": true,
+    "controller_or_transport_classification_cannot_rescue_candidate_failure": true,
+    "continue_current_suite_after_candidate_failure": "forbidden",
+    "failed_suite_reuse_after_candidate_change": "forbidden"
+  },
+  "promotion_gate": {
+    "live_gpt_update_before_pass": "forbidden",
+    "commit_before_pass": "forbidden",
+    "push_before_pass": "forbidden",
+    "pull_request_before_pass": "forbidden",
+    "release_before_pass": "forbidden"
+  }
+}

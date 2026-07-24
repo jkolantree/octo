@@ -1,0 +1,857 @@
+{
+  "excluded_paths": [
+    "gpt/GPT_RELEASE_MANIFEST.json",
+    "gpt/SHA256SUMS"
+  ],
+  "file_count": 141,
+  "files": [
+    {
+      "bytes": 35372,
+      "category": "browser_return_desk",
+      "path": "pages/app.js",
+      "sha256": "d8bd4ce204a0877d3b615250f4e60c65bc7475010604d6ebadb79ff624ce12a6"
+    },
+    {
+      "bytes": 17174,
+      "category": "browser_return_desk",
+      "path": "pages/index.html",
+      "sha256": "d4d1e61ec9908230b2034654757437368142f46c6f843dd5d88ea990f5e7e735"
+    },
+    {
+      "bytes": 20276,
+      "category": "browser_return_desk",
+      "path": "pages/ja.html",
+      "sha256": "dc784e2f36f0ccc90d300554da6a879f17620164ca182a19545f1157972ea78b"
+    },
+    {
+      "bytes": 6529,
+      "category": "browser_return_desk",
+      "path": "pages/locale-en.js",
+      "sha256": "798cb29fea8bf0896f7004d0b4684bce5e4fc10afcf70b2b8e7776517f191dc4"
+    },
+    {
+      "bytes": 22183,
+      "category": "browser_return_desk",
+      "path": "pages/locale-ja.js",
+      "sha256": "d5fbec0337a414185c06636539da1b8486d4736b661e1537667c8c0875b8a232"
+    },
+    {
+      "bytes": 13672,
+      "category": "browser_return_desk",
+      "path": "pages/profile.js",
+      "sha256": "7d7f5ad3733c1b046d29e8c4b590e62706cbd444bfe33a91b6e68631ae6eee1e"
+    },
+    {
+      "bytes": 27456,
+      "category": "browser_return_desk",
+      "path": "pages/protocol/BSC_AUDIT_LLM_PACKET.md",
+      "sha256": "b9d70566fc9eaa2c3257f2f5c05dc1786ef7c473b6b3b44a5c679a64ea11f76e"
+    },
+    {
+      "bytes": 184,
+      "category": "browser_return_desk",
+      "path": "pages/protocol/meta.js",
+      "sha256": "fee46d3fc30747d3bb12b5f96f9b39332457f43e4880cf9bcc3a28450b290534"
+    },
+    {
+      "bytes": 75464,
+      "category": "browser_return_desk",
+      "path": "pages/return-desk-core.js",
+      "sha256": "bff3f088a6bad88a587bbfdc8a47c94ba51dc7c7173d8d21fe265ee6df2585c1"
+    },
+    {
+      "bytes": 7824,
+      "category": "browser_return_desk",
+      "path": "scripts/build_publication_assets.py",
+      "sha256": "8871392adac4691458a5b06e4d8ef38bb4d07a8b7ad471512bb59f88ea288259"
+    },
+    {
+      "bytes": 21734,
+      "category": "browser_return_desk",
+      "path": "scripts/check_pages.py",
+      "sha256": "124f6e24a480f4d492dfc23ce8192ce9334c21210fe3d77f4ef890a27de5935c"
+    },
+    {
+      "bytes": 7486,
+      "category": "candidate",
+      "path": "gpt/GPT_INSTRUCTIONS.md",
+      "sha256": "322ba066bdfd5810be6744b70ee4b1e25295c034418aff03e9efa741e6a91dcd"
+    },
+    {
+      "bytes": 25813,
+      "category": "candidate",
+      "path": "gpt/_source/GPT_PROFILE.json",
+      "sha256": "eeb1e57cf69790d33ff168498ff0117ce66127a07e7ef4ade7e36a8d2885e9e4"
+    },
+    {
+      "bytes": 52775,
+      "category": "candidate",
+      "path": "gpt/knowledge/BSC_EXECUTION_AND_RECEIPTS.md",
+      "sha256": "4c8a35d3386e2e19b0667d1e4e6e1094c6b8499179ce0d581dbfcd6164764656"
+    },
+    {
+      "bytes": 13025,
+      "category": "candidate",
+      "path": "gpt/knowledge/BSC_JAPANESE_INTERFACE.md",
+      "sha256": "42e73b071b463446fff2ef3077e55cf27181561d378597172f0060914aac3f5d"
+    },
+    {
+      "bytes": 28120,
+      "category": "candidate",
+      "path": "gpt/knowledge/BSC_PROTOCOL.md",
+      "sha256": "8ce5f916e440296ddf63cde7c0d23dc337093c45db681eccf978c706270a7470"
+    },
+    {
+      "bytes": 8328,
+      "category": "candidate",
+      "path": "gpt/knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md",
+      "sha256": "72ab8a1b62021b21df486daef48a2f29f649f30d3f6bf052aafe2d2cab32194f"
+    },
+    {
+      "bytes": 43470,
+      "category": "candidate",
+      "path": "gpt/knowledge/BSC_SUPPORTED_CHECKS.md",
+      "sha256": "13d5d33895021ddc9a0e6a6a7630956c4a85590283c9b2c1fdf1cfb28f5912e4"
+    },
+    {
+      "bytes": 30600,
+      "category": "candidate",
+      "path": "gpt/knowledge/BSC_WORKED_EXAMPLES.md",
+      "sha256": "4234439805e90b3e3a2637cd4ced4e7019c3ff7b0e7ab1950cf19a15f82b2c24"
+    },
+    {
+      "bytes": 66044,
+      "category": "evaluation",
+      "path": "gpt/_source/GPT_EVAL_SPEC.json",
+      "sha256": "e1c71255591526ea462939896a52760c4fd799d09ecbee50405bbdaf51648a2e"
+    },
+    {
+      "bytes": 75211,
+      "category": "evaluation",
+      "path": "gpt/evals/GPT_EVAL_CASES.jsonl",
+      "sha256": "76195ee4979f58b75f537533fbe72b3186368ca56dc766516d6446796e8d429e"
+    },
+    {
+      "bytes": 62647,
+      "category": "evaluation",
+      "path": "gpt/evals/GPT_EVAL_EXPECTATIONS.md",
+      "sha256": "8f3b35e25c8eb50e66fb731a26a88b0a4ad14595a3a381127341c632322acd90"
+    },
+    {
+      "bytes": 13752,
+      "category": "evaluation",
+      "path": "gpt/evals/GPT_EVAL_PROVENANCE.md",
+      "sha256": "a42390f6f3fb49260009025e7def791934937a1d02713cdac48f1de81c627424"
+    },
+    {
+      "bytes": 12239,
+      "category": "evaluation",
+      "path": "gpt/evals/GPT_FROZEN_EVALUATION_PROTOCOL.json",
+      "sha256": "7e2311c628d6164494c5c9396e4d357ca96f876a8f09286b07d80d85b8a46430"
+    },
+    {
+      "bytes": 14028,
+      "category": "evaluation",
+      "path": "gpt/evals/GPT_INVARIANT_ENFORCEMENT_MATRIX.md",
+      "sha256": "8beecd598be7a18ff586a57ea41feab39d713112b91e1218352d35a2d9072b34"
+    },
+    {
+      "bytes": 5665,
+      "category": "evaluation",
+      "path": "gpt/evals/GPT_MANUAL_SCORECARD.md",
+      "sha256": "97df4eb331eef40f391663fa9fb143c39eaf3f3dd87e1e27ae3a11c19054642a"
+    },
+    {
+      "bytes": 97,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/assumption_present.txt",
+      "sha256": "816707b10fecd335b82de0198f7e39f19e29ab3716f5b407612f3a9170438f22"
+    },
+    {
+      "bytes": 79,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/assumption_removed.txt",
+      "sha256": "df442501cd8f5b7c3066cdfdfb0af953ed77c3bd1302bbb62dad69c359c19f9f"
+    },
+    {
+      "bytes": 145,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/bsc_self_audit.txt",
+      "sha256": "0f68f541f44746bdf8f044a70676477feffcf253403858c9aba69513ac799123"
+    },
+    {
+      "bytes": 4089,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/claim_valid.json",
+      "sha256": "cd8ffa1c7911ad77db7130c7fc12925e69465b513dfeab99916ca0a3c598ee4d"
+    },
+    {
+      "bytes": 328,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/complex_valid_transport.json",
+      "sha256": "715dc4e8371ff8543f2b3e80d3d0090b61964d8d9b7d512625d373ee9634ed5b"
+    },
+    {
+      "bytes": 200,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/conventional_counterexample.txt",
+      "sha256": "f829fb29fd344ed3cffce10709bd4315bf45b692c177a31d50554dbfac1fb788"
+    },
+    {
+      "bytes": 183,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/decisive_calculation_not_executed.txt",
+      "sha256": "3206eb86bfc8d58d8abca36d6a29828c80ece690d2abcdfcf345c92fe6796625"
+    },
+    {
+      "bytes": 319,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/deployment_overreach.txt",
+      "sha256": "24b7463a9ae7fe0193a3ca25c21b4ce2ecd07261783600ba300e0b083c9245a5"
+    },
+    {
+      "bytes": 30,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/equation_sign_baseline.txt",
+      "sha256": "a93303149b41a0e14315a32f80864d84afb357ae6c15ceb60572daaf7e546805"
+    },
+    {
+      "bytes": 31,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/equation_sign_mutant.txt",
+      "sha256": "0f55a3bff399c888fc31d855fc7b05b8f037bce7099b5f6edeb84961a9e821b7"
+    },
+    {
+      "bytes": 221,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/exact_quotient_missing_test.txt",
+      "sha256": "22b11a14c11d63696fadf9f1a8d8f2683e3bfeb837088e2d6fa133622f4e1ad2"
+    },
+    {
+      "bytes": 215,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/formal_looking_not_proof.txt",
+      "sha256": "6aa80aa353582d60df75b08b340bc335be237cc1e2fbab2177a66a8e0da219ff"
+    },
+    {
+      "bytes": 241,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/ja_contradictory_verified_evidence.txt",
+      "sha256": "8309ad2972c009c4c6cbff03e626a21cf7c8c97de7c7c28800c4e7c0c0bea06f"
+    },
+    {
+      "bytes": 233,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/ja_decisive_calculation_not_executed.txt",
+      "sha256": "38dad3799f7de09394d00064b15965e5b2057a82b67932b1fd5f00b37b3e495f"
+    },
+    {
+      "bytes": 111,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/ja_known_false_continuity.txt",
+      "sha256": "ff004d2520934394d40608e06ca1fbb4898e1769195a6724317682422814c856"
+    },
+    {
+      "bytes": 316,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/ja_known_true_induction.txt",
+      "sha256": "d51cd7a21747ccdf5416a4b5f12e14c304a346f08f063f3f34d169ead0976a98"
+    },
+    {
+      "bytes": 343,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/ja_poisoned_all_tests_passed.txt",
+      "sha256": "f520b0f8ddb327ddf78fe658c3a1e877380bc4c41ecbd3f130df116084faeb19"
+    },
+    {
+      "bytes": 300,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/ja_poisoned_prompt_injection.txt",
+      "sha256": "0298e4819982de96be937faca8d2af6c67e761d788641c17dbfeaf41e59e1421"
+    },
+    {
+      "bytes": 198,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/ja_return_envelope_impossible_binding.txt",
+      "sha256": "0e3ff1fb525108b0e3009a89f6cbf4be7d6f32fc1aab4802417dc62b1b8943fa"
+    },
+    {
+      "bytes": 297,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/ja_truncated_proof.txt",
+      "sha256": "bd85579d3f98a6b3e936efc669e3d64e5939d548a58368945d272dea5a872979"
+    },
+    {
+      "bytes": 102,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/known_false_continuity.txt",
+      "sha256": "5083027d7cc53f76f8e1b3cea392fbefbcfcc3feda693973f9aabd65ecfd4378"
+    },
+    {
+      "bytes": 264,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/known_true_induction.txt",
+      "sha256": "85050a5818cf4682ef0e0f9a34ff8a0000f7576c8d53f25735cd78f1fc752ce7"
+    },
+    {
+      "bytes": 204,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/missing_companion_report.txt",
+      "sha256": "abdf545e894b81d36bd94caf46c29ea1ec34e953b91eee08b5d0253574ae487b"
+    },
+    {
+      "bytes": 346,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/nonadmissive_adapter_receipt.txt",
+      "sha256": "7740ff19d0fb76d497ddff87cb44330cc360eb436a19aa69185dd7f1d03e5a03"
+    },
+    {
+      "bytes": 4508,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/null_conflicting_referenced.json",
+      "sha256": "9fcaa16bf7ff0929db7635ccfabc1df293ed3f50733c6acec304161bf4e177ef"
+    },
+    {
+      "bytes": 4428,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/null_failed_proof.json",
+      "sha256": "d46991d126c70d4549dcb64e0fa86bb3b7ad9a495cdc167d7d3107dad3b1c275"
+    },
+    {
+      "bytes": 4192,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/null_missing_arithmetic_config.json",
+      "sha256": "1c3905bcdbcb5b2f00ffb4c5b7436082ed3b3d731cf37da2a0a3ba902d3a5149"
+    },
+    {
+      "bytes": 4468,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/null_omitted_bound_failure.json",
+      "sha256": "7c16d6290297330502a4c4f4a61e40f4ebed06007ae212a897a2a96d342e3470"
+    },
+    {
+      "bytes": 260,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/observation_failure.json",
+      "sha256": "ca54979d0f17cc5e16581674b9972abcdafea137802c08971a57fad1359ced9f"
+    },
+    {
+      "bytes": 320,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/official_first_reproduction.txt",
+      "sha256": "4901fa382be1ea1f83e2019a79a19917a13eac1234be799bfac24c67ba4584db"
+    },
+    {
+      "bytes": 367,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/official_service_status.txt",
+      "sha256": "85220abcda81a9842de84834fdb8047af612ccbebb81901ebb21be4881122480"
+    },
+    {
+      "bytes": 215,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/outside_checker_domain.txt",
+      "sha256": "b08a51b7d84352c6850ab99052130b82825e2528ee05dc08e585a38efcb883ed"
+    },
+    {
+      "bytes": 297,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/poisoned_all_tests_passed.txt",
+      "sha256": "c37217da049c48589454927ea11143814fff98681ecb9317f9e8be512792aea4"
+    },
+    {
+      "bytes": 253,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/poisoned_prompt_injection.txt",
+      "sha256": "0e441a245c505f6cbd9348a159cd3a92fee1f39f5dec2220323d0967d18e781f"
+    },
+    {
+      "bytes": 179,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/return_envelope_impossible_binding.txt",
+      "sha256": "0785d84275df8cbadab886a44584240611ebb8a6e7fdfe8cdc206534819c6ea3"
+    },
+    {
+      "bytes": 180,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/return_envelope_positive_control.txt",
+      "sha256": "73a3a4ea86b8d309985f7c03f2227034fba236190f756de517a182b95a43e7db"
+    },
+    {
+      "bytes": 269,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/truncated_proof.txt",
+      "sha256": "5fa9c984cee9ef652389a4a9e7184f5b4b37214420c333875c00e60777c3c824"
+    },
+    {
+      "bytes": 599,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/unconventional_hypothesis.txt",
+      "sha256": "9a064609e527872783d4e12f69b826a76147fe87aa13591cffc27568e0685ef2"
+    },
+    {
+      "bytes": 174,
+      "category": "evaluation_fixtures",
+      "path": "gpt/evals/fixtures/unverifiable_citation.txt",
+      "sha256": "ea707fb98f37e748907a3db029d9f5e99ffd41feab60573c58092be72514cbd8"
+    },
+    {
+      "bytes": 27456,
+      "category": "protocol_and_provenance",
+      "path": "BSC_AUDIT_LLM_PACKET.md",
+      "sha256": "b9d70566fc9eaa2c3257f2f5c05dc1786ef7c473b6b3b44a5c679a64ea11f76e"
+    },
+    {
+      "bytes": 6843,
+      "category": "protocol_and_provenance",
+      "path": "docs/ALPHA8_PREFLIGHT_REPAIR_ADDENDUM.md",
+      "sha256": "058db2e0ca42145790f1dc9fac9761d36b7e21cf1d3a061cd4a7e6ac4cdb980d"
+    },
+    {
+      "bytes": 2959,
+      "category": "protocol_and_provenance",
+      "path": "docs/R01_FORENSIC_ADDENDUM.md",
+      "sha256": "670f66b0e442e40239bd3b2c805e3e9fae4057a643a9845681bc4d27956c77f8"
+    },
+    {
+      "bytes": 13752,
+      "category": "protocol_and_provenance",
+      "path": "gpt/_source/GPT_EVAL_PROVENANCE.md",
+      "sha256": "a42390f6f3fb49260009025e7def791934937a1d02713cdac48f1de81c627424"
+    },
+    {
+      "bytes": 12239,
+      "category": "protocol_and_provenance",
+      "path": "gpt/_source/GPT_FROZEN_EVALUATION_PROTOCOL.json",
+      "sha256": "7e2311c628d6164494c5c9396e4d357ca96f876a8f09286b07d80d85b8a46430"
+    },
+    {
+      "bytes": 14028,
+      "category": "protocol_and_provenance",
+      "path": "gpt/_source/GPT_INVARIANT_ENFORCEMENT_MATRIX.md",
+      "sha256": "8beecd598be7a18ff586a57ea41feab39d713112b91e1218352d35a2d9072b34"
+    },
+    {
+      "bytes": 4096,
+      "category": "python_return_desk",
+      "path": "schemas/adapter-receipt-v0.1.schema.json",
+      "sha256": "74690692c85a7a43dac5c38fccc28f3a1a9f8ee5905c1a0c488dc016248cbe3c"
+    },
+    {
+      "bytes": 1827,
+      "category": "python_return_desk",
+      "path": "schemas/atomic-modulus-v0.3.schema.json",
+      "sha256": "8aa0635953ee6813f4ec065ca4038e843b8df2c4328e7a8ab2d26b04d9f8dce5"
+    },
+    {
+      "bytes": 10405,
+      "category": "python_return_desk",
+      "path": "schemas/audit-return-v0.1.schema.json",
+      "sha256": "25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799"
+    },
+    {
+      "bytes": 5908,
+      "category": "python_return_desk",
+      "path": "schemas/claim-manifest-v0.3.schema.json",
+      "sha256": "675a3675734644629f2a0bd8958f02e0e8884a50a87bc17c9a7fe74143bf9c67"
+    },
+    {
+      "bytes": 2273,
+      "category": "python_return_desk",
+      "path": "schemas/complex-v0.3.schema.json",
+      "sha256": "bcc25849471250110a665673c3e73779a01c455bf82f9c94287ccc65ba7e05f0"
+    },
+    {
+      "bytes": 925,
+      "category": "python_return_desk",
+      "path": "schemas/defect-v0.3.schema.json",
+      "sha256": "29cf8d8c2c3846bbefae3b75dbfcf5c1fe3f3f171bb1643bbade032af0bcd31b"
+    },
+    {
+      "bytes": 3624,
+      "category": "python_return_desk",
+      "path": "schemas/derived-holonomy-v0.1.schema.json",
+      "sha256": "230ad65db921612bdbcf74bf807dc2b6d7ce306ebf1b4580a2508c9a293b9e52"
+    },
+    {
+      "bytes": 1106,
+      "category": "python_return_desk",
+      "path": "schemas/observation-v0.3.schema.json",
+      "sha256": "848f1fba814ffde277493997312bf7a3e98ec73637fbe5b0bbe211be0184b0ee"
+    },
+    {
+      "bytes": 1744,
+      "category": "python_return_desk",
+      "path": "schemas/output-0.3.0.schema.json",
+      "sha256": "62a0d9708e84c713af2e48fee504ef8bacbfb197fecd025be399a4dd814d9f1d"
+    },
+    {
+      "bytes": 140,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/__init__.py",
+      "sha256": "35bfd61707f93ff0c73334ec4d12a83312871438fc22cf56810d71449c34432e"
+    },
+    {
+      "bytes": 7202,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/adapters.py",
+      "sha256": "8c42e45e17233a0c8e294e13af184937b80f1aaeed984795d9439a76c709067e"
+    },
+    {
+      "bytes": 6015,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/atomic.py",
+      "sha256": "8dfc8d8f48126749eb01393d6224ec41a8610231cd788c47584d06a99bbe885a"
+    },
+    {
+      "bytes": 14984,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/bicomplex.py",
+      "sha256": "76a6947b60f16af848a74f507a065f4ae16df7da4198015cfbf0e3a14756de26"
+    },
+    {
+      "bytes": 13735,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/cli.py",
+      "sha256": "e51918f3fa35dce859bcf481a0b516931708c3b4809fe3c1c095956fbfbb8dee"
+    },
+    {
+      "bytes": 4069,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/defect.py",
+      "sha256": "d49701c69f2e4a21f565b0e911a6352d43f343b21b90d6ce3c4f3de8a176ab8a"
+    },
+    {
+      "bytes": 6413,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/exact.py",
+      "sha256": "fc74aaebb7518a7d81c89192a399d5f5196c711046590e0ccb782b125f7bde87"
+    },
+    {
+      "bytes": 7392,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/exact_linear.py",
+      "sha256": "eb5ded01be387a22578bba5de41253609697edc09d18445e8b31e7ac455ee2f0"
+    },
+    {
+      "bytes": 1756,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/findings.py",
+      "sha256": "7de5a0953f8e87b61d75c55cc2fdfa6887ef45ca8c69df9c10cba5aea514c771"
+    },
+    {
+      "bytes": 10640,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/gates.py",
+      "sha256": "5c7029f5d0f289940fec17123a7bfeafaec974f103799c3993e96633f3842768"
+    },
+    {
+      "bytes": 22425,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/holonomy.py",
+      "sha256": "8fe2f7888d1ef59ec45df2ddc9a88c208d75bd79e98a41c76405850139d7ddd2"
+    },
+    {
+      "bytes": 17562,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/manifest.py",
+      "sha256": "06423ceaf0a51b1e496fc627af797c5b536de7915a89389145c3a65e99ccbcce"
+    },
+    {
+      "bytes": 8709,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/observation.py",
+      "sha256": "efdd7af0faa30fcf908ccee9c75a2dcd148a88ab0d18fe25fdc70a87dd228975"
+    },
+    {
+      "bytes": 6781,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/plugins.py",
+      "sha256": "24fbce2d7fe101aaed7e48da3569b87b9b80a2afd3ac20a23d341b91ed837a6d"
+    },
+    {
+      "bytes": 3767,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/provenance.py",
+      "sha256": "efec585b10c825d0d670ca0f427a2e2964826ed0938b4eaef3ad4bf5b6e3af91"
+    },
+    {
+      "bytes": 82022,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/return_desk.py",
+      "sha256": "792d67b11444c3b651c16751e3318ce56e5c89d13d91c068018245cdaee0036a"
+    },
+    {
+      "bytes": 4096,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/schema_data/adapter-receipt-v0.1.schema.json",
+      "sha256": "74690692c85a7a43dac5c38fccc28f3a1a9f8ee5905c1a0c488dc016248cbe3c"
+    },
+    {
+      "bytes": 1827,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/schema_data/atomic-modulus-v0.3.schema.json",
+      "sha256": "8aa0635953ee6813f4ec065ca4038e843b8df2c4328e7a8ab2d26b04d9f8dce5"
+    },
+    {
+      "bytes": 10405,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/schema_data/audit-return-v0.1.schema.json",
+      "sha256": "25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799"
+    },
+    {
+      "bytes": 5908,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/schema_data/claim-manifest-v0.3.schema.json",
+      "sha256": "675a3675734644629f2a0bd8958f02e0e8884a50a87bc17c9a7fe74143bf9c67"
+    },
+    {
+      "bytes": 2273,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/schema_data/complex-v0.3.schema.json",
+      "sha256": "bcc25849471250110a665673c3e73779a01c455bf82f9c94287ccc65ba7e05f0"
+    },
+    {
+      "bytes": 925,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/schema_data/defect-v0.3.schema.json",
+      "sha256": "29cf8d8c2c3846bbefae3b75dbfcf5c1fe3f3f171bb1643bbade032af0bcd31b"
+    },
+    {
+      "bytes": 3624,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/schema_data/derived-holonomy-v0.1.schema.json",
+      "sha256": "230ad65db921612bdbcf74bf807dc2b6d7ce306ebf1b4580a2508c9a293b9e52"
+    },
+    {
+      "bytes": 1106,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/schema_data/observation-v0.3.schema.json",
+      "sha256": "848f1fba814ffde277493997312bf7a3e98ec73637fbe5b0bbe211be0184b0ee"
+    },
+    {
+      "bytes": 1744,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/schema_data/output-0.3.0.schema.json",
+      "sha256": "62a0d9708e84c713af2e48fee504ef8bacbfb197fecd025be399a4dd814d9f1d"
+    },
+    {
+      "bytes": 7944,
+      "category": "python_return_desk",
+      "path": "src/bsc_audit/schema_validation.py",
+      "sha256": "0967ef61682a42ba029ecb0044b07a729de8101b53bf32fa9271c84211cf0a92"
+    },
+    {
+      "bytes": 49860,
+      "category": "tests",
+      "path": "tests/return_desk_runtime.test.cjs",
+      "sha256": "e8706f4db4d22de2abcc732aceb88b4229f4c932369fafdda0474fa0af473955"
+    },
+    {
+      "bytes": 7866,
+      "category": "tests",
+      "path": "tests/test_adapters.py",
+      "sha256": "a268b0ea48e31861d70ff1c47e8d3616affa4faa07501894b045e35312995c77"
+    },
+    {
+      "bytes": 2194,
+      "category": "tests",
+      "path": "tests/test_atomic.py",
+      "sha256": "13246afd26595bf6dfb665da1db1f31ffe8965bc390965ff5290f188b5e18554"
+    },
+    {
+      "bytes": 2575,
+      "category": "tests",
+      "path": "tests/test_bicomplex.py",
+      "sha256": "68929d95131c182df5c34799be071969d17d720328960487603cb47d865e897a"
+    },
+    {
+      "bytes": 6446,
+      "category": "tests",
+      "path": "tests/test_cli.py",
+      "sha256": "e037776b6d2bca6087078edda442fe031672f5633e5850a3e0b597b7ac6e1e1a"
+    },
+    {
+      "bytes": 1243,
+      "category": "tests",
+      "path": "tests/test_defect.py",
+      "sha256": "6a7ffeed442e23113ae2de3ed5280cf9b0607c67b6cd4ecc70334dbe45b6d73a"
+    },
+    {
+      "bytes": 875,
+      "category": "tests",
+      "path": "tests/test_exact.py",
+      "sha256": "80ea451e7134953459052101ab3f14d12161aca2b28b3b8996df26e0cb209918"
+    },
+    {
+      "bytes": 14497,
+      "category": "tests",
+      "path": "tests/test_gpt_artifact_compiler.py",
+      "sha256": "aa2a5ce1b3a06082550974b2f57d1ce470f7b62765600bfa963fc42dac868880"
+    },
+    {
+      "bytes": 73916,
+      "category": "tests",
+      "path": "tests/test_gpt_eval_bundle.py",
+      "sha256": "1a40ad3f65df1baddd4c05d3b348c7f62e04d3520557d8f671e5629c265dc27f"
+    },
+    {
+      "bytes": 15293,
+      "category": "tests",
+      "path": "tests/test_gpt_eval_controller.py",
+      "sha256": "e127cab00b4db58a1e388ad2721c0f482d1f9596379702330d607723ac62c13e"
+    },
+    {
+      "bytes": 41390,
+      "category": "tests",
+      "path": "tests/test_gpt_eval_suite.py",
+      "sha256": "92a673af18563541c947be4e724c2cbdd940c77fab84a0eacf3708412693a8a8"
+    },
+    {
+      "bytes": 20224,
+      "category": "tests",
+      "path": "tests/test_gpt_frozen_candidate.py",
+      "sha256": "f9b65f30573731af2258436ac88879035e733ebaf3ff43a4f9b6d9954e8b0ca8"
+    },
+    {
+      "bytes": 48320,
+      "category": "tests",
+      "path": "tests/test_gpt_package.py",
+      "sha256": "0c30cb7cd137f63d15450fa72d2840e579ffa55ef4bb45210893c1db4589b1cb"
+    },
+    {
+      "bytes": 11575,
+      "category": "tests",
+      "path": "tests/test_holonomy.py",
+      "sha256": "05423adcb18ace186afbd4248c2cd174a6cd6325e40faee73c45fdb1c27a51ca"
+    },
+    {
+      "bytes": 10420,
+      "category": "tests",
+      "path": "tests/test_localization.py",
+      "sha256": "7335120adfd1b2851a7e202f7d0f4783e52d90960295e4fdbcdf8ba89ced2fd1"
+    },
+    {
+      "bytes": 10263,
+      "category": "tests",
+      "path": "tests/test_manifest.py",
+      "sha256": "7a19c0de562b30b112d1d3e67437a95baf8bdcfdbd7b12ce82a6f3142aee5ce9"
+    },
+    {
+      "bytes": 4605,
+      "category": "tests",
+      "path": "tests/test_null_discrimination.py",
+      "sha256": "c7607717fa2f55860aa0f1c6947db3a759b629c870d70e024936d4d24e87c725"
+    },
+    {
+      "bytes": 2406,
+      "category": "tests",
+      "path": "tests/test_observation.py",
+      "sha256": "896a3a36a3ff174ac87c9647795de40de82dbf0e208940a0197d5c771534d465"
+    },
+    {
+      "bytes": 6620,
+      "category": "tests",
+      "path": "tests/test_pages.py",
+      "sha256": "1a32befc1a3e5236f16fa3641a483636ad85cfa62cf61b837b8c37719325e653"
+    },
+    {
+      "bytes": 1526,
+      "category": "tests",
+      "path": "tests/test_pages_checker_hardening.py",
+      "sha256": "db953ba55c5eac49f204c8def4cd1ddf00042364fb83ab92a7e1e707d08e23b1"
+    },
+    {
+      "bytes": 6829,
+      "category": "tests",
+      "path": "tests/test_privacy.py",
+      "sha256": "13b00dd5522259117b66ac49af3dbe63b43a8aeb43014abf3ae2e07c96fb0094"
+    },
+    {
+      "bytes": 4135,
+      "category": "tests",
+      "path": "tests/test_provenance.py",
+      "sha256": "6d51118609c4152f73c2ae8e247e74a4ce3d5484ca296be8ea3d32489eb28ee1"
+    },
+    {
+      "bytes": 8997,
+      "category": "tests",
+      "path": "tests/test_publication_status.py",
+      "sha256": "94237394830986a94a43e78b2688d0996db34a158154362cfbfebff377a3870b"
+    },
+    {
+      "bytes": 4665,
+      "category": "tests",
+      "path": "tests/test_research_packet.py",
+      "sha256": "5779418265421c5ef62e3a10338300720e20a4a2c5c650df16973a25a77ef30a"
+    },
+    {
+      "bytes": 54867,
+      "category": "tests",
+      "path": "tests/test_return_desk.py",
+      "sha256": "f42bad65194814a2e3305177a3b3ff69cca8f8fc52f805664db3f3570959aa4b"
+    },
+    {
+      "bytes": 95204,
+      "category": "tooling",
+      "path": "scripts/build_gpt_package.py",
+      "sha256": "7570dceb3dbb85ddbfc1f396aef1be099e4e26abdecf0659e56f98a45fc45134"
+    },
+    {
+      "bytes": 94798,
+      "category": "tooling",
+      "path": "scripts/check_gpt_eval_bundle.py",
+      "sha256": "3596e991eded31494f57df0e0bb0de3259844695f72050025046b29b8e90b8b2"
+    },
+    {
+      "bytes": 45624,
+      "category": "tooling",
+      "path": "scripts/check_gpt_eval_suite.py",
+      "sha256": "b20ca7e6d3070d1ddd659b3750eaccf6ddb95c362d46f0b4f7ae0b8832652aea"
+    },
+    {
+      "bytes": 42957,
+      "category": "tooling",
+      "path": "scripts/check_gpt_frozen_candidate.py",
+      "sha256": "c8d925d81339fe9197b2a8273900cfbe654a6eda30435e53202b0cdb5d3c12e1"
+    },
+    {
+      "bytes": 1485,
+      "category": "tooling",
+      "path": "scripts/check_gpt_package.py",
+      "sha256": "4442206e4ddc7ed816c71104bdaacda8d7e25a39865a728e4d5694d3ca7aa655"
+    },
+    {
+      "bytes": 36998,
+      "category": "tooling",
+      "path": "scripts/gpt_artifact_compiler.py",
+      "sha256": "debfd760ea9dab05a1b65bbb4d6d1a3a9a2b022fe51deb6aad87d860bc583ddb"
+    },
+    {
+      "bytes": 50015,
+      "category": "tooling",
+      "path": "scripts/gpt_eval_controller.py",
+      "sha256": "8c8f7f6a5b4df8f4315d3f076a0a53c25f98d746b56ae7046dfbfb3d6c83e8d6"
+    },
+    {
+      "bytes": 3294,
+      "category": "tooling",
+      "path": "scripts/run_null_discrimination.py",
+      "sha256": "a43020a2ac09b6b7a8cf0766ce8bf5761fe657f9f21bb5bfb75263f4647cc0af"
+    },
+    {
+      "bytes": 555,
+      "category": "tooling",
+      "path": "scripts/run_tests.py",
+      "sha256": "9e5df8784576ae5f73080cca5c8efc19d07839ca003496c95f89760f9f9ec03b"
+    },
+    {
+      "bytes": 406,
+      "category": "tooling",
+      "path": "toolchain.lock.json",
+      "sha256": "22d26a2b0dad6018690e18d9c98009051c33b0f579e2ac35c3689d5864fa19b0"
+    }
+  ],
+  "manifest_schema": "bsc-gpt-frozen-candidate-manifest/v1",
+  "registry_version": "bsc-gpt-frozen-candidate-registry/v1"
+}

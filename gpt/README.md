@@ -1,6 +1,6 @@
 # BSC Claim Auditor reproducible package
 
-The official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is `LIVE`. This directory is the deterministic, repository-backed BSC `0.3.0-alpha.8.dev1` source and update candidate used to inspect, reproduce, verify, or fork its configuration.
+The official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is `LIVE`. This directory is the deterministic, repository-backed BSC `0.3.0-alpha.8` source and update candidate used to inspect, reproduce, verify, or fork its configuration.
 
 Candidate state is `PENDING`; live binding is `PENDING_VERIFICATION`; Preview validation is `PENDING`. These states do not change merely because the official service exists or candidate files were generated.
 
@@ -24,7 +24,7 @@ Generated files must not be edited by hand. Canonical GPT-specific behavior live
 
 ## Reproduce, verify, fork, or update
 
-Use `GPT_SETUP_AND_PUBLISHING.md`. Paste `GPT_INSTRUCTIONS.md`, upload all six Knowledge files in order, and run all 39 Preview evaluations. Creating a separate GPT is optional and produces a fork; updating the official GPT requires owner authorization and separate saved-binding evidence.
+Use `GPT_SETUP_AND_PUBLISHING.md` and `evals/GPT_FROZEN_EVALUATION_PROTOCOL.json`. Paste `GPT_INSTRUCTIONS.md`, upload all six Knowledge files in order, validate the controller synthetically, run uncounted Case 1 and Case 27 preflights, freeze exact candidate/evaluation bytes, and then run all 39 counted Preview regressions from Case 1 with controller validity classified before scoring. Creating a separate GPT is optional and produces a fork; updating the official GPT requires owner authorization and separate saved-binding evidence.
 
 ## Boundaries
 

@@ -6,7 +6,7 @@
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor)（live research preview）<br>
 **現行 GitHub release:** `v0.3.0-alpha.7`<br>
-**開発系列:** `0.3.0-alpha.8.dev1`（未リリースの follow-up candidate）<br>
+**リリース候補:** `0.3.0-alpha.8`（local、Preview、live binding、merge、release の各 gate は未完了）<br>
 **プロジェクト状態:** 実験的。研究監査と既知解テストには利用できますが、無人の科学・臨床・法律・安全・政策判断には使用できません。
 
 [English](README.md) | [Timestamped publication status](docs/PUBLICATION_STATUS.json)

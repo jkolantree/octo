@@ -19,20 +19,20 @@ official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed
 | Public Pages | **deployed** | alpha.8.dev0 が [jkolantree.github.io/octo](https://jkolantree.github.io/octo/) で live |
 | Japanese Pages route | **candidate; not deployed** | 予定 `/octo/ja.html` route は `2026-07-22T18:37:44Z` に HTTP 404。post-deploy English/JA/protocol route/metadata smoke が pass するまで live として案内しない |
 | Latest GitHub Release | **unchanged** | [`v0.3.0-alpha.7`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.7)、commit `5ac1b85d4d573d15ce5cf68329443de11428b490` |
-| Next repository candidate | **in development** | alpha.8.dev1。merge、live Update、release の前に fresh complete Preview evaluation が必要 |
+| Final alpha.8 release candidate | **pending gates** | `0.3.0-alpha.8`。live Update、merge、tag、release の前に isolated local gates、2 preflight、fresh frozen 39-case Preview regression が必要 |
 
 alpha.8.dev0 について確認済みなのは、repository CI と runtime identity smoke です。fresh Preview conversation による complete behavior evaluation は保存されていないため、CI と identity は Preview validation の代用にはなりません。利用可能な service の output も human-review research-preview draft として扱います。
 
 ## Next candidate
 
-alpha.8.dev1 は、service availability と candidate validation を混同せず、日本語 accessibility と exact evidence boundary を強化する follow-up candidate です。この candidate は:
+final `0.3.0-alpha.8` は、service availability と candidate validation を混同せず、日本語 accessibility と exact evidence boundary を強化する release candidate です。この candidate は:
 
 - uploaded Knowledge から mutable service-state claim を除き、現在状態は timestamped repository record に分離する;
 - 利用者向けの official URL と、任意の reproduction/fork/update route を明確に分ける;
 - canonical machine token を保った Japanese human-facing guidance を追加する;
 - Japanese behavior と corrected evidence boundary の generated evaluation suite を拡張する。
 
-candidate が complete Preview gate を通過し、saved configuration との exact binding が確認されるまで、alpha.8.dev1 を installed、bound、Preview-validated、または released として promote しません。official service の現在の availability は上記 timestamped state と machine-readable snapshot で確認します。
+candidate が complete Preview gate を通過し、saved configuration との exact binding が確認されるまで、`0.3.0-alpha.8` を installed、bound、Preview-validated、または released として promote しません。official service の現在の availability は上記 timestamped state と machine-readable snapshot で確認します。
 
 ## Exact trust boundary
 
@@ -43,7 +43,7 @@ GPT は authenticated owner-controlled research-preview interface です。proof
 - Lean/SMT/interval/empirical claim には separately identified supervised execution と admissible evidence が必要。
 - fluent report、hash-shaped string、submitted receipt、internally consistent `audit_return.json` は truth、source authenticity、independent replay、deployment permission を確立しない。
 
-## Promotion gate for alpha.8.dev1
+## Promotion gate for alpha.8
 
 merge、live Update、GitHub release の前に:
 

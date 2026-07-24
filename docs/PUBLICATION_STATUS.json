@@ -42,8 +42,8 @@
     "state": "unchanged"
   },
   "next_repository_candidate": {
-    "version": "0.3.0-alpha.8.dev1",
-    "state": "in_development",
+    "version": "0.3.0-alpha.8",
+    "state": "release_candidate_pending_gates",
     "complete_preview_gate": "required_before_merge_live_update_or_release",
     "japanese_pages_deployment": "pending",
     "japanese_layer": "beta_pending_native_speaker_terminology_review"

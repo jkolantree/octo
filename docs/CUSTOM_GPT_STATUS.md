@@ -17,18 +17,22 @@ Verified on 2026-07-22:
 | Public Pages | **deployed** | alpha.8.dev0 is live at [jkolantree.github.io/octo](https://jkolantree.github.io/octo/) |
 | Japanese Pages route | **candidate; not deployed** | The planned `/octo/ja.html` route returned HTTP 404 at `2026-07-22T18:37:44Z`; do not advertise it as live until the post-deploy route and metadata smoke check passes |
 | Latest GitHub Release | **unchanged** | [`v0.3.0-alpha.7`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.7), commit `5ac1b85d4d573d15ce5cf68329443de11428b490` |
-| Next repository candidate | **in development** | alpha.8.dev1; fresh complete Preview evaluation is required before merge, live Update, or release |
+| Final alpha.8 release candidate | **pending gates** | `0.3.0-alpha.8`; isolated local gates, two preflights, and a fresh frozen 39-case Preview regression are required before live Update, merge, tag, or release |
 
 Repository CI passed and the public GPT's controller identity was confirmed. The complete alpha.8.dev0 behavior evaluation was not preserved, so its Preview-validation state remains **not completed**. Source checks and identity checks do not substitute for fresh-conversation behavior evaluation.
 
 ## Candidate scope
 
-The alpha.8.dev1 candidate:
+The final `0.3.0-alpha.8` candidate:
 
 - keeps mutable service state in this timestamped record instead of embedding it in durable behavioral Knowledge;
 - presents the official GPT first, with reproduction, evaluation, and forks as open-source capabilities;
 - adds Japanese human-facing guidance while preserving canonical machine tokens;
 - expands the generated evaluation suite for Japanese behavior and the corrected evidence boundaries.
+- captures one session-reported runtime and derives artifact identities through one acyclic final-byte transaction instead of model-copied runtime, hash, size, or Base64 fields;
+- requires the exact target, all six Knowledge files, and generated outputs before controller replay or scoring;
+- keeps `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved` separate;
+- preserves the R01 mathematical pass, execution/representation failure, incomplete replay, exact downstream decode, and unresolved download identity in a non-destructive forensic addendum.
 
 Until that candidate passes its complete Preview gate, the public GPT remains available but not promoted as alpha.8 Preview-validated.
 
@@ -41,7 +45,7 @@ The GPT is an authenticated, owner-controlled research-preview interface. It is 
 - Lean, SMT, interval, or empirical claims require separately identified supervised execution and admissible evidence.
 - A fluent report, hash-shaped string, submitted receipt, or internally consistent `audit_return.json` does not establish truth, source authenticity, independent replay, or deployment permission.
 
-## Promotion gate for alpha.8.dev1
+## Promotion gate for alpha.8
 
 Before any merge, live Update, or GitHub release:
 

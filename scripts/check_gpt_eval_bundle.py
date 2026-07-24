@@ -1,0 +1,2530 @@
+#!/usr/bin/env python3
+"""Fail-closed verification for a preserved Custom GPT evaluation bundle."""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import binascii
+import hashlib
+import html
+import io
+import json
+import re
+import sys
+import unicodedata
+from contextlib import redirect_stdout
+from pathlib import Path, PurePosixPath
+from typing import Any
+
+try:
+    from scripts.gpt_eval_controller import (
+        BOUND_RUNTIME_ARTIFACT,
+        CANDIDATE_IDENTITY_FILENAMES,
+        CANDIDATE_FAILED,
+        CANDIDATE_NOT_SCORED,
+        CANDIDATE_PASSED,
+        CONTROLLER_ARTIFACT_FILENAMES,
+        CONTROLLER_RECORD_FIELDS,
+        CONTROLLER_VALID,
+        KNOWLEDGE_FILENAMES,
+        OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES,
+        RAW_RESPONSE_FILENAME,
+        TRANSPORT_IDENTITY_RESOLVED,
+        TRANSPORT_IDENTITY_UNRESOLVED,
+        TRANSPORT_NOT_APPLICABLE,
+        TRIAL_INVALID_CONTROLLER,
+        byte_record,
+        canonical_json_bytes,
+        derive_disposition,
+        output_record,
+        parse_runtime_ledger,
+        validate_closed_evidence_layout,
+        validate_controller_record,
+    )
+except ModuleNotFoundError:  # Direct ``python scripts/check_gpt_eval_bundle.py``.
+    from gpt_eval_controller import (  # type: ignore[no-redef]
+        BOUND_RUNTIME_ARTIFACT,
+        CANDIDATE_IDENTITY_FILENAMES,
+        CANDIDATE_FAILED,
+        CANDIDATE_NOT_SCORED,
+        CANDIDATE_PASSED,
+        CONTROLLER_ARTIFACT_FILENAMES,
+        CONTROLLER_RECORD_FIELDS,
+        CONTROLLER_VALID,
+        KNOWLEDGE_FILENAMES,
+        OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES,
+        RAW_RESPONSE_FILENAME,
+        TRANSPORT_IDENTITY_RESOLVED,
+        TRANSPORT_IDENTITY_UNRESOLVED,
+        TRANSPORT_NOT_APPLICABLE,
+        TRIAL_INVALID_CONTROLLER,
+        byte_record,
+        canonical_json_bytes,
+        derive_disposition,
+        output_record,
+        parse_runtime_ledger,
+        validate_closed_evidence_layout,
+        validate_controller_record,
+    )
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from bsc_audit.cli import main as bsc_audit_main  # noqa: E402
+
+
+ACTIVE_EXPORT_SUFFIX = ".export.json"
+CONTROLLER_RECORD_NAME = "controller_record.json"
+EXPORT_FIELDS = {"filename", "size_bytes", "sha256", "base64"}
+TRANSPORT_RECORD_FIELDS = {
+    "filename",
+    "method",
+    "direct_download_outcome",
+    "bytes",
+    "sha256",
+    "export_wrapper",
+}
+HASH_RE = re.compile(r"^(?:sha256:)?([0-9a-fA-F]{64})$")
+SYS_VERSION_RE = re.compile(
+    r"\d+\.\d+\.\d+(?:[A-Za-z0-9.+-]*)? \([^\r\n()]+\) \[[^\r\n\[\]]+\]"
+)
+EXPECTATION_FILES = {
+    "profile_hash": "GPT_PROFILE.json",
+    "instructions_hash": "GPT_INSTRUCTIONS.md",
+    "eval_spec_hash": "GPT_EVAL_SPEC.json",
+}
+SCORE_RESULT_FIELDS = {
+    "score_result_version",
+    "case_id",
+    "trial_id",
+    "pre_score_controller_sha256",
+    "dimension_scores",
+    "total_score",
+    "automatic_failure",
+    "observable_behavior_results",
+    "forbidden_behavior_results",
+    "observed_research_projection",
+    "research_projection_requirement",
+    "research_verdict_allowed",
+    "research_projection_contract_satisfied",
+    "terminal_response_complete",
+    "scorer",
+    "notes",
+}
+SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED = "scientific_verdict_required"
+STATUS_ONLY_RESEARCH_PROJECTION_EMPTY = "status_only_empty"
+RESEARCH_PROJECTION_REQUIREMENTS = {
+    SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED,
+    STATUS_ONLY_RESEARCH_PROJECTION_EMPTY,
+}
+LIMITATION = (
+    "Strict Base64 decoding validates the exported payload encoding, declared size, digest, "
+    "and local-byte equality; it does not establish download-button identity or prove which "
+    "bytes a UI download button served."
+)
+TRANSPORT_LIMITATION = (
+    "The transport record preserves the controller's observed download exposure/event outcome; "
+    "the record is not independent proof that the UI exposed or emitted a download."
+)
+
+
+class StrictJsonError(ValueError):
+    """Raised when JSON violates the checker's strict decoding contract."""
+
+
+class JsonArgumentParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        raise StrictJsonError(message)
+
+
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise StrictJsonError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_constant(value: str) -> None:
+    raise StrictJsonError(f"non-finite JSON number is prohibited: {value}")
+
+
+def _strict_json(text: str) -> Any:
+    try:
+        return json.loads(
+            text,
+            object_pairs_hook=_strict_object,
+            parse_constant=_reject_constant,
+        )
+    except (json.JSONDecodeError, RecursionError, StrictJsonError) as exc:
+        raise StrictJsonError("input is not valid strict JSON") from exc
+
+
+def _digest(value: Any, *, prefixed: bool = False) -> str | None:
+    if not isinstance(value, str):
+        return None
+    if prefixed and not value.startswith("sha256:"):
+        return None
+    match = HASH_RE.fullmatch(value)
+    return match.group(1).lower() if match else None
+
+
+def _relative_label(root: Path, path: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.name
+
+
+def _add_finding(
+    findings: list[dict[str, str]],
+    code: str,
+    path: str,
+    message: str,
+) -> None:
+    findings.append(
+        {
+            "severity": "ERROR",
+            "code": code,
+            "path": path,
+            "message": message,
+        }
+    )
+
+
+def _set_check(
+    checks: dict[str, dict[str, Any]],
+    name: str,
+    status: str,
+    detail: str | None = None,
+) -> None:
+    record = checks.setdefault(name, {"status": status})
+    if record["status"] == "blocked":
+        pass
+    elif status == "blocked" or record["status"] == "not_run":
+        record["status"] = status
+    if detail:
+        record.setdefault("details", []).append(detail)
+
+
+def _forbidden_controls(text: str) -> list[str]:
+    controls = {
+        f"U+{ord(character):04X}"
+        for character in text
+        if character not in "\t\n\r" and unicodedata.category(character) == "Cc"
+    }
+    return sorted(controls)
+
+
+def _decode_text(
+    data: bytes,
+    label: str,
+    findings: list[dict[str, str]],
+    checks: dict[str, dict[str, Any]],
+) -> str | None:
+    if data.startswith(b"\xef\xbb\xbf"):
+        _add_finding(
+            findings,
+            "TEXT_UTF8_BOM",
+            label,
+            "UTF-8 text must not begin with a byte-order mark",
+        )
+        _set_check(checks, "text_sanitation", "blocked", label)
+    try:
+        text = data.decode("utf-8", errors="strict")
+    except UnicodeDecodeError:
+        _add_finding(
+            findings,
+            "TEXT_NOT_UTF8",
+            label,
+            "text payload is not strict UTF-8",
+        )
+        _set_check(checks, "text_sanitation", "blocked", label)
+        return None
+    controls = _forbidden_controls(text)
+    if controls:
+        _add_finding(
+            findings,
+            "TEXT_CONTROL_CHARACTER",
+            label,
+            "text contains prohibited control characters; only TAB, LF, and CR are allowed",
+        )
+        _set_check(
+            checks,
+            "text_sanitation",
+            "blocked",
+            f"{label}: {', '.join(controls)}",
+        )
+    return text
+
+
+def _walk_string_controls(
+    value: Any,
+    label: str,
+    findings: list[dict[str, str]],
+    checks: dict[str, dict[str, Any]],
+) -> None:
+    if isinstance(value, str):
+        controls = _forbidden_controls(value)
+        if controls:
+            _add_finding(
+                findings,
+                "JSON_STRING_CONTROL_CHARACTER",
+                label,
+                "decoded JSON string contains prohibited control characters",
+            )
+            _set_check(
+                checks,
+                "text_sanitation",
+                "blocked",
+                f"{label}: {', '.join(controls)}",
+            )
+        return
+    if isinstance(value, list):
+        for index, item in enumerate(value):
+            _walk_string_controls(
+                item,
+                f"{label}[{index}]",
+                findings,
+                checks,
+            )
+        return
+    if isinstance(value, dict):
+        for key, item in value.items():
+            _walk_string_controls(
+                item,
+                f"{label}.{key}",
+                findings,
+                checks,
+            )
+
+
+def _safe_file(root: Path, filename: Any) -> Path | None:
+    if (
+        not isinstance(filename, str)
+        or not filename
+        or filename in {".", ".."}
+        or "/" in filename
+        or "\\" in filename
+        or "\x00" in filename
+        or Path(filename).is_absolute()
+    ):
+        return None
+    candidate = root / filename
+    try:
+        resolved = candidate.resolve(strict=True)
+        resolved.relative_to(root)
+    except (FileNotFoundError, OSError, RuntimeError, ValueError):
+        return None
+    return resolved if resolved.is_file() else None
+
+
+def _load_json_path(
+    root: Path,
+    path: Path,
+    findings: list[dict[str, str]],
+    checks: dict[str, dict[str, Any]],
+    check_name: str,
+) -> dict[str, Any] | None:
+    label = _relative_label(root, path)
+    try:
+        data = path.read_bytes()
+    except OSError:
+        _add_finding(findings, "FILE_UNREADABLE", label, "required JSON file is unreadable")
+        _set_check(checks, check_name, "blocked", label)
+        return None
+    text = _decode_text(data, label, findings, checks)
+    if text is None:
+        _set_check(checks, check_name, "blocked", label)
+        return None
+    try:
+        value = _strict_json(text)
+    except StrictJsonError as exc:
+        _add_finding(findings, "JSON_INVALID", label, str(exc))
+        _set_check(checks, check_name, "blocked", label)
+        return None
+    if not isinstance(value, dict):
+        _add_finding(findings, "JSON_TOP_LEVEL_NOT_OBJECT", label, "top-level JSON value must be an object")
+        _set_check(checks, check_name, "blocked", label)
+        return None
+    _walk_string_controls(value, "$", findings, checks)
+    return value
+
+
+def _safe_repo_relative_file(root: Path, relative: Any) -> Path | None:
+    """Resolve a frozen repo-relative fixture without relaxing bundle basenames."""
+
+    if (
+        not isinstance(relative, str)
+        or not relative
+        or "\\" in relative
+        or "\x00" in relative
+    ):
+        return None
+    pure = PurePosixPath(relative)
+    if (
+        pure.is_absolute()
+        or ".." in pure.parts
+        or any(part in {"", "."} for part in pure.parts)
+        or pure.as_posix() != relative
+    ):
+        return None
+    candidate = root.joinpath(*pure.parts)
+    current = root
+    try:
+        for part in pure.parts:
+            current = current / part
+            if current.is_symlink():
+                return None
+        resolved_root = root.resolve(strict=True)
+        resolved = candidate.resolve(strict=True)
+        resolved.relative_to(resolved_root)
+    except (FileNotFoundError, OSError, RuntimeError, ValueError):
+        return None
+    return resolved if resolved.is_file() else None
+
+
+def _expected_case_context(
+    case_id: str,
+    repository_root: Path = ROOT,
+) -> tuple[
+    list[dict[str, Any]],
+    bytes,
+    set[str],
+    list[str],
+    list[str],
+    list[str],
+    list[str],
+    str,
+    dict[str, Any] | None,
+]:
+    cases_path = repository_root / "gpt" / "evals" / "GPT_EVAL_CASES.jsonl"
+    selected: dict[str, Any] | None = None
+    try:
+        lines = cases_path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        raise StrictJsonError("generated evaluation cases are unavailable") from exc
+    for line in lines:
+        if not line:
+            continue
+        value = _strict_json(line)
+        if isinstance(value, dict) and value.get("id") == case_id:
+            if selected is not None:
+                raise StrictJsonError("evaluation case identifier is duplicated")
+            selected = value
+    if selected is None:
+        raise StrictJsonError("controller case identifier is not in the frozen suite")
+    fixture_paths = selected.get("fixture_paths")
+    if (
+        not isinstance(fixture_paths, list)
+        or len(fixture_paths) != 1
+        or not isinstance(fixture_paths[0], str)
+    ):
+        raise StrictJsonError("selected evaluation case must bind exactly one target")
+    target = _safe_repo_relative_file(repository_root / "gpt", fixture_paths[0])
+    if target is None:
+        raise StrictJsonError("selected evaluation target is unavailable or unsafe")
+    target_data = target.read_bytes()
+    expected_fixture_hash = _digest(selected.get("fixture_sha256"))
+    if expected_fixture_hash != _sha256(target_data):
+        raise StrictJsonError("selected evaluation target differs from its frozen digest")
+    preview_prompt = selected.get("preview_prompt")
+    if not isinstance(preview_prompt, str) or not preview_prompt:
+        raise StrictJsonError("selected evaluation case lacks an exact preview prompt")
+    values = [byte_record("target", target.name, target_data)]
+    for filename in KNOWLEDGE_FILENAMES:
+        path = repository_root / "gpt" / "knowledge" / filename
+        try:
+            data = path.read_bytes()
+        except OSError as exc:
+            raise StrictJsonError(
+                f"canonical Knowledge file is unavailable: {filename}"
+            ) from exc
+        values.append(byte_record("knowledge", filename, data))
+    expected = selected.get("expected")
+    behavior_text = json.dumps(
+        {
+            "user_request": selected.get("user_request"),
+            "workflow_requirement": selected.get("workflow_requirement"),
+            "expected": expected,
+        },
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+    required_outputs = (
+        {"audit_report.md", "audit_return.json"}
+        if "audit_return.json" in behavior_text and "audit_report.md" in behavior_text
+        else set()
+    )
+    scoring_criteria = selected.get("scoring_criteria")
+    observable = expected.get("observable_behaviors") if isinstance(expected, dict) else None
+    forbidden = expected.get("forbidden_behaviors") if isinstance(expected, dict) else None
+    allowed_verdicts = (
+        expected.get("research_verdict_any_of")
+        if isinstance(expected, dict)
+        else None
+    )
+    projection_requirement = (
+        expected.get("research_projection_requirement")
+        if isinstance(expected, dict)
+        else None
+    )
+    scientific_oracle_valid = (
+        projection_requirement == SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED
+        and isinstance(expected, dict)
+        and expected.get("execution") != "status_record_read_only"
+        and isinstance(allowed_verdicts, list)
+        and bool(allowed_verdicts)
+        and all(isinstance(item, str) and item for item in allowed_verdicts)
+        and len(set(allowed_verdicts)) == len(allowed_verdicts)
+    )
+    status_only_oracle_valid = (
+        projection_requirement == STATUS_ONLY_RESEARCH_PROJECTION_EMPTY
+        and isinstance(expected, dict)
+        and expected.get("execution") == "status_record_read_only"
+        and "research_verdict_any_of" not in expected
+        and "research_projection_exact" not in expected
+    )
+    exact_projection = (
+        expected.get("research_projection_exact")
+        if isinstance(expected, dict)
+        else None
+    )
+    exact_projection_valid = exact_projection is None
+    if exact_projection is not None:
+        exact_claim_ids = (
+            exact_projection.get("primary_claim_ids")
+            if isinstance(exact_projection, dict)
+            else None
+        )
+        exact_verdicts = (
+            exact_projection.get("verdicts_by_claim")
+            if isinstance(exact_projection, dict)
+            else None
+        )
+        exact_projection_valid = (
+            projection_requirement == SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED
+            and isinstance(allowed_verdicts, list)
+            and isinstance(exact_projection, dict)
+            and set(exact_projection)
+            == {
+                "primary_claim_ids",
+                "verdicts_by_claim",
+                "allow_additional_primary_claims",
+            }
+            and isinstance(exact_claim_ids, list)
+            and bool(exact_claim_ids)
+            and all(
+                isinstance(claim_id, str) and claim_id
+                for claim_id in exact_claim_ids
+            )
+            and len(set(exact_claim_ids)) == len(exact_claim_ids)
+            and isinstance(exact_verdicts, dict)
+            and set(exact_verdicts) == set(exact_claim_ids)
+            and all(
+                isinstance(verdict, str)
+                and verdict
+                and verdict in allowed_verdicts
+                for verdict in exact_verdicts.values()
+            )
+            and isinstance(
+                exact_projection.get("allow_additional_primary_claims"),
+                bool,
+            )
+        )
+    if (
+        not isinstance(scoring_criteria, list)
+        or len(scoring_criteria) != 10
+        or not all(isinstance(item, str) and item for item in scoring_criteria)
+        or len(set(scoring_criteria)) != len(scoring_criteria)
+        or not isinstance(observable, list)
+        or not all(isinstance(item, str) and item for item in observable)
+        or not isinstance(forbidden, list)
+        or not all(isinstance(item, str) and item for item in forbidden)
+        or projection_requirement not in RESEARCH_PROJECTION_REQUIREMENTS
+        or not (scientific_oracle_valid or status_only_oracle_valid)
+        or not exact_projection_valid
+    ):
+        raise StrictJsonError("selected evaluation case has an invalid frozen scoring oracle")
+    return (
+        values,
+        preview_prompt.encode("utf-8"),
+        required_outputs,
+        scoring_criteria,
+        observable,
+        forbidden,
+        allowed_verdicts if isinstance(allowed_verdicts, list) else [],
+        projection_requirement,
+        exact_projection,
+    )
+
+
+def _expected_candidate_identity(
+    repository_root: Path = ROOT,
+) -> list[dict[str, Any]]:
+    source_by_kind = {
+        "freeze_manifest": repository_root / "docs" / "GPT_FROZEN_CANDIDATE.json",
+        "profile": repository_root / "gpt" / "_source" / "GPT_PROFILE.json",
+        "instructions": repository_root / "gpt" / "GPT_INSTRUCTIONS.md",
+        "eval_spec": repository_root / "gpt" / "_source" / "GPT_EVAL_SPEC.json",
+    }
+    result: list[dict[str, Any]] = []
+    for kind, filename in CANDIDATE_IDENTITY_FILENAMES:
+        path = source_by_kind[kind]
+        try:
+            data = path.read_bytes()
+        except OSError as exc:
+            raise StrictJsonError(
+                f"canonical candidate identity is unavailable: {filename}"
+            ) from exc
+        result.append(byte_record(kind, filename, data))
+    return result
+
+
+def _actual_candidate_output_filenames(
+    root: Path,
+    *,
+    input_filenames: set[str],
+) -> set[str]:
+    """Inventory candidate outputs independently of audit_return declarations."""
+
+    excluded = {
+        CONTROLLER_RECORD_NAME,
+        *input_filenames,
+        *(filename for _, filename in CANDIDATE_IDENTITY_FILENAMES),
+        *CONTROLLER_ARTIFACT_FILENAMES,
+        *OPTIONAL_CONTROLLER_ARTIFACT_FILENAMES,
+    }
+    outputs: set[str] = set()
+    for path in root.iterdir():
+        if (
+            path.name in excluded
+            or path.name.endswith(ACTIVE_EXPORT_SUFFIX)
+            or not path.is_file()
+            or path.is_symlink()
+        ):
+            continue
+        outputs.add(path.name)
+    return outputs
+
+
+def _declared_candidate_outputs(
+    audit_return: dict[str, Any],
+    *,
+    input_filenames: set[str],
+) -> set[str] | None:
+    artifacts = audit_return.get("artifacts")
+    if not isinstance(artifacts, list):
+        return None
+    names: set[str] = {"audit_return.json"}
+    for item in artifacts:
+        if not isinstance(item, dict) or not isinstance(item.get("filename"), str):
+            return None
+        if item["filename"] not in input_filenames:
+            names.add(item["filename"])
+    return names
+
+
+def _load_controller_record(
+    root: Path,
+) -> tuple[dict[str, Any] | None, list[dict[str, str]]]:
+    path = root / CONTROLLER_RECORD_NAME
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return None, [
+            {
+                "severity": "ERROR",
+                "code": "CONTROLLER_RECORD_MISSING",
+                "path": CONTROLLER_RECORD_NAME,
+                "message": "strict controller_record.json is required before replay or scoring",
+            }
+        ]
+    try:
+        text = data.decode("utf-8", errors="strict")
+        if text.encode("utf-8") != data:
+            raise UnicodeError("UTF-8 round trip differs")
+        record = _strict_json(text)
+    except (UnicodeError, StrictJsonError):
+        return None, [
+            {
+                "severity": "ERROR",
+                "code": "CONTROLLER_RECORD_INVALID",
+                "path": CONTROLLER_RECORD_NAME,
+                "message": "controller record must be strict round-tripping UTF-8 JSON",
+            }
+        ]
+    if not isinstance(record, dict):
+        return None, [
+            {
+                "severity": "ERROR",
+                "code": "CONTROLLER_RECORD_INVALID",
+                "path": CONTROLLER_RECORD_NAME,
+                "message": "controller record must be a JSON object",
+            }
+        ]
+    return record, []
+
+
+def _transport_identity_axis(
+    records: dict[str, dict[str, Any]],
+) -> str:
+    if not records:
+        return TRANSPORT_NOT_APPLICABLE
+    # A self-reported download event or Base64 export record preserves what the
+    # controller observed.  Neither independently authenticates download-button
+    # bytes, so this checker never upgrades it to resolved identity.
+    return TRANSPORT_IDENTITY_UNRESOLVED
+
+
+def _verify_artifacts(
+    root: Path,
+    audit_return: dict[str, Any],
+    findings: list[dict[str, str]],
+    checks: dict[str, dict[str, Any]],
+) -> tuple[dict[str, tuple[Path, bytes, str | None]], tuple[Path, str] | None]:
+    artifacts_raw = audit_return.get("artifacts")
+    if not isinstance(artifacts_raw, list):
+        _add_finding(
+            findings,
+            "ARTIFACT_LEDGER_INVALID",
+            "audit_return.json",
+            "audit_return.artifacts must be an array",
+        )
+        _set_check(checks, "audit_return_artifacts", "blocked")
+        return {}, None
+
+    artifacts: dict[str, tuple[Path, bytes, str | None]] = {}
+    records: dict[str, dict[str, Any]] = {}
+    for index, artifact in enumerate(artifacts_raw):
+        path_label = f"audit_return.json:$.artifacts[{index}]"
+        if not isinstance(artifact, dict):
+            _add_finding(findings, "ARTIFACT_RECORD_INVALID", path_label, "artifact record must be an object")
+            _set_check(checks, "audit_return_artifacts", "blocked", path_label)
+            continue
+        identifier = artifact.get("id")
+        if not isinstance(identifier, str) or not identifier or identifier in records:
+            _add_finding(
+                findings,
+                "ARTIFACT_ID_INVALID",
+                path_label,
+                "artifact identifier must be a unique nonempty string",
+            )
+            _set_check(checks, "audit_return_artifacts", "blocked", path_label)
+            continue
+        records[identifier] = artifact
+        filename = artifact.get("filename")
+        local_path = _safe_file(root, filename)
+        if local_path is None:
+            _add_finding(
+                findings,
+                "ARTIFACT_MISSING_OR_UNSAFE",
+                path_label,
+                "bound artifact is missing, non-file, symlink-escaped, or has a non-portable relative name",
+            )
+            _set_check(checks, "audit_return_artifacts", "blocked", str(filename))
+            continue
+        try:
+            data = local_path.read_bytes()
+        except OSError:
+            _add_finding(
+                findings,
+                "ARTIFACT_UNREADABLE",
+                str(filename),
+                "bound artifact cannot be read",
+            )
+            _set_check(checks, "audit_return_artifacts", "blocked", str(filename))
+            continue
+        expected = _digest(artifact.get("sha256"), prefixed=True)
+        observed = _sha256(data)
+        if expected is None:
+            _add_finding(
+                findings,
+                "ARTIFACT_HASH_INVALID",
+                path_label,
+                "artifact sha256 must use sha256:<64 hexadecimal characters>",
+            )
+            _set_check(checks, "audit_return_artifacts", "blocked", str(filename))
+        elif expected != observed:
+            _add_finding(
+                findings,
+                "ARTIFACT_HASH_MISMATCH",
+                str(filename),
+                "local artifact bytes do not match audit_return.sha256",
+            )
+            _set_check(checks, "audit_return_artifacts", "blocked", str(filename))
+        text = _decode_text(data, str(filename), findings, checks)
+        if text is not None and local_path.suffix.lower() == ".json":
+            try:
+                decoded_json = _strict_json(text)
+            except StrictJsonError:
+                decoded_json = None
+            if decoded_json is not None:
+                _walk_string_controls(decoded_json, f"artifact:{identifier}", findings, checks)
+        artifacts[identifier] = (local_path, data, text)
+
+    binding = audit_return.get("bindings")
+    report: tuple[Path, str] | None = None
+    report_id = binding.get("report_artifact_id") if isinstance(binding, dict) else None
+    if not isinstance(report_id, str) or report_id not in records:
+        _add_finding(
+            findings,
+            "REPORT_BINDING_MISSING",
+            "audit_return.json:$.bindings.report_artifact_id",
+            "the report binding must resolve to one artifact record",
+        )
+        _set_check(checks, "audit_return_artifacts", "blocked", "report binding")
+    elif report_id in artifacts:
+        report_path, _, report_text = artifacts[report_id]
+        if report_text is None:
+            _add_finding(
+                findings,
+                "REPORT_NOT_UTF8",
+                report_path.name,
+                "bound report is not strict UTF-8 text",
+            )
+            _set_check(checks, "audit_return_artifacts", "blocked", report_path.name)
+        else:
+            report = (report_path, report_text)
+
+    return artifacts, report
+
+
+def _report_wrapper_candidate(wrapper_path: Path, report_filename: str | None) -> bool:
+    return bool(
+        report_filename
+        and wrapper_path.name == f"{report_filename}{ACTIVE_EXPORT_SUFFIX}"
+    )
+
+
+def _audit_return_string_values(
+    document: Any,
+    *,
+    structured_runtime_record: dict[str, Any],
+) -> list[tuple[str, str]]:
+    """Enumerate every return-envelope string except the one runtime projection."""
+
+    results: list[tuple[str, str]] = []
+    stack: list[tuple[str, Any]] = [("$", document)]
+    while stack:
+        path, value = stack.pop()
+        if isinstance(value, str):
+            results.append((f"audit_return.json:{path}", value))
+        elif isinstance(value, list):
+            stack.extend(
+                (f"{path}[{index}]", item)
+                for index, item in reversed(list(enumerate(value)))
+            )
+        elif isinstance(value, dict):
+            children = []
+            for key, item in value.items():
+                if value is structured_runtime_record and key == "version":
+                    continue
+                encoded_key = json.dumps(str(key), ensure_ascii=False)
+                children.append((f"{path}[{encoded_key}]", item))
+            stack.extend(reversed(children))
+    return results
+
+
+def _verify_transport_record(
+    root: Path,
+    audit_return: dict[str, Any] | None,
+    expected_output_filenames: set[str],
+    findings: list[dict[str, str]],
+    checks: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    path = root / "artifact_transport.json"
+    document = _load_json_path(
+        root,
+        path,
+        findings,
+        checks,
+        "artifact_transport",
+    ) if path.is_file() else None
+    if document is None:
+        if not path.is_file():
+            _add_finding(
+                findings,
+                "ARTIFACT_TRANSPORT_RECORD_MISSING",
+                path.name,
+                "a frozen evaluation bundle requires artifact_transport.json",
+            )
+            _set_check(checks, "artifact_transport", "blocked")
+        return {}
+    if set(document) != {"transport_version", "records"} or document.get(
+        "transport_version"
+    ) != "1.0":
+        _add_finding(
+            findings,
+            "ARTIFACT_TRANSPORT_RECORD_INVALID",
+            path.name,
+            "transport record must contain only transport_version=1.0 and records",
+        )
+        _set_check(checks, "artifact_transport", "blocked")
+
+    artifact_rows = [
+        item
+        for item in (
+            audit_return.get("artifacts", [])
+            if isinstance(audit_return, dict)
+            else []
+        )
+        if isinstance(item, dict)
+    ]
+    declared_by_filename = {
+        item.get("filename"): item
+        for item in artifact_rows
+        if isinstance(item.get("filename"), str)
+    }
+    expected = set(expected_output_filenames)
+    allowed = set(expected_output_filenames)
+    records_raw = document.get("records")
+    if not isinstance(records_raw, list):
+        _add_finding(
+            findings,
+            "ARTIFACT_TRANSPORT_RECORD_INVALID",
+            f"{path.name}:$.records",
+            "transport records must be an array",
+        )
+        _set_check(checks, "artifact_transport", "blocked")
+        return {}
+
+    records: dict[str, dict[str, Any]] = {}
+    for index, item in enumerate(records_raw):
+        label = f"{path.name}:$.records[{index}]"
+        if not isinstance(item, dict) or set(item) != TRANSPORT_RECORD_FIELDS:
+            _add_finding(
+                findings,
+                "ARTIFACT_TRANSPORT_ENTRY_INVALID",
+                label,
+                "transport entry fields differ from the frozen transport contract",
+            )
+            _set_check(checks, "artifact_transport", "blocked", label)
+            continue
+        filename = item.get("filename")
+        if (
+            not isinstance(filename, str)
+            or filename in records
+            or filename not in allowed
+        ):
+            _add_finding(
+                findings,
+                "ARTIFACT_TRANSPORT_FILENAME_INVALID",
+                label,
+                "transport filename must uniquely identify audit_return.json or a declared artifact",
+            )
+            _set_check(checks, "artifact_transport", "blocked", str(filename))
+            continue
+        records[filename] = item
+        local_path = _safe_file(root, filename)
+        if local_path is None:
+            _add_finding(
+                findings,
+                "ARTIFACT_TRANSPORT_LOCAL_FILE_INVALID",
+                label,
+                "transported payload does not resolve to a safe local file",
+            )
+            _set_check(checks, "artifact_transport", "blocked", filename)
+            continue
+        try:
+            data = local_path.read_bytes()
+        except OSError:
+            _add_finding(
+                findings,
+                "ARTIFACT_TRANSPORT_LOCAL_FILE_INVALID",
+                label,
+                "transported payload became unreadable during verification",
+            )
+            _set_check(checks, "artifact_transport", "blocked", filename)
+            continue
+        expected_hash = _digest(item.get("sha256"))
+        size = item.get("bytes")
+        if (
+            expected_hash != _sha256(data)
+            or isinstance(size, bool)
+            or not isinstance(size, int)
+            or size != len(data)
+        ):
+            _add_finding(
+                findings,
+                "ARTIFACT_TRANSPORT_BYTE_BINDING_MISMATCH",
+                label,
+                "transport record size or digest differs from the preserved local payload",
+            )
+            _set_check(checks, "artifact_transport", "blocked", filename)
+
+        method = item.get("method")
+        outcome = item.get("direct_download_outcome")
+        wrapper = item.get("export_wrapper")
+        if method == "direct_download":
+            valid_method = outcome == "download_event" and wrapper is None
+        elif method == "base64_export":
+            valid_method = (
+                outcome in {"unavailable", "no_download_event"}
+                and wrapper == f"{filename}{ACTIVE_EXPORT_SUFFIX}"
+            )
+        else:
+            valid_method = False
+        if not valid_method:
+            _add_finding(
+                findings,
+                "ARTIFACT_TRANSPORT_METHOD_INVALID",
+                label,
+                "direct download requires a captured event; Base64 requires unavailable/no-event evidence and its exact wrapper name",
+            )
+            _set_check(checks, "artifact_transport", "blocked", filename)
+
+    missing = sorted(expected - set(records))
+    if missing:
+        _add_finding(
+            findings,
+            "ARTIFACT_TRANSPORT_COVERAGE_MISSING",
+            f"{path.name}:$.records",
+            "every generated or returned artifact requires one transport record",
+        )
+        _set_check(checks, "artifact_transport", "blocked", f"missing={missing!r}")
+    if checks["artifact_transport"]["status"] == "not_run":
+        _set_check(checks, "artifact_transport", "pass")
+    return records
+
+
+def _verify_export_wrappers(
+    root: Path,
+    report: tuple[Path, str] | None,
+    transport_records: dict[str, dict[str, Any]],
+    findings: list[dict[str, str]],
+    checks: dict[str, dict[str, Any]],
+) -> None:
+    wrapper_paths = sorted(root.glob(f"*{ACTIVE_EXPORT_SUFFIX}"))
+    report_filename = report[0].name if report else None
+    report_wrapper_seen = False
+    expected_wrappers = {
+        str(record["export_wrapper"]): filename
+        for filename, record in transport_records.items()
+        if record.get("method") == "base64_export"
+        and isinstance(record.get("export_wrapper"), str)
+    }
+    seen_wrappers: set[str] = set()
+
+    for wrapper_path in wrapper_paths:
+        if wrapper_path.name not in expected_wrappers:
+            _add_finding(
+                findings,
+                "EXPORT_WRAPPER_UNDECLARED",
+                wrapper_path.name,
+                "active export wrapper lacks a matching Base64 transport record",
+            )
+            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+        else:
+            seen_wrappers.add(wrapper_path.name)
+        wrapper = _load_json_path(
+            root,
+            wrapper_path,
+            findings,
+            checks,
+            "export_wrappers",
+        )
+        named_report_wrapper = _report_wrapper_candidate(wrapper_path, report_filename)
+        if wrapper is None:
+            if named_report_wrapper:
+                _add_finding(
+                    findings,
+                    "REPORT_TRANSPORT_MISMATCH",
+                    wrapper_path.name,
+                    "the active report export wrapper could not be verified",
+                )
+            continue
+        if set(wrapper) != EXPORT_FIELDS:
+            _add_finding(
+                findings,
+                "EXPORT_WRAPPER_FIELDS_INVALID",
+                wrapper_path.name,
+                "export wrapper fields must be exactly filename, size_bytes, sha256, and base64",
+            )
+            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+
+        filename = wrapper.get("filename")
+        is_report = bool(report_filename and filename == report_filename)
+        report_wrapper_seen = report_wrapper_seen or is_report
+        if (
+            isinstance(filename, str)
+            and wrapper_path.name != f"{filename}{ACTIVE_EXPORT_SUFFIX}"
+        ):
+            _add_finding(
+                findings,
+                "EXPORT_WRAPPER_NAME_MISMATCH",
+                wrapper_path.name,
+                "active export wrapper name must equal <filename>.export.json",
+            )
+            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+            if is_report:
+                _add_finding(
+                    findings,
+                    "REPORT_TRANSPORT_MISMATCH",
+                    wrapper_path.name,
+                    "the active report wrapper name does not identify the bound report unambiguously",
+                )
+        local_path = _safe_file(root, filename)
+        if local_path is None:
+            _add_finding(
+                findings,
+                "EXPORT_LOCAL_FILE_MISSING_OR_UNSAFE",
+                wrapper_path.name,
+                "export wrapper filename does not resolve to a safe local file",
+            )
+            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+            if is_report or named_report_wrapper:
+                _add_finding(
+                    findings,
+                    "REPORT_TRANSPORT_MISMATCH",
+                    wrapper_path.name,
+                    "the report export cannot be compared with a safe local report file",
+                )
+            continue
+
+        encoded = wrapper.get("base64")
+        decoded: bytes | None = None
+        if not isinstance(encoded, str):
+            _add_finding(
+                findings,
+                "EXPORT_BASE64_INVALID",
+                wrapper_path.name,
+                "export wrapper base64 must be a string",
+            )
+            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+        else:
+            try:
+                decoded = base64.b64decode(encoded, validate=True)
+                if base64.b64encode(decoded).decode("ascii") != encoded:
+                    raise binascii.Error("non-canonical Base64")
+            except (binascii.Error, ValueError):
+                _add_finding(
+                    findings,
+                    "EXPORT_BASE64_INVALID",
+                    wrapper_path.name,
+                    "export wrapper Base64 is not strict canonical Base64",
+                )
+                _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+
+        if decoded is None:
+            if is_report or named_report_wrapper:
+                _add_finding(
+                    findings,
+                    "REPORT_TRANSPORT_MISMATCH",
+                    wrapper_path.name,
+                    "the report export payload could not be decoded",
+                )
+            continue
+
+        size = wrapper.get("size_bytes")
+        if isinstance(size, bool) or not isinstance(size, int) or size < 0 or size != len(decoded):
+            _add_finding(
+                findings,
+                "EXPORT_SIZE_MISMATCH",
+                wrapper_path.name,
+                "declared size_bytes does not equal the decoded payload length",
+            )
+            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+        expected_hash = _digest(wrapper.get("sha256"))
+        observed_hash = _sha256(decoded)
+        if expected_hash is None or expected_hash != observed_hash:
+            _add_finding(
+                findings,
+                "EXPORT_HASH_MISMATCH",
+                wrapper_path.name,
+                "declared sha256 does not equal the decoded payload digest",
+            )
+            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+        try:
+            local_bytes = local_path.read_bytes()
+        except OSError:
+            local_bytes = None
+        if local_bytes is None or local_bytes != decoded:
+            code = "REPORT_TRANSPORT_MISMATCH" if is_report else "EXPORT_LOCAL_BYTE_MISMATCH"
+            message = (
+                "decoded report export bytes differ from the bound local report bytes"
+                if is_report
+                else "decoded export bytes differ from the local file bytes"
+            )
+            _add_finding(findings, code, wrapper_path.name, message)
+            _set_check(checks, "export_wrappers", "blocked", wrapper_path.name)
+        _decode_text(decoded, f"{wrapper_path.name}:decoded", findings, checks)
+
+    missing_wrappers = sorted(set(expected_wrappers) - seen_wrappers)
+    if missing_wrappers:
+        _add_finding(
+            findings,
+            "EXPORT_WRAPPER_MISSING",
+            ".",
+            "one or more Base64 transport records lack their active export wrapper",
+        )
+        _set_check(
+            checks,
+            "export_wrappers",
+            "blocked",
+            f"missing={missing_wrappers!r}",
+        )
+        expected_report_wrapper = (
+            f"{report_filename}{ACTIVE_EXPORT_SUFFIX}" if report_filename else None
+        )
+        if expected_report_wrapper in missing_wrappers:
+            _add_finding(
+                findings,
+                "REPORT_EXPORT_WRAPPER_MISSING",
+                report_filename or "audit_report.md",
+                "the Base64-transported bound report lacks its active export wrapper",
+            )
+
+
+def _verify_version_literal(
+    root: Path,
+    audit_return: dict[str, Any],
+    artifacts: dict[str, tuple[Path, bytes, str | None]],
+    report: tuple[Path, str] | None,
+    findings: list[dict[str, str]],
+    checks: dict[str, dict[str, Any]],
+) -> None:
+    execution = audit_return.get("execution")
+    records = (
+        [
+            item
+            for item in execution
+            if isinstance(item, dict) and item.get("activity") == "chatgpt_data_analysis"
+        ]
+        if isinstance(execution, list)
+        else []
+    )
+    if len(records) != 1:
+        _add_finding(
+            findings,
+            "CHATGPT_DATA_ANALYSIS_RECORD_INVALID",
+            "audit_return.json:$.execution",
+            "exactly one chatgpt_data_analysis execution record is required",
+        )
+        _set_check(checks, "chatgpt_data_analysis_version", "blocked")
+        return
+    record = records[0]
+    version = record.get("version")
+    if (
+        record.get("status") != "ran"
+        or not isinstance(version, str)
+        or SYS_VERSION_RE.fullmatch(version) is None
+    ):
+        _add_finding(
+            findings,
+            "CHATGPT_DATA_ANALYSIS_VERSION_NOT_EXACT",
+            "audit_return.json:$.execution[chatgpt_data_analysis].version",
+            "a ran ChatGPT Data Analysis activity must record the complete sys.version-shaped session-reported runtime",
+        )
+        _set_check(checks, "chatgpt_data_analysis_version", "blocked")
+        return
+
+    artifact_records = {
+        item.get("id"): item
+        for item in audit_return.get("artifacts", [])
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    output_ids = record.get("output_artifact_ids")
+    output_ids = output_ids if isinstance(output_ids, list) else []
+    ledger_records = [
+        item
+        for item in artifact_records.values()
+        if item.get("filename") == BOUND_RUNTIME_ARTIFACT
+        and item.get("role") == "execution_output"
+    ]
+    ledger_text: str | None = None
+    ledger_id: str | None = None
+    if len(ledger_records) != 1:
+        _add_finding(
+            findings,
+            "CHATGPT_DATA_ANALYSIS_OUTPUT_ARTIFACT_INVALID",
+            "audit_return.json:$.artifacts",
+            f"exactly one role-execution_output artifact named {BOUND_RUNTIME_ARTIFACT} is required",
+        )
+        _set_check(checks, "chatgpt_data_analysis_output", "blocked")
+    else:
+        ledger_id = ledger_records[0]["id"]
+        if ledger_id not in output_ids:
+            _add_finding(
+                findings,
+                "CHATGPT_DATA_ANALYSIS_OUTPUT_BINDING_MISSING",
+                "audit_return.json:$.execution[chatgpt_data_analysis].output_artifact_ids",
+                "the dedicated Data Analysis output artifact must be bound as an output",
+            )
+            _set_check(checks, "chatgpt_data_analysis_output", "blocked")
+        artifact = artifacts.get(ledger_id)
+        if artifact is None or artifact[2] is None:
+            _add_finding(
+                findings,
+                "CHATGPT_DATA_ANALYSIS_OUTPUT_UNVERIFIED",
+                BOUND_RUNTIME_ARTIFACT,
+                "the dedicated Data Analysis output artifact must exist, hash-match, and decode as strict UTF-8",
+            )
+            _set_check(checks, "chatgpt_data_analysis_output", "blocked")
+        else:
+            ledger_text = artifact[2]
+            own_hash = ledger_records[0].get("sha256")
+            if isinstance(own_hash, str) and own_hash in ledger_text:
+                _add_finding(
+                    findings,
+                    "CHATGPT_DATA_ANALYSIS_OUTPUT_SELF_HASHED",
+                    BOUND_RUNTIME_ARTIFACT,
+                    "the Data Analysis output ledger must not claim its own final digest",
+                )
+                _set_check(checks, "chatgpt_data_analysis_output", "blocked")
+            expected_ledger_records: list[dict[str, Any]] = []
+            unavailable_output_ids: list[str] = []
+            for output_id in output_ids:
+                if output_id == ledger_id:
+                    continue
+                declared_output = artifact_records.get(output_id)
+                bound_output = artifacts.get(output_id)
+                filename = (
+                    declared_output.get("filename")
+                    if isinstance(declared_output, dict)
+                    else None
+                )
+                if (
+                    not isinstance(filename, str)
+                    or bound_output is None
+                ):
+                    unavailable_output_ids.append(str(output_id))
+                    continue
+                expected_ledger_records.append(
+                    output_record(filename, bound_output[1])
+                )
+            try:
+                captured_runtime, observed_ledger_records = parse_runtime_ledger(
+                    ledger_text
+                )
+            except ValueError as exc:
+                _add_finding(
+                    findings,
+                    "CHATGPT_DATA_ANALYSIS_RUNTIME_BINDING_INVALID",
+                    BOUND_RUNTIME_ARTIFACT,
+                    str(exc),
+                )
+                captured_runtime = None
+                _set_check(
+                    checks,
+                    "chatgpt_data_analysis_version",
+                    "blocked",
+                )
+                _set_check(checks, "chatgpt_data_analysis_output", "blocked")
+            else:
+                expected_ledger_records.sort(key=lambda item: item["filename"])
+                if (
+                    unavailable_output_ids
+                    or tuple(expected_ledger_records) != observed_ledger_records
+                ):
+                    _add_finding(
+                        findings,
+                        "CHATGPT_DATA_ANALYSIS_OUTPUT_LEDGER_ROSTER_MISMATCH",
+                        BOUND_RUNTIME_ARTIFACT,
+                        (
+                            "runtime ledger rows must exactly equal every other bound "
+                            "execution output filename, byte count, and SHA-256"
+                        ),
+                    )
+                    _set_check(
+                        checks,
+                        "chatgpt_data_analysis_output",
+                        "blocked",
+                        f"unavailable output IDs: {unavailable_output_ids!r}",
+                    )
+                elif checks["chatgpt_data_analysis_output"]["status"] == "not_run":
+                    _set_check(checks, "chatgpt_data_analysis_output", "pass")
+            if captured_runtime is not None:
+                if captured_runtime != version or ledger_text.count(version) != 1:
+                    _add_finding(
+                        findings,
+                        "CHATGPT_DATA_ANALYSIS_VERSION_MISMATCH",
+                        BOUND_RUNTIME_ARTIFACT,
+                        "structured return runtime differs from the one session-reported value in the bound execution output",
+                    )
+                    _set_check(
+                        checks,
+                        "chatgpt_data_analysis_version",
+                        "blocked",
+                    )
+
+    texts: dict[str, str] = {}
+    for identifier, artifact_record in artifact_records.items():
+        if (
+            artifact_record.get("role") in {"request", "source"}
+            or artifact_record.get("filename") == BOUND_RUNTIME_ARTIFACT
+        ):
+            continue
+        bound_artifact = artifacts.get(identifier)
+        if bound_artifact is not None and bound_artifact[2] is not None:
+            texts[str(artifact_record.get("filename"))] = bound_artifact[2]
+
+    if report is None:
+        _set_check(
+            checks,
+            "chatgpt_data_analysis_version",
+            "blocked",
+            "bound report unavailable",
+        )
+    else:
+        texts[report[0].name] = report[1]
+    for label, text in _audit_return_string_values(
+        audit_return,
+        structured_runtime_record=record,
+    ):
+        texts[label] = text
+
+    raw_path = _safe_repo_relative_file(root, RAW_RESPONSE_FILENAME)
+    if raw_path is None:
+        _add_finding(
+            findings,
+            "RAW_RESPONSE_MISSING_OR_UNSAFE",
+            RAW_RESPONSE_FILENAME,
+            "the complete assistant outerHTML capture is missing or unsafe",
+        )
+        _set_check(
+            checks,
+            "chatgpt_data_analysis_version",
+            "blocked",
+            "raw response unavailable",
+        )
+    else:
+        try:
+            raw_bytes = raw_path.read_bytes()
+        except OSError:
+            raw_bytes = b""
+            _add_finding(
+                findings,
+                "RAW_RESPONSE_UNREADABLE",
+                RAW_RESPONSE_FILENAME,
+                "the complete assistant outerHTML capture is unreadable",
+            )
+            _set_check(
+                checks,
+                "chatgpt_data_analysis_version",
+                "blocked",
+                "raw response unreadable",
+            )
+        raw_text = _decode_text(
+            raw_bytes,
+            RAW_RESPONSE_FILENAME,
+            findings,
+            checks,
+        )
+        if raw_text is not None:
+            texts[RAW_RESPONSE_FILENAME] = html.unescape(raw_text)
+
+    visible_path = root / "visible_response_dom.txt"
+    if visible_path.exists():
+        if not visible_path.is_file():
+            _add_finding(
+                findings,
+                "VISIBLE_RESPONSE_INVALID",
+                visible_path.name,
+                "visible_response_dom.txt is not a regular file",
+            )
+            _set_check(checks, "chatgpt_data_analysis_version", "blocked", visible_path.name)
+        else:
+            try:
+                visible_bytes = visible_path.read_bytes()
+            except OSError:
+                visible_bytes = b""
+                _add_finding(
+                    findings,
+                    "VISIBLE_RESPONSE_UNREADABLE",
+                    visible_path.name,
+                    "visible_response_dom.txt cannot be read",
+                )
+                _set_check(checks, "chatgpt_data_analysis_version", "blocked", visible_path.name)
+            visible_text = _decode_text(visible_bytes, visible_path.name, findings, checks)
+            if visible_text is not None:
+                texts[visible_path.name] = visible_text
+    else:
+        _add_finding(
+            findings,
+            "VISIBLE_RESPONSE_MISSING",
+            visible_path.name,
+            "a frozen evaluation bundle requires the preserved visible terminal response",
+        )
+        _set_check(
+            checks,
+            "visible_response_version",
+            "blocked",
+            "visible_response_dom.txt not present",
+        )
+
+    report_label = report[0].name if report is not None else None
+    for label, text in texts.items():
+        observed = set(SYS_VERSION_RE.findall(text))
+        if observed and observed != {version}:
+            _add_finding(
+                findings,
+                "CHATGPT_DATA_ANALYSIS_VERSION_MISMATCH",
+                label,
+                "an optional prose runtime literal contradicts the one bound session-reported value",
+            )
+            _set_check(
+                checks,
+                "chatgpt_data_analysis_version",
+                "blocked",
+                f"{label}: observed={sorted(observed)!r}",
+            )
+            if label == "visible_response_dom.txt":
+                _set_check(
+                    checks,
+                    "visible_response_version",
+                    "blocked",
+                    f"observed={sorted(observed)!r}",
+                )
+            continue
+        if observed:
+            _add_finding(
+                findings,
+                "CHATGPT_DATA_ANALYSIS_RUNTIME_LITERAL_PROHIBITED",
+                label,
+                (
+                    "model-authored prose must reference the bound runtime output; "
+                    "it may not independently reproduce even the matching runtime literal"
+                ),
+            )
+            _set_check(
+                checks,
+                "chatgpt_data_analysis_version",
+                "blocked",
+                f"{label}: runtime literal reproduced",
+            )
+            if label == "visible_response_dom.txt":
+                _set_check(
+                    checks,
+                    "visible_response_version",
+                    "blocked",
+                    "runtime literal reproduced",
+                )
+        if label == report_label and BOUND_RUNTIME_ARTIFACT not in text:
+            _add_finding(
+                findings,
+                "CHATGPT_DATA_ANALYSIS_RUNTIME_REFERENCE_MISSING",
+                label,
+                f"the report must reference {BOUND_RUNTIME_ARTIFACT} as the bound runtime source",
+            )
+            _set_check(
+                checks,
+                "chatgpt_data_analysis_version",
+                "blocked",
+                f"{label}: bound runtime reference absent",
+            )
+        if label == "visible_response_dom.txt" and not (
+            observed and observed != {version}
+        ):
+            _set_check(checks, "visible_response_version", "pass")
+
+
+def _invoke_return_desk(
+    audit_return_path: Path,
+    findings: list[dict[str, str]],
+    checks: dict[str, dict[str, Any]],
+) -> dict[str, Any] | None:
+    output = io.StringIO()
+    try:
+        with redirect_stdout(output):
+            exit_status = bsc_audit_main(["return-desk", str(audit_return_path)])
+        result = _strict_json(output.getvalue())
+    except Exception as exc:  # pragma: no cover - last-resort checker boundary
+        _add_finding(
+            findings,
+            "RETURN_DESK_INVOCATION_FAILED",
+            audit_return_path.name,
+            f"Python Return Desk invocation failed ({type(exc).__name__})",
+        )
+        _set_check(checks, "python_return_desk", "blocked")
+        return None
+    decision = result.get("decision") if isinstance(result, dict) else None
+    severities = {
+        item.get("severity")
+        for item in result.get("findings", [])
+        if isinstance(item, dict)
+    } if isinstance(result, dict) else {"ERROR"}
+    if (
+        exit_status != 0
+        or not isinstance(decision, str)
+        or not decision.startswith("no_blocking_findings")
+        or bool(severities & {"ERROR", "BLOCKED"})
+    ):
+        _add_finding(
+            findings,
+            "RETURN_DESK_BLOCKED",
+            audit_return_path.name,
+            "Python Return Desk reported a blocking or malformed result",
+        )
+        _set_check(
+            checks,
+            "python_return_desk",
+            "blocked",
+            f"exit={exit_status}; decision={decision}",
+        )
+    else:
+        _set_check(
+            checks,
+            "python_return_desk",
+            "pass",
+            f"decision={decision}",
+        )
+    return {
+        "exit_code": exit_status,
+        "decision": decision,
+        "findings": result.get("findings", []) if isinstance(result, dict) else [],
+    }
+
+
+def _verify_expectations(
+    root: Path,
+    expectations: dict[str, str | None],
+    findings: list[dict[str, str]],
+    checks: dict[str, dict[str, Any]],
+) -> None:
+    for name, filename in EXPECTATION_FILES.items():
+        expected_value = expectations.get(name)
+        check_name = f"expected_{name}"
+        if expected_value is None:
+            _set_check(checks, check_name, "not_run", "expectation argument not supplied")
+            continue
+        expected = _digest(expected_value)
+        if expected is None:
+            _add_finding(
+                findings,
+                "EXPECTATION_HASH_INVALID",
+                filename,
+                "expected SHA-256 must be 64 hexadecimal characters with an optional sha256: prefix",
+            )
+            _set_check(checks, check_name, "blocked")
+            continue
+        path = _safe_file(root, filename)
+        if path is None:
+            _add_finding(
+                findings,
+                "EXPECTED_COPY_MISSING_OR_UNSAFE",
+                filename,
+                "expected copied GPT source file is missing or unsafe",
+            )
+            _set_check(checks, check_name, "blocked")
+            continue
+        try:
+            data = path.read_bytes()
+        except OSError:
+            data = b""
+            _add_finding(
+                findings,
+                "EXPECTED_COPY_UNREADABLE",
+                filename,
+                "expected copied GPT source file cannot be read",
+            )
+            _set_check(checks, check_name, "blocked")
+        _decode_text(data, filename, findings, checks)
+        if _sha256(data) != expected:
+            _add_finding(
+                findings,
+                "EXPECTED_COPY_HASH_MISMATCH",
+                filename,
+                "copied GPT source bytes do not match the supplied expected SHA-256",
+            )
+            _set_check(checks, check_name, "blocked")
+        else:
+            _set_check(checks, check_name, "pass")
+
+
+def _load_score_result(
+    root: Path,
+    *,
+    controller_record: dict[str, Any],
+    case_id: str,
+    trial_id: str,
+    scoring_criteria: list[str],
+    observable_behaviors: list[str],
+    forbidden_behaviors: list[str],
+    allowed_research_verdicts: list[str],
+    research_projection_requirement: str,
+    exact_research_projection: dict[str, Any] | None,
+) -> tuple[str, dict[str, Any] | None, list[dict[str, str]]]:
+    """Load a strict preserved manual score without trusting its total."""
+
+    path = root / "score_result.json"
+    if not path.is_file():
+        return CANDIDATE_NOT_SCORED, None, []
+    try:
+        data = path.read_bytes()
+        text = data.decode("utf-8", errors="strict")
+        document = _strict_json(text)
+    except (OSError, UnicodeError, StrictJsonError):
+        return CANDIDATE_NOT_SCORED, None, [
+            {
+                "severity": "ERROR",
+                "code": "CONTROLLER_SCORE_RESULT_INVALID",
+                "path": "score_result.json",
+                "message": "score result must be strict UTF-8 JSON",
+            }
+        ]
+    if not isinstance(document, dict) or set(document) != SCORE_RESULT_FIELDS:
+        return CANDIDATE_NOT_SCORED, None, [
+            {
+                "severity": "ERROR",
+                "code": "CONTROLLER_SCORE_RESULT_INVALID",
+                "path": "score_result.json:$",
+                "message": "score-result fields differ from the frozen scoring contract",
+            }
+        ]
+    dimensions = document.get("dimension_scores")
+    observable = document.get("observable_behavior_results")
+    forbidden = document.get("forbidden_behavior_results")
+    projection = document.get("observed_research_projection")
+    total = document.get("total_score")
+    pre_score_path = root / "pre_score_controller.json"
+    try:
+        pre_score_bytes = pre_score_path.read_bytes()
+        pre_score_document = _strict_json(
+            pre_score_bytes.decode("utf-8", errors="strict")
+        )
+    except (OSError, UnicodeError, StrictJsonError):
+        pre_score_bytes = b""
+        pre_score_document = None
+    expected_pre_digest = _digest(document.get("pre_score_controller_sha256"))
+    stable_fields = CONTROLLER_RECORD_FIELDS - {"controller_artifacts"}
+    current_controller_artifacts = controller_record.get("controller_artifacts")
+    pre_controller_artifacts = (
+        pre_score_document.get("controller_artifacts")
+        if isinstance(pre_score_document, dict)
+        else None
+    )
+    expected_base_controller_artifacts = (
+        current_controller_artifacts[: len(CONTROLLER_ARTIFACT_FILENAMES)]
+        if isinstance(current_controller_artifacts, list)
+        else None
+    )
+    pre_score_binding_valid = (
+        expected_pre_digest == _sha256(pre_score_bytes)
+        and isinstance(pre_score_document, dict)
+        and set(pre_score_document) == CONTROLLER_RECORD_FIELDS
+        and all(
+            pre_score_document.get(field) == controller_record.get(field)
+            for field in stable_fields
+        )
+        and pre_controller_artifacts == expected_base_controller_artifacts
+        and all(
+            item.get("filename")
+            not in {"pre_score_controller.json", "score_result.json"}
+            for item in pre_controller_artifacts
+            if isinstance(item, dict)
+        )
+    )
+    valid_dimensions = (
+        isinstance(dimensions, dict)
+        and set(dimensions) == set(scoring_criteria)
+        and all(
+            not isinstance(value, bool)
+            and isinstance(value, int)
+            and 0 <= value <= 2
+            for value in dimensions.values()
+        )
+    )
+    recomputed_total = sum(dimensions.values()) if valid_dimensions else None
+    valid_projection_shape = (
+        isinstance(projection, dict)
+        and all(
+            isinstance(claim_id, str)
+            and bool(claim_id)
+            and isinstance(verdict, str)
+            and bool(verdict)
+            for claim_id, verdict in projection.items()
+        )
+    )
+    scientific_projection = (
+        research_projection_requirement
+        == SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED
+    )
+    recomputed_verdict_allowed: bool | None
+    if valid_projection_shape and scientific_projection:
+        recomputed_verdict_allowed = bool(projection) and all(
+            verdict in allowed_research_verdicts for verdict in projection.values()
+        )
+    else:
+        recomputed_verdict_allowed = None
+    exact_projection_satisfied = True
+    if (
+        scientific_projection
+        and valid_projection_shape
+        and isinstance(exact_research_projection, dict)
+    ):
+        expected_projection = exact_research_projection["verdicts_by_claim"]
+        exact_projection_satisfied = all(
+            projection.get(claim_id) == verdict
+            for claim_id, verdict in expected_projection.items()
+        ) and (
+            exact_research_projection["allow_additional_primary_claims"]
+            or set(projection) == set(expected_projection)
+        )
+    recomputed_projection_contract_satisfied = (
+        recomputed_verdict_allowed is True and exact_projection_satisfied
+        if scientific_projection
+        else valid_projection_shape and projection == {}
+    )
+    submitted_verdict_allowed = document.get("research_verdict_allowed")
+    verdict_allowed_field_valid = (
+        isinstance(submitted_verdict_allowed, bool)
+        and submitted_verdict_allowed == recomputed_verdict_allowed
+        if scientific_projection
+        else submitted_verdict_allowed is None
+    )
+    valid = (
+        document.get("score_result_version") == "2.0"
+        and document.get("case_id") == case_id
+        and document.get("trial_id") == trial_id
+        and pre_score_binding_valid
+        and valid_dimensions
+        and not isinstance(total, bool)
+        and isinstance(total, int)
+        and total == recomputed_total
+        and isinstance(document.get("automatic_failure"), bool)
+        and isinstance(observable, dict)
+        and set(observable) == set(observable_behaviors)
+        and all(isinstance(value, bool) for value in observable.values())
+        and isinstance(forbidden, dict)
+        and set(forbidden) == set(forbidden_behaviors)
+        and all(isinstance(value, bool) for value in forbidden.values())
+        and valid_projection_shape
+        and document.get("research_projection_requirement")
+        == research_projection_requirement
+        and verdict_allowed_field_valid
+        and isinstance(
+            document.get("research_projection_contract_satisfied"),
+            bool,
+        )
+        and document["research_projection_contract_satisfied"]
+        == recomputed_projection_contract_satisfied
+        and isinstance(document.get("terminal_response_complete"), bool)
+        and isinstance(document.get("scorer"), str)
+        and bool(document["scorer"].strip())
+        and isinstance(document.get("notes"), str)
+    )
+    if not valid:
+        return CANDIDATE_NOT_SCORED, None, [
+            {
+                "severity": "ERROR",
+                "code": "CONTROLLER_SCORE_RESULT_INVALID",
+                "path": "score_result.json:$",
+                "message": (
+                    "score result must bind the case/trial, all ten 0-2 dimensions, "
+                    "their recomputed total, every exact observable/forbidden behavior, "
+                    "the exact scientific or status-only research projection contract, "
+                    "terminal-response completeness, "
+                    "and the immutable pre-score controller record"
+                ),
+            }
+        ]
+    candidate_passed = (
+        total >= 18
+        and document["automatic_failure"] is False
+        and all(observable.values())
+        and not any(forbidden.values())
+        and document["research_projection_contract_satisfied"] is True
+        and document["terminal_response_complete"] is True
+    )
+    summary = {
+        "total_score": total,
+        "pre_score_controller_sha256": expected_pre_digest,
+        "dimension_scores": dimensions,
+        "automatic_failure": document["automatic_failure"],
+        "observable_behaviors_complete": all(observable.values()),
+        "forbidden_behaviors_absent": not any(forbidden.values()),
+        "observed_research_projection": projection,
+        "research_projection_requirement": research_projection_requirement,
+        "research_projection_exact_required": exact_research_projection is not None,
+        "research_verdict_allowed": submitted_verdict_allowed,
+        "research_projection_contract_satisfied": document[
+            "research_projection_contract_satisfied"
+        ],
+        "terminal_response_complete": document["terminal_response_complete"],
+        "scorer": document["scorer"],
+    }
+    return (
+        CANDIDATE_PASSED if candidate_passed else CANDIDATE_FAILED,
+        summary,
+        [],
+    )
+
+
+def check_bundle(
+    evidence_directory: Path,
+    *,
+    expected_case_id: str | None = None,
+    expected_profile_sha256: str | None = None,
+    expected_instructions_sha256: str | None = None,
+    expected_eval_spec_sha256: str | None = None,
+    candidate_source_root: Path | None = None,
+) -> tuple[int, dict[str, Any]]:
+    findings: list[dict[str, str]] = []
+    checks: dict[str, dict[str, Any]] = {
+        "evidence_directory": {"status": "not_run"},
+        "controller_record": {"status": "not_run"},
+        "controller_input_roster": {"status": "not_run"},
+        "controller_candidate_identity": {"status": "not_run"},
+        "controller_output_roster": {"status": "not_run"},
+        "controller_parser_round_trip": {"status": "not_run"},
+        "candidate_output_consistency": {"status": "not_run"},
+        "audit_return_parse": {"status": "not_run"},
+        "audit_return_artifacts": {"status": "not_run"},
+        "text_sanitation": {"status": "pass"},
+        "artifact_transport": {"status": "not_run"},
+        "export_wrappers": {"status": "not_run"},
+        "python_return_desk": {"status": "not_run"},
+        "chatgpt_data_analysis_output": {"status": "not_run"},
+        "chatgpt_data_analysis_version": {"status": "not_run"},
+        "visible_response_version": {"status": "not_run"},
+        "score_result": {"status": "not_run"},
+        "expected_profile_hash": {"status": "not_run"},
+        "expected_instructions_hash": {"status": "not_run"},
+        "expected_eval_spec_hash": {"status": "not_run"},
+    }
+    return_desk_result: dict[str, Any] | None = None
+    score_summary: dict[str, Any] | None = None
+    controller_axis = TRIAL_INVALID_CONTROLLER
+    candidate_axis = CANDIDATE_NOT_SCORED
+    transport_axis = TRANSPORT_NOT_APPLICABLE
+    transport_records: dict[str, dict[str, Any]] = {}
+    controller_record: dict[str, Any] | None = None
+    source_root = ROOT
+    source_root_error: str | None = None
+    if candidate_source_root is not None:
+        try:
+            source_root = candidate_source_root.resolve(strict=True)
+            if not source_root.is_dir():
+                raise OSError("not a directory")
+        except (FileNotFoundError, OSError, RuntimeError) as exc:
+            source_root_error = (
+                "candidate source root is unavailable, unsafe, or not a directory"
+            )
+
+    try:
+        root = evidence_directory.resolve(strict=True)
+    except (FileNotFoundError, OSError, RuntimeError):
+        root = evidence_directory.absolute()
+    if not root.is_dir():
+        _add_finding(
+            findings,
+            "EVIDENCE_DIRECTORY_INVALID",
+            str(evidence_directory),
+            "evidence directory does not exist or is not a directory",
+        )
+        _set_check(checks, "evidence_directory", "blocked")
+        _set_check(checks, "controller_record", "blocked", "evidence directory invalid")
+    else:
+        _set_check(checks, "evidence_directory", "pass")
+        controller_record, controller_issues = _load_controller_record(root)
+        try:
+            validate_closed_evidence_layout(evidence_directory)
+        except (OSError, RuntimeError, ValueError) as exc:
+            controller_issues.append(
+                {
+                    "severity": "ERROR",
+                    "code": "CONTROLLER_EVIDENCE_LAYOUT_INVALID",
+                    "path": ".",
+                    "message": str(exc),
+                }
+            )
+        if source_root_error is not None:
+            controller_issues.append(
+                {
+                    "severity": "ERROR",
+                    "code": "CONTROLLER_CANDIDATE_SOURCE_UNAVAILABLE",
+                    "path": str(candidate_source_root),
+                    "message": source_root_error,
+                }
+            )
+        selected_case_id: str | None = None
+        expected_inputs: list[dict[str, Any]] = []
+        expected_prompt = b""
+        required_outputs: set[str] = set()
+        scoring_criteria: list[str] = []
+        observable_behaviors: list[str] = []
+        forbidden_behaviors: list[str] = []
+        allowed_research_verdicts: list[str] = []
+        research_projection_requirement = ""
+        exact_research_projection: dict[str, Any] | None = None
+        expected_identity: list[dict[str, Any]] = []
+        actual_outputs: set[str] = set()
+
+        if controller_record is not None:
+            selected_case_id = (
+                expected_case_id
+                if expected_case_id is not None
+                else controller_record.get("case_id")
+            )
+        if not isinstance(selected_case_id, str) or not selected_case_id:
+            controller_issues.append(
+                {
+                    "severity": "ERROR",
+                    "code": "CONTROLLER_CASE_ID_INVALID",
+                    "path": f"{CONTROLLER_RECORD_NAME}:$.case_id",
+                    "message": "controller case identity must be a nonempty frozen case identifier",
+                }
+            )
+        else:
+            try:
+                (
+                    expected_inputs,
+                    expected_prompt,
+                    required_outputs,
+                    scoring_criteria,
+                    observable_behaviors,
+                    forbidden_behaviors,
+                    allowed_research_verdicts,
+                    research_projection_requirement,
+                    exact_research_projection,
+                ) = _expected_case_context(selected_case_id, source_root)
+                expected_identity = _expected_candidate_identity(source_root)
+            except (OSError, StrictJsonError) as exc:
+                controller_issues.append(
+                    {
+                        "severity": "ERROR",
+                        "code": "CONTROLLER_EXPECTED_CONTEXT_UNAVAILABLE",
+                        "path": CONTROLLER_RECORD_NAME,
+                        "message": str(exc),
+                    }
+                )
+            else:
+                input_names = {item["filename"] for item in expected_inputs}
+                actual_outputs = _actual_candidate_output_filenames(
+                    root,
+                    input_filenames=input_names,
+                )
+
+        audit_return_path = root / "audit_return.json"
+        audit_return: dict[str, Any] | None = None
+        parse_findings: list[dict[str, str]] = []
+        parse_checks: dict[str, dict[str, Any]] = {
+            "audit_return_parse": {"status": "not_run"},
+            "text_sanitation": {"status": "pass"},
+        }
+        if audit_return_path.is_file():
+            audit_return = _load_json_path(
+                root,
+                audit_return_path,
+                parse_findings,
+                parse_checks,
+                "audit_return_parse",
+            )
+            if audit_return is not None:
+                _set_check(parse_checks, "audit_return_parse", "pass")
+        elif "audit_return.json" in required_outputs:
+            _set_check(
+                parse_checks,
+                "audit_return_parse",
+                "blocked",
+                "frozen case required audit_return.json but candidate did not produce it",
+            )
+        else:
+            _set_check(
+                parse_checks,
+                "audit_return_parse",
+                "not_run",
+                "frozen case did not require a return envelope",
+            )
+
+        if (
+            controller_record is not None
+            and selected_case_id is not None
+            and expected_inputs
+            and expected_identity
+        ):
+            controller_issues.extend(
+                validate_controller_record(
+                    root=root,
+                    record=controller_record,
+                    expected_case_id=selected_case_id,
+                    expected_preview_prompt=expected_prompt,
+                    expected_inputs=expected_inputs,
+                    expected_candidate_identity=expected_identity,
+                    expected_output_filenames=actual_outputs,
+                    repository_root=source_root,
+                )
+            )
+            if audit_return is not None:
+                declared = _declared_candidate_outputs(
+                    audit_return,
+                    input_filenames={item["filename"] for item in expected_inputs},
+                )
+                if declared is not None:
+                    missing_capture = sorted(declared - actual_outputs)
+                    if missing_capture:
+                        controller_issues.append(
+                            {
+                                "severity": "ERROR",
+                                "code": "CONTROLLER_DECLARED_OUTPUT_NOT_CAPTURED",
+                                "path": f"{CONTROLLER_RECORD_NAME}:$.observed_outputs",
+                                "message": (
+                                    "candidate-declared outputs were omitted from the "
+                                    f"independent capture: {missing_capture!r}"
+                                ),
+                            }
+                        )
+
+            canonical_hashes = {
+                item["filename"]: item["sha256"] for item in expected_identity
+            }
+            expectation_findings: list[dict[str, str]] = []
+            expectation_checks = {
+                "expected_profile_hash": {"status": "not_run"},
+                "expected_instructions_hash": {"status": "not_run"},
+                "expected_eval_spec_hash": {"status": "not_run"},
+                "text_sanitation": {"status": "pass"},
+            }
+            _verify_expectations(
+                root,
+                {
+                    "profile_hash": (
+                        expected_profile_sha256
+                        if expected_profile_sha256 is not None
+                        else canonical_hashes["GPT_PROFILE.json"]
+                    ),
+                    "instructions_hash": (
+                        expected_instructions_sha256
+                        if expected_instructions_sha256 is not None
+                        else canonical_hashes["GPT_INSTRUCTIONS.md"]
+                    ),
+                    "eval_spec_hash": (
+                        expected_eval_spec_sha256
+                        if expected_eval_spec_sha256 is not None
+                        else canonical_hashes["GPT_EVAL_SPEC.json"]
+                    ),
+                },
+                expectation_findings,
+                expectation_checks,
+            )
+            controller_issues.extend(expectation_findings)
+            for name in (
+                "expected_profile_hash",
+                "expected_instructions_hash",
+                "expected_eval_spec_hash",
+            ):
+                checks[name] = expectation_checks[name]
+
+            transport_findings: list[dict[str, str]] = []
+            transport_checks = {
+                "artifact_transport": {"status": "not_run"},
+                "text_sanitation": {"status": "pass"},
+            }
+            transport_records = _verify_transport_record(
+                root,
+                audit_return,
+                actual_outputs,
+                transport_findings,
+                transport_checks,
+            )
+            controller_issues.extend(transport_findings)
+            checks["artifact_transport"] = transport_checks["artifact_transport"]
+
+            score_axis, score_summary, score_issues = _load_score_result(
+                root,
+                controller_record=controller_record,
+                case_id=selected_case_id,
+                trial_id=str(controller_record.get("trial_id", "")),
+                scoring_criteria=scoring_criteria,
+                observable_behaviors=observable_behaviors,
+                forbidden_behaviors=forbidden_behaviors,
+                allowed_research_verdicts=allowed_research_verdicts,
+                research_projection_requirement=research_projection_requirement,
+                exact_research_projection=exact_research_projection,
+            )
+            controller_issues.extend(score_issues)
+        else:
+            score_axis = CANDIDATE_NOT_SCORED
+
+        if controller_issues:
+            findings.extend(controller_issues)
+            _set_check(
+                checks,
+                "controller_record",
+                "blocked",
+                f"{len(controller_issues)} controller preflight finding(s)",
+            )
+            issue_codes = {item["code"] for item in controller_issues}
+            _set_check(
+                checks,
+                "controller_input_roster",
+                "blocked" if any("INPUT" in code for code in issue_codes) else "not_run",
+                "controller preflight failed",
+            )
+            _set_check(
+                checks,
+                "controller_candidate_identity",
+                (
+                    "blocked"
+                    if any(
+                        "CANDIDATE_IDENTITY" in code
+                        or code.startswith("EXPECTED_COPY")
+                        for code in issue_codes
+                    )
+                    else "not_run"
+                ),
+                "controller preflight failed",
+            )
+            _set_check(
+                checks,
+                "controller_output_roster",
+                (
+                    "blocked"
+                    if any(
+                        "OUTPUT" in code or "ARTIFACT_TRANSPORT" in code
+                        for code in issue_codes
+                    )
+                    else "not_run"
+                ),
+                "controller preflight failed",
+            )
+            _set_check(
+                checks,
+                "controller_parser_round_trip",
+                (
+                    "blocked"
+                    if any(
+                        "PARSER" in code or "WRAPPER" in code
+                        for code in issue_codes
+                    )
+                    else "not_run"
+                ),
+                "controller preflight failed",
+            )
+            if any("SCORE_RESULT" in code for code in issue_codes):
+                _set_check(checks, "score_result", "blocked")
+            for name in (
+                "candidate_output_consistency",
+                "audit_return_artifacts",
+                "export_wrappers",
+                "python_return_desk",
+                "chatgpt_data_analysis_output",
+                "chatgpt_data_analysis_version",
+                "visible_response_version",
+            ):
+                _set_check(
+                    checks,
+                    name,
+                    "not_run",
+                    "trial_invalid_controller; candidate scoring prohibited",
+                )
+        else:
+            controller_axis = CONTROLLER_VALID
+            _set_check(checks, "controller_record", "pass")
+            _set_check(checks, "controller_input_roster", "pass")
+            _set_check(checks, "controller_candidate_identity", "pass")
+            _set_check(checks, "controller_output_roster", "pass")
+            _set_check(checks, "controller_parser_round_trip", "pass")
+            checks["audit_return_parse"] = parse_checks["audit_return_parse"]
+            findings.extend(parse_findings)
+            candidate_finding_start = len(findings) - len(parse_findings)
+
+            missing_required = sorted(required_outputs - actual_outputs)
+            if missing_required:
+                _add_finding(
+                    findings,
+                    "CANDIDATE_REQUIRED_OUTPUT_MISSING",
+                    ".",
+                    f"frozen case required candidate outputs that were not produced: {missing_required!r}",
+                )
+                _set_check(
+                    checks,
+                    "candidate_output_consistency",
+                    "blocked",
+                    f"missing={missing_required!r}",
+                )
+
+            report: tuple[Path, str] | None = None
+            if audit_return is not None:
+                declared = _declared_candidate_outputs(
+                    audit_return,
+                    input_filenames={item["filename"] for item in expected_inputs},
+                )
+                if declared is None:
+                    _add_finding(
+                        findings,
+                        "CANDIDATE_OUTPUT_DECLARATION_INVALID",
+                        "audit_return.json:$.artifacts",
+                        "candidate output declarations must be a complete filename roster",
+                    )
+                    _set_check(checks, "candidate_output_consistency", "blocked")
+                else:
+                    undeclared = sorted(actual_outputs - declared)
+                    if undeclared:
+                        _add_finding(
+                            findings,
+                            "CANDIDATE_OUTPUT_UNDECLARED",
+                            "audit_return.json:$.artifacts",
+                            f"independently captured outputs were not declared: {undeclared!r}",
+                        )
+                        _set_check(
+                            checks,
+                            "candidate_output_consistency",
+                            "blocked",
+                            f"undeclared={undeclared!r}",
+                        )
+                    elif checks["candidate_output_consistency"]["status"] == "not_run":
+                        _set_check(checks, "candidate_output_consistency", "pass")
+
+                artifacts, report = _verify_artifacts(
+                    root,
+                    audit_return,
+                    findings,
+                    checks,
+                )
+                if checks["audit_return_artifacts"]["status"] == "not_run":
+                    _set_check(checks, "audit_return_artifacts", "pass")
+                _verify_export_wrappers(
+                    root,
+                    report,
+                    transport_records,
+                    findings,
+                    checks,
+                )
+                if checks["export_wrappers"]["status"] == "not_run":
+                    _set_check(checks, "export_wrappers", "pass")
+                _verify_version_literal(
+                    root,
+                    audit_return,
+                    artifacts,
+                    report,
+                    findings,
+                    checks,
+                )
+                if checks["chatgpt_data_analysis_version"]["status"] == "not_run":
+                    _set_check(checks, "chatgpt_data_analysis_version", "pass")
+                return_desk_result = _invoke_return_desk(
+                    audit_return_path,
+                    findings,
+                    checks,
+                )
+            else:
+                _verify_export_wrappers(
+                    root,
+                    None,
+                    transport_records,
+                    findings,
+                    checks,
+                )
+                if checks["export_wrappers"]["status"] == "not_run":
+                    _set_check(checks, "export_wrappers", "pass")
+                visible_path = root / "visible_response_dom.txt"
+                if visible_path.is_file():
+                    visible_text = _decode_text(
+                        visible_path.read_bytes(),
+                        visible_path.name,
+                        findings,
+                        checks,
+                    )
+                    if visible_text is not None:
+                        _set_check(checks, "visible_response_version", "pass")
+                for name in (
+                    "audit_return_artifacts",
+                    "python_return_desk",
+                    "chatgpt_data_analysis_output",
+                    "chatgpt_data_analysis_version",
+                ):
+                    _set_check(
+                        checks,
+                        name,
+                        "not_run",
+                        "no return envelope was available for this case",
+                    )
+                if checks["candidate_output_consistency"]["status"] == "not_run":
+                    _set_check(checks, "candidate_output_consistency", "pass")
+
+            transport_axis = _transport_identity_axis(transport_records)
+            candidate_findings = findings[candidate_finding_start:]
+            candidate_blocked = bool(candidate_findings) or any(
+                checks[name]["status"] == "blocked"
+                for name in (
+                    "candidate_output_consistency",
+                    "audit_return_parse",
+                    "audit_return_artifacts",
+                    "text_sanitation",
+                    "export_wrappers",
+                    "python_return_desk",
+                    "chatgpt_data_analysis_output",
+                    "chatgpt_data_analysis_version",
+                    "visible_response_version",
+                )
+            )
+            if candidate_blocked:
+                candidate_axis = CANDIDATE_FAILED
+                _set_check(
+                    checks,
+                    "score_result",
+                    "blocked",
+                    "candidate contradiction or artifact failure overrides any score",
+                )
+            else:
+                candidate_axis = score_axis
+                if score_axis == CANDIDATE_NOT_SCORED:
+                    _set_check(
+                        checks,
+                        "score_result",
+                        "not_run",
+                        "no separately preserved valid manual score/oracle record",
+                    )
+                elif score_axis == CANDIDATE_PASSED:
+                    _set_check(
+                        checks,
+                        "score_result",
+                        "pass",
+                        f"recomputed total={score_summary['total_score']}",
+                    )
+                else:
+                    _add_finding(
+                        findings,
+                        "CANDIDATE_SCORE_GATE_FAILED",
+                        "score_result.json",
+                        "manual threshold, automatic-failure, or exact behavior oracle failed",
+                    )
+                    _set_check(
+                        checks,
+                        "score_result",
+                        "blocked",
+                        f"recomputed total={score_summary['total_score']}",
+                    )
+
+    blocked = (
+        controller_axis == TRIAL_INVALID_CONTROLLER
+        or candidate_axis == CANDIDATE_FAILED
+        or any(record["status"] == "blocked" for record in checks.values())
+    )
+    disposition = derive_disposition(
+        controller=controller_axis,
+        candidate=candidate_axis,
+        transport=transport_axis,
+    )
+    binding_hashes: dict[str, str | None] = {}
+    for label, filename in (
+        ("controller_record_sha256", "controller_record.json"),
+        ("pre_score_controller_sha256", "pre_score_controller.json"),
+        ("score_result_sha256", "score_result.json"),
+    ):
+        path = root / filename
+        try:
+            binding_hashes[label] = _sha256(path.read_bytes()) if path.is_file() else None
+        except OSError:
+            binding_hashes[label] = None
+    try:
+        binding_hashes["candidate_identity_sha256"] = (
+            _sha256(canonical_json_bytes(controller_record["candidate_identity"]))
+            if isinstance(controller_record, dict)
+            and isinstance(controller_record.get("candidate_identity"), list)
+            else None
+        )
+    except (TypeError, ValueError):
+        binding_hashes["candidate_identity_sha256"] = None
+    payload: dict[str, Any] = {
+        "checker": "gpt_eval_bundle",
+        "output_version": "2.0",
+        "evidence_directory": str(root),
+        "status": "blocked" if blocked else "pass",
+        "outcomes": {
+            "controller": controller_axis,
+            "candidate": candidate_axis,
+            "transport": transport_axis,
+            "disposition": disposition,
+            "scoring_allowed": controller_axis == CONTROLLER_VALID,
+        },
+        "checks": checks,
+        "findings": findings,
+        "bindings": binding_hashes,
+        "score_result": score_summary,
+        "return_desk": return_desk_result,
+        "limitations": [
+            LIMITATION,
+            TRANSPORT_LIMITATION,
+            (
+                f"Only active *{ACTIVE_EXPORT_SUFFIX} wrappers are transport-checked; "
+                "archived mismatch captures remain preserved evidence."
+            ),
+        ],
+    }
+    return (1 if blocked else 0), payload
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = JsonArgumentParser(
+        prog="check_gpt_eval_bundle.py",
+        description="Fail-closed verification for a preserved Custom GPT evaluation bundle",
+    )
+    parser.add_argument("evidence_directory", type=Path)
+    parser.add_argument(
+        "--expect-case-id",
+        dest="expected_case_id",
+        help="require the controller record to bind this frozen evaluation case",
+    )
+    parser.add_argument(
+        "--expect-profile-sha256",
+        "--expect-gpt-profile-sha256",
+        dest="expected_profile_sha256",
+    )
+    parser.add_argument(
+        "--expect-instructions-sha256",
+        "--expect-gpt-instructions-sha256",
+        dest="expected_instructions_sha256",
+    )
+    parser.add_argument(
+        "--expect-eval-spec-sha256",
+        "--expect-gpt-eval-spec-sha256",
+        dest="expected_eval_spec_sha256",
+    )
+    parser.add_argument(
+        "--candidate-source-root",
+        type=Path,
+        help=(
+            "validate frozen cases, candidate identity, and trial mapping against "
+            "this preserved candidate source snapshot"
+        ),
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    try:
+        args = _parser().parse_args(argv)
+    except StrictJsonError as exc:
+        payload = {
+            "checker": "gpt_eval_bundle",
+            "output_version": "2.0",
+            "status": "blocked",
+            "checks": {"cli_arguments": {"status": "blocked"}},
+            "findings": [
+                {
+                    "severity": "ERROR",
+                    "code": "CLI_USAGE",
+                    "path": "$",
+                    "message": str(exc),
+                }
+            ],
+            "limitations": [LIMITATION],
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False))
+        return 2
+    status, payload = check_bundle(
+        args.evidence_directory,
+        expected_case_id=args.expected_case_id,
+        expected_profile_sha256=args.expected_profile_sha256,
+        expected_instructions_sha256=args.expected_instructions_sha256,
+        expected_eval_spec_sha256=args.expected_eval_spec_sha256,
+        candidate_source_root=args.candidate_source_root,
+    )
+    print(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False))
+    return status
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

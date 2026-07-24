@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import re
@@ -8,14 +9,17 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from build_gpt_package import (  # noqa: E402
+    EVAL_GOVERNANCE_SOURCES,
     GPT_ROOT,
     MAX_GPT_INSTRUCTION_CHARACTERS,
+    NONADMISSIVE_RECEIPT_RESEARCH_PROJECTION_EXACT,
     OFFICIAL_GPT_URL,
     PROFILE_PATH,
     REQUIRED_EVAL_CASE_REQUIREMENTS,
@@ -24,6 +28,8 @@ from build_gpt_package import (  # noqa: E402
     REQUIRED_RULE_IDS,
     REQUIRED_RULE_SEVERITIES,
     REQUIRED_STATUS_REPRODUCTION_EVAL_CASE_IDS,
+    SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED,
+    STATUS_ONLY_RESEARCH_PROJECTION_EMPTY,
     all_rules,
     archive_name,
     generated_payload,
@@ -32,12 +38,19 @@ from build_gpt_package import (  # noqa: E402
     package_files,
     provenance_paths,
     sha256_bytes,
+    validate_evaluation_governance,
+    validate_exact_eval_oracles,
     verify_archive,
     verify_package,
     write_archive,
     write_package,
 )
-from build_release import require_release_version, write_gpt_release_asset  # noqa: E402
+from build_release import (  # noqa: E402
+    PUBLIC_VERSION,
+    __version__ as RELEASE_ENGINE_VERSION,
+    require_release_version,
+    write_gpt_release_asset,
+)
 
 
 class CustomGptPackageTests(unittest.TestCase):
@@ -70,7 +83,7 @@ class CustomGptPackageTests(unittest.TestCase):
         binding = {
             "source_commit": "1" * 40,
             "source_tree": "2" * 40,
-            "source_tag": "v0.3.0-alpha.8.dev1",
+            "source_tag": "v0.3.0-alpha.8",
         }
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-bound-zip-") as directory:
             path = write_gpt_release_asset(Path(directory), **binding)
@@ -83,11 +96,12 @@ class CustomGptPackageTests(unittest.TestCase):
                 (binding["source_commit"], binding["source_tree"], binding["source_tag"]),
             )
 
-    def test_development_tree_cannot_run_the_repository_release_builder(self) -> None:
-        with self.assertRaisesRegex(SystemExit, "release builds refuse development version"):
-            require_release_version()
+    def test_final_tree_has_the_exact_release_identity(self) -> None:
+        self.assertEqual(RELEASE_ENGINE_VERSION, "0.3.0a8")
+        self.assertEqual(PUBLIC_VERSION, "0.3.0-alpha.8")
+        self.assertIsNone(require_release_version())
 
-    def test_development_knowledge_links_target_main_not_a_nonexistent_dev_tag(self) -> None:
+    def test_final_knowledge_links_target_the_exact_release_tag(self) -> None:
         payload = generated_payload()
         knowledge = "\n".join(
             data.decode("utf-8")
@@ -95,7 +109,11 @@ class CustomGptPackageTests(unittest.TestCase):
             if path.parts and path.parts[0] == "knowledge"
         )
         self.assertNotIn("/blob/v0.3.0-alpha.8.dev1/", knowledge)
-        self.assertIn("https://github.com/jkolantree/octo/blob/main/", knowledge)
+        self.assertNotIn("https://github.com/jkolantree/octo/blob/main/", knowledge)
+        self.assertIn(
+            "https://github.com/jkolantree/octo/blob/v0.3.0-alpha.8/",
+            knowledge,
+        )
 
     def test_strict_json_rejects_duplicate_keys_and_nonfinite_values(self) -> None:
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-json-") as directory:
@@ -114,6 +132,20 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertIsNone(manifest["source_commit"])
         self.assertIsNone(manifest["source_tree"])
         self.assertIsNone(manifest["source_tag"])
+        canonical_sources = {item["path"] for item in manifest["canonical_sources"]}
+        self.assertTrue(
+            {
+                "scripts/check_gpt_eval_bundle.py",
+                "scripts/check_gpt_eval_suite.py",
+                "scripts/gpt_artifact_compiler.py",
+                "scripts/gpt_eval_controller.py",
+                "tests/test_gpt_artifact_compiler.py",
+                "tests/test_gpt_eval_bundle.py",
+                "tests/test_gpt_eval_controller.py",
+                "tests/test_gpt_eval_suite.py",
+            }
+            <= canonical_sources
+        )
         self.assertEqual(
             {item["path"] for item in manifest["generated_artifacts"]},
             {path.as_posix() for path in payload if path.as_posix() not in {"GPT_RELEASE_MANIFEST.json", "SHA256SUMS"}},
@@ -134,12 +166,19 @@ class CustomGptPackageTests(unittest.TestCase):
             json.loads(line)
             for line in generated_payload()[Path("evals/GPT_EVAL_CASES.jsonl")].decode("utf-8").splitlines()
         ]
+        validate_evaluation_governance(records)
         self.assertTrue(records)
         self.assertTrue(all(len(record.get("scoring_criteria", [])) == 10 for record in records))
         self.assertTrue(
             all(
                 record.get("preview_prompt")
-                == f"Run this audit at {record['audit_depth']} depth.\n\n{record['user_request']}"
+                == (
+                    f"Target attachment for this case: {Path(record['fixture_paths'][0]).name}\n\n"
+                    "Use this attachment as the sole case target; ambient File Library results are not case targets.\n\n"
+                    "The visible answer must include complete required sections 1-9 and 10 when required; "
+                    "generated files never substitute.\n\n"
+                    f"Run this audit at {record['audit_depth']} depth.\n\n{record['user_request']}"
+                )
                 for record in records
             )
         )
@@ -168,6 +207,70 @@ class CustomGptPackageTests(unittest.TestCase):
             },
             REQUIRED_EVAL_CASE_REQUIREMENTS,
         )
+        protocol = load_strict_json(
+            ROOT / "gpt" / "_source" / "GPT_FROZEN_EVALUATION_PROTOCOL.json"
+        )
+        self.assertEqual(
+            protocol["protocol_schema"],
+            "bsc-gpt-frozen-evaluation/v3",
+        )
+        for obsolete_key in (
+            "regression_trials",
+            "prospective_base_trials",
+            "high_risk_subset_selected_before_results",
+        ):
+            self.assertNotIn(obsolete_key, protocol)
+        self.assertEqual(
+            [
+                (
+                    item["trial_id"],
+                    item["case_number"],
+                    item["case_id"],
+                    item["counted"],
+                )
+                for item in protocol["development_preflights"]
+            ],
+            [
+                ("D01", 1, "known-true-induction", False),
+                ("D02", 27, "return-envelope-positive-control", False),
+            ],
+        )
+        self.assertEqual(
+            protocol["development_preflight_policy"],
+            {
+                "evidence_classification": (
+                    "development_regressions_not_independent_evaluation_evidence"
+                ),
+                "run_order": "case_1_then_case_27",
+                "candidate_defect_repair_allowance": 1,
+                "repair_scope": "one_consolidated_root_cause_repair",
+                "regenerate_all_candidate_artifacts": "required",
+                "rerun_all_local_gates": "required",
+                "restart_preflights": "both_from_case_1",
+            },
+        )
+        self.assertEqual(
+            protocol["trial_counts"],
+            {
+                "development_preflights": 2,
+                "counted_regressions_per_complete_suite": 39,
+                "maximum_post_suite_root_cause_repairs": 1,
+                "maximum_complete_counted_suites": 2,
+            },
+        )
+        self.assertEqual(
+            [
+                (item["trial_id"], item["case_number"], item["case_id"], item["counted"])
+                for item in protocol["counted_regression_trials"]
+            ],
+            [
+                (f"C{number:03d}", number, case_id, True)
+                for number, case_id in enumerate(
+                    [record["id"] for record in records],
+                    start=1,
+                )
+            ],
+        )
 
     def test_preview_promotion_gate_is_mandatory_per_case(self) -> None:
         payload = generated_payload()
@@ -180,6 +283,115 @@ class CustomGptPackageTests(unittest.TestCase):
             self.assertIn(mandatory_gate, text, relative)
             self.assertNotIn("Recommended pass", text, relative)
             self.assertNotIn("18/20 is recommended", text, relative)
+        setup = payload[Path("GPT_SETUP_AND_PUBLISHING.md")].decode("utf-8")
+        readme = payload[Path("README.md")].decode("utf-8")
+        for text in (setup, readme):
+            self.assertIn("validate the controller synthetically", text)
+            self.assertIn("Case 1 and Case 27", text)
+            self.assertIn("freeze", text)
+            self.assertIn("controller validity", text)
+        self.assertIn("complete restart from Case 1", setup)
+        self.assertIn("same frozen candidate", setup)
+
+    def test_frozen_evaluation_protocol_mutation_fails_closed(self) -> None:
+        cases = load_strict_json(
+            ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json"
+        )["cases"]
+        protocol = load_strict_json(
+            ROOT / "gpt" / "_source" / "GPT_FROZEN_EVALUATION_PROTOCOL.json"
+        )
+        mutations = []
+
+        score_weakened = copy.deepcopy(protocol)
+        score_weakened["pass_criteria"]["minimum_score_each_counted_trial"] = 17
+        mutations.append(("score", score_weakened))
+
+        counted_case_dropped = copy.deepcopy(protocol)
+        counted_case_dropped["counted_regression_trials"].pop()
+        mutations.append(("counted_case", counted_case_dropped))
+
+        candidate_changed_on_retry = copy.deepcopy(protocol)
+        candidate_changed_on_retry["invalid_controller_retry"][
+            "same_frozen_candidate_required"
+        ] = False
+        mutations.append(("retry_candidate", candidate_changed_on_retry))
+
+        candidate_failure_reclassified = copy.deepcopy(protocol)
+        candidate_failure_reclassified["invalid_controller_retry"][
+            "candidate_failed_retry_as_controller_invalid"
+        ] = "allowed"
+        mutations.append(("candidate_failure", candidate_failure_reclassified))
+
+        transport_identity_claimed = copy.deepcopy(protocol)
+        transport_identity_claimed["artifact_transport"][
+            "download_button_identity_from_base64"
+        ] = "allowed"
+        mutations.append(("transport_identity", transport_identity_claimed))
+
+        with tempfile.TemporaryDirectory(prefix="bsc-gpt-governance-") as directory:
+            for name, mutated_protocol in mutations:
+                with self.subTest(name=name):
+                    mutated_path = Path(directory) / f"{name}.json"
+                    mutated_path.write_text(
+                        json.dumps(mutated_protocol, indent=2) + "\n",
+                        encoding="utf-8",
+                    )
+                    with patch.dict(
+                        EVAL_GOVERNANCE_SOURCES,
+                        {
+                            "evals/GPT_FROZEN_EVALUATION_PROTOCOL.json": str(
+                                mutated_path
+                            )
+                        },
+                    ):
+                        with self.assertRaisesRegex(ValueError, "gate weakened"):
+                            validate_evaluation_governance(cases)
+
+    def test_evaluation_governance_records_preserve_r01_boundaries(self) -> None:
+        cases = load_strict_json(
+            ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json"
+        )["cases"]
+        provenance_key = "evals/GPT_EVAL_PROVENANCE.md"
+        provenance = (
+            ROOT / EVAL_GOVERNANCE_SOURCES[provenance_key]
+        ).read_text(encoding="utf-8")
+        matrix_key = "evals/GPT_INVARIANT_ENFORCEMENT_MATRIX.md"
+        matrix = (
+            ROOT / EVAL_GOVERNANCE_SOURCES[matrix_key]
+        ).read_text(encoding="utf-8")
+        mutations = (
+            (
+                "candidate_failure",
+                provenance_key,
+                provenance.replace(
+                    "`candidate_failed`",
+                    "`candidate_neutral`",
+                    1,
+                ),
+                "R01",
+            ),
+            (
+                "runtime_replication",
+                matrix_key,
+                matrix.replace(
+                    "one bound execution-output artifact",
+                    "three manually replicated runtime literals",
+                    1,
+                ),
+                "controller or R01",
+            ),
+        )
+        with tempfile.TemporaryDirectory(prefix="bsc-gpt-governance-record-") as directory:
+            for name, source_key, mutated_text, expected_error in mutations:
+                with self.subTest(name=name):
+                    mutated_path = Path(directory) / f"{name}.md"
+                    mutated_path.write_text(mutated_text, encoding="utf-8")
+                    with patch.dict(
+                        EVAL_GOVERNANCE_SOURCES,
+                        {source_key: str(mutated_path)},
+                    ):
+                        with self.assertRaisesRegex(ValueError, expected_error):
+                            validate_evaluation_governance(cases)
 
     def test_eval_source_paths_cannot_escape_the_reviewed_repository_prefix(self) -> None:
         spec = {
@@ -200,20 +412,31 @@ class CustomGptPackageTests(unittest.TestCase):
         rules = all_rules(profile)
         self.assertEqual({rule["id"] for rule in rules}, REQUIRED_RULE_IDS)
         self.assertEqual({rule["id"]: rule["severity"] for rule in rules}, REQUIRED_RULE_SEVERITIES)
-        self.assertEqual(len(REQUIRED_RULE_IDS), 39)
-        self.assertEqual(sum(severity == "fatal" for severity in REQUIRED_RULE_SEVERITIES.values()), 30)
+        self.assertEqual(len(REQUIRED_RULE_IDS), 40)
+        self.assertEqual(sum(severity == "fatal" for severity in REQUIRED_RULE_SEVERITIES.values()), 31)
         self.assertNotIn("BSC_CODEX_PUBLIC_GPT_WORKFLOW.md", "\n".join(provenance_paths(profile)))
         instructions = payload[Path("GPT_INSTRUCTIONS.md")]
         instruction_text = instructions.decode("utf-8")
         self.assertLessEqual(len(instruction_text), MAX_GPT_INSTRUCTION_CHARACTERS)
         self.assertIn(f"Profile SHA-256: {hashlib.sha256(PROFILE_PATH.read_bytes()).hexdigest()}".encode(), instructions)
         self.assertTrue(instructions.startswith(b"BSC_CUSTOM_GPT_INSTRUCTIONS_BEGIN\n"))
-        self.assertTrue(instructions.endswith(b"BSC_CUSTOM_GPT_INSTRUCTIONS_END\n"))
+        self.assertTrue(instructions.endswith(b"BSC_CUSTOM_GPT_INSTRUCTIONS_END"))
+        for fixed_contract_line in (
+            "Fatal controls.",
+            "BSC_PROTOCOL.md|BSC_STATUS_AND_EVIDENCE_MODEL.md|BSC_EXECUTION_AND_RECEIPTS.md|"
+            "BSC_SUPPORTED_CHECKS.md|BSC_WORKED_EXAMPLES.md|BSC_JAPANESE_INTERFACE.md.",
+            "Missing:name it;coverage=unavailable/not_reviewed;no affected pass/proven/gate/run;"
+            "fail closed/request re-upload.",
+            "DEPTH:quick|standard(default)|adversarial|formal-mathematical;last2 need machine record;"
+            "BSC_PROTOCOL.md.",
+            "F=fatal;R=required;all.",
+        ):
+            self.assertIn(fixed_contract_line, instruction_text)
         for rule in rules:
             marker = "F" if rule["severity"] == "fatal" else "R"
-            self.assertEqual(instruction_text.count(f"{marker} {rule['id']}: {rule['text']}"), 1)
+            self.assertEqual(instruction_text.count(f"{marker}:{rule['id']}:{rule['text']}"), 1)
         self.assertIn(
-            "Completing missing/truncated proof is repair, never proof/closure.",
+            "Missing/truncated proof=>THEOREM PBU; never true/no-counterexample/proven; completion=repair.",
             instruction_text,
         )
         protocol_text = payload[Path("knowledge/BSC_PROTOCOL.md")].decode("utf-8")
@@ -223,7 +446,7 @@ class CustomGptPackageTests(unittest.TestCase):
             protocol_text,
         )
         self.assertIn(
-            "Reply in requested language. Preserve JSON keys/enums, IDs, tokens, paths, hashes, commands, filenames",
+            "Requested language; preserve exact JSON keys/enums/IDs/tokens/paths/hashes/commands/filenames",
             instruction_text,
         )
         japanese_knowledge = payload[Path("knowledge/BSC_JAPANESE_INTERFACE.md")].decode("utf-8")
@@ -253,33 +476,94 @@ class CustomGptPackageTests(unittest.TestCase):
         rules = {rule["id"]: rule["text"] for rule in all_rules(profile)}
         expected_rules = {
             "source_coverage_first": (
-                "Visible ledger row per target/Knowledge/used web page: stable ID/title+URL/DOI; query, access "
-                "mode, opened state, coverage, scope, omissions, code read/run."
+                "FIRST: table ID|title/URL/DOI|query|opened?|access_mode|coverage|scope|omissions|code_read?|"
+                "code_run?. Exactly 7 base rows=target+6 Knowledge even unavailable; retry target twice; add used "
+                "web; no collapse/omit."
+            ),
+            "separate_status_axes": (
+                "Research IDs/text/verdicts exclude gate/admission/deployment/execution/replication/provenance/"
+                "missing; delete such IDs. CLI only if BSC ran."
             ),
             "research_verdict_vocabulary": (
-                "Use only proven/strongly_supported/plausible_but_unresolved/refuted/ill_posed/"
-                "outside_current_knowledge. ill_posed=indefinite/unevaluable; refuted=decisive "
-                "counterevidence; proven=complete dependency-closed proof/certificate; otherwise unresolved."
+                "Verdicts=proven/strongly_supported/plausible_but_unresolved/refuted/ill_posed/"
+                "outside_current_knowledge only. Missing=>PBU; closed exact proof=>proven without author work; "
+                "ill_posed=undefined; refuted=disproof."
             ),
             "fail_closed": (
-                "Missing evidence/execution neither passes nor refutes; claim unresolved, gate unrun, decision "
-                "blocked. Completing missing/truncated proof is repair, never proof/closure. A supplied exact-"
-                "implementation countertrace refutes its literal universal claim; replay stays unrun."
+                "Missing evidence/execution: unresolved, no pass/refute, gates unrun. Missing/truncated proof=>"
+                "THEOREM PBU; never true/no-counterexample/proven; completion=repair. Exact countertrace refutes "
+                "universal; replay unrun."
+            ),
+            "independent_fatal_gates": (
+                "Gates independent; admission iff all fatal gates pass; unrun/fail/conflict blocks; no score "
+                "rescue. Proven/strong claim/lemma=>evidence-derived pass gate, else demote/omit."
             ),
             "execution_label_precision": (
-                "Label ChatGPT runs exactly: file-read is not math verification. Claim BSC Python only for "
-                "executed version+inputs; adapter fields are not supervised runs."
+                "ALL-SIX/no receipts: section7 activity|target|current rows Python/Lean/SMT/interval/BSC/"
+                "independent replication=reported_but_unverified|not_run. Sole "
+                "research T=plausible_but_unresolved; extra ID/verdict INVALID."
+            ),
+            "future_execution_projection": (
+                "FUTURE/no output: Section7 EXACT; sole research T=plausible_but_unresolved; other ID/verdict "
+                "INVALID:\n"
+                "activity|target|current\n"
+                "Monte Carlo|not_run|not_run\n"
+                "empirical test|not_run|not_run"
             ),
             "citations_must_be_checked": (
-                "Search cards/snippets are discovery, not evidence; every used result must be individually "
-                "opened+ledgered."
+                "Snippets/cards=discovery; open+ledger each used page."
+            ),
+            "response_language_and_canonical_tokens": (
+                "Requested language; preserve exact JSON keys/enums/IDs/tokens/paths/hashes/commands/filenames/"
+                "artifact IDs/source quotes; label translations."
             ),
             "draft_machine_records": (
-                "At required depth, emit separate audit_report.md + schema-valid audit_return.json with exact "
-                "hashes; if impossible, emit no envelope and explain."
+                "Machine=audit_request.txt(request)+audit_report.md(report)+audit_return.json. Compiler=/mnt/"
+                "data/gpt_artifact_compiler.py; copy K3 source unchanged; RUN. Runtime once; freeze request/"
+                "source/evidence; compiler owns Ledger8/report/IDs/topology; return LAST. No manual runtime/"
+                "hash/size/Base64; block=>no return/pass/proven. Refs 2-way; pass=>no obligation; omit self; "
+                "fatal IDs exact. Proven/strong/lemma=>all6K+S10+evidence/claim/run/pass-gate; else demote/omit. "
+                "protocol.sha256=sha256:b9d70566fc9eaa2c3257f2f5c05dc1786ef7c473b6b3b44a5c679a64ea11f76e. "
+                "Request/report!=source; equal request/target=>distinct bytes+IDs/digests. Section7=compiler "
+                "ledger. Fallback: RUN controller literal command; return verbatim JSON stdout block; no reuse/"
+                "combine."
+            ),
+            "execution_ledger": (
+                "Ledger8. file_read_only=>no output/receipt; !=independent_source_check. Topology: "
+                "model_reasoning in=request+target+6K,out=evidence+report,receipts=[]; DA "
+                "in=same,out=evidence+report+chatgpt_data_analysis_output.txt,receipts=[]. Ledger v2=one "
+                "session_reported runtime+provenance then filename-sorted final non-request/source outputs; no "
+                "self/return/extra; report refs it. Other ran(nonmodel)=>exact tool/version+bound I/O|receipt. "
+                "Validator=>bound version+schema/input hashes+result, else not_run/no pass. Evidence "
+                "run=>request+claim sources+cited outputs. BSC/external/empirical unrun=>not_run."
+            ),
+            "nonadmissive_receipts": (
+                "Receipt-only: sole research T=plausible_but_unresolved; no authorization/tool-run IDs, type/"
+                "evidence rows, conclusions, extra verdicts. Authorization only decision/gate; no A claim."
+            ),
+            "closing_disclosure": (
+                "BEFORE SEND: full1-9+7 sources+8 ledger; files never substitute; add10 if needed; no merge/"
+                "swap/omit. Close with depth+coverage/omissions+runs/unruns+unresolved+drafts+verdict changer."
             ),
         }
         self.assertEqual({rule_id: rules[rule_id] for rule_id in expected_rules}, expected_rules)
+        self.assertEqual(
+            next(
+                depth["builder_instruction"]
+                for depth in profile["audit_depths"]
+                if depth["id"] == "formal-mathematical"
+            ),
+            "Visible: exact objects/quantifiers/hypotheses/conclusion; every proof step/obligation; certificate/"
+            "tool limits.",
+        )
+        instruction_length = len(
+            generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
+        )
+        self.assertLessEqual(instruction_length, 7500)
+        self.assertGreaterEqual(
+            MAX_GPT_INSTRUCTION_CHARACTERS - instruction_length,
+            500,
+        )
 
         spec = load_strict_json(ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json")
         cases = {case["id"]: case for case in spec["cases"]}
@@ -299,6 +583,64 @@ class CustomGptPackageTests(unittest.TestCase):
                 "clean-structural-control": ["plausible_but_unresolved"],
                 "nonadmissive-adapter-receipt": ["plausible_but_unresolved"],
             },
+        )
+        self.assertEqual(
+            {
+                case_id: cases[case_id]["expected"]["research_verdict_any_of"]
+                for case_id in (
+                    "return-envelope-impossible-binding",
+                    "ja-return-envelope-impossible-binding",
+                    "exact-quotient-without-test",
+                )
+            },
+            {
+                "return-envelope-impossible-binding": ["plausible_but_unresolved"],
+                "ja-return-envelope-impossible-binding": ["plausible_but_unresolved"],
+                "exact-quotient-without-test": ["ill_posed"],
+            },
+        )
+
+        receipt_only = cases["nonadmissive-adapter-receipt"]["expected"]
+        self.assertEqual(
+            receipt_only["research_projection_exact"],
+            NONADMISSIVE_RECEIPT_RESEARCH_PROJECTION_EXACT,
+        )
+        generated_cases = {
+            case["id"]: case
+            for case in (
+                json.loads(line)
+                for line in generated_payload()[Path("evals/GPT_EVAL_CASES.jsonl")]
+                .decode("utf-8")
+                .splitlines()
+            )
+        }
+        self.assertEqual(
+            generated_cases["nonadmissive-adapter-receipt"]["expected"][
+                "research_projection_exact"
+            ],
+            NONADMISSIVE_RECEIPT_RESEARCH_PROJECTION_EXACT,
+        )
+        mutated_cases = copy.deepcopy(spec["cases"])
+        mutated_receipt = next(
+            case
+            for case in mutated_cases
+            if case["id"] == "nonadmissive-adapter-receipt"
+        )
+        mutated_receipt["expected"]["research_projection_exact"][
+            "allow_additional_primary_claims"
+        ] = True
+        with self.assertRaisesRegex(ValueError, "sole-T unresolved oracle"):
+            validate_exact_eval_oracles(mutated_cases)
+        self.assertIn(
+            "Keeps T as the sole primary research claim and emits exactly one primary verdict, "
+            "plausible_but_unresolved; receipt non-admissibility belongs only on evidence, execution, and "
+            "gate axes.",
+            receipt_only["observable_behaviors"],
+        )
+        self.assertIn(
+            "Creates a receipt-authorization or policy claim as a primary research claim, or emits any extra "
+            "refuted or ill_posed research verdict from the receipt defect.",
+            receipt_only["forbidden_behaviors"],
         )
 
         file_read_behavior = (
@@ -346,6 +688,112 @@ class CustomGptPackageTests(unittest.TestCase):
             positive_return["observable_behaviors"],
         )
         self.assertIn(
+            "Keeps request and target source as byte-distinct artifacts; if their bytes are identical, emits no envelope until a distinct exact request artifact exists, and never duplicates one digest across roles.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Never binds a sources entry directly to a request or report artifact; excludes it or supplies a distinct role-source artifact ID.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Binds each verified proof-evidence record to a downloadable role-evidence artifact and to an execution activity that declares that evidence artifact as output, never to a role-source artifact alone.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Records ChatGPT Data Analysis as ran when it writes files, computes hashes, or declares output_artifact_ids; file_read_only declares no outputs.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Requires every proven or strongly_supported claim, including lemmas, to bind at least one fatal gate that derives pass from complete evidence.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Projects exactly every declared fatal gate into summary_projection.fatal_gate_ids.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Omits a lemma claim rather than recording it proven without an evidence-derived passing fatal gate.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Records any non-model ran activity with hash-matched input and verified output or admissible receipt plus an exact observed nonempty tool and version; otherwise no pass or proven promotion.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Binds the request and every locally available source for the evidence claims as inputs to each evidence-cited execution.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Claims schema or semantic validation ran without a bound versioned validator output.",
+            positive_return["forbidden_behaviors"],
+        )
+        self.assertIn(
+            "Captures the full session-reported runtime once whenever Data Analysis writes or hashes files, then "
+            "deterministically creates exactly one chatgpt_data_analysis_output.txt role-execution_output "
+            "using the v2 header, one runtime line, one session-reported provenance line, and filename-sorted "
+            "`sha256  bytes  filename` rows derived from every earlier-frozen non-request/source output but "
+            "never itself or audit_return.json.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Projects that one captured value into the structured execution.version field, labels it "
+            "session-reported rather than independently authenticated, and makes the visible report reference "
+            "chatgpt_data_analysis_output.txt or its artifact ID instead of manually reproducing the runtime "
+            "literal.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertNotIn(
+            "Prints one identical literal full sys.version in chatgpt_data_analysis_output.txt, the visible "
+            "execution ledger, and audit_return.json; a file or receipt reference never substitutes.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Leaves schema and semantic validation unvalidated or not_run unless a bound versioned validator-output artifact records the check.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Emits prohibited ASCII control bytes in generated text artifacts or interprets a literal LaTeX backslash as a string escape.",
+            positive_return["forbidden_behaviors"],
+        )
+        self.assertIn(
+            "After the last write of every artifacts[] file, re-reads the final downloadable bytes, derives every "
+            "hash and size from those final bytes, freezes the file, and serializes audit_return.json only after "
+            "all referenced artifacts are final.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Asks model-authored prose to independently reproduce a hash, byte count, Base64 payload, or full "
+            "runtime string.",
+            positive_return["forbidden_behaviors"],
+        )
+        self.assertIn(
+            "Claims an optional Base64 export proves identity with unavailable download-button bytes or calls "
+            "unavailable original bytes corrupt.",
+            positive_return["forbidden_behaviors"],
+        )
+        self.assertIn(
+            "Records every unexecuted BSC, external-proof, and empirical activity as not_run, never "
+            "not_applicable.",
+            positive_return["observable_behaviors"],
+        )
+        self.assertIn(
+            "Binds a pre-final artifact digest, changes an artifacts[] file after hashing, or retains pass or "
+            "proven after a byte-hash mismatch.",
+            positive_return["forbidden_behaviors"],
+        )
+        self.assertIn(
+            "Marks an unexecuted empirical activity not_applicable.",
+            positive_return["forbidden_behaviors"],
+        )
+        self.assertIn(
+            "Records Data Analysis as ran after writes or hashes without binding every generated output except the request and return, including chatgpt_data_analysis_output.txt.",
+            positive_return["forbidden_behaviors"],
+        )
+        self.assertIn(
+            "Uses a role-source target or Knowledge file as the verified proof-evidence artifact for a proven claim.",
+            positive_return["forbidden_behaviors"],
+        )
+        self.assertIn(
             "Pastes an audit_return.json object with invented, placeholder, or unverifiable hashes.",
             impossible_return["forbidden_behaviors"],
         )
@@ -370,19 +818,125 @@ class CustomGptPackageTests(unittest.TestCase):
             self.assertIn("japanese", expected_text.lower())
             self.assertIn("canonical", expected_text.lower())
             self.assertIn("Answers only in English", expected_text)
+            self.assertEqual(
+                case["expected"]["research_projection_requirement"],
+                STATUS_ONLY_RESEARCH_PROJECTION_EMPTY,
+            )
+            self.assertNotIn("research_verdict_any_of", case["expected"])
+            self.assertNotIn("research_projection_exact", case["expected"])
 
+        generated_cases = {
+            case["id"]: case
+            for case in (
+                json.loads(line)
+                for line in generated_payload()[Path("evals/GPT_EVAL_CASES.jsonl")]
+                .decode("utf-8")
+                .splitlines()
+            )
+        }
+        self.assertEqual(len(generated_cases), 39)
+        self.assertEqual(
+            {
+                case_id
+                for case_id, case in generated_cases.items()
+                if case["expected"]["research_projection_requirement"]
+                == STATUS_ONLY_RESEARCH_PROJECTION_EMPTY
+            },
+            REQUIRED_STATUS_REPRODUCTION_EVAL_CASE_IDS,
+        )
+        self.assertTrue(
+            all(
+                case["expected"]["research_projection_requirement"]
+                in {
+                    SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED,
+                    STATUS_ONLY_RESEARCH_PROJECTION_EMPTY,
+                }
+                for case in generated_cases.values()
+            )
+        )
         instructions = generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
         self.assertLessEqual(len(instructions), MAX_GPT_INSTRUCTION_CHARACTERS)
+        self.assertFalse(instructions.endswith("\n"))
         for rule_id, text in expected_rules.items():
-            self.assertEqual(instructions.count(f"F {rule_id}: {text}"), 1)
+            self.assertEqual(instructions.count(f"F:{rule_id}:{text}"), 1)
+
+    def test_research_projection_oracle_cannot_reclassify_scientific_cases(self) -> None:
+        spec = load_strict_json(ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json")
+
+        scientific_without_verdict = copy.deepcopy(spec["cases"])
+        scientific = next(
+            case
+            for case in scientific_without_verdict
+            if case["id"] == "known-true-induction"
+        )
+        scientific["expected"].pop("research_verdict_any_of")
+        with self.assertRaisesRegex(ValueError, "nonempty unique verdict oracle"):
+            validate_exact_eval_oracles(scientific_without_verdict)
+
+        scientific_as_status = copy.deepcopy(spec["cases"])
+        scientific = next(
+            case for case in scientific_as_status if case["id"] == "known-true-induction"
+        )
+        scientific["expected"]["research_projection_requirement"] = (
+            STATUS_ONLY_RESEARCH_PROJECTION_EMPTY
+        )
+        scientific["expected"].pop("research_verdict_any_of")
+        scientific["expected"]["execution"] = "status_record_read_only"
+        with self.assertRaisesRegex(ValueError, "reviewed official-state pair"):
+            validate_exact_eval_oracles(scientific_as_status)
+
+        scientific_status_execution = copy.deepcopy(spec["cases"])
+        next(
+            case
+            for case in scientific_status_execution
+            if case["id"] == "known-true-induction"
+        )["expected"]["execution"] = "status_record_read_only"
+        with self.assertRaisesRegex(ValueError, "non-status execution mode"):
+            validate_exact_eval_oracles(scientific_status_execution)
+
+    def test_status_only_projection_oracle_rejects_scientific_fields_and_unknown_modes(
+        self,
+    ) -> None:
+        spec = load_strict_json(ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json")
+        for field, value in (
+            ("research_verdict_any_of", ["plausible_but_unresolved"]),
+            (
+                "research_projection_exact",
+                {
+                    "primary_claim_ids": ["T"],
+                    "verdicts_by_claim": {"T": "plausible_but_unresolved"},
+                    "allow_additional_primary_claims": False,
+                },
+            ),
+        ):
+            with self.subTest(field=field):
+                cases = copy.deepcopy(spec["cases"])
+                status_case = next(
+                    case
+                    for case in cases
+                    if case["id"] == "official-service-status-separation"
+                )
+                status_case["expected"][field] = value
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "must be a status-record read and must not carry",
+                ):
+                    validate_exact_eval_oracles(cases)
+
+        unknown = copy.deepcopy(spec["cases"])
+        next(
+            case for case in unknown if case["id"] == "known-true-induction"
+        )["expected"]["research_projection_requirement"] = "unknown"
+        with self.assertRaisesRegex(ValueError, "unknown research projection requirement"):
+            validate_exact_eval_oracles(unknown)
 
     def test_profile_disables_actions_and_preserves_upload_privacy_boundary(self) -> None:
         profile = load_strict_json(PROFILE_PATH)
         self.assertFalse(profile["capabilities"]["actions"]["enabled"])
         self.assertFalse(profile["capabilities"]["apps"]["enabled"])
         instructions = generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
-        self.assertIn("handled through ChatGPT", instructions)
-        self.assertIn("Packet Builder local-only does not cover ChatGPT", instructions)
+        self.assertIn("Packet Builder local-only excludes GPT uploads", instructions)
+        self.assertIn("ChatGPT settings/terms apply", instructions)
 
     def test_official_service_candidate_and_bilingual_metadata_are_separate(self) -> None:
         profile = load_strict_json(PROFILE_PATH)

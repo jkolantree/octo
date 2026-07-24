@@ -96,19 +96,22 @@ Exit criterion: the repository-generated controller fits the actual Builder fiel
 
 Exit criterion: a nonexpert can reproduce the package, identify exactly what to paste and upload, run the Preview gate, and distinguish an interpretive ChatGPT audit from actual BSC Python or external proof execution. The repository release does not establish that the authenticated Custom GPT was created or published; the human editor step and returned public URL remain separate.
 
-## 0.3.0-alpha.8 development - Audit Return Desk, GPT calibration, and Japanese access
+## v0.3.0-alpha.8 - Audit Return Desk, deterministic GPT artifacts, and Japanese access
 
 - implement one closed `audit-return-v0.1` envelope for a separate human report, source coverage, artifacts, evidence, fatal gates, execution, receipts, and unresolved obligations;
 - provide matching Python and accessible browser-local inspectors without treating fluent model output or submitted receipts as checker evidence;
 - bind exact protocol and schema bytes, enforce portable filenames, and recompute claim-scoped gate and summary projections;
 - require exact execution input/output/receipt scope and locally available source bytes for high research verdicts;
 - preserve poisoned returns for concealed failures, unsupported execution, missing-source promotion, receipt-only promotion, and deployment overreach;
-- harden all 29 GPT evaluation oracles around source coverage, absence-only refutation, `file_read_only`, verdict calibration, and exact return-envelope emission;
+- harden all 39 GPT evaluation oracles around source coverage, absence-only refutation, `file_read_only`, verdict calibration, and exact return-envelope emission;
+- generate return artifacts through one acyclic final-byte transaction with one captured session-reported runtime and no model-copied hash, size, Base64, or runtime projection;
+- fail the evaluation controller before scoring unless the exact target, six canonical Knowledge files, and generated outputs are present;
+- preserve `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved` as separate outcomes that cannot rescue a substantive contradiction;
 - lead public documentation with the official GPT while keeping its reproducible package, exact configuration binding, Preview validation, GitHub release, and Pages deployment as separate states;
 - add Japanese Pages, GPT behavior/evaluations, and framework guidance without translating or normalizing canonical IDs, verdict tokens, hashes, paths, commands, filenames, or source bytes;
 - preserve the immutable alpha.7 release while recording that alpha.8.dev0 reached `main`, Pages, and the live GPT before its intended complete Preview sequence.
 
-Exit criterion: Python/browser semantic parity, deterministic generation and hashes, English/Japanese accessibility and privacy checks, full regression and Null-Discrimination passes, clean pseudonymous-publication checks, native-speaker terminology review for stable Japanese claims, and a fresh complete generated Builder Preview gate before the next merge, live Update, or GitHub release.
+Exit criterion: Python/browser semantic parity, deterministic generation and hashes, English/Japanese accessibility and privacy checks, full regression and Null-Discrimination passes, clean pseudonymous-publication checks, two development preflights, and all 39 frozen-candidate Preview regressions at 18/20 or better with no automatic failure before live Update, merge, tag, or GitHub release. Native-speaker terminology review remains a separate beta-to-stable gate for Japanese claims.
 
 ## v0.3 - rational dictionary and support certificates
 

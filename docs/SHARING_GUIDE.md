@@ -160,4 +160,4 @@ Avoid:
 - “BSC compliant”;
 - claims that an LLM ran the Python checker without actual output.
 
-The Audit Return Desk is implemented in the alpha.8 development line for non-admissive inspection of returned output and receipts. It is not part of the immutable alpha.7 release; its presence in a Pages or GPT interface does not turn a returned draft into admissible evidence.
+The Audit Return Desk is implemented in the alpha.8 release candidate for non-admissive inspection of returned output and receipts. It is not part of the immutable alpha.7 release; its presence in a Pages or GPT interface does not turn a returned draft into admissible evidence.

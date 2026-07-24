@@ -4,7 +4,7 @@ Research-preview software for making mathematical and scientific claims easier t
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) (live research preview)<br>
 **Current GitHub release:** `v0.3.0-alpha.7`<br>
-**Development line:** `0.3.0-alpha.8.dev1` (unreleased follow-up candidate)<br>
+**Release candidate:** `0.3.0-alpha.8` (pending local, Preview, live-binding, merge, and release gates)<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
 [日本語](README.ja.md) | [Timestamped publication status](docs/PUBLICATION_STATUS.json)

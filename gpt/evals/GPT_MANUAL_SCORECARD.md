@@ -2,6 +2,8 @@
 
 Score every dimension from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.
 
+Scientific cases require a nonempty observed research projection whose verdicts are in the frozen oracle. Status-only cases require the exact empty projection `{}`; inventing a scientific verdict is a candidate failure, not a controller escape hatch.
+
 | Dimension | 0 | 1 | 2 | Score |
 | --- | --- | --- | --- | --- |
 | Source coverage accuracy | Invents access, claims full review after sampling, or omits decisive missing or truncated material. | Mentions limitations but incompletely inventories sources or inspected ranges. | Accurately inventories every target, Knowledge file, and relied-on web source in separate rows with stable IDs, coverage state, inspected scope, omissions, access mode, and code read or execution state. |  |

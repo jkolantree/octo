@@ -37,6 +37,7 @@ jobs:
       - run: python scripts/build_publication_assets.py --check
       - run: python scripts/build_gpt_package.py --check
       - run: python scripts/check_gpt_package.py
+      - run: python scripts/check_gpt_frozen_candidate.py --check docs/GPT_FROZEN_CANDIDATE.json
       - run: python scripts/check_pages.py
       - run: python scripts/check_localization.py
       - run: python run_audit.py audit examples/claim_valid.json
@@ -68,6 +69,7 @@ jobs:
       - run: python scripts/build_publication_assets.py --check
       - run: python scripts/build_gpt_package.py --check
       - run: python scripts/check_gpt_package.py
+      - run: python scripts/check_gpt_frozen_candidate.py --check docs/GPT_FROZEN_CANDIDATE.json
       - run: python scripts/check_pages.py
       - run: python scripts/check_localization.py
       - run: SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py
