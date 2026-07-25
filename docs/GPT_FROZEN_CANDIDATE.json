@@ -3,7 +3,7 @@
     "gpt/GPT_RELEASE_MANIFEST.json",
     "gpt/SHA256SUMS"
   ],
-  "file_count": 142,
+  "file_count": 144,
   "files": [
     {
       "bytes": 35372,
@@ -39,7 +39,7 @@
       "bytes": 13624,
       "category": "browser_return_desk",
       "path": "pages/profile.js",
-      "sha256": "e04490ade7252d44b965771c92206bc896ce683eb4400baa073e77eb42926033"
+      "sha256": "c1db300b454c16df29550aee141437545d5b433d70e5ee204e3fe1cc6622db59"
     },
     {
       "bytes": 30376,
@@ -72,64 +72,64 @@
       "sha256": "124f6e24a480f4d492dfc23ce8192ce9334c21210fe3d77f4ef890a27de5935c"
     },
     {
-      "bytes": 7474,
+      "bytes": 7456,
       "category": "candidate",
       "path": "gpt/GPT_INSTRUCTIONS.md",
-      "sha256": "beb77f991b9274316298d47586b305ea6ebac8974a471b66819342b2dd16a86a"
+      "sha256": "8e4e68327496c68345149ab067498c4ec8ae0901c4c91d92c3a479188e3f864c"
     },
     {
-      "bytes": 26324,
+      "bytes": 26350,
       "category": "candidate",
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "b5be283f7686791f5c892ff7c0449e3f2bcd28f1fa812e6625c45de8f03c115f"
+      "sha256": "008734872e4cee34b3399a29c47833af10bec374ec11514cb4dfe4164fb11e56"
     },
     {
-      "bytes": 13025,
+      "bytes": 4661,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_JAPANESE_INTERFACE.md",
-      "sha256": "42e73b071b463446fff2ef3077e55cf27181561d378597172f0060914aac3f5d"
+      "sha256": "c36ef6641197c9484d7a03fc00a7db84c237a8a07d331195740c5bc71e562f4e"
     },
     {
-      "bytes": 19867,
+      "bytes": 19500,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_PROTOCOL.md",
-      "sha256": "f974cc0aa7157eb1f74848a4772704147ae4489f6ee60e1e990529d577fb303a"
+      "sha256": "5fc71befdd1cab3b2f6689ffacec8736e3421435c7cdb17a0aafde4d5d51da91"
     },
     {
-      "bytes": 8328,
+      "bytes": 7455,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md",
-      "sha256": "72ab8a1b62021b21df486daef48a2f29f649f30d3f6bf052aafe2d2cab32194f"
+      "sha256": "c03075b00c2616ab6b2ec0aa4a57d3ead09d89221b74fec046b4bb7adc6afd85"
     },
     {
-      "bytes": 45867,
+      "bytes": 16011,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_SUPPORTED_CHECKS.md",
-      "sha256": "21af93d80c5d84d4a39c28864bf4208e14e008ae42a36b28f536e99ac53c9cad"
+      "sha256": "1de0b1846aa25b9a0db84cd693b67d9e06da6188a94c3830832b036208c4011f"
     },
     {
-      "bytes": 30600,
+      "bytes": 5015,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_WORKED_EXAMPLES.md",
-      "sha256": "4234439805e90b3e3a2637cd4ced4e7019c3ff7b0e7ab1950cf19a15f82b2c24"
+      "sha256": "caefdfa74919369d7f74778ad342b8e64732a42afb7c24367bfe4d52d4bdb4d6"
     },
     {
-      "bytes": 66086,
+      "bytes": 68963,
       "category": "evaluation",
       "path": "gpt/_source/GPT_EVAL_SPEC.json",
-      "sha256": "8209d5deefb112ac8570bf451807114ba430a189273b1d8a50bf5ac0d604feaa"
+      "sha256": "60c38bdf4746ea355558f2abfe6ad61d9a407d4f672bc15bad6b3979fbd275ef"
     },
     {
-      "bytes": 77164,
+      "bytes": 84288,
       "category": "evaluation",
       "path": "gpt/evals/GPT_EVAL_CASES.jsonl",
-      "sha256": "0cd9e2e3f3509da78b89d388c5b0c62865e19eb8eb0f9fc879c00164b2474edc"
+      "sha256": "4cc0c2f2c221a69af201c124111b1821ccb9cc9077e853befe802c4bea413d64"
     },
     {
-      "bytes": 64737,
+      "bytes": 71895,
       "category": "evaluation",
       "path": "gpt/evals/GPT_EVAL_EXPECTATIONS.md",
-      "sha256": "15e4481681fa0acb865db254764a683e1b4f6811bd51d894faf65f8381c261d2"
+      "sha256": "a0067405770f73a1d503eac2f94f464c72cf92524c92fe34f9450c508091bf25"
     },
     {
       "bytes": 30533,
@@ -678,6 +678,12 @@
       "sha256": "e037776b6d2bca6087078edda442fe031672f5633e5850a3e0b597b7ac6e1e1a"
     },
     {
+      "bytes": 18600,
+      "category": "tests",
+      "path": "tests/test_compact_preview_response.py",
+      "sha256": "5de97ae164769affe2c1ce424bc6ddedf43bfbaa5a8b2752ce33afce18681f7d"
+    },
+    {
       "bytes": 1243,
       "category": "tests",
       "path": "tests/test_defect.py",
@@ -714,16 +720,16 @@
       "sha256": "b0d6643b796c131eefab182691c6dcdede147ab7bd5ea23ac77bc24222f675a9"
     },
     {
-      "bytes": 20259,
+      "bytes": 20370,
       "category": "tests",
       "path": "tests/test_gpt_frozen_candidate.py",
-      "sha256": "d8ace360ec988570b3dacd769bcca2fc806fb00599797f99e74dc123fb3d5b45"
+      "sha256": "7d4992827d8d6d9a08dbaabfe63f9b19f7befb463f5115fbf6d375ddff33e911"
     },
     {
-      "bytes": 52252,
+      "bytes": 52892,
       "category": "tests",
       "path": "tests/test_gpt_package.py",
-      "sha256": "45e33438e53876a284f2336ecf33774376ce981cf2042f94c8dfc9e64d9086f5"
+      "sha256": "37375b496d384b300558a8215ff90254c714b5b8bf1e840f1aeac770cb6be701"
     },
     {
       "bytes": 11575,
@@ -798,10 +804,16 @@
       "sha256": "4ef64b47c34ace1735eac59040977ee7a23260f118e9d60fbcfaf6508985d106"
     },
     {
-      "bytes": 113352,
+      "bytes": 123522,
       "category": "tooling",
       "path": "scripts/build_gpt_package.py",
-      "sha256": "8322dc6c3451e923329eda74b809bd03c02d81edbb8e63b0871b2d6eaf6cfac0"
+      "sha256": "498994e23355de4defdb9c7f6024e3d26a37d097e3d2962ea7b7c1ac4990ca77"
+    },
+    {
+      "bytes": 11293,
+      "category": "tooling",
+      "path": "scripts/check_compact_preview_response.py",
+      "sha256": "37dc7abe97e98c4c18660ff7a267741a5409aa1fe96b347f4523bc186e3a7841"
     },
     {
       "bytes": 134831,
@@ -816,10 +828,10 @@
       "sha256": "cfe1d850884348af9e4d0aca746081c246574ec6532c556b7a7512a7430e1f69"
     },
     {
-      "bytes": 42974,
+      "bytes": 43170,
       "category": "tooling",
       "path": "scripts/check_gpt_frozen_candidate.py",
-      "sha256": "b315cc0aba8ff6fc8df22570e254dca1341b0260113a77da2460b7228620d6c6"
+      "sha256": "074bfe4605ca06f462ee9b61201682d5c9ee07e4d610da39d2d9e2694edeb5a5"
     },
     {
       "bytes": 1485,
@@ -859,5 +871,5 @@
     }
   ],
   "manifest_schema": "bsc-gpt-frozen-candidate-manifest/v1",
-  "registry_version": "bsc-gpt-frozen-candidate-registry/v2"
+  "registry_version": "bsc-gpt-frozen-candidate-registry/v3"
 }

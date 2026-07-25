@@ -36,11 +36,23 @@ MUTABLE_KNOWLEDGE_STATE_ASSERTIONS = (
 )
 SOURCE_DATE_EPOCH = int(os.environ.get("SOURCE_DATE_EPOCH", "1784505600"))
 ZIP_TIME = time.gmtime(max(SOURCE_DATE_EPOCH, 315532800))[:6]
+PUBLIC_DIGEST_VALUE_PATTERN = re.compile(
+    r"(?<![0-9A-Fa-f])[0-9A-Fa-f]{64}(?![0-9A-Fa-f])"
+)
+PUBLIC_DIGEST_VALUE_PLACEHOLDER = "[digest value withheld from public profile]"
+PROHIBITED_PUBLIC_KNOWLEDGE_INSTRUCTION_FRAGMENTS = (
+    "create distinct transaction artifacts",
+    "execute the complete canonical `scripts/gpt_artifact_compiler.py`",
+    "generate that execution-output artifact",
+    "serialize `audit_return.json`",
+    "append that exact complete stdout",
+    "split the zlib stream into contiguous data shards",
+)
 
 KNOWLEDGE_SOURCES: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "knowledge/BSC_PROTOCOL.md": (
         "BSC Protocol",
-        "The compact public-GPT projection of the normative cross-model audit protocol. The complete canonical source remains bound by hash, while machine-record production stays offline.",
+        "The compact public-GPT projection of the normative cross-model audit protocol. Repository-only serialization machinery is excluded from this public response profile.",
         ("BSC_AUDIT_LLM_PACKET.md",),
     ),
     "knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md": (
@@ -50,35 +62,21 @@ KNOWLEDGE_SOURCES: dict[str, tuple[str, str, tuple[str, ...]]] = {
     ),
     "knowledge/BSC_SUPPORTED_CHECKS.md": (
         "BSC Supported Checks",
-        "Implemented finite Python routes, schemas, mathematical scope, and explicit non-goals.",
+        "Mathematical scope, implemented finite-check concepts, and explicit non-goals without repository serialization schemas.",
         (
-            "schemas/README.md",
-            "schemas/audit-return-v0.1.schema.json",
-            "docs/SCHEMA.md",
-            "docs/AUDIT_RETURN_DESK.md",
             "docs/MATHEMATICS.md",
             "docs/DERIVED_HOLONOMY.md",
         ),
     ),
     "knowledge/BSC_WORKED_EXAMPLES.md": (
         "BSC Worked and Adversarial Examples",
-        "Known-answer examples and preserved negative cases. Expected checker outcomes do not establish external scientific truth.",
-        (
-            "examples/README.md",
-            "examples/claim_valid.json",
-            "examples/null_conflicting_referenced.json",
-            "examples/null_omitted_bound_failure.json",
-            "examples/null_failed_proof.json",
-            "examples/null_missing_arithmetic_config.json",
-            "examples/observation_failure.json",
-            "examples/complex_valid_transport.json",
-            "examples/complex_broken_transport.json",
-        ),
+        "A compact catalog of known-answer and adversarial examples. Raw fixture payloads and repository-only return formats are deliberately excluded.",
+        ("examples/README.md",),
     ),
     "knowledge/BSC_JAPANESE_INTERFACE.md": (
         "BSC Japanese Interface and Canonical-Token Glossary",
-        "Japanese usage guidance and terminology. Translated explanations never replace the canonical English protocol or machine tokens.",
-        ("docs/ja/GPT_INTERFACE.md", "docs/ja/GLOSSARY.md"),
+        "Japanese terminology for research and official-product status. Translated explanations never replace canonical non-hash tokens or URLs.",
+        ("docs/ja/GLOSSARY.md",),
     ),
 }
 
@@ -106,12 +104,14 @@ EXECUTABLE_TRUST_BOUNDARY_SOURCES = {
     "schemas/audit-return-v0.1.schema.json",
     "pages/return-desk-core.js",
     "scripts/build_publication_assets.py",
+    "scripts/check_compact_preview_response.py",
     "scripts/check_gpt_eval_bundle.py",
     "scripts/check_gpt_eval_suite.py",
     "scripts/check_gpt_frozen_candidate.py",
     "scripts/gpt_artifact_compiler.py",
     "scripts/gpt_eval_controller.py",
     "tests/test_gpt_artifact_compiler.py",
+    "tests/test_compact_preview_response.py",
     "tests/test_gpt_eval_bundle.py",
     "tests/test_gpt_eval_suite.py",
     "tests/test_gpt_frozen_candidate.py",
@@ -399,10 +399,63 @@ def validate_exact_eval_oracles(
                 raise ValueError(
                     f"status-only evaluation case {case_id} must be a status-record read and must not carry a scientific verdict oracle"
                 )
+            if case_id in REQUIRED_STATUS_REPRODUCTION_EVAL_CASE_IDS:
+                status_oracle = json.dumps(
+                    expected,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ).casefold()
+                if (
+                    case.get("audit_depth") != "quick"
+                    or OFFICIAL_GPT_URL.casefold() not in status_oracle
+                    or not all(
+                        token in status_oracle
+                        for token in (
+                            "status-only route",
+                            "duties 1-9",
+                            "research verdict",
+                            "official url",
+                            "status_record_read_only",
+                            "key=value",
+                            "stops after",
+                        )
+                    )
+                ):
+                    raise ValueError(
+                        f"status-only evaluation case {case_id} lacks the exact "
+                        "official-first, no-scientific-projection oracle"
+                    )
 
     if status_only_case_ids != REQUIRED_STATUS_REPRODUCTION_EVAL_CASE_IDS:
         raise ValueError(
             "status-only research projection cases differ from the reviewed official-state pair"
+        )
+
+    conflict_cases = [
+        case for case in cases if case.get("id") == "contradictory-verified-evidence"
+    ]
+    if len(conflict_cases) != 1:
+        raise ValueError(
+            "evaluation source must contain exactly one contradictory-verified-evidence case"
+        )
+    conflict_oracle = json.dumps(
+        conflict_cases[0].get("expected", {}),
+        ensure_ascii=False,
+        sort_keys=True,
+    ).casefold()
+    if not all(
+        token in conflict_oracle
+        for token in (
+            "evidence:fixture:manifest-structure",
+            "evidence:fixture:manifest-structure-fail",
+            "manifest_structure as conflict",
+            "digest value",
+            "does not claim the bsc checker ran",
+        )
+    ):
+        raise ValueError(
+            "contradictory-verified-evidence lacks the exact conflict and "
+            "digest-withholding oracle"
         )
 
     receipt_cases = [
@@ -1040,6 +1093,16 @@ def compact_protocol_projection(markdown: str) -> str:
 
     replacements = (
         (
+            "Turn mathematical, scientific, computational, or empirical material into "
+            "a precise audit with explicit scope, assumptions, source coverage, "
+            "counterexample searches, hard gates, demotion rules, and draft "
+            "machine-readable artifacts.",
+            "Turn mathematical, scientific, computational, or empirical material into "
+            "a precise audit with explicit scope, assumptions, source coverage, "
+            "counterexample searches, hard gates, demotion rules, and bounded "
+            "human-readable findings.",
+        ),
+        (
             "If no depth is requested, use `standard`. The `adversarial` and "
             "`formal-mathematical` depths require the draft machine-readable audit "
             "record described below. The `quick` and `standard` depths include it "
@@ -1047,6 +1110,37 @@ def compact_protocol_projection(markdown: str) -> str:
             "If no depth is requested, use `standard`. Audit depth changes the rigor "
             "and detail of the visible analysis, not the output medium. The public "
             "Custom GPT returns only a bounded human-readable audit at every depth.",
+        ),
+        (
+            "Write human-readable explanations in the language requested by the user; "
+            "otherwise follow the user's language. Preserve machine-facing material "
+            "exactly: JSON keys and enum values, schema and rule identifiers, verdict "
+            "and gate tokens, finding codes, paths, hashes, commands, filenames, "
+            "artifact IDs, and quoted source text. A translated explanation may "
+            "accompany a canonical token, but it must not replace or redefine it.",
+            "Write human-readable explanations in the language requested by the user; "
+            "otherwise follow the user's language. Preserve canonical non-hash tokens "
+            "and URLs exactly. Do not reproduce digest values in the public response; "
+            "refer to one only as `digest supplied`. A translated explanation may "
+            "accompany a canonical token, but it must not replace or redefine it.",
+        ),
+        (
+            "Do not normalize, transliterate, or translate bytes before hashing. Label "
+            "any translation of quoted material as a translation and retain the "
+            "original quotation when it is material to the audit. The canonical "
+            "English protocol and machine vocabulary control if a translated guide "
+            "diverges.",
+            "Label any translation of quoted material as a translation and retain the "
+            "original quotation when it is material to the audit. The canonical "
+            "English protocol and non-hash machine vocabulary control if a translated "
+            "guide diverges.",
+        ),
+        (
+            "Never invent hashes, citations, files, measurements, command output, "
+            "interval enclosures, formal proofs, or independent replication.",
+            "Never invent or reproduce digest values, citations, files, measurements, "
+            "command output, interval enclosures, formal proofs, or independent "
+            "replication.",
         ),
         (
             "When ChatGPT Data Analysis creates or hashes files, the executed canonical "
@@ -1061,10 +1155,9 @@ def compact_protocol_projection(markdown: str) -> str:
             "need not reproduce the runtime literal. Never ask model-authored prose to "
             "recopy a runtime, digest, byte count, or encoded payload.",
             "In the public Custom GPT, Data Analysis may inspect an attachment or perform "
-            "a bounded calculation when useful. It must not create or hash audit "
-            "artifacts, run the artifact compiler, or emit a machine-record transport. "
-            "Describe actual tool use and its limits directly in the visible execution "
-            "ledger.",
+            "a bounded calculation when useful. Describe actual tool use and its limits "
+            "directly in the visible execution ledger; the response remains visible "
+            "human-readable text.",
         ),
         (
             "Return sections 1 through 9 in order. Return section 10 only when the user "
@@ -1079,13 +1172,12 @@ def compact_protocol_projection(markdown: str) -> str:
             "short summary must never strengthen the technical audit; when compression "
             "would distort the result, preserve the necessary qualification. Be concise. "
             "Quote only when exact wording is necessary.",
-            "The public Custom GPT has no section 10. If a user requests a machine "
-            "record, downloadable report, `audit_return.json`, compiler output, Base64, "
-            "shards, or transport, explain that this profile does not produce it and "
-            "continue with the human-readable audit.\n\n"
+            "The public Custom GPT has no machine-output section. If a user requests an "
+            "exported or machine format, state briefly that this profile returns visible "
+            "human-readable text and continue with that audit.\n\n"
             "The default report must be beginner-first but technically inspectable. "
-            "Including tables, use at most 500 words for `quick`, 1,200 for `standard`, "
-            "and 2,000 for `adversarial` or `formal-mathematical`, unless the user "
+            "Including tables, use at most 300 words for `quick`, 650 for `standard`, "
+            "and 1,000 for `adversarial` or `formal-mathematical`, unless the user "
             "explicitly asks for an expanded report. State omitted scope and offer a "
             "focused continuation rather than emitting a giant response.",
         ),
@@ -1102,57 +1194,130 @@ def compact_protocol_projection(markdown: str) -> str:
     prefix, remainder = markdown.split(start, 1)
     _, suffix = remainder.split(end, 1)
     boundary = (
-        "\n## Standalone machine-record boundary\n\n"
-        "The repository retains machine records, the artifact compiler, and Return Desk "
-        "as separately invoked supervised tooling. They are not installed, executed, or "
-        "represented as capabilities of the public Custom GPT. The public GPT must not "
-        "create downloadable audit artifacts, compiler stdout, hashes, Base64, shards, "
-        "parity, transport, or section 10.\n"
+        "\n## Public-response boundary\n\n"
+        "This public profile returns bounded visible text. Downloadable audit artifacts, "
+        "machine records, compiler output, Base64, shards, transport, and Return Desk "
+        "execution are disabled; repository serialization workflows remain offline.\n"
     )
     return prefix + boundary + end + suffix
 
 
+def drop_markdown_sections(
+    markdown: str,
+    forbidden_heading_fragments: tuple[str, ...],
+) -> str:
+    """Remove complete second-level sections selected by stable heading fragments."""
+
+    fragments = tuple(item.casefold() for item in forbidden_heading_fragments)
+    projected: list[str] = []
+    skipping = False
+    for line in markdown.splitlines():
+        if line.startswith("## "):
+            heading = line[3:].casefold()
+            skipping = any(fragment in heading for fragment in fragments)
+        if not skipping:
+            projected.append(line)
+    return "\n".join(projected).rstrip() + "\n"
+
+
+def compact_status_projection(markdown: str) -> str:
+    projected = drop_markdown_sections(markdown, ("return desk",))
+    projected = projected.replace(", and Return Desk outcome", "")
+    if "return desk" in projected.casefold():
+        raise ValueError("public status projection retained Return Desk instructions")
+    return projected
+
+
+def compact_examples_projection(markdown: str) -> str:
+    return drop_markdown_sections(markdown, ("audit return desk",))
+
+
+def compact_japanese_projection(markdown: str) -> str:
+    projected = drop_markdown_sections(markdown, ("return desk",))
+    japanese_hash_word = "\u30cf\u30c3\u30b7\u30e5"
+    projected = "\n".join(
+        line for line in projected.splitlines() if japanese_hash_word not in line
+    )
+    return projected.rstrip() + "\n"
+
+
+def public_source_projection(relative: str, markdown: str) -> str:
+    if relative == "BSC_AUDIT_LLM_PACKET.md":
+        return compact_protocol_projection(markdown)
+    if relative == "docs/STATUS_MODEL.md":
+        return compact_status_projection(markdown)
+    if relative == "examples/README.md":
+        return compact_examples_projection(markdown)
+    if relative == "docs/ja/GLOSSARY.md":
+        return compact_japanese_projection(markdown)
+    return markdown
+
+
+def withhold_public_digest_values(text: str) -> str:
+    """Remove only complete digest values; preserve all non-hash tokens and URLs."""
+
+    return PUBLIC_DIGEST_VALUE_PATTERN.sub(PUBLIC_DIGEST_VALUE_PLACEHOLDER, text)
+
+
+def validate_public_knowledge_text(relative: str, text: str) -> None:
+    if PUBLIC_DIGEST_VALUE_PATTERN.search(text):
+        raise ValueError(f"public Knowledge contains a digest value: {relative}")
+    lowered = text.casefold()
+    for fragment in PROHIBITED_PUBLIC_KNOWLEDGE_INSTRUCTION_FRAGMENTS:
+        if fragment.casefold() in lowered:
+            raise ValueError(
+                f"public Knowledge retained repository-only instructions: "
+                f"{relative}: {fragment}"
+            )
+
+
 def source_block(relative: str) -> str:
     path = ROOT / relative
-    if path.suffix == ".json":
-        return f"## Canonical source: `{relative}`\n\n```json\n{path.read_text(encoding='utf-8').rstrip()}\n```\n"
-    if path.suffix == ".py":
-        return f"## Canonical source: `{relative}`\n\n```python\n{path.read_text(encoding='utf-8').rstrip()}\n```\n"
     text = path.read_text(encoding="utf-8")
-    if relative == "BSC_AUDIT_LLM_PACKET.md":
-        text = compact_protocol_projection(text)
+    text = public_source_projection(relative, text)
     text = rewrite_relative_links(text, relative).rstrip()
-    return f"## Canonical source: `{relative}`\n\n{text}\n"
+    text = withhold_public_digest_values(text)
+    if path.suffix == ".json":
+        return f"## Public source projection: `{relative}`\n\n```json\n{text}\n```\n"
+    if path.suffix == ".py":
+        return f"## Public source projection: `{relative}`\n\n```python\n{text}\n```\n"
+    return f"## Public source projection: `{relative}`\n\n{text}\n"
 
 
 def knowledge_document(title: str, introduction: str, sources: tuple[str, ...]) -> bytes:
-    ledger = "\n".join(
-        f"- `{relative}` — SHA-256 `{sha256(ROOT / relative)}`" for relative in sources
-    )
+    ledger = "\n".join(f"- `{relative}`" for relative in sources)
     blocks = "\n\n---\n\n".join(source_block(relative) for relative in sources)
     text = (
         f"# {title}\n\n"
         f"**BSC version:** `{public_version()}`\n\n"
         "**Generation:** deterministic repository derivative; do not edit this file by hand\n\n"
         f"**Purpose:** {introduction}\n\n"
-        "## Bound canonical sources\n\n"
+        "## Public source projection ledger\n\n"
         f"{ledger}\n\n"
-        "Source hashes bind the pre-upload repository bytes. They do not prove that ChatGPT preserves an identical internal index.\n\n"
+        "Paths identify the offline repository sources. Digest values are deliberately "
+        "withheld from public Knowledge and remain available only in offline release "
+        "verification records.\n\n"
         f"---\n\n{blocks}"
     )
-    return (text.rstrip() + "\n").encode("utf-8")
+    text = text.rstrip() + "\n"
+    validate_public_knowledge_text(title, text)
+    return text.encode("utf-8")
 
 
 def render_instructions(profile: dict[str, Any]) -> bytes:
     lines = [
         "BSC_CUSTOM_GPT_INSTRUCTIONS_BEGIN",
         f"BSC Claim Auditor v{public_version()}",
-        f"Profile SHA-256: {sha256(PROFILE_PATH)}",
-        "Fatal controls.",
-        "BSC_PROTOCOL.md|BSC_STATUS_AND_EVIDENCE_MODEL.md|BSC_SUPPORTED_CHECKS.md|BSC_WORKED_EXAMPLES.md|BSC_JAPANESE_INTERFACE.md.",
-        "Missing:name it;coverage=unavailable/not_reviewed;no affected pass/proven/gate/run;fail closed/request re-upload.",
-        "DEPTH:quick|standard(default)|adversarial|formal-mathematical;human audit only at every depth;BSC_PROTOCOL.md.",
-        "COMPACT:cover duties1-9 in <=5 headings;no generated/downloadable records;no compiler/Base64/shards/transport/Section10.",
+        "K:PROTOCOL|STATUS|CHECKS|EXAMPLES|JA;missing=>unavailable,"
+        "no affected pass/proven/run.",
+        "PUBLIC:human audit only at every depth;visible text;"
+        "exact non-hash tokens+URLs;"
+        "never output/copy hash/digest values.",
+        "STATUS_ONLY>duties1-9:official service/package/candidate/binding/Preview/"
+        "release/Pages states only;no research IDs/verdicts/gates/admission;"
+        "requested language.",
+        f"OFFICIAL:{OFFICIAL_GPT_URL};LIVE=availability only;"
+        "never installed/bound/validated/released/Pages proof.",
         "F=fatal;R=required;all.",
     ]
     for rule in all_rules(profile):
@@ -1247,6 +1412,50 @@ def render_starters(profile: dict[str, Any]) -> bytes:
     return ("\n".join(lines).rstrip() + "\n").encode("utf-8")
 
 
+def render_preview_prompt(case: dict[str, Any], fixture_filename: str) -> str:
+    """Render the one authoritative target-bound Preview prompt for a case."""
+
+    expected = case.get("expected")
+    if not isinstance(expected, dict):
+        raise ValueError(f"eval {case.get('id')} has no expected scoring object")
+    requirement = expected.get(
+        "research_projection_requirement",
+        SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED,
+    )
+    prefix = (
+        f"Target attachment for this case: {fixture_filename}\n\n"
+        "Use this attachment as the sole case target; ambient File Library results "
+        "are not case targets.\n\n"
+    )
+    if requirement == STATUS_ONLY_RESEARCH_PROJECTION_EMPTY:
+        if case.get("audit_depth") != "quick":
+            raise ValueError(
+                f"status-only eval {case.get('id')} must use quick depth"
+            )
+        route = (
+            "STATUS-ONLY route: do not apply audit duties 1-9 and do not create "
+            "research claim IDs, research verdicts, fatal-gate results, or admission "
+            "states. Report only the official-product states supplied in the attachment. "
+            "Output the literal execution token status_record_read_only and render every "
+            "supplied official-product field as its exact key=value form, including "
+            "public_url=<exact supplied URL>; do not paraphrase canonical fields. Keep "
+            "service availability, package role, candidate state, live binding, "
+            "Preview validation, GitHub release, and Pages deployment separate. Do not "
+            "infer a state that the record does not supply. Answer in the requested "
+            "language, then stop.\n\n"
+            f"{case['user_request']}"
+        )
+        return prefix + route
+    route = (
+        "Cover compact audit duties 1-9 in at most 5 visible headings. Do not create "
+        "or offer files, machine records, compiler output, Base64, shards, transport, "
+        "or Section 10. Never reproduce a hash or digest value; preserve every other "
+        "canonical token and URL exactly.\n\n"
+        f"Run this audit at {case['audit_depth']} depth.\n\n{case['user_request']}"
+    )
+    return prefix + route
+
+
 def materialize_eval_cases(spec: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[Path, bytes]]:
     records: list[dict[str, Any]] = []
     fixtures: dict[Path, bytes] = {}
@@ -1301,12 +1510,7 @@ def materialize_eval_cases(spec: dict[str, Any]) -> tuple[list[dict[str, Any]], 
         record["fixture_paths"] = [relative.as_posix()]
         record["fixture_sha256"] = sha256_bytes(data)
         record.setdefault("scoring_criteria", scoring_criteria)
-        record["preview_prompt"] = (
-            f"Target attachment for this case: {safe.name}\n\n"
-            "Use this attachment as the sole case target; ambient File Library results are not case targets.\n\n"
-            "Cover compact audit duties 1-9 in at most 5 visible headings. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
-            f"Run this audit at {record['audit_depth']} depth.\n\n{record['user_request']}"
-        )
+        record["preview_prompt"] = render_preview_prompt(record, safe.name)
         records.append(record)
     return records, fixtures
 
@@ -1492,11 +1696,11 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "",
         *compact_gate_lines,
         "",
-        "For the 11 retained case IDs, the matching fixture and scientific oracle in `evals/GPT_EVAL_CASES.jsonl` may be reused, but that file is the preserved historical 39-case artifact suite: its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded. Wrap every retained case with the current compact duties1-9/at-most-5-headings/no-export instruction.",
+        "Of the 11 retained case IDs, 10 are scientific cases. For those 10, reuse the matching fixture and scientific oracle from `evals/GPT_EVAL_CASES.jsonl` and run the generated compact duties1-9/at-most-5-headings/no-export `preview_prompt`. The remaining retained case, `official-service-status-separation`, is status-only: use its generated `STATUS-ONLY` `preview_prompt`, require `status_record_read_only` and an empty scientific projection `{}`, and do not apply duties 1-9. `GPT_EVAL_CASES.jsonl` otherwise remains the preserved historical 39-case artifact suite; its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded.",
         "",
-        "`artifact-export-disabled-control` reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.",
+        "The remaining synthetic control, `artifact-export-disabled-control`, is not a retained JSONL case. It reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.",
         "",
-        "Preserve every raw response and score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.",
+        "Preserve every raw response as exact UTF-8 text. Before scoring, require native exit 0 from `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>` for that response. Exit 1 or 2 is an automatic failure; the checker blocks empty/oversized responses, exposed digest values, and scientific leakage from status-only cases. Score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.",
         "",
         "Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.",
         "All counted cases must use the same frozen candidate.",
@@ -1507,6 +1711,7 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "- Package version and Knowledge filenames match this release.",
         "- Instructions boundary lines and counts were checked.",
         "- All Preview cases were run and raw responses preserved.",
+        "- Every preserved response passed `check_compact_preview_response.py` with native exit 0 before manual scoring.",
         "- No unsupported execution claim received a pass.",
         "- Upload privacy language appears in the GPT's behavior.",
         "- Builder profile, icon metadata if any, and public fields contain no personal identifiers.",
@@ -1833,8 +2038,12 @@ def validate_payload(
     for token in (
         "F:compact_no_machine_records:",
         "quick<=300 words; standard<=650; adversarial/formal<=1000",
-        "COMPACT:cover duties1-9 in <=5 headings;no generated/downloadable records;"
-        "no compiler/Base64/shards/transport/Section10.",
+        "PUBLIC:human audit only at every depth;visible text;"
+        "exact non-hash tokens+URLs;"
+        "never output/copy hash/digest values.",
+        "STATUS_ONLY>duties1-9:official service/package/candidate/binding/Preview/"
+        "release/Pages states only;no research IDs/verdicts/gates/admission;",
+        f"OFFICIAL:{OFFICIAL_GPT_URL};LIVE=availability only;",
     ):
         if token not in instructions:
             failures.append(
@@ -1903,17 +2112,39 @@ def validate_payload(
     for path, data in payload.items():
         if not path.parts or path.parts[0] != "knowledge":
             continue
-        lowered = data.decode("utf-8").lower()
+        knowledge_text = data.decode("utf-8")
+        lowered = knowledge_text.lower()
         for assertion in MUTABLE_KNOWLEDGE_STATE_ASSERTIONS:
             if assertion in lowered:
                 failures.append(
                     f"durable Knowledge embeds mutable official-service state: {path.as_posix()}: {assertion}"
                 )
+        try:
+            validate_public_knowledge_text(path.as_posix(), knowledge_text)
+        except ValueError as exc:
+            failures.append(str(exc))
+        ledger = knowledge_text.partition("\n---\n")[0]
+        if PUBLIC_DIGEST_VALUE_PATTERN.search(ledger):
+            failures.append(
+                f"public Knowledge source ledger contains a digest value: "
+                f"{path.as_posix()}"
+            )
     japanese_knowledge = payload[Path("knowledge/BSC_JAPANESE_INTERFACE.md")].decode("utf-8")
     if "| `inconsistent` |" in japanese_knowledge:
         failures.append("Japanese Knowledge invents noncanonical Return Desk outcome inconsistent")
-    if "Return Desk の browser outcome は `consistent`、`needs_review`、`blocked` の 3 つだけです。" not in japanese_knowledge:
-        failures.append("Japanese Knowledge must state the exact three canonical Return Desk outcomes")
+    if "Return Desk" in japanese_knowledge:
+        failures.append("compact Japanese Knowledge retained Return Desk instructions")
+    for token in (
+        "LIVE",
+        "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
+        "PENDING",
+        "PENDING_VERIFICATION",
+        "VERIFIED",
+    ):
+        if token not in japanese_knowledge:
+            failures.append(
+                f"compact Japanese Knowledge omits official-state token: {token}"
+            )
 
     records = []
     for line_number, raw in enumerate(payload[Path("evals/GPT_EVAL_CASES.jsonl")].decode("utf-8").splitlines(), 1):
@@ -2005,12 +2236,7 @@ def validate_payload(
             failures.append(f"eval case must bind exactly one fixture: {record.get('id')}")
             continue
         fixture_path = Path(fixture_paths[0])
-        expected_preview_prompt = (
-            f"Target attachment for this case: {fixture_path.name}\n\n"
-            "Use this attachment as the sole case target; ambient File Library results are not case targets.\n\n"
-            "Cover compact audit duties 1-9 in at most 5 visible headings. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
-            f"Run this audit at {record.get('audit_depth')} depth.\n\n{record.get('user_request')}"
-        )
+        expected_preview_prompt = render_preview_prompt(record, fixture_path.name)
         if record.get("preview_prompt") != expected_preview_prompt:
             failures.append(f"eval case preview prompt is not target-bound: {record.get('id')}")
         fixture_data = payload.get(fixture_path)

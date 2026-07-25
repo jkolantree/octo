@@ -15,7 +15,7 @@ from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_SCHEMA = "bsc-gpt-frozen-candidate-manifest/v1"
-REGISTRY_VERSION = "bsc-gpt-frozen-candidate-registry/v2"
+REGISTRY_VERSION = "bsc-gpt-frozen-candidate-registry/v3"
 OUTPUT_VERSION = "1.0"
 MAX_MANIFEST_BYTES = 8 * 1024 * 1024
 MAX_REGISTRY_FILE_BYTES = 64 * 1024 * 1024
@@ -138,6 +138,7 @@ TEST_FILENAMES = (
     "test_atomic.py",
     "test_bicomplex.py",
     "test_cli.py",
+    "test_compact_preview_response.py",
     "test_defect.py",
     "test_exact.py",
     "test_gpt_artifact_compiler.py",
@@ -221,6 +222,7 @@ REGISTRY: dict[str, tuple[str, ...]] = {
     "tests": tuple(f"tests/{filename}" for filename in TEST_FILENAMES),
     "tooling": (
         "scripts/build_gpt_package.py",
+        "scripts/check_compact_preview_response.py",
         "scripts/check_gpt_eval_bundle.py",
         "scripts/check_gpt_eval_suite.py",
         "scripts/check_gpt_frozen_candidate.py",
@@ -540,8 +542,10 @@ def _validate_registry_definition() -> list[dict[str, Any]]:
         "gpt/GPT_INSTRUCTIONS.md",
         "gpt/_source/GPT_PROFILE.json",
         "scripts/build_gpt_package.py",
+        "scripts/check_compact_preview_response.py",
         "scripts/check_gpt_frozen_candidate.py",
         "scripts/gpt_artifact_compiler.py",
+        "tests/test_compact_preview_response.py",
         "tests/test_gpt_artifact_compiler.py",
         "tests/test_gpt_frozen_candidate.py",
         "src/bsc_audit/return_desk.py",

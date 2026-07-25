@@ -38,9 +38,9 @@ class FrozenCandidateManifestTests(unittest.TestCase):
     def test_registry_contract_is_explicit_complete_and_current(self) -> None:
         document, findings = checker.build_manifest(ROOT)
         self.assertEqual(findings, [])
-        self.assertEqual(len(checker.registry_entries()), 142)
-        self.assertEqual(document["file_count"], 142)
-        self.assertEqual(len(document["files"]), 142)
+        self.assertEqual(len(checker.registry_entries()), 144)
+        self.assertEqual(document["file_count"], 144)
+        self.assertEqual(len(document["files"]), 144)
         self.assertEqual(
             [(entry["category"], entry["path"]) for entry in document["files"]],
             list(checker.registry_entries()),
@@ -71,7 +71,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             },
         )
         self.assertEqual(len(checker.KNOWLEDGE_FILENAMES), 5)
-        self.assertEqual(len(checker.TEST_FILENAMES), 25)
+        self.assertEqual(len(checker.TEST_FILENAMES), 26)
         self.assertEqual(
             {
                 path
@@ -116,6 +116,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "gpt/_source/GPT_FROZEN_EVALUATION_PROTOCOL.json",
             "BSC_AUDIT_LLM_PACKET.md",
             "scripts/build_gpt_package.py",
+            "scripts/check_compact_preview_response.py",
             "scripts/check_gpt_package.py",
             "scripts/check_gpt_eval_bundle.py",
             "scripts/check_gpt_eval_suite.py",
@@ -127,6 +128,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "src/bsc_audit/return_desk.py",
             "pages/return-desk-core.js",
             "tests/return_desk_runtime.test.cjs",
+            "tests/test_compact_preview_response.py",
             "tests/test_gpt_artifact_compiler.py",
             "tests/test_gpt_eval_bundle.py",
             "tests/test_gpt_eval_controller.py",

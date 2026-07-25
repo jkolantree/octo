@@ -4,7 +4,7 @@ Alpha.8 is designated as a public research preview of the BSC Audit Engine and t
 
 ## Compact public GPT pivot
 
-The official GPT now performs one job: a bounded human-readable audit. It covers duties 1-9 within 300 words at `quick`, 650 at `standard`, and 1,000 at `adversarial` or `formal-mathematical` depth unless the user explicitly requests expansion. It does not generate files, hashes, `audit_return.json`, compiler stdout, Base64, shards, parity, transport, or section 10.
+The official GPT now performs one bounded human-readable job per route. Scientific audit responses cover duties 1-9 within 300 words at `quick`, 650 at `standard`, and 1,000 at `adversarial` or `formal-mathematical` depth unless the user explicitly requests expansion. Official-product status-only responses bypass duties 1-9 and return only concise supplied canonical states. Neither route generates files, hashes, `audit_return.json`, compiler stdout, Base64, shards, parity, transport, or section 10.
 
 The live Knowledge roster is reduced to five files; `BSC_EXECUTION_AND_RECEIPTS.md` is no longer uploaded. Data Analysis remains available for actual attachment inspection or bounded calculations, but not for packaging the audit. The repository keeps the compiler, controller, return schema, and Audit Return Desk as separately invoked supervised tooling.
 

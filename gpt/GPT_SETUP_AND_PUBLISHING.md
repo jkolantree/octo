@@ -18,13 +18,13 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
 
 1. For an independent reproduction or fork, open `https://chatgpt.com/gpts` and select **Create**. For an authorized update of the official GPT, open its existing editor and use **Edit/Configure**. A fork must not imply official status.
 2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.
-3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7474 characters and 7474 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
+3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7456 characters and 7456 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
 4. Upload these Knowledge files in this exact order:
-   1. `BSC_PROTOCOL.md` — 19867 bytes — SHA-256 `f974cc0aa7157eb1f74848a4772704147ae4489f6ee60e1e990529d577fb303a` — Deterministic Knowledge wrapper containing the canonical normative protocol
-   2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 8328 bytes — SHA-256 `72ab8a1b62021b21df486daef48a2f29f649f30d3f6bf052aafe2d2cab32194f` — Research, evidence, gate, execution, deployment, and CLI status boundaries
-   3. `BSC_SUPPORTED_CHECKS.md` — 45867 bytes — SHA-256 `21af93d80c5d84d4a39c28864bf4208e14e008ae42a36b28f536e99ac53c9cad` — Implemented Python routes, schemas, findings, and limitations
-   4. `BSC_WORKED_EXAMPLES.md` — 30600 bytes — SHA-256 `4234439805e90b3e3a2637cd4ced4e7019c3ff7b0e7ab1950cf19a15f82b2c24` — Known-answer and adversarial examples without redefining the protocol
-   5. `BSC_JAPANESE_INTERFACE.md` — 13025 bytes — SHA-256 `42e73b071b463446fff2ef3077e55cf27181561d378597172f0060914aac3f5d` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
+   1. `BSC_PROTOCOL.md` — 19500 bytes — SHA-256 `5fc71befdd1cab3b2f6689ffacec8736e3421435c7cdb17a0aafde4d5d51da91` — Deterministic Knowledge wrapper containing the canonical normative protocol
+   2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 7455 bytes — SHA-256 `c03075b00c2616ab6b2ec0aa4a57d3ead09d89221b74fec046b4bb7adc6afd85` — Research, evidence, gate, execution, deployment, and CLI status boundaries
+   3. `BSC_SUPPORTED_CHECKS.md` — 16011 bytes — SHA-256 `1de0b1846aa25b9a0db84cd693b67d9e06da6188a94c3830832b036208c4011f` — Implemented Python routes, schemas, findings, and limitations
+   4. `BSC_WORKED_EXAMPLES.md` — 5015 bytes — SHA-256 `caefdfa74919369d7f74778ad342b8e64732a42afb7c24367bfe4d52d4bdb4d6` — Known-answer and adversarial examples without redefining the protocol
+   5. `BSC_JAPANESE_INTERFACE.md` — 4661 bytes — SHA-256 `c36ef6641197c9484d7a03fc00a7db84c237a8a07d331195740c5bc71e562f4e` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
 5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.
 6. Copy the four prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.
 7. Freeze the exact compact candidate and applicable evaluation bytes, then run all 12 declared fresh-conversation Preview cases. Do not reuse a pass from the retired artifact-export profile. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.
@@ -48,11 +48,11 @@ Run exactly these 12 compact-profile cases from the beginning in fresh conversat
 11. `ja-truncated-proof`
 12. `official-service-status-separation`
 
-For the 11 retained case IDs, the matching fixture and scientific oracle in `evals/GPT_EVAL_CASES.jsonl` may be reused, but that file is the preserved historical 39-case artifact suite: its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded. Wrap every retained case with the current compact duties1-9/at-most-5-headings/no-export instruction.
+Of the 11 retained case IDs, 10 are scientific cases. For those 10, reuse the matching fixture and scientific oracle from `evals/GPT_EVAL_CASES.jsonl` and run the generated compact duties1-9/at-most-5-headings/no-export `preview_prompt`. The remaining retained case, `official-service-status-separation`, is status-only: use its generated `STATUS-ONLY` `preview_prompt`, require `status_record_read_only` and an empty scientific projection `{}`, and do not apply duties 1-9. `GPT_EVAL_CASES.jsonl` otherwise remains the preserved historical 39-case artifact suite; its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded.
 
-`artifact-export-disabled-control` reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.
+The remaining synthetic control, `artifact-export-disabled-control`, is not a retained JSONL case. It reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.
 
-Preserve every raw response and score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.
+Preserve every raw response as exact UTF-8 text. Before scoring, require native exit 0 from `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>` for that response. Exit 1 or 2 is an automatic failure; the checker blocks empty/oversized responses, exposed digest values, and scientific leakage from status-only cases. Score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.
 
 Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.
 All counted cases must use the same frozen candidate.
@@ -63,6 +63,7 @@ A genuine candidate failure ends that counted suite. Any authorized root-cause r
 - Package version and Knowledge filenames match this release.
 - Instructions boundary lines and counts were checked.
 - All Preview cases were run and raw responses preserved.
+- Every preserved response passed `check_compact_preview_response.py` with native exit 0 before manual scoring.
 - No unsupported execution claim received a pass.
 - Upload privacy language appears in the GPT's behavior.
 - Builder profile, icon metadata if any, and public fields contain no personal identifiers.

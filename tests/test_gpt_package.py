@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import hashlib
 import json
 import re
 import sys
@@ -39,6 +38,7 @@ from build_gpt_package import (  # noqa: E402
     materialize_eval_cases,
     package_files,
     provenance_paths,
+    render_preview_prompt,
     sha256_bytes,
     validate_evaluation_governance,
     validate_exact_eval_oracles,
@@ -171,19 +171,27 @@ class CustomGptPackageTests(unittest.TestCase):
         validate_evaluation_governance(records)
         self.assertTrue(records)
         self.assertTrue(all(len(record.get("scoring_criteria", [])) == 10 for record in records))
-        self.assertTrue(
-            all(
-                record.get("preview_prompt")
-                == (
-                    f"Target attachment for this case: {Path(record['fixture_paths'][0]).name}\n\n"
-                    "Use this attachment as the sole case target; ambient File Library results are not case targets.\n\n"
-                    "Cover compact audit duties 1-9 in at most 5 visible headings. Do not create or offer files, "
-                    "machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
-                    f"Run this audit at {record['audit_depth']} depth.\n\n{record['user_request']}"
-                )
-                for record in records
+        for record in records:
+            prompt = record["preview_prompt"]
+            self.assertEqual(
+                prompt,
+                render_preview_prompt(
+                    record,
+                    Path(record["fixture_paths"][0]).name,
+                ),
             )
-        )
+            if (
+                record["expected"]["research_projection_requirement"]
+                == STATUS_ONLY_RESEARCH_PROJECTION_EMPTY
+            ):
+                self.assertIn("STATUS-ONLY route:", prompt)
+                self.assertIn("status_record_read_only", prompt)
+                self.assertIn("exact key=value form", prompt)
+                self.assertNotIn("Cover compact audit duties 1-9", prompt)
+            else:
+                self.assertIn("Cover compact audit duties 1-9", prompt)
+                self.assertIn("Never reproduce a hash or digest value", prompt)
+                self.assertNotIn("STATUS-ONLY route:", prompt)
         self.assertTrue(REQUIRED_EVAL_CASE_IDS <= {record["id"] for record in records})
         by_id = {record["id"]: record for record in records}
         truncated = by_id["truncated-proof"]
@@ -430,19 +438,25 @@ class CustomGptPackageTests(unittest.TestCase):
         instructions = payload[Path("GPT_INSTRUCTIONS.md")]
         instruction_text = instructions.decode("utf-8")
         self.assertLessEqual(len(instruction_text), MAX_GPT_INSTRUCTION_CHARACTERS)
-        self.assertIn(f"Profile SHA-256: {hashlib.sha256(PROFILE_PATH.read_bytes()).hexdigest()}".encode(), instructions)
+        self.assertNotIn("Profile SHA-256:", instruction_text)
+        self.assertIsNone(
+            re.search(
+                r"(?<![0-9A-Fa-f])[0-9A-Fa-f]{64}(?![0-9A-Fa-f])",
+                instruction_text,
+            )
+        )
         self.assertTrue(instructions.startswith(b"BSC_CUSTOM_GPT_INSTRUCTIONS_BEGIN\n"))
         self.assertTrue(instructions.endswith(b"BSC_CUSTOM_GPT_INSTRUCTIONS_END"))
         for fixed_contract_line in (
-            "Fatal controls.",
-            "BSC_PROTOCOL.md|BSC_STATUS_AND_EVIDENCE_MODEL.md|BSC_SUPPORTED_CHECKS.md|"
-            "BSC_WORKED_EXAMPLES.md|BSC_JAPANESE_INTERFACE.md.",
-            "Missing:name it;coverage=unavailable/not_reviewed;no affected pass/proven/gate/run;"
-            "fail closed/request re-upload.",
-            "DEPTH:quick|standard(default)|adversarial|formal-mathematical;human audit only at every depth;"
-            "BSC_PROTOCOL.md.",
-            "COMPACT:cover duties1-9 in <=5 headings;no generated/downloadable records;no compiler/Base64/shards/"
-            "transport/Section10.",
+            "K:PROTOCOL|STATUS|CHECKS|EXAMPLES|JA;missing=>unavailable,"
+            "no affected pass/proven/run.",
+            "PUBLIC:human audit only at every depth;visible text;"
+            "exact non-hash tokens+URLs;never output/copy hash/digest values.",
+            "STATUS_ONLY>duties1-9:official service/package/candidate/binding/Preview/"
+            "release/Pages states only;no research IDs/verdicts/gates/admission;"
+            "requested language.",
+            f"OFFICIAL:{OFFICIAL_GPT_URL};LIVE=availability only;"
+            "never installed/bound/validated/released/Pages proof.",
             "F=fatal;R=required;all.",
         ):
             self.assertIn(fixed_contract_line, instruction_text)
@@ -460,16 +474,21 @@ class CustomGptPackageTests(unittest.TestCase):
             protocol_text,
         )
         self.assertIn(
-            "Requested language; preserve exact JSON keys/enums/IDs/tokens/paths/hashes/commands/filenames",
+            "Requested language; preserve exact non-hash canonical tokens and URLs; "
+            "label translations. Hash-value ban overrides.",
             instruction_text,
         )
         japanese_knowledge = payload[Path("knowledge/BSC_JAPANESE_INTERFACE.md")].decode("utf-8")
-        self.assertIn("公式 GPT を使う", japanese_knowledge)
+        for token in (
+            "LIVE",
+            "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
+            "PENDING",
+            "PENDING_VERIFICATION",
+            "VERIFIED",
+        ):
+            self.assertIn(token, japanese_knowledge)
         self.assertIn("正規トークン", japanese_knowledge)
-        self.assertIn(
-            "Return Desk の browser outcome は `consistent`、`needs_review`、`blocked` の 3 つだけです。",
-            japanese_knowledge,
-        )
+        self.assertNotIn("Return Desk", japanese_knowledge)
         self.assertNotIn("| `inconsistent` |", japanese_knowledge)
         self.assertNotIn(
             Path("knowledge/BSC_EXECUTION_AND_RECEIPTS.md"),
@@ -490,7 +509,7 @@ class CustomGptPackageTests(unittest.TestCase):
             ],
         )
         self.assertIn(
-            "Never generate/offer downloadable audit_request.txt",
+            "NEVER compute/output/quote hash/digest values from any source or request",
             instruction_text,
         )
         self.assertIn("quick<=300 words", instruction_text)
@@ -521,8 +540,9 @@ class CustomGptPackageTests(unittest.TestCase):
                 "or claim full inspection."
             ),
             "separate_status_axes": (
-                "Research IDs/text/verdicts exclude gate/admission/deployment/execution/replication/provenance/"
-                "missing; delete such IDs. CLI only if BSC ran."
+                "STATUS-ONLY FIRST overrides scientific duties: service/package/candidate/binding/Preview state "
+                "only => exact URL+state tokens in requested language; no research IDs/claims/verdicts/gates/"
+                "admission. Else nonresearch status stays outside research IDs/verdicts; CLI only if BSC ran."
             ),
             "research_verdict_vocabulary": (
                 "Verdicts=proven/strongly_supported/plausible_but_unresolved/refuted/ill_posed/"
@@ -552,15 +572,14 @@ class CustomGptPackageTests(unittest.TestCase):
                 "Snippets/cards=discovery; open+ledger each used page."
             ),
             "response_language_and_canonical_tokens": (
-                "Requested language; preserve exact JSON keys/enums/IDs/tokens/paths/hashes/commands/filenames/"
-                "artifact IDs/source quotes; label translations."
+                "Requested language; preserve exact non-hash canonical tokens and URLs; label translations. "
+                "Hash-value ban overrides."
             ),
             "compact_no_machine_records": (
-                "COMPACT: cover duties1-9 in at most 5 visible headings. Never generate/offer downloadable audit_request.txt, "
-                "audit_report.md, audit_return.json, ledger artifacts, or machine records; never run the "
-                "compiler; never emit stdout/hashes/Base64/chunks/shards/parity/transport/Section10. If requested, "
-                "say disabled in public GPT, point to the supervised local engine/Return Desk, and continue the "
-                "human audit."
+                "COMPACT: duties1-9; <=5 headings. No files/downloads/machine records/compiler/stdout/Base64/"
+                "shards/transport/Section10. NEVER compute/output/quote hash/digest values from any source or "
+                "request; say only \"digest supplied\". Export requests: say disabled in public GPT; refer to "
+                "supervised local engine/Return Desk."
             ),
             "execution_ledger": (
                 "Compact execution disclosure: mention only activities used, claimed, or decisive; distinguish "
@@ -586,6 +605,7 @@ class CustomGptPackageTests(unittest.TestCase):
                 "and no irrelevant boilerplate."
             ),
         }
+        self.assertEqual(all_rules(profile)[0]["id"], "separate_status_axes")
         self.assertEqual({rule_id: rules[rule_id] for rule_id in expected_rules}, expected_rules)
         self.assertEqual(
             next(
@@ -996,7 +1016,11 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertNotIn(Path("knowledge/BSC_EXECUTION_AND_RECEIPTS.md"), payload)
         self.assertIn("F:compact_no_machine_records:", instructions)
         self.assertIn("human audit only at every depth", instructions)
-        self.assertIn("no compiler/Base64/shards/transport/Section10", instructions)
+        self.assertIn(
+            "No files/downloads/machine records/compiler/stdout/Base64/shards/"
+            "transport/Section10.",
+            instructions,
+        )
         self.assertNotIn("last2 need machine record", instructions)
         self.assertNotIn("Final=exact v9 stdout", instructions)
 
