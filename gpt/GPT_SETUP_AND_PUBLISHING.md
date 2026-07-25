@@ -18,7 +18,7 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
 
 1. For an independent reproduction or fork, open `https://chatgpt.com/gpts` and select **Create**. For an authorized update of the official GPT, open its existing editor and use **Edit/Configure**. A fork must not imply official status.
 2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.
-3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7495 characters and 7495 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
+3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7474 characters and 7474 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
 4. Upload these Knowledge files in this exact order:
    1. `BSC_PROTOCOL.md` — 19867 bytes — SHA-256 `f974cc0aa7157eb1f74848a4772704147ae4489f6ee60e1e990529d577fb303a` — Deterministic Knowledge wrapper containing the canonical normative protocol
    2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 8328 bytes — SHA-256 `72ab8a1b62021b21df486daef48a2f29f649f30d3f6bf052aafe2d2cab32194f` — Research, evidence, gate, execution, deployment, and CLI status boundaries
@@ -48,9 +48,9 @@ Run exactly these 12 compact-profile cases from the beginning in fresh conversat
 11. `ja-truncated-proof`
 12. `official-service-status-separation`
 
-For the 11 retained case IDs, the matching fixture and scientific oracle in `evals/GPT_EVAL_CASES.jsonl` may be reused, but that file is the preserved historical 39-case artifact suite: its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded. Wrap every retained case with the current compact sections1-9/no-export instruction.
+For the 11 retained case IDs, the matching fixture and scientific oracle in `evals/GPT_EVAL_CASES.jsonl` may be reused, but that file is the preserved historical 39-case artifact suite: its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded. Wrap every retained case with the current compact duties1-9/at-most-5-headings/no-export instruction.
 
-`artifact-export-disabled-control` reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass completes the correct in-chat sections1-9 audit and verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.
+`artifact-export-disabled-control` reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.
 
 Preserve every raw response and score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.
 
