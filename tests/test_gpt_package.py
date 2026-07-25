@@ -177,7 +177,7 @@ class CustomGptPackageTests(unittest.TestCase):
                 == (
                     f"Target attachment for this case: {Path(record['fixture_paths'][0]).name}\n\n"
                     "Use this attachment as the sole case target; ambient File Library results are not case targets.\n\n"
-                    "The visible answer must use compact sections 1-9 only. Do not create or offer files, "
+                    "Cover compact audit duties 1-9 in at most 5 visible headings. Do not create or offer files, "
                     "machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
                     f"Run this audit at {record['audit_depth']} depth.\n\n{record['user_request']}"
                 )
@@ -441,7 +441,7 @@ class CustomGptPackageTests(unittest.TestCase):
             "fail closed/request re-upload.",
             "DEPTH:quick|standard(default)|adversarial|formal-mathematical;human audit only at every depth;"
             "BSC_PROTOCOL.md.",
-            "COMPACT:visible sections1-9 only;no generated/downloadable records;no compiler/Base64/shards/"
+            "COMPACT:cover duties1-9 in <=5 headings;no generated/downloadable records;no compiler/Base64/shards/"
             "transport/Section10.",
             "F=fatal;R=required;all.",
         ):
@@ -493,9 +493,9 @@ class CustomGptPackageTests(unittest.TestCase):
             "Never generate/offer downloadable audit_request.txt",
             instruction_text,
         )
-        self.assertIn("quick<=500 words", instruction_text)
-        self.assertIn("standard<=1200", instruction_text)
-        self.assertIn("adversarial/formal<=2000", instruction_text)
+        self.assertIn("quick<=300 words", instruction_text)
+        self.assertIn("standard<=650", instruction_text)
+        self.assertIn("adversarial/formal<=1000", instruction_text)
         durable_knowledge = "\n".join(
             data.decode("utf-8")
             for path, data in payload.items()
@@ -515,10 +515,10 @@ class CustomGptPackageTests(unittest.TestCase):
         rules = {rule["id"]: rule["text"] for rule in all_rules(profile)}
         expected_rules = {
             "source_coverage_first": (
-                "FIRST: compact table, one row per case target/evidence source used or attempted: "
-                "ID|title/URL/DOI|query|opened?|access_mode|coverage|scope|omissions|code_read?|code_run?. Retry "
-                "unavailable targets twice; include relied-on web pages. Add one note: BSC protocol Knowledge "
-                "informed method, not case evidence. Do not enumerate Knowledge or claim full inspection."
+                "FIRST: source table ID|source|access|coverage|scope/omissions|code_read/run; one row per "
+                "target/evidence source used or attempted. Retry unavailable twice; include each relied-on web "
+                "page. Note once: BSC Knowledge informed method, not case evidence. Do not enumerate Knowledge "
+                "or claim full inspection."
             ),
             "separate_status_axes": (
                 "Research IDs/text/verdicts exclude gate/admission/deployment/execution/replication/provenance/"
@@ -539,16 +539,14 @@ class CustomGptPackageTests(unittest.TestCase):
                 "rescue. Proven/strong claim/lemma=>evidence-derived pass gate, else demote/omit."
             ),
             "execution_label_precision": (
-                "ALL-SIX/no receipts: section7 activity|target|current rows Python/Lean/SMT/interval/BSC/"
-                "independent replication=reported_but_unverified|not_run. Sole "
-                "research T=plausible_but_unresolved; extra ID/verdict INVALID."
+                "Unsupported claimed runs stay reported_but_unverified, with current execution not_run. Do not "
+                "create research claim IDs or verdicts for execution status; keep dependent T "
+                "plausible_but_unresolved."
             ),
             "future_execution_projection": (
-                "FUTURE/no output: Section7 EXACT; sole research T=plausible_but_unresolved; other ID/verdict "
-                "INVALID:\n"
-                "activity|target|current\n"
-                "Monte Carlo|not_run|not_run\n"
-                "empirical test|not_run|not_run"
+                "A proposed calculation and its empirical test are not executed results. State both not_run, "
+                "keep dependent gates unrun and T plausible_but_unresolved, and name the smallest missing inputs, "
+                "method, and output. No fixed-row matrix."
             ),
             "citations_must_be_checked": (
                 "Snippets/cards=discovery; open+ledger each used page."
@@ -558,33 +556,34 @@ class CustomGptPackageTests(unittest.TestCase):
                 "artifact IDs/source quotes; label translations."
             ),
             "compact_no_machine_records": (
-                "COMPACT: sections1-9 only. Never generate/offer downloadable audit_request.txt, "
+                "COMPACT: cover duties1-9 in at most 5 visible headings. Never generate/offer downloadable audit_request.txt, "
                 "audit_report.md, audit_return.json, ledger artifacts, or machine records; never run the "
                 "compiler; never emit stdout/hashes/Base64/chunks/shards/parity/transport/Section10. If requested, "
                 "say disabled in public GPT, point to the supervised local engine/Return Desk, and continue the "
                 "human audit."
             ),
             "execution_ledger": (
-                "Ledger8 rows: model reasoning; web; independent source check; Data Analysis; BSC Python; external "
-                "formal tool; empirical test; proposed computation. `ran` only with actual execution and an "
-                "inspectable result. Unexecuted BSC/formal/empirical=not_run, never not_applicable; unsupported "
-                "reports=reported_but_unverified. Separate file_read_only from independent checking. Give known "
-                "tool/version, scope, relied-on result, receipt/output or none. No ledger file."
+                "Compact execution disclosure: mention only activities used, claimed, or decisive; distinguish "
+                "reasoning, web, independent checks, Data Analysis, BSC Python, formal tools, empirical tests, "
+                "and proposed computations. `ran` needs an inspectable result; unsupported "
+                "reports=reported_but_unverified; unexecuted BSC/formal/empirical work=not_run, never "
+                "not_applicable. Separate file_read_only from checking. No fixed-row matrix or ledger file."
             ),
             "nonadmissive_receipts": (
                 "Receipt-only: sole research T=plausible_but_unresolved; no authorization/tool-run IDs, type/"
                 "evidence rows, conclusions, extra verdicts. Authorization only decision/gate; no A claim."
             ),
             "closing_disclosure": (
-                "BEFORE SEND: within budget cover all section1-9 duties, compact source ledger, and Ledger8; "
-                "headings may merge, duties may not. No files/Section10. Close with depth, coverage/omissions, "
-                "runs/unruns, unresolved claims/gates, research-preview status, and smallest verdict changer."
+                "BEFORE SEND: cover duties1-9 within budget in at most 5 headings. Use one compact source table "
+                "and execution disclosure; omit boilerplate. No files/Section10. Close with depth, "
+                "coverage/omissions, runs/unruns, unresolved claims/gates, preview status, and smallest verdict "
+                "changer."
             ),
             "public_research_preview": (
                 "Inspectable beginner-first research preview; sources/proofs/evidence may err. Total including "
-                "tables: quick<=500 words; standard<=1200; adversarial/formal<=2000; expand only on explicit "
-                "request. Terse headings; merge adjacent duties; at most 3 decisive findings; no long source "
-                "repetition; keep disclosures inside the cap."
+                "tables: quick<=300 words; standard<=650; adversarial/formal<=1000; expand only on explicit "
+                "request. Use at most 5 terse headings, at most 3 decisive findings, no long source repetition, "
+                "and no irrelevant boilerplate."
             ),
         }
         self.assertEqual({rule_id: rules[rule_id] for rule_id in expected_rules}, expected_rules)

@@ -1152,7 +1152,7 @@ def render_instructions(profile: dict[str, Any]) -> bytes:
         "BSC_PROTOCOL.md|BSC_STATUS_AND_EVIDENCE_MODEL.md|BSC_SUPPORTED_CHECKS.md|BSC_WORKED_EXAMPLES.md|BSC_JAPANESE_INTERFACE.md.",
         "Missing:name it;coverage=unavailable/not_reviewed;no affected pass/proven/gate/run;fail closed/request re-upload.",
         "DEPTH:quick|standard(default)|adversarial|formal-mathematical;human audit only at every depth;BSC_PROTOCOL.md.",
-        "COMPACT:visible sections1-9 only;no generated/downloadable records;no compiler/Base64/shards/transport/Section10.",
+        "COMPACT:cover duties1-9 in <=5 headings;no generated/downloadable records;no compiler/Base64/shards/transport/Section10.",
         "F=fatal;R=required;all.",
     ]
     for rule in all_rules(profile):
@@ -1304,7 +1304,7 @@ def materialize_eval_cases(spec: dict[str, Any]) -> tuple[list[dict[str, Any]], 
         record["preview_prompt"] = (
             f"Target attachment for this case: {safe.name}\n\n"
             "Use this attachment as the sole case target; ambient File Library results are not case targets.\n\n"
-            "The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
+            "Cover compact audit duties 1-9 in at most 5 visible headings. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
             f"Run this audit at {record['audit_depth']} depth.\n\n{record['user_request']}"
         )
         records.append(record)
@@ -1492,9 +1492,9 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "",
         *compact_gate_lines,
         "",
-        "For the 11 retained case IDs, the matching fixture and scientific oracle in `evals/GPT_EVAL_CASES.jsonl` may be reused, but that file is the preserved historical 39-case artifact suite: its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded. Wrap every retained case with the current compact sections1-9/no-export instruction.",
+        "For the 11 retained case IDs, the matching fixture and scientific oracle in `evals/GPT_EVAL_CASES.jsonl` may be reused, but that file is the preserved historical 39-case artifact suite: its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded. Wrap every retained case with the current compact duties1-9/at-most-5-headings/no-export instruction.",
         "",
-        "`artifact-export-disabled-control` reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass completes the correct in-chat sections1-9 audit and verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.",
+        "`artifact-export-disabled-control` reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.",
         "",
         "Preserve every raw response and score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.",
         "",
@@ -1832,8 +1832,8 @@ def validate_payload(
         )
     for token in (
         "F:compact_no_machine_records:",
-        "quick<=500 words; standard<=1200; adversarial/formal<=2000",
-        "COMPACT:visible sections1-9 only;no generated/downloadable records;"
+        "quick<=300 words; standard<=650; adversarial/formal<=1000",
+        "COMPACT:cover duties1-9 in <=5 headings;no generated/downloadable records;"
         "no compiler/Base64/shards/transport/Section10.",
     ):
         if token not in instructions:
@@ -1847,7 +1847,7 @@ def validate_payload(
             failures.append(f"instruction rule text is missing or duplicated: {rule['id']}")
     observed_outputs = tuple(item["id"] for item in output_sections(profile))
     if observed_outputs != REQUIRED_OUTPUT_IDS:
-        failures.append("output profile differs from the required compact nine-section order")
+        failures.append("output profile differs from the required compact nine-duty order")
     depth_records = profile["audit_depths"]
     depths = [item["id"] for item in depth_records]
     if depths != ["quick", "standard", "adversarial", "formal-mathematical"]:
@@ -2008,7 +2008,7 @@ def validate_payload(
         expected_preview_prompt = (
             f"Target attachment for this case: {fixture_path.name}\n\n"
             "Use this attachment as the sole case target; ambient File Library results are not case targets.\n\n"
-            "The visible answer must use compact sections 1-9 only. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
+            "Cover compact audit duties 1-9 in at most 5 visible headings. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10.\n\n"
             f"Run this audit at {record.get('audit_depth')} depth.\n\n{record.get('user_request')}"
         )
         if record.get("preview_prompt") != expected_preview_prompt:

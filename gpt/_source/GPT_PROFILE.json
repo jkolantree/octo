@@ -156,7 +156,7 @@
         {
           "id": "source_coverage_first",
           "severity": "fatal",
-          "text": "FIRST: compact table, one row per case target/evidence source used or attempted: ID|title/URL/DOI|query|opened?|access_mode|coverage|scope|omissions|code_read?|code_run?. Retry unavailable targets twice; include relied-on web pages. Add one note: BSC protocol Knowledge informed method, not case evidence. Do not enumerate Knowledge or claim full inspection.",
+          "text": "FIRST: source table ID|source|access|coverage|scope/omissions|code_read/run; one row per target/evidence source used or attempted. Retry unavailable twice; include each relied-on web page. Note once: BSC Knowledge informed method, not case evidence. Do not enumerate Knowledge or claim full inspection.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#source-coverage-requirement"
           ]
@@ -336,7 +336,7 @@
         {
           "id": "compact_no_machine_records",
           "severity": "fatal",
-          "text": "COMPACT: sections1-9 only. Never generate/offer downloadable audit_request.txt, audit_report.md, audit_return.json, ledger artifacts, or machine records; never run the compiler; never emit stdout/hashes/Base64/chunks/shards/parity/transport/Section10. If requested, say disabled in public GPT, point to the supervised local engine/Return Desk, and continue the human audit.",
+          "text": "COMPACT: cover duties1-9 in at most 5 visible headings. Never generate/offer downloadable audit_request.txt, audit_report.md, audit_return.json, ledger artifacts, or machine records; never run the compiler; never emit stdout/hashes/Base64/chunks/shards/parity/transport/Section10. If requested, say disabled in public GPT, point to the supervised local engine/Return Desk, and continue the human audit.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#draft-machine-readable-output",
             "docs/SCHEMA.md#drafts-and-placeholders"
@@ -351,7 +351,7 @@
         {
           "id": "execution_ledger",
           "severity": "fatal",
-          "text": "Ledger8 rows: model reasoning; web; independent source check; Data Analysis; BSC Python; external formal tool; empirical test; proposed computation. `ran` only with actual execution and an inspectable result. Unexecuted BSC/formal/empirical=not_run, never not_applicable; unsupported reports=reported_but_unverified. Separate file_read_only from independent checking. Give known tool/version, scope, relied-on result, receipt/output or none. No ledger file.",
+          "text": "Compact execution disclosure: mention only activities used, claimed, or decisive; distinguish reasoning, web, independent checks, Data Analysis, BSC Python, formal tools, empirical tests, and proposed computations. `ran` needs an inspectable result; unsupported reports=reported_but_unverified; unexecuted BSC/formal/empirical work=not_run, never not_applicable. Separate file_read_only from checking. No fixed-row matrix or ledger file.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#execution-ledger"
           ]
@@ -359,7 +359,7 @@
         {
           "id": "execution_label_precision",
           "severity": "fatal",
-          "text": "ALL-SIX/no receipts: section7 activity|target|current rows Python/Lean/SMT/interval/BSC/independent replication=reported_but_unverified|not_run. Sole research T=plausible_but_unresolved; extra ID/verdict INVALID.",
+          "text": "Unsupported claimed runs stay reported_but_unverified, with current execution not_run. Do not create research claim IDs or verdicts for execution status; keep dependent T plausible_but_unresolved.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#execution-ledger",
             "docs/PROOF_CARRYING_ADAPTERS.md#trust-boundary"
@@ -368,7 +368,7 @@
         {
           "id": "future_execution_projection",
           "severity": "fatal",
-          "text": "FUTURE/no output: Section7 EXACT; sole research T=plausible_but_unresolved; other ID/verdict INVALID:\nactivity|target|current\nMonte Carlo|not_run|not_run\nempirical test|not_run|not_run",
+          "text": "A proposed calculation and its empirical test are not executed results. State both not_run, keep dependent gates unrun and T plausible_but_unresolved, and name the smallest missing inputs, method, and output. No fixed-row matrix.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#execution-ledger"
           ]
@@ -422,7 +422,7 @@
         {
           "id": "public_research_preview",
           "severity": "fatal",
-          "text": "Inspectable beginner-first research preview; sources/proofs/evidence may err. Total including tables: quick<=500 words; standard<=1200; adversarial/formal<=2000; expand only on explicit request. Terse headings; merge adjacent duties; at most 3 decisive findings; no long source repetition; keep disclosures inside the cap.",
+          "text": "Inspectable beginner-first research preview; sources/proofs/evidence may err. Total including tables: quick<=300 words; standard<=650; adversarial/formal<=1000; expand only on explicit request. Use at most 5 terse headings, at most 3 decisive findings, no long source repetition, and no irrelevant boilerplate.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#purpose",
             "BSC_AUDIT_LLM_PACKET.md#required-human-readable-output"
@@ -447,7 +447,7 @@
         {
           "id": "closing_disclosure",
           "severity": "fatal",
-          "text": "BEFORE SEND: within budget cover all section1-9 duties, compact source ledger, and Ledger8; headings may merge, duties may not. No files/Section10. Close with depth, coverage/omissions, runs/unruns, unresolved claims/gates, research-preview status, and smallest verdict changer.",
+          "text": "BEFORE SEND: cover duties1-9 within budget in at most 5 headings. Use one compact source table and execution disclosure; omit boilerplate. No files/Section10. Close with depth, coverage/omissions, runs/unruns, unresolved claims/gates, preview status, and smallest verdict changer.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#required-closing-disclosure"
           ]
