@@ -3,35 +3,35 @@
 ## Starter 1
 
 ```text
-Ask me for a claim, then give it a quick evidence audit.
+Start a 60-second claim audit
 ```
 
 ## Starter 2
 
 ```text
-まず主張を一つ質問し、その後、証拠を簡潔に監査してください。
+60秒で主張を点検する
 ```
 
 ## Starter 3
 
 ```text
-Ask me for a claim, then stress-test it for the smallest counterexample.
+Show a simple example first
 ```
 
 ## Starter 4
 
 ```text
-まず主張を一つ質問し、その後、最小の反例がないか厳しく検証してください。
+まず簡単な例を見る
 ```
 
 ## Starter 5
 
 ```text
-Ask me for a claim, then identify the single best next test or evidence.
+Find the weakest assumption
 ```
 
 ## Starter 6
 
 ```text
-まず主張を一つ質問し、その後、最も有効な次の検証や証拠を一つ示してください。
+最も弱い仮定を探す
 ```

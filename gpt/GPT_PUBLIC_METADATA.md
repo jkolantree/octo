@@ -26,7 +26,7 @@ BSC Claim Auditor
 
 ## Description
 
-Audits scientific and technical claims, separates evidence, assumptions, and execution, and shows what remains unresolved. 科学・技術上の主張を監査し、証拠・仮定・実行・未解決点を分けて示します。日本語対応はベータ版で、母語話者による用語レビューは未完了です。Research preview; not a proof or certification system.
+Stress-test one scientific or technical claim. Get the bottom line, weak points, and best next test. 科学・技術の主張を簡潔に点検します。日本語対応はベータ版です。Research aid—not certification.
 
 ## Category recommendation
 
@@ -48,4 +48,4 @@ The official configuration has no Apps, Actions, analytics, account system, clou
 
 ## Public positioning
 
-> Audits scientific and technical claims, separates evidence, assumptions, and execution, and shows what remains unresolved. 科学・技術上の主張を監査し、証拠・仮定・実行・未解決点を分けて示します。日本語対応はベータ版で、母語話者による用語レビューは未完了です。Research preview; not a proof or certification system.
+> Stress-test one scientific or technical claim. Get the bottom line, weak points, and best next test. 科学・技術の主張を簡潔に点検します。日本語対応はベータ版です。Research aid—not certification.
