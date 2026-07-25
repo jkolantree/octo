@@ -9,7 +9,10 @@
   const MAX_ITEMS = 100000;
   const MAX_RETURN_JSON_BYTES = 8 * 1024 * 1024;
   const EXPECTED_SCHEMA_SHA256 = "25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799";
+  const DATA_ANALYSIS_LEDGER_HEADER = "bsc_chatgpt_data_analysis_output_version: 2";
+  const DATA_ANALYSIS_LEDGER_SECTION = "finalized_artifacts:";
   const EVIDENCE_ARTIFACT_ROLES = new Set(["evidence", "source", "execution_output"]);
+  const NOT_APPLICABLE_REQUIRED_ACTIVITIES = new Set(["bsc_python_checker", "external_proof_tool", "empirical_test"]);
   const WINDOWS_RESERVED_BASENAMES = new Set(["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "COM¹", "COM²", "COM³", "LPT¹", "LPT²", "LPT³"]);
   const CANONICAL_ACTIVITIES = Object.freeze([
     "model_reasoning",
@@ -47,6 +50,22 @@
 
   function hasVisibleText(value) {
     return Array.from(value).some((character) => !/[\p{C}\p{M}\p{Z}]/u.test(character));
+  }
+
+  function hasExactRuntimeBinding(text, version, expectedRows) {
+    const rows = Array.from(expectedRows)
+      .sort((left, right) => (
+        left.filename < right.filename ? -1 : (left.filename > right.filename ? 1 : 0)
+      ))
+      .map((row) => `${row.sha256}  ${row.bytes}  ${row.filename}`);
+    const expected = [
+      DATA_ANALYSIS_LEDGER_HEADER,
+      `session_reported_runtime=${version}`,
+      "runtime_provenance=session_reported",
+      DATA_ANALYSIS_LEDGER_SECTION,
+      ...rows,
+    ].join("\n") + "\n";
+    return text === expected;
   }
 
   function hasUnpairedSurrogate(value) {
@@ -312,6 +331,22 @@
     return a.length === b.length && a.every((value, index) => value === b[index]);
   }
 
+  function suppliedByteView(value) {
+    if (typeof ArrayBuffer === "undefined") return null;
+    if (value instanceof ArrayBuffer) return new Uint8Array(value);
+    if (ArrayBuffer.isView(value)) return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+    return null;
+  }
+
+  function isUtf8TextArtifact(artifact) {
+    const mediaType = artifact.media_type.toLowerCase().split(";", 1)[0].trim();
+    const filename = artifact.filename.toLowerCase();
+    return mediaType.startsWith("text/")
+      || filename.endsWith(".md")
+      || filename.endsWith(".txt")
+      || filename.endsWith(".json");
+  }
+
   function indexRecords(records, label, findings, globalIds) {
     const output = new Map();
     records.forEach((record, index) => {
@@ -570,6 +605,7 @@
       else suppliedByName.set(artifact.name, artifact);
     });
     const verifiedArtifacts = new Set();
+    const verifiedArtifactText = new Map();
     const declaredFilenames = new Set();
     const declaredPortableNames = new Map();
     record.artifacts.forEach((artifact, index) => {
@@ -591,6 +627,31 @@
       if (supplied.sha256 !== artifact.sha256) {
         findings.push(finding("blocked", "RETURN_ARTIFACT_HASH_MISMATCH", `$.artifacts.${index}.sha256`, "attached artifact bytes do not match the declared SHA-256", { filename: artifact.filename, expected: artifact.sha256, observed: supplied.sha256 }));
         return;
+      }
+      const suppliedBytes = suppliedByteView(supplied.bytes);
+      if (suppliedBytes !== null && isUtf8TextArtifact(artifact)) {
+        let decoded;
+        try {
+          decoded = new TextDecoder("utf-8", { fatal: true }).decode(suppliedBytes);
+        } catch (_error) {
+          findings.push(finding("blocked", "RETURN_ARTIFACT_TEXT_ENCODING_INVALID", `$.artifacts.${index}`, "a hash-verified text artifact must be valid UTF-8", artifact.filename));
+          return;
+        }
+        const invalidControlOffsets = [];
+        suppliedBytes.forEach((byte, byteOffset) => {
+          if (byte <= 0x08 || byte === 0x0b || byte === 0x0c || (byte >= 0x0e && byte <= 0x1f) || byte === 0x7f) invalidControlOffsets.push(byteOffset);
+        });
+        if (invalidControlOffsets.length > 0) {
+          findings.push(finding(
+            "blocked",
+            "RETURN_ARTIFACT_TEXT_CONTROL_INVALID",
+            `$.artifacts.${index}`,
+            "a hash-verified text artifact may contain only TAB, LF, or CR control bytes",
+            { filename: artifact.filename, byte_offsets: invalidControlOffsets.slice(0, 100) },
+          ));
+          return;
+        }
+        verifiedArtifactText.set(artifact.id, decoded);
       }
       verifiedArtifacts.add(artifact.id);
     });
@@ -673,7 +734,106 @@
       if (item.status === "file_read_only" && item.activity !== "chatgpt_data_analysis") findings.push(finding("blocked", "RETURN_FILE_READ_ACTIVITY_MISMATCH", `$.execution.${index}.status`, "file_read_only is valid only for ChatGPT attachment tooling"));
       if (item.activity === "proposed_computation" && ["ran", "file_read_only"].includes(item.status)) findings.push(finding("blocked", "RETURN_PROPOSAL_EXECUTION_MISMATCH", `$.execution.${index}.status`, "a proposed computation cannot simultaneously be recorded as executed"));
       if (["not_run", "not_applicable", "file_read_only"].includes(item.status) && (item.output_artifact_ids.length > 0 || item.receipt_ids.length > 0)) findings.push(finding("blocked", "RETURN_EXECUTION_STATUS_CONTRADICTION", `$.execution.${index}`, "an unexecuted or read-only activity cannot declare execution outputs or receipts"));
+      if (item.status === "not_applicable" && NOT_APPLICABLE_REQUIRED_ACTIVITIES.has(item.activity)) findings.push(finding(
+        "blocked",
+        "RETURN_EXECUTION_NOT_APPLICABLE_MISUSED",
+        `$.execution.${index}.status`,
+        "canonical checker, proof-tool, and empirical activities must remain explicitly not_run when they were not executed",
+        item.activity,
+        "record not_run unless the activity was actually executed and can satisfy the execution-record requirements",
+      ));
       if (item.status === "reported_but_unverified") findings.push(finding("review", "RETURN_EXECUTION_UNVERIFIED", `$.execution.${index}.status`, "reported execution lacks an adequate verified record", item.activity));
+      if (item.status === "ran" && item.activity !== "model_reasoning") {
+        const reportText = verifiedArtifactText.get(record.bindings.report_artifact_id);
+        const supportArtifactIds = new Set(item.output_artifact_ids);
+        item.receipt_ids.forEach((receiptId) => {
+          const receipt = indexes.receipts.get(receiptId);
+          if (receipt) supportArtifactIds.add(receipt.artifact_id);
+        });
+        const versionArtifactIds = Array.from(supportArtifactIds)
+          .filter((artifactId) => (
+            typeof item.version === "string"
+            && (verifiedArtifactText.get(artifactId) || "").includes(item.version)
+          ))
+          .sort();
+        if (versionArtifactIds.length === 0) findings.push(finding(
+          "blocked",
+          "RETURN_EXECUTION_VERSION_UNBOUND",
+          `$.execution.${index}.version`,
+          "a ran non-model execution version must appear in a verified bound execution output or receipt",
+          {
+            activity: item.activity,
+            version: item.version,
+            support_artifact_ids: Array.from(supportArtifactIds).sort(),
+          },
+        ));
+        const supportReferences = Array.from(new Set(versionArtifactIds.flatMap((artifactId) => {
+          const artifact = indexes.artifacts.get(artifactId);
+          return artifact ? [artifactId, artifact.filename] : [];
+        }))).sort();
+        if (
+          typeof reportText !== "string"
+          || !supportReferences.some((reference) => reportText.includes(reference))
+        ) findings.push(finding(
+          "blocked",
+          "RETURN_EXECUTION_OUTPUT_NOT_REFERENCED",
+          `$.execution.${index}`,
+          "the verified report must reference a bound version-bearing execution output or receipt instead of independently reproducing its version",
+          {
+            activity: item.activity,
+            report_artifact_id: record.bindings.report_artifact_id,
+            accepted_references: supportReferences,
+          },
+        ));
+        if (item.activity === "chatgpt_data_analysis") {
+          const runtimeArtifactIds = item.output_artifact_ids.filter((artifactId) => {
+            const artifact = indexes.artifacts.get(artifactId);
+            return artifact
+              && artifact.role === "execution_output"
+              && artifact.filename === "chatgpt_data_analysis_output.txt";
+          }).sort();
+          const runtimeText = runtimeArtifactIds.length === 1
+            ? verifiedArtifactText.get(runtimeArtifactIds[0])
+            : null;
+          const runtimeArtifactId = runtimeArtifactIds.length === 1
+            ? runtimeArtifactIds[0]
+            : null;
+          const runtimeLedgerRows = [];
+          let runtimeLedgerMembersVerified = true;
+          item.output_artifact_ids.forEach((artifactId) => {
+            if (artifactId === runtimeArtifactId) return;
+            const artifact = indexes.artifacts.get(artifactId);
+            if (!artifact || ["request", "source"].includes(artifact.role)) return;
+            const supplied = suppliedByName.get(artifact.filename);
+            const bytes = supplied ? suppliedByteView(supplied.bytes) : null;
+            if (!verifiedArtifacts.has(artifactId) || bytes === null) {
+              runtimeLedgerMembersVerified = false;
+              return;
+            }
+            runtimeLedgerRows.push({
+              filename: artifact.filename,
+              bytes: bytes.byteLength,
+              sha256: artifact.sha256.slice("sha256:".length),
+            });
+          });
+          const runtimeBindingOk = (
+            typeof runtimeText === "string"
+            && typeof item.version === "string"
+            && runtimeLedgerMembersVerified
+            && hasExactRuntimeBinding(runtimeText, item.version, runtimeLedgerRows)
+          );
+          if (!runtimeBindingOk) findings.push(finding(
+            "blocked",
+            "RETURN_DATA_ANALYSIS_RUNTIME_BINDING_INVALID",
+            `$.execution.${index}`,
+            "ChatGPT Data Analysis must bind one verified chatgpt_data_analysis_output.txt that projects the structured version as a session-reported, not independently authenticated runtime",
+            {
+              runtime_artifact_ids: runtimeArtifactIds,
+              structured_version: item.version,
+            },
+          ));
+        }
+      }
 
       let effective = false;
       if (item.activity === "model_reasoning") effective = item.status === "ran";
@@ -743,7 +903,25 @@
         if (receiptScopeOk.get(receiptId) !== true) failures.push("receipt_scope_mismatch");
         if (failures.length > 0) receiptFailures[receiptId] = failures;
       });
-      return { executionOk: unboundActivities.length === 0, inputOk: inputUnboundActivities.length === 0, receiptOk: Object.keys(receiptFailures).length === 0, receiptFailures, requiredInputs: Array.from(requiredInputs).sort(), unboundActivities, inputUnboundActivities };
+      const supportOutputFailures = item.artifact_ids.filter((id) => (
+        indexes.artifacts.has(id)
+        && indexes.artifacts.get(id).role === "evidence"
+        && !item.execution_activities.some((activity) => (
+          executionByActivity.has(activity)
+          && executionByActivity.get(activity).output_artifact_ids.includes(id)
+        ))
+      ));
+      return {
+        executionOk: unboundActivities.length === 0,
+        inputOk: inputUnboundActivities.length === 0,
+        receiptOk: Object.keys(receiptFailures).length === 0,
+        supportOutputOk: supportOutputFailures.length === 0,
+        receiptFailures,
+        requiredInputs: Array.from(requiredInputs).sort(),
+        supportOutputFailures,
+        unboundActivities,
+        inputUnboundActivities,
+      };
     }
 
     function evidenceEffective(item) {
@@ -764,6 +942,7 @@
         && bindings.executionOk
         && bindings.inputOk
         && bindings.receiptOk
+        && bindings.supportOutputOk
         && artifactRolesOk
         && sourceScopeOk
         && outputScopeOk
@@ -785,6 +964,7 @@
       if (invalidRoleArtifacts.length > 0) findings.push(finding("blocked", "RETURN_EVIDENCE_ARTIFACT_ROLE_INVALID", `$.evidence.${index}.artifact_ids`, "evidence artifacts may use only evidence, source, execution_output, or receipt roles", invalidRoleArtifacts));
       if (sourceScopeFailures.length > 0) findings.push(finding("blocked", "RETURN_EVIDENCE_SOURCE_SCOPE_MISMATCH", `$.evidence.${index}.artifact_ids`, "a source artifact used as evidence must be declared by every claim it supports", sourceScopeFailures));
       if (outputScopeFailures.length > 0) findings.push(finding("blocked", "RETURN_EVIDENCE_OUTPUT_SCOPE_MISMATCH", `$.evidence.${index}.artifact_ids`, "an execution-output artifact must be an output of an execution activity cited by the evidence", outputScopeFailures));
+      if (item.status === "verified" && !bindings.supportOutputOk) findings.push(finding("blocked", "RETURN_EVIDENCE_SUPPORT_OUTPUT_MISMATCH", `$.evidence.${index}.artifact_ids`, "every artifact with role evidence must be an output of an execution activity cited by the evidence record", bindings.supportOutputFailures));
       if (item.status === "verified" && item.result === "pass" && receiptOnly) findings.push(finding("blocked", "RETURN_RECEIPT_ONLY_PROMOTION", `$.evidence.${index}`, "a receipt alone cannot promote a passing evidence record"));
       if (!bindings.executionOk) findings.push(finding("blocked", "RETURN_EVIDENCE_EXECUTION_BINDING_MISMATCH", `$.evidence.${index}.execution_activities`, "evidence cannot reuse an unrelated execution; each cited activity must bind this evidence's output or receipt", bindings.unboundActivities));
       if (!bindings.inputOk) findings.push(finding("blocked", "RETURN_EVIDENCE_EXECUTION_INPUT_UNBOUND", `$.evidence.${index}.execution_activities`, "each cited execution must bind the request and every locally available source for the evidence's claims", { activities: bindings.inputUnboundActivities, required_artifact_ids: bindings.requiredInputs }));
@@ -823,6 +1003,30 @@
 
     if (record.summary_projection.deployment_status === "admitted") findings.push(finding("blocked", "RETURN_DEPLOYMENT_AUTHORITY_MISSING", "$.summary_projection.deployment_status", "this non-admissive return format cannot grant deployment admission, even when its internal gate projection passes"));
     record.unresolved_obligations.forEach((obligation, index) => {
+      const unownedGateIds = obligation.gate_ids.filter((gateId) => !obligation.claim_ids.some((claimId) => (
+        indexes.claims.has(claimId) && indexes.claims.get(claimId).fatal_gate_ids.includes(gateId)
+      )));
+      const evidenceClaimScopeFailures = obligation.evidence_ids.filter((evidenceId) => (
+        !indexes.evidence.has(evidenceId)
+        || !indexes.evidence.get(evidenceId).claim_ids.some((claimId) => obligation.claim_ids.includes(claimId))
+      ));
+      const evidenceGateScopeFailures = obligation.evidence_ids.filter((evidenceId) => (
+        !indexes.evidence.has(evidenceId)
+        || !indexes.evidence.get(evidenceId).gate_ids.some((gateId) => obligation.gate_ids.includes(gateId))
+      ));
+      if (obligation.claim_ids.length === 0 || obligation.gate_ids.length === 0 || unownedGateIds.length > 0 || evidenceClaimScopeFailures.length > 0 || evidenceGateScopeFailures.length > 0) findings.push(finding(
+        "blocked",
+        "RETURN_OBLIGATION_SCOPE_MISMATCH",
+        `$.unresolved_obligations.${index}`,
+        "an unresolved obligation needs nonempty claim and gate scope, each gate owned by a listed claim, and each listed evidence record intersecting both scopes",
+        {
+          empty_claim_scope: obligation.claim_ids.length === 0,
+          empty_gate_scope: obligation.gate_ids.length === 0,
+          unowned_gate_ids: unownedGateIds,
+          evidence_claim_scope_failures: evidenceClaimScopeFailures,
+          evidence_gate_scope_failures: evidenceGateScopeFailures,
+        },
+      ));
       if (obligation.gate_ids.some((id) => derivedGateStates.get(id) === "pass")) findings.push(finding("blocked", "RETURN_OPEN_OBLIGATION_BEHIND_PASS", `$.unresolved_obligations.${index}`, "a fatal gate cannot pass while a bound obligation remains unresolved", obligation.id));
     });
 

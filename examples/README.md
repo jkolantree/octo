@@ -36,7 +36,7 @@ A nonzero exit is expected for blocking and demotion fixtures. CI should test th
 
 ## Audit Return Desk controls
 
-These alpha.8 development fixtures exercise the closed, explicitly non-admissive return envelope. Run each with `python run_audit.py return-desk FILE`.
+These fixtures exercise the closed, explicitly non-admissive return envelope. Run each with `python run_audit.py return-desk FILE`.
 
 | File | Expected decision | Exit | Lesson |
 |---|---:|---:|---|

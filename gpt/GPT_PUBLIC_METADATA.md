@@ -1,6 +1,24 @@
-# Copy-ready public metadata
+# Official BSC Claim Auditor metadata
 
-**Publication status:** `UNPUBLISHED` — this repository does not assert a public GPT URL.
+**Official GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) — `LIVE`
+
+**Repository package role:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE`
+
+**Candidate state:** `PENDING`
+
+**Live binding:** `PENDING_VERIFICATION`
+
+**Preview validation:** `PENDING` — 12 fresh-conversation cases required
+
+**Compact Preview roster:** `known-true-induction`, `artifact-export-disabled-control`, `known-false-continuity`, `assumption-present`, `assumption-removed`, `truncated-proof`, `decisive-calculation-not-executed`, `poisoned-source-prompt-injection`, `contradictory-verified-evidence`, `deployment-from-mathematical-result`, `ja-truncated-proof`, `official-service-status-separation`
+
+**Historical evaluation suite:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES` — preserved for forensic and regression history only; its 39 cases, D01/D02 preflights, compiler/transport requirements, and results do not govern or validate this compact candidate.
+
+**Japanese interface:** `BETA` — native-speaker terminology review `PENDING`; canonical English protocol and machine tokens control conflicts
+
+The official GPT is available now. This repository package is its reproducible source and update candidate; candidate presence alone does not prove that its exact bytes are installed or Preview-validated in the live service.
+
+**Compact response boundary:** the official GPT profile produces only a bounded human-readable audit. Downloadable machine records, `audit_return.json`, compiler execution/stdout, Base64, shards, parity, transport, and section 10 are disabled. The repository retains the compiler and Return Desk only as supervised standalone tooling.
 
 ## Name
 
@@ -8,7 +26,7 @@ BSC Claim Auditor
 
 ## Description
 
-Reconstructs scientific and technical claims, separates evidence from assumptions, records what actually ran, and shows what remains unresolved. Research preview; not a proof engine or certification system.
+Audits scientific and technical claims, separates evidence, assumptions, and execution, and shows what remains unresolved. 科学・技術上の主張を監査し、証拠・仮定・実行・未解決点を分けて示します。日本語対応はベータ版で、母語話者による用語レビューは未完了です。Research preview; not a proof or certification system.
 
 ## Category recommendation
 
@@ -19,15 +37,15 @@ Reconstructs scientific and technical claims, separates evidence from assumption
 - **Web Search:** `enabled`
   - Use when current source or citation verification is material, and disclose whether each decisive cited source was independently opened.
 - **Code Interpreter And Data Analysis:** `enabled`
-  - Use for attachment inspection and calculations when appropriate, but label it as ChatGPT tool execution rather than BSC Python execution.
+  - Use only for attachment inspection or bounded calculations when useful, and label it as ChatGPT tool execution rather than BSC Python execution. This compact release profile must not create or hash audit artifacts, run gpt_artifact_compiler.py, emit audit_return.json, reproduce compiler stdout, or serialize Base64, shards, or transport.
 - **Image Generation:** `disabled`
 - **Apps:** `disabled`
 - **Actions:** `disabled`
-  - No GPT Action is included in the first public release.
+  - The official configuration includes no GPT Action.
 - **Canvas:** `disabled; optional`
 
-Do not add Apps, Actions, analytics, accounts, cloud storage, or a hosted BSC API for this release.
+The official configuration has no Apps, Actions, analytics, account system, cloud storage, or hosted BSC API.
 
 ## Public positioning
 
-> Reconstructs scientific and technical claims, separates evidence from assumptions, records what actually ran, and shows what remains unresolved. Research preview; not a proof engine or certification system.
+> Audits scientific and technical claims, separates evidence, assumptions, and execution, and shows what remains unresolved. 科学・技術上の主張を監査し、証拠・仮定・実行・未解決点を分けて示します。日本語対応はベータ版で、母語話者による用語レビューは未完了です。Research preview; not a proof or certification system.
