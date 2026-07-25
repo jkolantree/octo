@@ -3,8 +3,8 @@
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) (live research preview)<br>
-**Current GitHub release:** `v0.3.0-alpha.7`<br>
-**Release candidate:** `0.3.0-alpha.8` (pending local, Preview, live-binding, merge, and release gates)<br>
+**Current GitHub prerelease:** `v0.3.0-alpha.8`<br>
+**Validation boundary:** compact profile released; the complete 12-case Preview suite remains post-release hardening and is not claimed as passed<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
 [日本語](README.ja.md) | [Timestamped publication status](docs/PUBLICATION_STATUS.json)
@@ -35,7 +35,7 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 
 ## Choose an entry point
 
-1. **Official Custom GPT - direct ChatGPT audit:** open the live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor). It currently reports the alpha.8.dev0 controller identity, but no preserved complete post-update Preview evaluation satisfies that version's gate; treat every output as a research-preview draft. Uploads go through ChatGPT under the user's applicable settings and terms. The GPT has no Action, hosted API, account, analytics, or cloud-storage integration. See the exact [live/candidate status](docs/CUSTOM_GPT_STATUS.md).
+1. **Official Custom GPT - direct ChatGPT audit:** open the live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor). Alpha.8 supports bounded human-readable audits; large artifact, hash, Base64, shard, and transport output is deliberately excluded from this public profile. Targeted live checks passed for canonical status routing and conflicting verified evidence without digest leakage. The complete 12-case Preview suite was not run, so treat every output as a research-preview draft rather than a validated certificate. Uploads go through ChatGPT under the user's applicable settings and terms. The GPT has no Action, hosted API, account, analytics, or cloud-storage integration. See the exact [live/candidate status](docs/CUSTOM_GPT_STATUS.md).
 2. **Local browser Packet Builder and Audit Return Desk:** [open the accessible GitHub Pages module](https://jkolantree.github.io/octo/) to construct a versioned packet or inspect a returned `audit_return.json` draft and selected artifact bytes locally. Neither function uploads the target, calls an LLM, or runs Python.
 3. **Repository and Python engine - exact checker route:** use [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and preserved command output. This is the only route here that runs the BSC checker.
 

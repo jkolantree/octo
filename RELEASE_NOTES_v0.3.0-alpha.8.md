@@ -1,6 +1,6 @@
 # BSC Audit Engine v0.3.0-alpha.8
 
-Alpha.8 is designated as a public research preview of the BSC Audit Engine and the repository-backed BSC Claim Auditor configuration. That designation does not itself establish publication; publication status is established only by the recorded local, Preview, live-binding, CI, and immutable-release gates.
+Alpha.8 ships as a GitHub prerelease of the BSC Audit Engine and the repository-backed compact BSC Claim Auditor configuration. Its supported public-GPT surface is bounded human-readable auditing. It does not claim that the complete 12-case Preview suite passed, that every live Builder byte is independently bound to this tag, or that the retained standalone artifact workflow is suitable for the public GPT.
 
 ## Compact public GPT pivot
 
@@ -10,7 +10,7 @@ The live Knowledge roster is reduced to five files; `BSC_EXECUTION_AND_RECEIPTS.
 
 The public landing screen now uses six short, self-contained conversation starters in alternating English/Japanese order. They ask for a claim before auditing it, so mobile users are not sent into an attachment-dependent dead end.
 
-The current Preview gate is 12 fresh compact-profile cases, including an explicit request for the disabled export feature. The former 39-case artifact suite and D01/D02 transport preflights are preserved as historical evidence and do not validate this changed profile.
+The full validation target remains 12 fresh compact-profile cases, including an explicit request for the disabled export feature. That suite was not completed before this prerelease and remains post-release hardening. Targeted live regressions passed for canonical status-only routing and for conflicting verified evidence: the conflict blocked admission and no digest leaked. The former 39-case artifact suite and D01/D02 transport preflights are preserved as historical evidence and do not validate this changed profile.
 
 ## Retained standalone compiler repairs
 
@@ -170,9 +170,9 @@ negative evidence remain unchanged.
 
 No case, fixture, scientific expectation or oracle, scorer, rubric, threshold,
 automatic-failure rule, or Return Desk negative changes. The failed freeze is
-not reusable. All local gates, both fresh preflights, and the complete counted
-suite from C001 must restart before any live Update, push, merge, tag, Release,
-or publication.
+not reusable. That stop boundary governs any future claim that the superseded
+artifact-capable line passed its counted suite; it does not validate, and does
+not block, this smaller compact-profile prerelease.
 
 ## Authority and privacy boundary
 

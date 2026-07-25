@@ -9,15 +9,15 @@
   "entries": [
     {
       "source": "README.md",
-      "source_sha256": "4d753556638642821ad76d67d5f78b6fac45ac19b3f364af7a93c284d1f276ad",
+      "source_sha256": "ab4d4c5d42983ce00507f54af1eca0face30e6ce77dd7a54a55e7fe837673e0d",
       "target": "README.ja.md",
-      "target_sha256": "5132b3e2f57972a6706a6ca7a517d6be3857e2dcd47568db0a8bccf690287153"
+      "target_sha256": "b6e7af8770a4a9a354c028ce6a20710b9d65047a78504d3c88d7c693a0821abd"
     },
     {
       "source": "START_HERE.md",
-      "source_sha256": "8f28d07c997e077c56e75a32ffd29e73789956dfcf08159e1cc753bf3a304ca4",
+      "source_sha256": "06d00ca19105b8b7854899de927d6774d2ec5425d1a8be655b894519c5db973b",
       "target": "START_HERE.ja.md",
-      "target_sha256": "993a60160d80b01bbfbc488b6f6496e160e52e14dc36794ce2a5dda93ffcce97"
+      "target_sha256": "6eb0bda16ac3094e94b75d36f7828ba5f172dad3422ee8f40fca762369745812"
     },
     {
       "source": "docs/AUDIT_RETURN_DESK.md",
@@ -27,9 +27,9 @@
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "6bfe5b43b35701a0d6d9eba62cd1535cf907c4b2467722c9710987b501b58139",
+      "source_sha256": "f2e53dfe503eec3e398c08c3c35ef391121098fa9caa94585f24edd298937f46",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
-      "target_sha256": "185cbc4f47d38f7857ad9e920157f105bd568f7caaa0b80122cee40afe073b5d"
+      "target_sha256": "fff779eae0f30d2df237b80889117d57f4611135a96f26fb6a7826fad1677127"
     },
     {
       "source": "docs/STATUS_MODEL.md",
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "4ee9c804e704892c504ba497cdbed971baba2bbf0ae090346178969d120ad05e"
+  "manifest_payload_sha256": "8450c8763739d5211482b1e2cdc1473eeeabebe66ebef4d0acc739af04ca5500"
 }
