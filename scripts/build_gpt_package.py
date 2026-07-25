@@ -1312,7 +1312,7 @@ def render_instructions(profile: dict[str, Any]) -> bytes:
         "no affected pass/proven/run.",
         "PUBLIC:human audit only at every depth;visible text;"
         "exact non-hash tokens+URLs;"
-        "never output/copy hash/digest values.",
+        "never compute/output/copy/quote hash/digest values.",
         "STATUS_ONLY>duties1-9:official service/package/candidate/binding/Preview/"
         "release/Pages states only;no research IDs/verdicts/gates/admission;"
         "requested language.",
@@ -1323,8 +1323,9 @@ def render_instructions(profile: dict[str, Any]) -> bytes:
     for rule in all_rules(profile):
         marker = "F" if rule["severity"] == "fatal" else "R"
         lines.append(f"{marker}:{rule['id']}:{rule['text']}")
-    for section in output_sections(profile):
-        lines.append(f"{section['order']}:{section['title']}")
+    lines.append(
+        "DEEP/FORMAL:use nine duties;Quick/Intake/Follow-up do not."
+    )
     lines.append("BSC_CUSTOM_GPT_INSTRUCTIONS_END")
     # GPT Builder strips terminal whitespace on save, so the deterministic
     # artifact deliberately matches the server-persisted byte sequence.
@@ -2004,9 +2005,9 @@ def validate_payload(
         failures.append(
             "GPT profile must contain exactly six starters alternating English and Japanese"
         )
-    if any(not str(item).strip() or len(str(item)) > 96 for item in starters):
+    if any(not str(item).strip() or len(str(item)) > 32 for item in starters):
         failures.append(
-            "GPT conversation starters must be nonempty and at most 96 characters for mobile use"
+            "GPT conversation starters must be nonempty and at most 32 characters for mobile use"
         )
     if any(
         re.search(
@@ -2022,8 +2023,10 @@ def validate_payload(
     description = str(product_record.get("description", ""))
     if not re.search(r"[A-Za-z]", description) or not re.search(r"[\u3040-\u30ff\u3400-\u9fff]", description):
         failures.append("GPT public description must be bilingual English and Japanese")
-    if "日本語対応はベータ版" not in description or "母語話者による用語レビューは未完了" not in description:
-        failures.append("GPT public description must disclose the Japanese beta and pending native-speaker review")
+    if len(description) > 200:
+        failures.append("GPT public description must be at most 200 characters for mobile use")
+    if "日本語対応はベータ版" not in description:
+        failures.append("GPT public description must disclose the Japanese beta")
     paths = {path.as_posix() for path in payload}
     for path in paths:
         pure = PurePosixPath(path)
@@ -2058,10 +2061,10 @@ def validate_payload(
         )
     for token in (
         "F:compact_no_machine_records:",
-        "quick<=300 words; standard<=650; adversarial/formal<=1000",
+        "Intake<=40 words; Follow-up<=120; Quick<=250 words",
         "PUBLIC:human audit only at every depth;visible text;"
         "exact non-hash tokens+URLs;"
-        "never output/copy hash/digest values.",
+        "never compute/output/copy/quote hash/digest values.",
         "STATUS_ONLY>duties1-9:official service/package/candidate/binding/Preview/"
         "release/Pages states only;no research IDs/verdicts/gates/admission;",
         f"OFFICIAL:{OFFICIAL_GPT_URL};LIVE=availability only;",
