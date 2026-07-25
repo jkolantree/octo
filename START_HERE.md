@@ -12,7 +12,7 @@ It is not a truth machine. It cannot turn a plausible idea into a theorem, valid
 
 Open the live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) for a direct ChatGPT audit. It is already built and link-shared as a research preview. The repository's [Custom GPT package](gpt/README.md) is the reproducible source for inspecting, evaluating, updating, or independently forking that configuration.
 
-The current live controller identifies as alpha.8.dev0, while no preserved complete post-update Preview run satisfies its gate. Do not treat availability as validation. Uploads are processed by ChatGPT under the user's applicable settings and terms and are not local-only. See [Custom GPT live status](docs/CUSTOM_GPT_STATUS.md).
+Alpha.8's supported public surface is a bounded human-readable audit. Large artifact, hash, Base64, shard, and transport output remains standalone repository tooling. Targeted live checks passed for canonical status routing and conflicting verified evidence without digest leakage; the complete 12-case Preview suite was not run. Treat availability as a research preview, not certification. Uploads are processed by ChatGPT under the user's applicable settings and terms and are not local-only. See [Custom GPT live status](docs/CUSTOM_GPT_STATUS.md).
 
 ### One-page local builder and Return Desk
 

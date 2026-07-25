@@ -8,24 +8,22 @@ official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed
 
 ## Current state
 
-2026-07-22 に確認:
+2026-07-24 に確認:
 
 | Surface | State | Exact binding または boundary |
 |---|---|---|
-| Official Custom GPT | **live** | 上記 public URL。runtime identity smoke は controller `0.3.0-alpha.8.dev0` と Profile SHA-256 `99d6f78d3af21c68ddb6545b034d340e77b73d2f1ffa657120d4147455128b90` を返した |
-| Alpha.8.dev0 Preview evaluation | **not completed** | candidate の generated case gate を満たす preserved complete post-update run はない。identity smoke は evaluation ではない |
-| Repository `main` | **merged** | commit `1e5c60360d8473e170f828597241dc9ab5844d3b`、tree `f1460fb6e84c11ad363e3c8796ea22a3c2a4fde8` |
-| GitHub Actions for that merge | **passed** | exact-audit と Pages publication はともに成功 |
-| Public Pages | **deployed** | alpha.8.dev0 が [jkolantree.github.io/octo](https://jkolantree.github.io/octo/) で live |
+| Official Custom GPT | **live** | 上記 public URL。supported alpha.8 surface は bounded human-readable audit |
+| Targeted alpha.8 live regressions | **passed** | canonical status-only routing は pass。conflicting verified evidence は admission を block し、SHA-256 digest を出力しなかった |
+| Complete 12-case Preview evaluation | **not completed** | この prerelease は `pass_12_of_12` または complete live Builder-byte binding を主張しない |
+| GitHub prerelease | **published** | [`v0.3.0-alpha.8`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.8)。immutable tag と release assets が exact repository binding |
+| Public Pages | **deployed** | English interface は [jkolantree.github.io/octo](https://jkolantree.github.io/octo/) で live |
 | Japanese Pages route | **candidate; not deployed** | 予定 `/octo/ja.html` route は `2026-07-22T18:37:44Z` に HTTP 404。post-deploy English/JA/protocol route/metadata smoke が pass するまで live として案内しない |
-| Latest GitHub Release | **unchanged** | [`v0.3.0-alpha.7`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.7)、commit `5ac1b85d4d573d15ce5cf68329443de11428b490` |
-| Final alpha.8 release candidate | **pending gates** | `0.3.0-alpha.8`。live Update、merge、tag、release の前に isolated local gates と fresh frozen 12-case compact-profile Preview regression が必要 |
 
-alpha.8.dev0 について確認済みなのは、repository CI と runtime identity smoke です。fresh Preview conversation による complete behavior evaluation は保存されていないため、CI と identity は Preview validation の代用にはなりません。利用可能な service の output も human-review research-preview draft として扱います。
+この release は「working research preview」と「fully Preview-validated」を明確に分離します。repository checks と、repair された 2 つの high-risk live route は pass しました。full 12-case roster は未完了なので、source CI と targeted checks を broader evaluation の代用として表現してはいけません。
 
-## Next candidate
+## Released compact scope
 
-final `0.3.0-alpha.8` は、service availability と candidate validation を混同せず、日本語 accessibility と exact evidence boundary を強化する release candidate です。この candidate は:
+`0.3.0-alpha.8` prerelease は、service availability と validation を混同せず、日本語 accessibility と exact evidence boundary を強化します。この release は:
 
 - uploaded Knowledge から mutable service-state claim を除き、現在状態は timestamped repository record に分離する;
 - 利用者向けの official URL と、任意の reproduction/fork/update route を明確に分ける;
@@ -37,7 +35,7 @@ final `0.3.0-alpha.8` は、service availability と candidate validation を混
 
 preserved 39-case artifact-profile suite、D01/D02 preflight、compiler/transport results は historical and superseded です。これらは compact candidate を validate せず、12-case gate の代用になりません。
 
-candidate が complete Preview gate を通過し、saved configuration との exact binding が確認されるまで、`0.3.0-alpha.8` を installed、bound、Preview-validated、または released として promote しません。official service の現在の availability は上記 timestamped state と machine-readable snapshot で確認します。
+prior artifact-profile Preview result は、この changed compact profile を validate しません。public GPT と GitHub prerelease は利用できますが、`pass_12_of_12` または fully Preview-validated として promote しません。
 
 ## Exact trust boundary
 
@@ -48,19 +46,13 @@ GPT は authenticated owner-controlled research-preview interface です。proof
 - Lean/SMT/interval/empirical claim には separately identified supervised execution と admissible evidence が必要。
 - fluent report、hash-shaped string、submitted receipt、internally consistent `audit_return.json` は truth、source authenticity、independent replay、deployment permission を確立しない。
 
-## Promotion gate for alpha.8
+## Alpha.8 release boundary
 
-merge、live Update、GitHub release の前に:
+exact repository candidate が deterministic local checks と branch CI を pass し、repair された status-routing と conflicting-evidence path が targeted live regression を pass した場合、この minimal prerelease を ship できます。これが supported alpha.8 claim です。
 
-1. clean candidate tree から exact package を generate/validate する。
-2. Instructions character limit と reserved headroom、5 個の exact Knowledge files と offline release hashes、public Knowledge 内の digest value が 0、metadata、capabilities、Apps/Actions 不在、execution-and-receipts Knowledge upload 不在を verify する。
-3. exact fixture と current compact `preview_prompt` を使い、exact 12-case compact roster を fresh Builder Preview conversation で実行する。保存された historical 39-case artifact suite はこの gate ではない。
-4. 各 response が declared compact budget 内に収まり、human audit を完了し、machine record、compiler output、Base64、shards、transport、section 10 を提供しないことを確認する。
-5. 各 raw response を exact UTF-8 で保存し、score 前に `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>` の native exit 0 を要求する。exit 1 または 2 は automatic failure とする。
-6. checker を pass した各 response を generated oracle に対して score する。
-7. 各 case に 18/20 以上かつ automatic failure なしを要求する。1 failed case を average で消してはいけない。
-8. repository、Pages、localization、privacy、release-integrity、Null-Discrimination checks を実行する。
-9. 全 gate pass 後にだけ live GPT を update し、public identity と timestamped status record を再 verify する。
+exact 12-case compact roster は、将来 `pass_12_of_12` または fully Preview-validated と主張するための gate として残ります。未完了状態は明示し、平均化や黙った relabel はしません。former 39-case artifact workflow、compiler output、downloadable machine record、Base64、shards、transport は supported public-GPT surface に含まれません。
+
+Instructions、Knowledge、capabilities、Builder configuration を後から変更する場合は、新しい binding record と相応の regression testing が必要です。この prerelease は changed service bytes を validate しません。
 
 ## Preserved alpha.7 baseline
 

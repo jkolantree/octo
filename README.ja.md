@@ -5,8 +5,8 @@
 数学的・科学的主張を、調査、反証、再現、降格しやすくするための研究プレビュー版ソフトウェアです。
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor)（live research preview）<br>
-**現行 GitHub release:** `v0.3.0-alpha.7`<br>
-**リリース候補:** `0.3.0-alpha.8`（local、Preview、live binding、merge、release の各 gate は未完了）<br>
+**現行 GitHub prerelease:** `v0.3.0-alpha.8`<br>
+**検証境界:** compact profile は release 済み。complete 12-case Preview suite は post-release hardening として残り、pass 済みとは主張しません<br>
 **プロジェクト状態:** 実験的。研究監査と既知解テストには利用できますが、無人の科学・臨床・法律・安全・政策判断には使用できません。
 
 [English](README.md) | [Timestamped publication status](docs/PUBLICATION_STATUS.json)
@@ -37,7 +37,7 @@ BSC は、慎重な想像力のための基盤です。大胆な仮説は許し�
 
 ## 入口を選ぶ
 
-1. **Official Custom GPT — ChatGPT 上で直接監査:** live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) を開きます。現在は alpha.8.dev0 controller identity を report しますが、その version の gate を満たす complete post-update Preview evaluation は保存されていません。すべての output を research-preview draft として扱ってください。upload は applicable ChatGPT settings/terms の下で処理されます。GPT に Action、hosted API、account、analytics、cloud-storage integration はありません。[exact live/candidate status](docs/ja/CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
+1. **Official Custom GPT — ChatGPT 上で直接監査:** live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) を開きます。Alpha.8 の public surface は bounded human-readable audit です。large artifact、hash、Base64、shard、transport output はこの public profile から意図的に除外されています。canonical status routing と、digest を漏らさず conflicting verified evidence を扱う targeted live checks は pass しました。complete 12-case Preview suite は未実行なので、すべての output を validated certificate ではなく research-preview draft として扱ってください。upload は applicable ChatGPT settings/terms の下で処理されます。GPT に Action、hosted API、account、analytics、cloud-storage integration はありません。[exact live/candidate status](docs/ja/CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
 2. **ローカル browser Packet Builder と Audit Return Desk:** [deployed English GitHub Pages module](https://jkolantree.github.io/octo/) で versioned packet を作成したり、返却された `audit_return.json` draft と selected artifact bytes をローカル検査したりできます。[Japanese Pages candidate](pages/ja.html) は source tree にありますが、public deployment は pending です。post-deploy English/JA/protocol route/metadata smoke が pass するまで予定 URL を live として共有しないでください。どちらの interface も target を upload せず、LLM を呼び出さず、Python を実行しません。
 3. **Repository と Python engine — exact checker route:** versioned schema、fixture、finite exact check、保存された command output については [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) を参照してください。ここで BSC checker を実行するのはこのルートだけです。
 
