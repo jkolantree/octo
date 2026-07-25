@@ -8,6 +8,8 @@ The official GPT now performs one bounded human-readable job per route. Scientif
 
 The live Knowledge roster is reduced to five files; `BSC_EXECUTION_AND_RECEIPTS.md` is no longer uploaded. Data Analysis remains available for actual attachment inspection or bounded calculations, but not for packaging the audit. The repository keeps the compiler, controller, return schema, and Audit Return Desk as separately invoked supervised tooling.
 
+The public landing screen now uses six short, self-contained conversation starters in alternating English/Japanese order. They ask for a claim before auditing it, so mobile users are not sent into an attachment-dependent dead end.
+
 The current Preview gate is 12 fresh compact-profile cases, including an explicit request for the disabled export feature. The former 39-case artifact suite and D01/D02 transport preflights are preserved as historical evidence and do not validate this changed profile.
 
 ## Retained standalone compiler repairs

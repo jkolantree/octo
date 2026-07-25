@@ -14,7 +14,7 @@
     {
       "bytes": 30086,
       "path": "docs/GPT_FROZEN_CANDIDATE.json",
-      "sha256": "98e87cb1e3aff96882c79d617a73ed16464f3ee72c6b7412c005720619e5cf4f"
+      "sha256": "5862ec0ef60a7373a8046ce35db85cea32b7aa17487f329d712a6aa2dacd2f1c"
     },
     {
       "bytes": 10099,
@@ -72,9 +72,9 @@
       "sha256": "5f60476038d1a20a4b55c79389e2e0fe8ba60b89cd737602a30b39e13308821f"
     },
     {
-      "bytes": 26388,
+      "bytes": 26475,
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "a28cc00752f24b5208ed89d907be1237d851b3aaf343a4cfa22682d6138fe961"
+      "sha256": "97a05f2ccefc9d61c2e841756c8d97d0588a46b29331312393c9722455842857"
     },
     {
       "bytes": 75464,
@@ -87,9 +87,9 @@
       "sha256": "25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799"
     },
     {
-      "bytes": 123522,
+      "bytes": 124197,
       "path": "scripts/build_gpt_package.py",
-      "sha256": "498994e23355de4defdb9c7f6024e3d26a37d097e3d2962ea7b7c1ac4990ca77"
+      "sha256": "197cdc32d6c7745f4e2f5fb35935e5dcfb4ec790c5d7c79a41221d991d7fc9a6"
     },
     {
       "bytes": 7824,
@@ -235,9 +235,9 @@
   "evaluation_schema": "bsc-custom-gpt-eval/v2",
   "generated_artifacts": [
     {
-      "bytes": 592,
+      "bytes": 715,
       "path": "GPT_CONVERSATION_STARTERS.md",
-      "sha256": "f7fa99696fbde41edba2670e21db0cab923646718de3b251262a2100254cc2cf"
+      "sha256": "6ec673cb59a1de63017eb22cc6b8d204bf8d49f2a2e71bcf2d0e5010bdb2ee27"
     },
     {
       "bytes": 7494,
@@ -250,9 +250,9 @@
       "sha256": "12587d488f08f457f9a6e118143960c69e10ecbafdc46f591d851ccd3d381ef4"
     },
     {
-      "bytes": 9219,
+      "bytes": 9216,
       "path": "GPT_SETUP_AND_PUBLISHING.md",
-      "sha256": "1f8532f3128a6c57e798326625722375b9931931d5b37ffcdacd8a934614059c"
+      "sha256": "328475f49a558c3e8cb244c2ea99b4542e26c2d799a2dcafc8c17e1ffc2b1118"
     },
     {
       "bytes": 2592,
@@ -517,7 +517,7 @@
   ],
   "generator": {
     "path": "scripts/build_gpt_package.py",
-    "sha256": "498994e23355de4defdb9c7f6024e3d26a37d097e3d2962ea7b7c1ac4990ca77",
+    "sha256": "197cdc32d6c7745f4e2f5fb35935e5dcfb4ec790c5d7c79a41221d991d7fc9a6",
     "version": "bsc-custom-gpt-generator-v1"
   },
   "historical_artifact_evaluation_case_count": 39,

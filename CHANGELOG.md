@@ -18,6 +18,7 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 ### Corrected
 
 - pivoted the official Custom GPT to a compact human-audit profile after repeated artifact-output stalls and malformed giant responses: scientific audit responses now return only bounded duties 1-9, with 300/650/1,000-word caps, while official-product status-only responses bypass duties 1-9 and return only concise supplied canonical states; generated/downloadable machine records, compiler execution/stdout, Base64, shards, parity, transport, and section 10 are disabled in the public GPT;
+- replaced attachment-dependent conversation starters with six short, self-contained mobile prompts alternating English and Japanese;
 - reduced the official Knowledge roster from six files to five by removing `BSC_EXECUTION_AND_RECEIPTS.md`; the compiler, return schema, controller, and Audit Return Desk remain preserved as supervised standalone repository tooling rather than live GPT behavior;
 - replaced the live-profile promotion gate with 12 fresh compact cases, including an explicit artifact-export-disabled control; the earlier 39-case artifact-profile suite, D01/D02 preflights, and transport results remain preserved historical evidence but do not govern or validate the compact candidate;
 - strengthened the alpha.8 Custom GPT controller and all 39 evaluation oracles around per-source coverage, `file_read_only`, absence-only refutation, exact verdict calibration, incomplete or non-admissive evidence, and exact audit-return emission;
