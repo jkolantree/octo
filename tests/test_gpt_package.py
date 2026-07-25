@@ -1059,8 +1059,35 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertEqual(product["japanese_interface_status"], "BETA")
         self.assertEqual(product["japanese_native_speaker_terminology_review"], "PENDING")
         starters = product["conversation_starters"]
-        self.assertEqual(len(starters), 4)
-        self.assertEqual(sum(bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", item)) for item in starters), 2)
+        self.assertEqual(
+            starters,
+            [
+                "Ask me for a claim, then give it a quick evidence audit.",
+                "まず主張を一つ質問し、その後、証拠を簡潔に監査してください。",
+                "Ask me for a claim, then stress-test it for the smallest counterexample.",
+                "まず主張を一つ質問し、その後、最小の反例がないか厳しく検証してください。",
+                "Ask me for a claim, then identify the single best next test or evidence.",
+                "まず主張を一つ質問し、その後、最も有効な次の検証や証拠を一つ示してください。",
+            ],
+        )
+        self.assertEqual(
+            [
+                bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", item))
+                for item in starters
+            ],
+            [False, True] * 3,
+        )
+        self.assertTrue(all(0 < len(item) <= 96 for item in starters))
+        self.assertFalse(
+            any(
+                re.search(
+                    r"(?:attachment|attached|upload|file|添付|ファイル)",
+                    item,
+                    re.IGNORECASE,
+                )
+                for item in starters
+            )
+        )
         self.assertRegex(product["description"], r"[A-Za-z]")
         self.assertRegex(product["description"], r"[\u3040-\u30ff\u3400-\u9fff]")
         self.assertIn("日本語対応はベータ版", product["description"])
@@ -1082,6 +1109,14 @@ class CustomGptPackageTests(unittest.TestCase):
         setup = payload[Path("GPT_SETUP_AND_PUBLISHING.md")].decode("utf-8")
         self.assertIn("**Japanese interface:** `BETA`", setup)
         self.assertIn("Preserve this disclosure in the public Description", setup)
+        self.assertIn(
+            "Copy the 6 prompts from `GPT_CONVERSATION_STARTERS.md`",
+            setup,
+        )
+        rendered_starters = payload[Path("GPT_CONVERSATION_STARTERS.md")].decode(
+            "utf-8"
+        )
+        self.assertEqual(rendered_starters.count("## Starter "), 6)
         manifest = json.loads(payload[Path("GPT_RELEASE_MANIFEST.json")])
         self.assertEqual(manifest["official_service_and_candidate_state"]["public_url"], OFFICIAL_GPT_URL)
         self.assertEqual(manifest["official_service_and_candidate_state"]["preview_gate_case_count"], 12)

@@ -26,7 +26,7 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
    4. `BSC_WORKED_EXAMPLES.md` — 5015 bytes — SHA-256 `caefdfa74919369d7f74778ad342b8e64732a42afb7c24367bfe4d52d4bdb4d6` — Known-answer and adversarial examples without redefining the protocol
    5. `BSC_JAPANESE_INTERFACE.md` — 4661 bytes — SHA-256 `c36ef6641197c9484d7a03fc00a7db84c237a8a07d331195740c5bc71e562f4e` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
 5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.
-6. Copy the four prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.
+6. Copy the 6 prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.
 7. Freeze the exact compact candidate and applicable evaluation bytes, then run all 12 declared fresh-conversation Preview cases. Do not reuse a pass from the retired artifact-export profile. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.
 8. Keep an independent reproduction private until its gate passes. For an authorized official update, do not mark the candidate validated until the saved editor, public view, exact binding evidence, and complete gate all agree.
 9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.

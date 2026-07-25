@@ -31,10 +31,12 @@
     "description": "Audits scientific and technical claims, separates evidence, assumptions, and execution, and shows what remains unresolved. 科学・技術上の主張を監査し、証拠・仮定・実行・未解決点を分けて示します。日本語対応はベータ版で、母語話者による用語レビューは未完了です。Research preview; not a proof or certification system.",
     "category_recommendation": "Education",
     "conversation_starters": [
-      "Audit the attached paper at standard depth and tell me what survives.",
-      "Test this claim adversarially and show the smallest decisive counterexample or next test.",
-      "添付した数学的議論を再構成し、仮定と帰結を分け、未解決の証明義務を日本語で示してください。",
-      "この主張を敵対的深度（adversarial）で検証し、最小の反例または次の決定的なテストを日本語で示してください。"
+      "Ask me for a claim, then give it a quick evidence audit.",
+      "まず主張を一つ質問し、その後、証拠を簡潔に監査してください。",
+      "Ask me for a claim, then stress-test it for the smallest counterexample.",
+      "まず主張を一つ質問し、その後、最小の反例がないか厳しく検証してください。",
+      "Ask me for a claim, then identify the single best next test or evidence.",
+      "まず主張を一つ質問し、その後、最も有効な次の検証や証拠を一つ示してください。"
     ],
     "candidate_update_step": "The official GPT already exists. For an authorized update, load this exact candidate in the authenticated editor, upload all generated Knowledge files in order, run and preserve the complete Preview gate, and verify the saved live binding. For an independent reproduction or fork, create a separate GPT and do not imply official status."
   },

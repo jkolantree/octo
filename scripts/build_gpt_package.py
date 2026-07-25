@@ -1685,7 +1685,7 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "4. Upload these Knowledge files in this exact order:",
         *[f"   {item}" for item in knowledge_lines],
         "5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.",
-        "6. Copy the four prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.",
+        f"6. Copy the {len(product_record['conversation_starters'])} prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.",
         f"7. Freeze the exact compact candidate and applicable evaluation bytes, then run all {product_record['preview_gate_case_count']} declared fresh-conversation Preview cases. Do not reuse a pass from the retired artifact-export profile. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
         "8. Keep an independent reproduction private until its gate passes. For an authorized official update, do not mark the candidate validated until the saved editor, public view, exact binding evidence, and complete gate all agree.",
         "9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.",
@@ -1996,8 +1996,29 @@ def validate_payload(
     if any(product_record.get(key) != value for key, value in expected_japanese_state.items()):
         failures.append("Japanese interface state must remain beta with native-speaker terminology review pending")
     starters = product_record.get("conversation_starters", [])
-    if len(starters) != 4 or sum(bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", str(item))) for item in starters) != 2:
-        failures.append("GPT profile must contain exactly four starters, exactly two of them Japanese")
+    starter_languages = [
+        bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", str(item)))
+        for item in starters
+    ]
+    if len(starters) != 6 or starter_languages != [False, True] * 3:
+        failures.append(
+            "GPT profile must contain exactly six starters alternating English and Japanese"
+        )
+    if any(not str(item).strip() or len(str(item)) > 96 for item in starters):
+        failures.append(
+            "GPT conversation starters must be nonempty and at most 96 characters for mobile use"
+        )
+    if any(
+        re.search(
+            r"(?:attachment|attached|upload|file|添付|ファイル)",
+            str(item),
+            re.IGNORECASE,
+        )
+        for item in starters
+    ):
+        failures.append(
+            "GPT conversation starters must not assume an attachment or file upload"
+        )
     description = str(product_record.get("description", ""))
     if not re.search(r"[A-Za-z]", description) or not re.search(r"[\u3040-\u30ff\u3400-\u9fff]", description):
         failures.append("GPT public description must be bilingual English and Japanese")
