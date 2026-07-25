@@ -451,7 +451,8 @@ class CustomGptPackageTests(unittest.TestCase):
             "K:PROTOCOL|STATUS|CHECKS|EXAMPLES|JA;missing=>unavailable,"
             "no affected pass/proven/run.",
             "PUBLIC:human audit only at every depth;visible text;"
-            "exact non-hash tokens+URLs;never output/copy hash/digest values.",
+            "exact non-hash tokens+URLs;"
+            "never compute/output/copy/quote hash/digest values.",
             "STATUS_ONLY>duties1-9:official service/package/candidate/binding/Preview/"
             "release/Pages states only;no research IDs/verdicts/gates/admission;"
             "requested language.",
@@ -509,12 +510,27 @@ class CustomGptPackageTests(unittest.TestCase):
             ],
         )
         self.assertIn(
-            "NEVER compute/output/quote hash/digest values from any source or request",
+            "never compute/output/copy/quote hash/digest values",
             instruction_text,
         )
-        self.assertIn("quick<=300 words", instruction_text)
-        self.assertIn("standard<=650", instruction_text)
-        self.assertIn("adversarial/formal<=1000", instruction_text)
+        self.assertIn("Intake<=40 words", instruction_text)
+        self.assertIn("Follow-up<=120", instruction_text)
+        self.assertIn("Quick<=250 words", instruction_text)
+        self.assertIn(
+            "ask only for a one-sentence claim in user's language;"
+            " no evidence/files yet; stop",
+            instruction_text,
+        )
+        self.assertIn("else Quick", instruction_text)
+        self.assertIn("Deep=Standard/Adversarial", instruction_text)
+        self.assertIn("Formal=formal-mathematical", instruction_text)
+        self.assertIn("Standard<=650", instruction_text)
+        self.assertIn("Adversarial/Formal<=1000", instruction_text)
+        self.assertIn(
+            "DEEP/FORMAL:use nine duties;Quick/Intake/Follow-up do not.",
+            instruction_text,
+        )
+        self.assertNotIn("\n1:Source coverage\n", instruction_text)
         durable_knowledge = "\n".join(
             data.decode("utf-8")
             for path, data in payload.items()
@@ -534,10 +550,9 @@ class CustomGptPackageTests(unittest.TestCase):
         rules = {rule["id"]: rule["text"] for rule in all_rules(profile)}
         expected_rules = {
             "source_coverage_first": (
-                "FIRST: source table ID|source|access|coverage|scope/omissions|code_read/run; one row per "
-                "target/evidence source used or attempted. Retry unavailable twice; include each relied-on web "
-                "page. Note once: BSC Knowledge informed method, not case evidence. Do not enumerate Knowledge "
-                "or claim full inspection."
+                "Quick: verdict first, then one-line basis; no table unless source coverage affects the verdict. "
+                "Deep/Formal: source table ID|source|access|coverage|omissions|code_read/run; include relied-on "
+                "pages. Missing stays missing. Knowledge=method, never case evidence/full inspection."
             ),
             "separate_status_axes": (
                 "STATUS-ONLY FIRST: official service/package/candidate/binding/Preview overrides duties => output "
@@ -577,10 +592,9 @@ class CustomGptPackageTests(unittest.TestCase):
                 "Hash-value ban overrides."
             ),
             "compact_no_machine_records": (
-                "COMPACT: duties1-9; <=5 headings. No files/downloads/machine records/compiler/stdout/Base64/"
-                "shards/transport/Section10. NEVER compute/output/quote hash/digest values from any source or "
-                "request; say only \"digest supplied\". Export requests: say disabled in public GPT; refer to "
-                "supervised local engine/Return Desk."
+                "PUBLIC: no files/downloads/machine records/compiler/stdout/Base64/shards/transport/Section10; "
+                "say \"digest supplied\". Export disabled; refer to supervised local engine/Return Desk. Quick/"
+                "Intake/Follow-up override Knowledge full-report/ledger templates; nine duties=Deep/Formal only."
             ),
             "execution_ledger": (
                 "Compact execution disclosure: mention only activities used, claimed, or decisive; distinguish "
@@ -594,16 +608,15 @@ class CustomGptPackageTests(unittest.TestCase):
                 "evidence rows, conclusions, extra verdicts. Authorization only decision/gate; no A claim."
             ),
             "closing_disclosure": (
-                "BEFORE SEND: cover duties1-9 within budget in at most 5 headings. Use one compact source table "
-                "and execution disclosure; omit boilerplate. No files/Section10. Close with depth, "
-                "coverage/omissions, runs/unruns, unresolved claims/gates, preview status, and smallest verdict "
-                "changer."
+                "Quick: Bottom line|Why|Weakest point|Best next check; add one short method/omissions note only if "
+                "material. Intake stops after question; Follow-up answers delta. Deep/Formal covers nine duties "
+                "within budget with compact source/execution disclosures."
             ),
             "public_research_preview": (
-                "Inspectable beginner-first research preview; sources/proofs/evidence may err. Total including "
-                "tables: quick<=300 words; standard<=650; adversarial/formal<=1000; expand only on explicit "
-                "request. Use at most 5 terse headings, at most 3 decisive findings, no long source repetition, "
-                "and no irrelevant boilerplate."
+                "Verdict first; beginner-first; no boilerplate. Intake<=40 words; Follow-up<=120; Quick<=250 "
+                "words and <=4 short blocks; Standard<=650; Adversarial/Formal<=1000. Quick uses <=3 decisive "
+                "findings and no tables/internal IDs/gates unless material. Expand only if asked; sources/proofs/"
+                "evidence may err."
             ),
         }
         self.assertEqual(all_rules(profile)[0]["id"], "separate_status_axes")
@@ -1018,8 +1031,12 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertIn("F:compact_no_machine_records:", instructions)
         self.assertIn("human audit only at every depth", instructions)
         self.assertIn(
-            "No files/downloads/machine records/compiler/stdout/Base64/shards/"
-            "transport/Section10.",
+            "no files/downloads/machine records/compiler/stdout/Base64/shards/"
+            "transport/Section10",
+            instructions,
+        )
+        self.assertIn(
+            "never compute/output/copy/quote hash/digest values",
             instructions,
         )
         self.assertNotIn("last2 need machine record", instructions)
@@ -1062,12 +1079,12 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertEqual(
             starters,
             [
-                "Ask me for a claim, then give it a quick evidence audit.",
-                "まず主張を一つ質問し、その後、証拠を簡潔に監査してください。",
-                "Ask me for a claim, then stress-test it for the smallest counterexample.",
-                "まず主張を一つ質問し、その後、最小の反例がないか厳しく検証してください。",
-                "Ask me for a claim, then identify the single best next test or evidence.",
-                "まず主張を一つ質問し、その後、最も有効な次の検証や証拠を一つ示してください。",
+                "Start a 60-second claim audit",
+                "60秒で主張を点検する",
+                "Show a simple example first",
+                "まず簡単な例を見る",
+                "Find the weakest assumption",
+                "最も弱い仮定を探す",
             ],
         )
         self.assertEqual(
@@ -1077,7 +1094,7 @@ class CustomGptPackageTests(unittest.TestCase):
             ],
             [False, True] * 3,
         )
-        self.assertTrue(all(0 < len(item) <= 96 for item in starters))
+        self.assertTrue(all(0 < len(item) <= 32 for item in starters))
         self.assertFalse(
             any(
                 re.search(
@@ -1090,8 +1107,12 @@ class CustomGptPackageTests(unittest.TestCase):
         )
         self.assertRegex(product["description"], r"[A-Za-z]")
         self.assertRegex(product["description"], r"[\u3040-\u30ff\u3400-\u9fff]")
+        self.assertLessEqual(len(product["description"]), 200)
         self.assertIn("日本語対応はベータ版", product["description"])
-        self.assertIn("母語話者による用語レビューは未完了", product["description"])
+        self.assertEqual(
+            product["japanese_native_speaker_terminology_review"],
+            "PENDING",
+        )
 
         payload = generated_payload()
         public_text = "\n".join(
