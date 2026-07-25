@@ -216,6 +216,15 @@ def main() -> int:
     run([sys.executable, "scripts/run_tests.py"])
     run([sys.executable, "scripts/run_null_discrimination.py"])
     run([node, "--test", "tests/return_desk_runtime.test.cjs"])
+    run(
+        [
+            sys.executable,
+            "scripts/check_gpt_frozen_candidate.py",
+            "--check",
+            "docs/GPT_FROZEN_CANDIDATE.json",
+        ]
+    )
+    run([sys.executable, "scripts/check_localization.py"])
     run([sys.executable, "scripts/check_release.py"])
     env = dict(os.environ, SOURCE_DATE_EPOCH=str(SOURCE_DATE_EPOCH))
     build = subprocess.run([sys.executable, "scripts/build_dist.py", "--outdir", str(output)], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
@@ -273,10 +282,12 @@ def main() -> int:
             "source_tests": "pass",
             "null_discrimination": "pass",
             "return_desk_runtime": "pass",
+            "frozen_custom_gpt_candidate": "pass",
             "release_integrity_checks": "pass",
             "pages_integrity": "pass",
             "publication_assets": "pass",
             "custom_gpt_package": "pass",
+            "localization_freshness": "pass",
             "privacy_scan": "pass",
             "reproducible_distributions": "pass",
             "clean_git_tree": "pass",

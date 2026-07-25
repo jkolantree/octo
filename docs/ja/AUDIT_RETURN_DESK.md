@@ -1,0 +1,115 @@
+# Audit Return Desk
+
+> **日本語ベータ版**: この文書は [`docs/AUDIT_RETURN_DESK.md`](../AUDIT_RETURN_DESK.md) の参考訳です。母語話者による用語レビューは未完了です。英語版が規範です。JSON keys/values、schema/rule IDs、status/verdict/gate/finding tokens、paths、hashes、commands、filenames、quoted source bytes はそのまま保持します。
+
+Audit Return Desk は、明示的に non-admissive な contract の下で structured audit return を検査します。同じ contract の 2 implementation があります。
+
+- `pages/` 内の browser-local Desk: strict JSON parsing と user-selected file の hash;
+- `python run_audit.py return-desk PATH`: 同じ semantic inspection を行い、return file の directory から artifact を読む。
+
+official service の現在の availability は [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md) に分けて記録します。official-service availability、exact candidate binding、Preview validation、GitHub release state、Pages deployment は別々の fact であり、この source feature の存在だけからどれも推論できません。
+
+official compact Custom GPT は machine record を生成・export せず、`BSC_EXECUTION_AND_RECEIPTS.md` も upload しません。この Desk と compiler workflow は supervised standalone repository tooling としてのみ利用できます。source に存在することは public GPT が実行したことを意味しません。
+
+## Authority boundary
+
+Desk が検査するのは internal consistency です。truth を決めず、citation を authenticate せず、theorem を prove せず、external tool が実際に走ったことを establish せず、experiment を independently replicate せず、evidence を admit せず、deployment permission を grant しません。
+
+accepted envelope は次の値を厳密に維持しなければなりません。
+
+```json
+{
+  "return_version": "0.1.0",
+  "authority": "non_admissive_return_inspection",
+  "draft": true
+}
+```
+
+closed schema は [`schemas/audit-return-v0.1.schema.json`](../../schemas/audit-return-v0.1.schema.json) です。canonical production rules は [LLM Audit Packet](../../BSC_AUDIT_LLM_PACKET.md) にあります。generated model output は Desk に対しても untrusted input です。
+
+## Standalone deterministic producer transaction
+
+明示的に選択された supervised standalone machine-record workflow は、retired derivative [`BSC_EXECUTION_AND_RECEIPTS.md`](../standalone/BSC_EXECUTION_AND_RECEIPTS.md) に保存された完全な canonical `scripts/gpt_artifact_compiler.py` source によって finalize しなければなりません。model はその source を実行し、その動作を prose で再現したり、代替 finalizer を書いたりしてはいけません。
+
+実行された compiler は自身の完全な `sys.version` を一度だけ capture し、model-authored spec からの runtime 指定や override を拒否します。compiler は exact frozen request/source/evidence bytes、control-free な明示的 `report_body_lines` array、structured return template を受け取り、report を finalize し、final bytes から artifact identities と runtime ledger を導出し、execution/evidence topology を validate し、`chatgpt_data_analysis_output.txt` を書き、最後に `audit_return.json` を serialize します。compiler failure があれば return と、artifact production の成功に依存するすべての conclusion を禁止します。matching final snapshot だけでは historical write order を証明しないため、compiler execution と保存された output も candidate evidence の一部です。
+
+retained standalone artifact transaction の legacy execution topology は固定です。
+
+- `model_reasoning` の input は request、exact case target、6 個すべての canonical Knowledge files です。output は model-produced の role-`evidence` artifact すべてと `audit_report.md` です。`receipt_ids` は empty です。
+- `chatgpt_data_analysis` の input も同じです。output はそれらの evidence artifacts、`audit_report.md`、`chatgpt_data_analysis_output.txt` です。`receipt_ids` は empty です。
+
+external receipt は、それを実際に生成した external activity だけに属します。model reasoning や Data Analysis への alias にしてはいけません。
+
+## Browser workflow
+
+1. Pages module を開き、表示された protocol version と verification state が intended workflow と一致することを確認する。
+2. complete `audit_return.json` object を 1 個 paste するか JSON file を選ぶ。
+3. envelope が宣言する request、human report、sources、evidence、execution outputs、receipt files を選ぶ。
+4. **Inspect return locally** を選ぶ。
+5. blocking、needs-review、informational finding をすべて確認し、technical witness/repair があれば展開する。
+6. metadata を安全に retain/share できる場合だけ deterministic inspection JSON を download する。
+
+page は canonical protocol と embedded return-schema bytes を検証してから inspection を有効にします。duplicate JSON key、trailing data、stale protocol binding、unsafe/colliding filename、contradictory ledger、unsupported verdict promotion、concealed gate failure、unrelated execution reuse、ID/role 間の exact-byte artifact alias、local hash mismatch を reject します。
+
+Return JSON は UTF-8 で 8 MiB までです。browser hashing は selected return artifact 32 files、1 file 64 MiB、total 256 MiB までです。追加の declared file は unavailable のままで `needs_review` を強制します。Python route も同じ 32-file、64-MiB-per-file、256-MiB-total bound を enforce し、declared-file/aggregate local-byte budget を超える envelope を block します。大きな review は material evidence を omit せず、明示的 scope の複数 return に分割してください。
+
+page code は selected bytes を hashing のために読み、target-data network request を行わず、意図的に保存せず、browser file path を収集しません。ただし browser/OS history、crash recovery、swap、extension、clipboard、downloaded inspection file は page の管理外です。
+
+downloaded result は attached file bytes を含みませんが、filename、identifier、expected/observed hash、witness、repair を開示する可能性があります。SHA-256 は private/low-entropy material を anonymize しません。
+
+## Python workflow
+
+envelope と declared artifact を、unique portable basename で 1 directory に置き、実行します。
+
+```bash
+python run_audit.py return-desk path/to/audit_return.json
+```
+
+Known controls:
+
+```bash
+python run_audit.py return-desk examples/audit_return_valid.json
+python run_audit.py return-desk examples/audit_return_missing_artifact.json
+python run_audit.py return-desk examples/audit_return_poisoned_summary.json
+```
+
+1 つ目は `no_blocking_findings`、2 つ目は `no_blocking_findings_with_warnings`、poisoned summary は `blocked` を返します。exit code `0` は、この inspection が blocking inconsistency を見つけなかったという意味だけで、scientific pass ではありません。
+
+## 再計算されるもの
+
+semantic layer は次を検査します。
+
+- exact protocol version と SHA-256;
+- globally unique ID と complete reference;
+- request/report role と portable filename uniqueness;
+- bidirectional claim/evidence/gate/obligation binding;
+- claim-scoped gate evidence と complete summary projection;
+- local artifact hash と eligible evidence role;
+- `proven`, `strongly_supported`, `refuted` に必要な source coverage/source bytes;
+- exact eight-activity execution roster と `file_read_only` boundary;
+- execution input/output/receipt/claim/gate scope;
+- receipt authority/kind/artifact uniqueness/single-activity use;
+- fatal-gate state と conjunctive admission の recomputation;
+- receipt-only proof と deployment overreach の prohibition。
+
+missing bytes は通常 review-needed status になります。declared hash mismatch、placeholder hash、stale protocol、invalid schema、concealed failure、unsupported promotion、contradictory binding は block します。missing material だけで claim を `refuted` にしてはいけません。
+
+## Browser と Python の outcome
+
+| 意味 | Browser | Python CLI |
+|---|---|---|
+| blocking finding も unavailable byte もない | `consistent` | `no_blocking_findings` |
+| internally coherent だが unavailable/unverified のものがある | `needs_review` | `no_blocking_findings_with_warnings` |
+| malformed、contradictory、unsupported、stale、integrity-failing | `blocked` | `blocked`、または schema/malformed input では `prohibited` |
+
+これら outcome は research verdict、evidence maturity、execution status、gate state、deployment status、他 BSC route の decision とは別 coordinate です。
+
+## Preview transport boundary
+
+evaluation controller は最初に direct generated-file control を試みます。original compiler-v9 transaction は `audit_return.json` を serialize した後、同じ finalized in-memory generated-output bytes から 1 個の deterministic かつ bounded な container を作ります。same-response transport v2 は container を zlib 圧縮し、連続する最大 2,048 bytes の data shard に分割し、すべての data shard を最大 shard 幅まで zero padding して bytewise XOR した 1 個の `xor_parity_v1` shard を追加します。compiler は完全な envelope を canonical no-terminal-LF stdout に含めます。candidate はその stdout 全体を byte-for-byte で、最後の 1 個の fenced code block に追加し、その後に prose を付けてはいけません。この bundle は transport 専用であり、semantic artifact、execution output、file control ではなく、後続 turn の `/mnt/data` path に依存しません。
+
+controller は完全な original response `outerHTML` と exact compiler-block text を保存します。1 個の canonical compiler block、sorted unique portable member roster、連続 shard、canonical Base64、bounded decompression、exact container framing、container/member の size と SHA-256 の一致を検証してから local bytes を再構成します。metadata と expected ASCII Base64 text length が intact で、content の decode または declared byte binding だけが失敗した data shard がちょうど 1 個であり、他のすべての data shard と parity が valid な場合に限り、その 1 shard を recovery できます。recovery 後は aggregate、container、member、topology の全 check を再実行し、deterministic receipt state `data_shard_recovered` を記録します。pristine bundle は `not_needed` を記録します。aligned-quartet omission、metadata mutation、2 個以上の bad data shard、または bad data と bad parity の併発は recovery できません。すべての data shard が valid で exact-length parity content だけが bad な場合、parity は使用せず、receipt state を `parity_degraded_not_used` とします。
+
+bundle の integrity は常に検証します。direct acquisition を primary candidate-byte path とし、interface が direct bytes を公開しない場合に限って reconstructed member を選びます。両方の copy が存在する場合は exact bytes が一致しなければ candidate failure です。visible file control ごとに controller は明示的な per-file attempt outcome を bind し、bytes がないことだけから `no_download_event` を推論してはいけません。controller はその bound observation と bytes から `artifact_transport.json` を deterministic に生成し、deterministic recovery receipt を `controller_record.json` に bind します。
+
+完了した response が bundle を省略または切断した場合、あるいは permitted recovery の範囲外の mutation が残る場合は `candidate_failed` です。bound raw response に存在する block を controller が失うか変更した場合は `trial_invalid_controller` です。valid または validly recovered bundle が確立するのは、controller が実際に受け取った exported payload の identity だけです。original download-button bytes が unavailable のままなら、その identity は `transport_identity_unresolved` であり、identity も corruption も確立されていません。

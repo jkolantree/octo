@@ -1,6 +1,6 @@
 # BSC Audit Packet for Language Models
 
-**Protocol version:** `0.3.0-alpha.8.dev0`<br>
+**Protocol version:** `0.3.0-alpha.8`<br>
 **Output status:** draft until human review and, where applicable, actual mechanical execution
 
 ## Purpose
@@ -18,9 +18,15 @@ State one requested depth at the beginning of the audit. The canonical depths ar
 - `quick` - lead with the verdict and the most consequential findings; apply every fatal gate, but compress lower-priority detail;
 - `standard` - apply the complete protocol with a prioritized human report;
 - `adversarial` - apply the complete protocol, intensify counterexample searches, and identify the smallest target mutation that breaks each surviving claim;
-- `formal-mathematical` - prioritize definitions, types, quantifiers, hypotheses, exact proof obligations, certificate-replay boundaries, and explicit unresolved lemmas.
+- `formal-mathematical` - put exact definitions, types, quantifiers, hypotheses, each proof step or obligation, certificate-replay boundaries, and unresolved lemmas in the visible report.
 
 If no depth is requested, use `standard`. The `adversarial` and `formal-mathematical` depths require the draft machine-readable audit record described below. The `quick` and `standard` depths include it only when the user requests it.
+
+## Language and canonical tokens
+
+Write human-readable explanations in the language requested by the user; otherwise follow the user's language. Preserve machine-facing material exactly: JSON keys and enum values, schema and rule identifiers, verdict and gate tokens, finding codes, paths, hashes, commands, filenames, artifact IDs, and quoted source text. A translated explanation may accompany a canonical token, but it must not replace or redefine it.
+
+Do not normalize, transliterate, or translate bytes before hashing. Label any translation of quoted material as a translation and retain the original quotation when it is material to the audit. The canonical English protocol and machine vocabulary control if a translated guide diverges.
 
 ## Security and privacy boundary
 
@@ -47,7 +53,7 @@ The browser Packet Builder's page code makes no target-data network request and 
 7. Recommend the smallest repair that restores a meaningful claim.
 8. Distinguish model reasoning, document review, web research and independently opened citations, ChatGPT Code Interpreter or Data Analysis, the versioned BSC Python checker, external proof tools, empirical tests, and computations that were only proposed.
 9. Never invent hashes, citations, files, measurements, command output, interval enclosures, formal proofs, or independent replication.
-10. If required evidence or execution is missing, keep the affected audited claim unresolved, leave its gate `unrun`, and block dependent admission or decision. Absence is not refutation. A model-completed missing or truncated proof is only a proposed repair; it never grounds a `proven` verdict or closed proof obligations.
+10. If required evidence or execution is missing, keep the affected audited claim unresolved, leave its gate `unrun`, and block dependent admission or decision. Absence is not refutation. A model-completed missing or truncated proof is only a proposed repair; it never grounds a `proven` verdict or closed proof obligations. A supplied countertrace explicitly declared to come from the exact implementation under audit can refute that literal universal implementation claim as supplied evidence; record its provenance and keep independent replay `unrun`.
 11. State what was not checked.
 12. Keep deployment authority separate from scientific assessment.
 13. Apply the same evidentiary standard to conventional, unconventional, institutional, informal, and BSC claims.
@@ -65,6 +71,8 @@ Before judging claims, create a source-coverage ledger containing:
 - material skipped, truncated, inaccessible, OCR-damaged, or unreadable;
 - whether outside sources or web search were used;
 - whether code was read, executed, or neither.
+
+The visible response itself must contain this ledger; a generated report or return-envelope artifact does not substitute for it. Search cards and snippets are discovery aids, not evidence or source access. Log a search query as `web_research`, but do not treat its cards as sources. Before relying on any result, open its individual page and give that page its own source-ledger row with stable title and URL or DOI, exact query, access mode, opened state, coverage, inspected scope, and omissions. Unopened results remain `unverifiable` and cannot support a factual attribution, claim, or gate.
 
 Cite the source location beside every decisive factual attribution. If page or line locations are unavailable, cite the nearest section, heading, function, or object name. Do not claim full-document review after sampling.
 
@@ -116,6 +124,8 @@ Also assign:
 
 Research verdict, evidence maturity, execution status, deployment status, gate state, and any BSC CLI decision are independent coordinates. Do not translate LLM confidence into any of them, and never infer one coordinate from another.
 
+State the applicable coordinates explicitly in the visible response. Merely saying that they were kept separate, or placing them only in a generated artifact, is insufficient.
+
 ## Execution ledger
 
 Every audit must include one ledger entry for each of these activities, even when its status is `not_run` or `not_applicable`:
@@ -139,6 +149,8 @@ For each entry record the activity, status, scope and inputs, tool and version w
 Natural-language analysis is model reasoning, not mechanical execution. Code run through ChatGPT is ChatGPT tool execution, not a BSC checker result, unless the correct versioned checker actually ran and its output is bound to the stated inputs. A named proof, a screenshot, a success string, or a submitted adapter receipt is not by itself independent proof-tool verification.
 
 Demote unsupported execution claims fail-closed. In particular, if a target says `Python passed`, `Lean verified it`, `all tests passed`, or equivalent without an adequate bound record, mark that activity `reported_but_unverified`, do not award evidence maturity, and leave dependent gates `unrun` unless verified conflicting evidence requires `conflict`. Missing execution does not itself refute the research claim, but it can block or demote any conclusion that depends on execution.
+
+When ChatGPT Data Analysis creates or hashes files, the executed canonical compiler must read its own full `sys.version` once as `session_reported_runtime`; the model-authored spec cannot supply or override it. Treat that value as session-reported unless a separate authenticated record establishes more; never present it as independently authenticated. Project the captured value mechanically into the structured `execution.version` field and one dedicated `chatgpt_data_analysis_output.txt` execution-output artifact. The visible report must reference that bound artifact by filename or artifact ID; it need not reproduce the runtime literal. Never ask model-authored prose to recopy a runtime, digest, byte count, or encoded payload.
 
 ## Audit sequence
 
@@ -251,13 +263,18 @@ The default report must be beginner-first but technically inspectable. The short
 
 ## Draft machine-readable output
 
-When requested or required by the selected depth, create two separate artifacts: the exact human report as `audit_report.md`, and `audit_return.json` conforming to [`audit-return-v0.1.schema.json`](schemas/audit-return-v0.1.schema.json). The return envelope is a draft for the browser Audit Return Desk and the `return-desk` Python route. It is not a truth, proof, citation, execution, admissibility, or deployment certificate.
+When requested or required by the selected depth, create distinct transaction artifacts: the exact request as `audit_request.txt`, the human report as `audit_report.md`, and `audit_return.json` conforming to [`audit-return-v0.1.schema.json`](schemas/audit-return-v0.1.schema.json). The executed compiler also creates the bound `chatgpt_data_analysis_output.txt` ledger and finalizes any declared evidence outputs. The return envelope is a draft for the browser Audit Return Desk and the `return-desk` Python route. It is not a truth, proof, citation, execution, admissibility, or deployment certificate.
 
 Production requirements:
 
 - Keep `return_version: "0.1.0"`, `authority: "non_admissive_return_inspection"`, and `draft: true` exactly.
+- Execute the complete canonical `scripts/gpt_artifact_compiler.py` source embedded in `BSC_EXECUTION_AND_RECEIPTS.md` for every machine-record transaction. Do not rewrite, summarize, or reimplement the compiler. Supply its strict compile spec, the exact already-frozen request/source/evidence bytes, an explicit `report_body_lines` array, and the structured return template; if the compiler blocks, emit no return and grant no dependent pass. Each report-body array element is one control-free line and the compiler alone inserts LF. Prefer plain text or literal Unicode math. Never put LaTeX command backslashes in an ordinary Python or JSON string literal, never launder an interpreted multiline literal through `splitlines()`, and never delete, substitute, or guess after a control-character failure; regenerate from the frozen claim.
+- Use the compiler as the single artifact source of truth. Let the executed compiler capture its own `sys.version` once; freeze request, source, and evidence bytes; let the compiler finalize the report, derive every digest and byte count from the same final byte objects, create `chatgpt_data_analysis_output.txt`, validate execution/evidence topology, and serialize `audit_return.json` last. Do not change a referenced artifact after it is frozen, and never ask model prose to reproduce hashes, byte counts, Base64, or the full runtime string.
+- A ChatGPT Data Analysis run that writes or hashes files must bind exactly one role-`execution_output` artifact named `chatgpt_data_analysis_output.txt`. It must contain `session_reported_runtime=<execution.version>` and `runtime_provenance=session_reported`; the report must reference that output by artifact ID or filename. This records what the session reported and does not authenticate the runtime independently.
+- Generate that execution-output artifact as strict UTF-8 with LF separators, one terminal LF, and exactly this grammar: `bsc_chatgpt_data_analysis_output_version: 2`; the runtime line; the provenance line; `finalized_artifacts:`; then one `<lowercase SHA-256><two spaces><base-10 byte count><two spaces><portable filename>` row for each earlier-frozen non-request/source output, sorted by filename. Derive every row from the final bytes. Do not add prose, duplicate rows, a self row, or an `audit_return.json` row.
 - Bind the exact protocol version and SHA-256, the original request packet, the separate human report, every locally available source, and every relied-upon evidence or receipt artifact. Do not list `audit_return.json` itself as an artifact.
-- Use stable, globally unambiguous IDs. Every claim-to-evidence, evidence-to-gate, gate-to-obligation, source, receipt, and artifact reference must resolve. The primary claim must declare at least one fatal gate, and every fatal gate must be owned by at least one claim. Bidirectional evidence bindings must agree exactly, and every evidence record used to derive a gate must bind every claim that declares that gate.
+- Use stable, globally unambiguous IDs. Every claim-to-evidence, evidence-to-gate, gate-to-obligation, source, receipt, and artifact reference must resolve. The primary claim must declare at least one fatal gate, and every fatal gate must be owned by at least one claim. Bidirectional evidence and obligation bindings must agree exactly, and every evidence record used to derive a gate must bind every claim that declares that gate. A passing gate has no open obligation. Every `fail`, `unrun`, or `conflict` gate retains at least one scoped open obligation, and `summary_projection.unresolved_obligation_ids` projects every open obligation exactly.
+- Keep scientific closure separate from workflow disposition. When an exact counterexample refutes the frozen claim, retain `research_verdict: "refuted"`, the failing evidence, and the failed gate. The required open obligation is then to retire, narrow, or amend the failed claim before any admission; it is not unresolved uncertainty about the refutation.
 - Use unique portable artifact basenames: no path components, control or Unicode format characters, non-ASCII cased letters, reserved device names, trailing dot or space, or Unicode/ASCII-case-normalized collisions.
 - Declare each exact byte sequence once; reuse that artifact ID wherever its role is eligible, and never redeclare one SHA-256 under another ID, role, or filename.
 - Evidence may be grounded only in artifacts with role `evidence`, `source`, or `execution_output`, plus separately bound `receipt` artifacts. Request, report, receipt-only, or `other` artifacts cannot be promoted into substantive evidence. Every source artifact must belong to each claim it supports.
@@ -265,12 +282,16 @@ Production requirements:
 - Inventory each target, Knowledge file, and relied-upon web result separately. Record `fully_inspected`, `partially_inspected`, `unreadable`, `missing`, or `possibly_truncated`; inspected scope; omissions; access mode; and an artifact binding when bytes are available.
 - Every verified evidence record must name at least one execution-ledger activity that checked or produced it and bind that activity's exact inputs and output or receipt. An empty activity list cannot support a gate.
 - Include exactly one execution entry for each of: `model_reasoning`, `web_research`, `independent_source_check`, `chatgpt_data_analysis`, `bsc_python_checker`, `external_proof_tool`, `empirical_test`, and `proposed_computation`.
+- For the Custom GPT artifact transaction, `model_reasoning` binds the request, exact case target, and all six canonical Knowledge artifacts as inputs; binds every model-produced role-`evidence` artifact plus `audit_report.md` as outputs; and has no receipt. `chatgpt_data_analysis` binds those same request/source inputs; binds those evidence outputs, `audit_report.md`, and `chatgpt_data_analysis_output.txt` as outputs; and has no receipt. Never alias either activity to a receipt or omit the request from either input roster.
 - Use `file_read_only` only for ChatGPT attachment tooling that opened or inventoried a file. It cannot support a mathematical, BSC Python, formal-tool, or empirical pass.
 - Evidence that cites an execution must bind that activity's inputs and output or receipt; BSC Python, external proof, and empirical activities require both output and receipt. Receipt bytes, activity, claim scope, and gate scope must agree exactly and cannot be relabeled across records, artifact identifiers, or substantive evidence roles.
 - A gate passes only when all evidence bound from either direction is locally verified, passing, non-conflicting, and supported by any required execution record. Missing or unverified evidence leaves it `unrun`. Locally effective inconclusive evidence alone also leaves it `unrun`; mixed with a locally effective pass or fail it makes the gate `conflict`. A direct verified failure without such a mix makes it `fail`; verified pass and fail together also make it `conflict`.
 - Keep every submitted receipt non-admissive unless it is an independently preserved execution record with locally hash-matched bytes. A receipt alone never makes a claim `proven`.
 - Use `proven` only with complete, locally hash-bound source coverage, passing fatal gates, locally bound non-receipt proof evidence, and every dependency proven. Use `strongly_supported` only with complete locally bound sources, direct effective passing evidence, every bound fatal gate passing, and every dependency at least strongly supported. A `refuted` verdict likewise requires complete locally bound sources plus direct effective failing evidence; missing material alone never refutes.
 - Do not represent deployment as `admitted`; this return format has no deployment-granting authority.
+- Do not use model-mediated Base64 as the primary proof path. After serializing `audit_return.json` in the original compiler-v9 transaction, the compiler derives one deterministic bounded length-framed container from the same finalized non-source output bytes plus the return, compresses it, splits the zlib stream into contiguous data shards of at most 2,048 bytes, and adds one `xor_parity_v1` shard equal to the bytewise XOR of every data shard padded with zero bytes to the maximum shard width. It includes the complete `bsc-gpt-same-response-transport-v2` envelope in canonical no-terminal-LF stdout. Append that exact complete stdout byte-for-byte in one final fenced code block in the original response, with nothing after it; never regenerate, trim, reserialize, or independently author its runtime, hashes, sizes, Base64, roster, data shards, or parity.
+- The controller binds the complete original response and exact code-block bytes, requires exactly one compiler block, and validates the sorted portable member roster, framing, bounds, canonical Base64, compression, sizes, hashes, and member bytes before reconstruction. It may recover exactly one data shard only when that shard's metadata and expected ASCII Base64 text length are intact, its content fails decoding or its declared byte binding, and every other data shard plus parity is valid. After recovery it must rerun every aggregate, container, member, and topology check and record deterministic receipt state `data_shard_recovered`; a pristine bundle records `not_needed`. Aligned-quartet omission, metadata mutation, more than one bad data shard, or a bad data shard together with bad parity is unrecoverable. If all data shards are valid and only exact-length parity content is bad, do not use parity and record `parity_degraded_not_used`.
+- The controller records an explicit per-file direct-acquisition outcome for every visible file control; missing bytes alone never imply `no_download_event`. Direct bytes remain primary, the reconstructed member is selected only when direct bytes are unavailable, and both copies must match exactly when present. A valid bundle identifies only the exported payload actually received; it never authenticates unavailable download-button bytes. Preserve those original bytes as `transport_identity_unresolved`, not corrupt. Active trials must not depend on a later `/mnt/data` path or use the offline historical `export-chunk` path.
 - If the exact files cannot be separated and hashed, the schema is unavailable, or a required value is unknown, do not invent a schema-valid-looking envelope. State what prevented emission; prose without the envelope will correctly receive `needs_review`.
 
 The legacy `claim_manifest.json` remains available only when a user explicitly requests a manifest for the `audit` or `lint` Python route. It does not replace `audit_return.json` and must keep unsupported gates `unrun`. When observation descent or context transport is relevant, emit the route-specific draft only if the source supports its exact finite fields.

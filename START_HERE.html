@@ -159,17 +159,37 @@ narrow, reproduce, and retire.</p>
 <p>It is not a truth machine. It cannot turn a plausible idea into a
 theorem, validate an arbitrary proof, or grant permission to deploy a
 system.</p>
+<p><a href="START_HERE.ja.md" hreflang="ja" lang="ja">日本語</a></p>
 <h2 id="choose-your-route">Choose your route</h2>
-<h3 id="one-page-local-builder">One-page local builder</h3>
+<h3 id="official-custom-gpt">Official Custom GPT</h3>
+<p>Open the live <a
+href="https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor">BSC
+Claim Auditor</a> for a direct ChatGPT audit. It is already built and
+link-shared as a research preview. The repository's <a
+href="gpt/README.md">Custom GPT package</a> is the reproducible source
+for inspecting, evaluating, updating, or independently forking that
+configuration.</p>
+<p>The current live controller identifies as alpha.8.dev0, while no
+preserved complete post-update Preview run satisfies its gate. Do not treat
+availability as validation. Uploads are processed by ChatGPT under the
+user's applicable settings and terms and are not local-only. See <a
+href="docs/CUSTOM_GPT_STATUS.md">Custom GPT live status</a>.</p>
+<h3 id="one-page-local-builder-and-return-desk">One-page local builder
+and Return Desk</h3>
 <p>Open the <a href="https://jkolantree.github.io/octo/">accessible
-GitHub Pages module</a>, paste or attach material, choose an audit
-depth, then copy or download the generated packet. Target material stays
-in the browser while the packet is built. The alpha.8 development
-source also adds an Audit Return Desk for checking a returned
-<code>audit_return.json</code> and declared artifact hashes locally after
-the change is merged and deployed. The page does not call an LLM or run
-the Python checker. A Return Desk <code>consistent</code> result is not a
-truth, proof, execution, citation, or deployment certificate.</p>
+English GitHub Pages module</a>, paste or attach material, choose an audit
+depth, then copy or download the generated packet. The <a
+ href="pages/ja.html" hreflang="ja">Japanese Pages candidate</a> is included
+in this source tree but remains pending public deployment; do not share its
+planned public URL until the post-deploy smoke check passes. You can also bring back
+<code>audit_return.json</code> plus declared artifacts and check their
+internal bindings locally. The page code makes no target-data network
+request and does not intentionally persist target material; browser and
+operating-system behavior remains outside its control. The page does not
+call an LLM or run the Python checker; sharing the packet with a model is
+a separate action governed by that service's privacy terms. A Return
+Desk <code>consistent</code> result is not a truth, proof, execution,
+citation, or deployment certificate.</p>
 <h3 id="human-route">Human route</h3>
 <p>Open <a href="AUDIT_WORKSHEET.md">AUDIT_WORKSHEET.md</a>. Answer the
 twelve questions in ordinary language. No code or LLM is required.</p>

@@ -1,6 +1,7 @@
 "use strict";
 
 const MAX_FILES = 8;
+const MAX_TARGET_FILENAME_CODE_POINTS = 240;
 const MAX_EMBEDDED_TEXT_BYTES = 1024 * 1024;
 const MAX_HASH_BYTES = 25 * 1024 * 1024;
 const MAX_RETURN_FILES = 32;
@@ -10,6 +11,10 @@ const MAX_RETURN_TOTAL_HASH_BYTES = 256 * 1024 * 1024;
 const TEXT_EXTENSIONS = new Set([
   "txt", "md", "markdown", "json", "jsonl", "csv", "tsv", "py", "js", "mjs", "cjs", "ts",
   "tsx", "jsx", "css", "html", "htm", "xml", "yaml", "yml", "toml", "ini", "cfg", "tex", "rst",
+]);
+const WINDOWS_RESERVED_BASENAMES = new Set([
+  "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+  "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "COM¹", "COM²", "COM³", "LPT¹", "LPT²", "LPT³",
 ]);
 
 const state = {
@@ -35,12 +40,76 @@ const state = {
 
 const elements = {};
 
+function activeLocale() {
+  const locale = window.BSC_PAGE_LOCALE;
+  if (!locale || typeof locale.code !== "string" || typeof locale.report_language !== "string" || !locale.strings || typeof locale.strings !== "object") {
+    throw new Error("The local interface catalog is missing or malformed.");
+  }
+  return locale;
+}
+
+function t(key, values = {}) {
+  const template = activeLocale().strings[key];
+  if (typeof template !== "string") throw new Error(`The local interface string is missing: ${key}`);
+  return template.replace(/\{([A-Za-z0-9_]+)\}/g, (_match, name) => {
+    if (!Object.prototype.hasOwnProperty.call(values, name)) throw new Error(`The local interface value is missing: ${key}.${name}`);
+    return String(values[name]);
+  });
+}
+
+function localizedFindingExplanation(code) {
+  const explanations = activeLocale().finding_explanations;
+  if (!explanations || typeof explanations !== "object") return null;
+  const explanation = explanations[code];
+  return typeof explanation === "string" && explanation ? explanation : null;
+}
+
+function codePointLength(value) {
+  return Array.from(value).length;
+}
+
 function byId(id) {
   return document.getElementById(id);
 }
 
-function cleanFilename(name) {
+function safeDisplayFilename(name) {
   return Array.from(name.replace(/[\p{Cc}\p{Cf}\p{Cs}\p{Zl}\p{Zp}]/gu, "_")).slice(0, 240).join("") || "unnamed-file";
+}
+
+function quotedFilename(name) {
+  return JSON.stringify(name).replace(/[\p{Cc}\p{Cf}\p{Cs}\p{Zl}\p{Zp}]/gu, (character) => `\\u{${character.codePointAt(0).toString(16).padStart(4, "0")}}`);
+}
+
+function targetFilenameRecord(name) {
+  if (typeof name !== "string" || !name) return { error: "missing", key: null, name };
+  if (codePointLength(name) > MAX_TARGET_FILENAME_CODE_POINTS) return { error: "overlong", key: null, name };
+  const collisionKeySource = name.normalize("NFC");
+  const base = name.split(".", 1)[0].replace(/[ .]+$/g, "").toUpperCase();
+  const unsafe = name === "." || name === ".." || /[ .]$/.test(name)
+    || /[<>:"/\\|?*]/.test(name) || /[\p{Cc}\p{Cf}\p{Cs}\p{Zl}\p{Zp}]/u.test(name)
+    || Array.from(name).some((character) => character.codePointAt(0) > 127 && character.toLowerCase() !== character.toUpperCase())
+    || WINDOWS_RESERVED_BASENAMES.has(base);
+  return {
+    error: unsafe ? "unsafe" : null,
+    key: unsafe ? null : collisionKeySource.replace(/[A-Z]/g, (character) => character.toLowerCase()),
+    name,
+  };
+}
+
+function validateTargetFilenames(files) {
+  const occupied = new Set();
+  for (const file of state.files) {
+    const record = targetFilenameRecord(file.name);
+    if (record.error) throw new Error(t("target_filename_unsafe", { name: quotedFilename(file.name) }));
+    if (occupied.has(record.key)) throw new Error(t("target_filename_collision", { name: quotedFilename(file.name) }));
+    occupied.add(record.key);
+  }
+  for (const file of files) {
+    const record = targetFilenameRecord(file.name);
+    if (record.error) throw new Error(t("target_filename_unsafe", { name: quotedFilename(file.name) }));
+    if (occupied.has(record.key)) throw new Error(t("target_filename_collision", { name: quotedFilename(file.name) }));
+    occupied.add(record.key);
+  }
 }
 
 function formatBytes(bytes) {
@@ -86,11 +155,11 @@ function deepFreeze(value) {
 
 async function verifyReturnContract(profile) {
   const published = profile.return_contract;
-  if (!published || typeof published.schema_source !== "string" || !/^[0-9a-f]{64}$/.test(published.schema_sha256)) throw new Error("Return schema metadata is missing or malformed.");
+  if (!published || typeof published.schema_source !== "string" || !/^[0-9a-f]{64}$/.test(published.schema_sha256)) throw new Error(t("return_schema_metadata_error"));
   const schemaBytes = new TextEncoder().encode(published.schema_source);
-  if (await digestBytes(schemaBytes) !== published.schema_sha256) throw new Error("Return schema bytes do not match the published SHA-256.");
+  if (await digestBytes(schemaBytes) !== published.schema_sha256) throw new Error(t("return_schema_hash_error"));
   const schema = JSON.parse(published.schema_source);
-  if (!schema || Array.isArray(schema) || typeof schema !== "object" || schema.$id !== "urn:bsc-audit:schema:audit-return:v0.1") throw new Error("Return schema identity is missing or malformed.");
+  if (!schema || Array.isArray(schema) || typeof schema !== "object" || schema.$id !== "urn:bsc-audit:schema:audit-return:v0.1") throw new Error(t("return_schema_identity_error"));
   state.returnContract = deepFreeze({
     authority: published.authority,
     execution_activities: Array.from(published.execution_activities || []),
@@ -106,29 +175,29 @@ async function verifyProtocol() {
   const meta = window.BSC_PROTOCOL;
   const profile = window.BSC_AUDIT_PROFILE;
   if (!meta || !/^[0-9a-f]{64}$/.test(meta.sha256)) {
-    throw new Error("Protocol metadata is missing or malformed.");
+    throw new Error(t("protocol_metadata_error"));
   }
   if (!profile || profile.version !== meta.version || !/^[0-9a-f]{64}$/.test(profile.profile_sha256)) {
-    throw new Error("Audit profile metadata is missing, malformed, or version-mismatched.");
+    throw new Error(t("profile_metadata_error"));
   }
   elements.protocolVersion.textContent = meta.version;
   elements.protocolSha.textContent = meta.sha256;
   const response = await fetch(meta.path, { cache: "no-cache", credentials: "same-origin" });
-  if (!response.ok) throw new Error(`Protocol file returned HTTP ${response.status}.`);
+  if (!response.ok) throw new Error(t("protocol_http_error", { status: response.status }));
   const bytes = await response.arrayBuffer();
   const actual = await digestBytes(bytes);
-  if (actual !== meta.sha256) throw new Error("Protocol bytes do not match the published SHA-256.");
-  state.protocol = new TextDecoder("utf-8").decode(bytes);
+  if (actual !== meta.sha256) throw new Error(t("protocol_hash_error"));
+  state.protocol = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   state.protocolReady = true;
-  elements.protocolStatus.textContent = "Verified locally before use";
-  setStatus("Protocol verified. Add target material, then copy or download your packet.");
+  elements.protocolStatus.textContent = t("protocol_verified");
+  setStatus(t("protocol_ready"));
   try {
     await verifyReturnContract(profile);
-    setReturnStatus("Protocol and Return Desk schema verified. Add a versioned audit return to begin.");
+    setReturnStatus(t("return_contract_verified"));
   } catch (error) {
     state.returnContract = null;
     state.returnContractReady = false;
-    setReturnStatus(`Return inspection is blocked: ${error.message}`, true);
+    setReturnStatus(t("return_contract_blocked"), true);
   }
   updateActions();
 }
@@ -146,16 +215,23 @@ async function describeFile(file) {
   const descriptor = {
     content: null,
     embedded: false,
-    name: cleanFilename(file.name),
+    name: file.name,
     sha256: null,
     size: file.size,
     type: file.type || "application/octet-stream",
   };
-  if (file.size <= MAX_HASH_BYTES) {
-    descriptor.sha256 = await digestBytes(await file.arrayBuffer());
+  const embedAsText = isTextFile(file) && file.size <= MAX_EMBEDDED_TEXT_BYTES;
+  const needsBytes = file.size <= MAX_HASH_BYTES || embedAsText;
+  const bytes = needsBytes ? await file.arrayBuffer() : null;
+  if (file.size <= MAX_HASH_BYTES && bytes) {
+    descriptor.sha256 = await digestBytes(bytes);
   }
-  if (isTextFile(file) && file.size <= MAX_EMBEDDED_TEXT_BYTES) {
-    descriptor.content = await file.text();
+  if (embedAsText && bytes) {
+    try {
+      descriptor.content = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch (_error) {
+      throw new Error(t("target_text_utf8_error", { name: descriptor.name }));
+    }
     descriptor.embedded = true;
   }
   return descriptor;
@@ -169,14 +245,14 @@ function renderFiles() {
     const name = document.createElement("strong");
     name.textContent = file.name;
     const metadata = document.createElement("small");
-    const mode = file.embedded ? "embedded text" : "companion attachment";
-    const digest = file.sha256 ? ` · SHA-256 ${file.sha256.slice(0, 12)}...` : " · hash skipped above 25 MiB";
+    const mode = file.embedded ? t("file_mode_embedded") : t("file_mode_companion");
+    const digest = file.sha256 ? ` · SHA-256 ${file.sha256.slice(0, 12)}...` : ` · ${t("file_hash_skipped")}`;
     metadata.textContent = `${formatBytes(file.size)} · ${mode}${digest}`;
     details.append(name, metadata);
     const remove = document.createElement("button");
     remove.type = "button";
-    remove.textContent = "Remove";
-    remove.setAttribute("aria-label", `Remove ${file.name}`);
+    remove.textContent = t("remove");
+    remove.setAttribute("aria-label", t("remove_file_aria", { name: file.name }));
     remove.addEventListener("click", () => {
       state.fileEpoch += 1;
       state.processingFiles = false;
@@ -184,7 +260,7 @@ function renderFiles() {
       state.files.splice(index, 1);
       renderFiles();
       updateActions();
-      setStatus(`${file.name} removed from local packet state.`);
+      setStatus(t("target_file_removed", { name: file.name }));
       const buttons = elements.fileList.querySelectorAll("button");
       (buttons[Math.min(index, buttons.length - 1)] || elements.fileInput).focus();
     });
@@ -200,16 +276,23 @@ async function handleFiles(event) {
   invalidatePacketPreview();
   const remaining = MAX_FILES - state.files.length;
   if (remaining <= 0) {
-    setStatus(`A maximum of ${MAX_FILES} files can be added at once.`, true);
+    setStatus(t("target_file_limit", { count: MAX_FILES }), true);
+    return;
+  }
+  const acceptedFiles = selected.slice(0, remaining);
+  try {
+    validateTargetFilenames(acceptedFiles);
+  } catch (error) {
+    setStatus(error instanceof Error ? error.message : t("target_file_read_error"), true);
     return;
   }
   const epoch = ++state.fileEpoch;
   state.processingFiles = true;
   updateActions();
-  setStatus("Reading and hashing selected files locally...");
+  setStatus(t("target_files_reading"));
   try {
     const descriptors = [];
-    for (const file of selected.slice(0, remaining)) {
+    for (const file of acceptedFiles) {
       const descriptor = await describeFile(file);
       if (epoch !== state.fileEpoch) return;
       descriptors.push(descriptor);
@@ -218,12 +301,11 @@ async function handleFiles(event) {
     state.files.push(...descriptors);
     renderFiles();
     const omitted = selected.length - descriptors.length;
-    setStatus(
-      `${descriptors.length} file${descriptors.length === 1 ? "" : "s"} added locally.${omitted ? ` ${omitted} omitted because the limit is ${MAX_FILES}.` : ""}`,
-      omitted > 0,
-    );
+    const added = t(descriptors.length === 1 ? "target_files_added_one" : "target_files_added_many", { count: descriptors.length });
+    const omittedMessage = omitted ? ` ${t("target_files_omitted", { count: omitted, limit: MAX_FILES })}` : "";
+    setStatus(`${added}${omittedMessage}`, omitted > 0);
   } catch (error) {
-    if (epoch === state.fileEpoch) setStatus(`A selected file could not be read locally: ${error.message}`, true);
+    if (epoch === state.fileEpoch) setStatus(error instanceof Error ? error.message : t("target_file_read_error"), true);
   } finally {
     if (epoch === state.fileEpoch) {
       state.processingFiles = false;
@@ -238,18 +320,20 @@ function selectedDepth() {
 
 function depthInstruction(depth) {
   const item = window.BSC_AUDIT_PROFILE.audit_depths.find((candidate) => candidate.id === depth);
-  if (!item) throw new Error("The selected audit depth is not in the versioned profile.");
+  if (!item) throw new Error(t("audit_depth_error"));
   const record = item.machine_record_required ? " A draft machine-readable record is required." : " A machine-readable record is optional unless requested.";
   return `${item.label}: ${item.instruction}${record}`;
 }
 
 async function buildPacket() {
-  if (!state.protocolReady) throw new Error("The protocol has not passed its local integrity check.");
-  const pasted = elements.material.value.trim();
-  if (!pasted && state.files.length === 0) {
-    throw new Error("Paste material or attach at least one target file first.");
+  if (!state.protocolReady) throw new Error(t("protocol_not_verified"));
+  const pasted = elements.material.value;
+  const pastedHasCodePoints = pasted.length > 0;
+  const pastedSatisfiesRequiredTarget = pasted.trim().length > 0;
+  if (!pastedSatisfiesRequiredTarget && state.files.length === 0) {
+    throw new Error(t("target_required"));
   }
-  const pastedDigest = pasted ? await digestBytes(new TextEncoder().encode(pasted)) : null;
+  const pastedDigest = pastedHasCodePoints ? await digestBytes(new TextEncoder().encode(pasted)) : null;
   const embedded = state.files.filter((file) => file.embedded);
   const companions = state.files.filter((file) => !file.embedded);
   const outputOrder = window.BSC_AUDIT_PROFILE.output_sections.map((section) => `${section.order}. ${section.title}`);
@@ -258,6 +342,8 @@ async function buildPacket() {
     `Protocol version: ${window.BSC_PROTOCOL.version}`,
     `Protocol SHA-256: ${window.BSC_PROTOCOL.sha256}`,
     `Requested depth: ${selectedDepth()}`,
+    `Human-readable report language: ${activeLocale().report_language}`,
+    "Write explanatory prose and human-readable section headings in that language. Preserve protocol identifiers, JSON keys and enum values, finding codes, JSON paths, SHA-256 values, versions, commands, filenames, artifact IDs, and quoted source text exactly.",
     "",
     "BEGINNER-FIRST OUTPUT ORDER",
     ...outputOrder,
@@ -267,15 +353,15 @@ async function buildPacket() {
     "Do not claim that code, theorem provers, web research, or experiments ran unless they actually ran and you report their scope.",
     "",
     "===== VERSIONED AUDIT PROTOCOL AND TARGET DELIMITER =====",
-    state.protocol.trimEnd(),
+    state.protocol,
     "",
   ];
 
-  if (pasted) {
+  if (pastedHasCodePoints) {
     lines.push(
       "PASTED TARGET MATERIAL",
       `UTF-8 text SHA-256: ${pastedDigest}`,
-      `Characters: ${pasted.length}`,
+      `Characters (Unicode code points): ${codePointLength(pasted)}`,
       "",
       pasted,
       "",
@@ -317,7 +403,7 @@ async function buildPacket() {
 
 async function copyText(text) {
   if (!navigator.clipboard || !window.isSecureContext) {
-    throw new Error("Clipboard access is unavailable. Use the download button or select the preview text manually.");
+    throw new Error(t("clipboard_unavailable"));
   }
   await navigator.clipboard.writeText(text);
 }
@@ -334,7 +420,7 @@ async function generate(action) {
     if (action === "copy") {
       await copyText(packet);
       if (generationEpoch !== state.packetGenerationEpoch || inputEpoch !== state.packetInputEpoch) return;
-      setStatus("Audit prompt copied. Paste it into your chosen LLM.");
+      setStatus(t("prompt_copied"));
     } else {
       const blob = new Blob([packet], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
@@ -345,7 +431,7 @@ async function generate(action) {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setStatus("UPLOAD_THIS_TO_YOUR_LLM.txt downloaded. Attach it with any companion files.");
+      setStatus(t("prompt_downloaded"));
     }
   } catch (error) {
     if (generationEpoch === state.packetGenerationEpoch && inputEpoch === state.packetInputEpoch) setStatus(error.message, true);
@@ -366,7 +452,7 @@ function clearBuilder() {
   state.files = [];
   renderFiles();
   elements.characterCount.textContent = "0";
-  setStatus("Local target material cleared from this page.");
+  setStatus(t("target_cleared"));
   updateActions();
   elements.material.focus();
 }
@@ -395,12 +481,12 @@ function renderReturnFiles() {
     const metadata = document.createElement("small");
     metadata.textContent = file.sha256
       ? `${formatBytes(file.size)} · SHA-256 ${file.sha256.slice(7, 19)}...`
-      : `${formatBytes(file.size)} · hash unavailable under the per-file or total budget`;
+      : `${formatBytes(file.size)} · ${t("return_hash_unavailable")}`;
     details.append(name, metadata);
     const remove = document.createElement("button");
     remove.type = "button";
-    remove.textContent = "Remove";
-    remove.setAttribute("aria-label", `Remove ${file.name}`);
+    remove.textContent = t("remove");
+    remove.setAttribute("aria-label", t("remove_file_aria", { name: file.name }));
     remove.addEventListener("click", () => {
       state.returnArtifactEpoch += 1;
       state.processingReturnFiles = false;
@@ -408,7 +494,7 @@ function renderReturnFiles() {
       invalidateReturnInspection();
       renderReturnFiles();
       updateActions();
-      setReturnStatus(`${file.name} removed from local Return Desk state.`);
+      setReturnStatus(t("return_file_removed", { name: file.name }));
       const buttons = elements.returnFileList.querySelectorAll("button");
       (buttons[Math.min(index, buttons.length - 1)] || elements.returnArtifacts).focus();
     });
@@ -423,7 +509,7 @@ async function handleReturnJsonFile(event) {
   if (!file) return;
   invalidateReturnInspection();
   if (file.size > MAX_RETURN_JSON_BYTES) {
-    setReturnStatus(`The audit return exceeds the ${formatBytes(MAX_RETURN_JSON_BYTES)} JSON limit.`, true);
+    setReturnStatus(t("return_json_limit", { limit: formatBytes(MAX_RETURN_JSON_BYTES) }), true);
     return;
   }
   const epoch = ++state.returnJsonEpoch;
@@ -433,11 +519,11 @@ async function handleReturnJsonFile(event) {
     const bytes = await file.arrayBuffer();
     if (epoch !== state.returnJsonEpoch) return;
     elements.returnJson.value = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-    setReturnStatus(`${cleanFilename(file.name)} loaded locally. Attach its declared artifacts, then inspect.`);
+    setReturnStatus(t("return_json_loaded", { name: safeDisplayFilename(file.name) }));
     elements.returnJson.focus();
   } catch (error) {
     if (epoch !== state.returnJsonEpoch) return;
-    setReturnStatus(`The selected return must be readable UTF-8 text: ${error.message}`, true);
+    setReturnStatus(t("return_json_utf8_error"), true);
   } finally {
     if (epoch === state.returnJsonEpoch) {
       state.processingReturnJson = false;
@@ -454,12 +540,12 @@ async function handleReturnArtifacts(event) {
   const epoch = ++state.returnArtifactEpoch;
   const remaining = MAX_RETURN_FILES - state.returnArtifacts.length;
   if (remaining <= 0) {
-    setReturnStatus(`A maximum of ${MAX_RETURN_FILES} return artifacts can be attached at once.`, true);
+    setReturnStatus(t("return_file_limit", { count: MAX_RETURN_FILES }), true);
     return;
   }
   state.processingReturnFiles = true;
   updateActions();
-  setReturnStatus("Hashing selected return artifacts locally...");
+  setReturnStatus(t("return_files_hashing"));
   try {
     const descriptors = [];
     let hashBudget = MAX_RETURN_TOTAL_HASH_BYTES - state.returnArtifacts.reduce((total, item) => total + (item.sha256 ? item.size : 0), 0);
@@ -478,13 +564,12 @@ async function handleReturnArtifacts(event) {
     state.returnArtifacts.push(...descriptors);
     renderReturnFiles();
     const omitted = selected.length - descriptors.length;
-    setReturnStatus(
-      `${descriptors.length} artifact${descriptors.length === 1 ? "" : "s"} hashed locally.${omitted ? ` ${omitted} omitted because the limit is ${MAX_RETURN_FILES}.` : ""}`,
-      omitted > 0,
-    );
+    const hashed = t(descriptors.length === 1 ? "return_files_hashed_one" : "return_files_hashed_many", { count: descriptors.length });
+    const omittedMessage = omitted ? ` ${t("return_files_omitted", { count: omitted, limit: MAX_RETURN_FILES })}` : "";
+    setReturnStatus(`${hashed}${omittedMessage}`, omitted > 0);
   } catch (error) {
     if (epoch !== state.returnArtifactEpoch) return;
-    setReturnStatus(`A selected artifact could not be read locally: ${error.message}`, true);
+    setReturnStatus(t("return_file_read_error"), true);
   } finally {
     if (epoch === state.returnArtifactEpoch) {
       state.processingReturnFiles = false;
@@ -494,32 +579,56 @@ async function handleReturnArtifacts(event) {
 }
 
 function renderReturnResult(result) {
-  elements.returnOutcome.textContent = result.outcome.replace("_", " ");
+  const outcomeKey = `outcome_${result.outcome}`;
+  elements.returnOutcome.textContent = Object.prototype.hasOwnProperty.call(activeLocale().strings, outcomeKey)
+    ? t(outcomeKey)
+    : result.outcome;
   elements.returnOutcome.dataset.outcome = result.outcome;
-  const summaries = {
-    blocked: "The return contains a malformed, contradictory, unsupported, or integrity-failing claim. Do not promote it.",
-    needs_review: "No blocking contradiction was established, but material remains unavailable, unverified, or outside this local structural check.",
-    consistent: "The versioned structure, projections, references, and supplied byte bindings are internally consistent. This is not a truth or proof certificate.",
-  };
-  elements.returnSummary.textContent = summaries[result.outcome] || result.caveat;
+  const summaryKey = `outcome_${result.outcome}_summary`;
+  elements.returnSummary.textContent = Object.prototype.hasOwnProperty.call(activeLocale().strings, summaryKey)
+    ? t(summaryKey)
+    : result.caveat;
   elements.returnFindings.replaceChildren();
   result.findings.forEach((finding) => {
     const item = document.createElement("li");
     item.dataset.severity = finding.severity;
     const title = document.createElement("strong");
-    title.textContent = `${finding.severity.replace("review", "needs review")}: ${finding.message}`;
+    const severityKey = `finding_severity_${finding.severity}`;
+    title.textContent = Object.prototype.hasOwnProperty.call(activeLocale().strings, severityKey)
+      ? t(severityKey)
+      : finding.severity;
+    const canonicalMessage = document.createElement("p");
+    canonicalMessage.className = "canonical-finding-message";
+    canonicalMessage.lang = "en";
+    canonicalMessage.textContent = finding.message;
     const code = document.createElement("code");
     code.textContent = `${finding.code} · ${finding.path}`;
-    item.append(title, code);
+    item.append(title, canonicalMessage);
+    const localizedExplanation = localizedFindingExplanation(finding.code);
+    if (localizedExplanation) {
+      const explanation = document.createElement("p");
+      explanation.className = "localized-finding-explanation";
+      explanation.lang = activeLocale().code;
+      const explanationLabel = document.createElement("strong");
+      explanationLabel.textContent = `${t("finding_explanation_label")}: `;
+      explanation.append(explanationLabel, localizedExplanation);
+      item.append(explanation);
+    }
+    item.append(code);
     if (finding.repair) {
       const repair = document.createElement("p");
-      repair.textContent = `Repair: ${finding.repair}`;
+      const repairLabel = document.createElement("strong");
+      repairLabel.textContent = `${t("repair_label")}: `;
+      const repairText = document.createElement("span");
+      repairText.lang = "en";
+      repairText.textContent = finding.repair;
+      repair.append(repairLabel, repairText);
       item.append(repair);
     }
     if (Object.prototype.hasOwnProperty.call(finding, "witness")) {
       const details = document.createElement("details");
       const summary = document.createElement("summary");
-      summary.textContent = "Technical witness";
+      summary.textContent = t("technical_witness");
       const witness = document.createElement("pre");
       witness.textContent = typeof finding.witness === "string" ? finding.witness : JSON.stringify(finding.witness, null, 2);
       details.append(summary, witness);
@@ -548,14 +657,14 @@ async function inspectSelectedReturn() {
   const artifactDescriptors = canonicalReturnArtifactDescriptors(state.returnArtifacts);
   state.processingReturnInspection = true;
   updateActions();
-  setReturnStatus("Inspecting the return and binding the exact local inputs...");
+  setReturnStatus(t("return_inspecting"));
   try {
-    if (!state.protocolReady) throw new Error("The protocol has not passed its local integrity check.");
-    if (!window.BSC_RETURN_DESK || typeof window.BSC_RETURN_DESK.inspectReturn !== "function") throw new Error("The Return Desk core is unavailable.");
+    if (!state.protocolReady) throw new Error(t("protocol_not_verified"));
+    if (!window.BSC_RETURN_DESK || typeof window.BSC_RETURN_DESK.inspectReturn !== "function") throw new Error(t("return_core_unavailable"));
     if (window.BSC_RETURN_DESK.MAX_RETURN_JSON_BYTES !== MAX_RETURN_JSON_BYTES
-      || typeof window.BSC_RETURN_DESK.utf8ByteLengthBounded !== "function") throw new Error("The Return Desk source-limit contract is unavailable.");
+      || typeof window.BSC_RETURN_DESK.utf8ByteLengthBounded !== "function") throw new Error(t("return_limit_contract_unavailable"));
     const returnTextByteLength = window.BSC_RETURN_DESK.utf8ByteLengthBounded(returnText, MAX_RETURN_JSON_BYTES);
-    if (returnTextByteLength > MAX_RETURN_JSON_BYTES) throw new Error(`The audit return exceeds the ${formatBytes(MAX_RETURN_JSON_BYTES)} UTF-8 JSON limit.`);
+    if (returnTextByteLength > MAX_RETURN_JSON_BYTES) throw new Error(t("return_json_utf8_limit", { limit: formatBytes(MAX_RETURN_JSON_BYTES) }));
     const returnTextBytes = new TextEncoder().encode(returnText);
     const result = window.BSC_RETURN_DESK.inspectReturn(returnText, {
       artifacts: artifactDescriptors,
@@ -583,12 +692,12 @@ async function inspectSelectedReturn() {
     };
     elements.downloadReturnResult.disabled = false;
     renderReturnResult(state.returnInspection);
-    setReturnStatus(`Inspection complete: ${result.outcome.replace("_", " ")}. The download is bound to the exact return text and attachment descriptors.` , result.outcome === "blocked");
+    setReturnStatus(t("return_inspection_complete", { outcome: t(`outcome_${result.outcome}`) }), result.outcome === "blocked");
   } catch (error) {
     if (epoch === state.returnInspectionEpoch) {
       state.returnInspection = null;
       elements.downloadReturnResult.disabled = true;
-      setReturnStatus(`Return inspection could not run: ${error.message}`, true);
+      setReturnStatus(error instanceof Error ? error.message : t("return_inspection_failed"), true);
     }
   } finally {
     if (epoch === state.returnInspectionEpoch) {
@@ -610,7 +719,7 @@ function downloadReturnInspection() {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
-  setReturnStatus("Deterministic, input-bound inspection downloaded. It contains no attached file bytes, but it may disclose filenames, IDs, sizes, and SHA-256 values; hashes do not anonymize private material.");
+  setReturnStatus(t("return_downloaded"));
 }
 
 function clearReturnDesk() {
@@ -625,7 +734,7 @@ function clearReturnDesk() {
   state.processingReturnInspection = false;
   state.processingReturnJson = false;
   renderReturnFiles();
-  setReturnStatus("Local audit return and artifact references cleared from this page.");
+  setReturnStatus(t("return_cleared"));
   updateActions();
   elements.returnJson.focus();
 }
@@ -680,11 +789,11 @@ function setupDemo() {
     if (timer) window.clearInterval(timer);
     timer = null;
   };
-  elements.toggleDemo.textContent = paused ? "Play animation" : "Pause animation";
+  elements.toggleDemo.textContent = paused ? t("play_animation") : t("pause_animation");
   elements.toggleDemo.setAttribute("aria-pressed", paused ? "true" : "false");
   elements.toggleDemo.addEventListener("click", () => {
     paused = !paused;
-    elements.toggleDemo.textContent = paused ? "Play animation" : "Pause animation";
+    elements.toggleDemo.textContent = paused ? t("play_animation") : t("pause_animation");
     elements.toggleDemo.setAttribute("aria-pressed", paused ? "true" : "false");
     if (paused) stop(); else start();
   });
@@ -693,6 +802,7 @@ function setupDemo() {
 }
 
 function initialize() {
+  deepFreeze(activeLocale());
   Object.assign(elements, {
     characterCount: byId("character-count"),
     clearBuilder: byId("clear-builder"),
@@ -725,7 +835,7 @@ function initialize() {
   });
 
   elements.material.addEventListener("input", () => {
-    elements.characterCount.textContent = String(elements.material.value.length);
+    elements.characterCount.textContent = String(codePointLength(elements.material.value));
     invalidatePacketPreview();
   });
   document.querySelectorAll('input[name="depth"]').forEach((control) => control.addEventListener("change", invalidatePacketPreview));
@@ -733,7 +843,7 @@ function initialize() {
     state.returnJsonEpoch += 1;
     state.processingReturnJson = false;
     invalidateReturnInspection();
-    setReturnStatus("Return text changed. Inspect again to create a new exact input binding.");
+    setReturnStatus(t("return_text_changed"));
     updateActions();
   });
   elements.fileInput.addEventListener("change", handleFiles);
@@ -746,16 +856,16 @@ function initialize() {
   elements.downloadReturnResult.addEventListener("click", downloadReturnInspection);
   elements.clearReturn.addEventListener("click", clearReturnDesk);
   elements.practice.addEventListener("click", () => {
-    elements.material.value = "Claim: A new numerical pattern proves that every nontrivial zero of the Riemann zeta function lies on the critical line. Evidence offered: agreement with the first 10,000 computed zeros and a proposed spectral analogy. Audit the logical gap between the finite computation, the analogy, and the universal theorem.";
-    elements.characterCount.textContent = String(elements.material.value.length);
+    elements.material.value = t("practice_claim");
+    elements.characterCount.textContent = String(codePointLength(elements.material.value));
     invalidatePacketPreview();
     elements.material.focus();
-    setStatus("Practice claim loaded locally. Choose a depth and build the packet.");
+    setStatus(t("practice_loaded"));
   });
   elements.copyStarter.addEventListener("click", async () => {
     try {
       await copyText(elements.starterMessage.textContent);
-      setStatus("Starter message copied.");
+      setStatus(t("starter_copied"));
     } catch (error) {
       setStatus(error.message, true);
     }
@@ -764,9 +874,9 @@ function initialize() {
   setupTabs();
   setupDemo();
   verifyProtocol().catch((error) => {
-    elements.protocolStatus.textContent = "Blocked: integrity check failed";
-    setStatus(`Packet creation is blocked: ${error.message}`, true);
-    setReturnStatus(`Return inspection is blocked: ${error.message}`, true);
+    elements.protocolStatus.textContent = t("protocol_integrity_blocked");
+    setStatus(t("packet_integrity_blocked"), true);
+    setReturnStatus(t("return_integrity_blocked"), true);
     updateActions();
   });
 }
