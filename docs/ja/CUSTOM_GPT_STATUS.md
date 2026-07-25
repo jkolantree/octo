@@ -31,7 +31,7 @@ final `0.3.0-alpha.8` は、service availability と candidate validation を混
 - 利用者向けの official URL と、任意の reproduction/fork/update route を明確に分ける;
 - canonical machine token を保った Japanese human-facing guidance を追加する;
 - official GPT の Knowledge を 5 files にし、`BSC_EXECUTION_AND_RECEIPTS.md` は standalone repository tooling に限定する;
-- human-readable duties 1-9 のみを 300/650/1,000-word budget 内で返す;
+- scientific audit では human-readable duties 1-9 のみを 300/650/1,000-word budget 内で返す; official-product status-only response は duties 1-9 を bypass し、提供された canonical state だけを簡潔に返す;
 - downloadable machine record、compiler stdout、Base64、shards、transport、section 10 を official GPT では無効化する;
 - fresh 12-case compact-profile Preview gate で Japanese behavior と corrected evidence boundary を検証する。
 
@@ -53,12 +53,14 @@ GPT は authenticated owner-controlled research-preview interface です。proof
 merge、live Update、GitHub release の前に:
 
 1. clean candidate tree から exact package を generate/validate する。
-2. Instructions character limit、Profile SHA、Knowledge filenames/hashes、metadata、capabilities、Apps/Actions 不在を verify する。
-3. 12 個の compact-profile evaluation case をすべて fresh Builder Preview conversation で exact fixture と exact depth-explicit `preview_prompt` を使って実行する。
-4. raw response を各々保存し、generated oracle に対して score する。
-5. 各 case に 18/20 以上かつ automatic failure なしを要求する。1 failed case を average で消してはいけない。
-6. repository、Pages、localization、privacy、release-integrity、Null-Discrimination checks を実行する。
-7. 全 gate pass 後にだけ live GPT を update し、public identity と timestamped status record を再 verify する。
+2. Instructions character limit と reserved headroom、5 個の exact Knowledge files と offline release hashes、public Knowledge 内の digest value が 0、metadata、capabilities、Apps/Actions 不在、execution-and-receipts Knowledge upload 不在を verify する。
+3. exact fixture と current compact `preview_prompt` を使い、exact 12-case compact roster を fresh Builder Preview conversation で実行する。保存された historical 39-case artifact suite はこの gate ではない。
+4. 各 response が declared compact budget 内に収まり、human audit を完了し、machine record、compiler output、Base64、shards、transport、section 10 を提供しないことを確認する。
+5. 各 raw response を exact UTF-8 で保存し、score 前に `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>` の native exit 0 を要求する。exit 1 または 2 は automatic failure とする。
+6. checker を pass した各 response を generated oracle に対して score する。
+7. 各 case に 18/20 以上かつ automatic failure なしを要求する。1 failed case を average で消してはいけない。
+8. repository、Pages、localization、privacy、release-integrity、Null-Discrimination checks を実行する。
+9. 全 gate pass 後にだけ live GPT を update し、public identity と timestamped status record を再 verify する。
 
 ## Preserved alpha.7 baseline
 

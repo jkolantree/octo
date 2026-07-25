@@ -29,7 +29,7 @@ The final `0.3.0-alpha.8` candidate:
 - presents the official GPT first, with reproduction, evaluation, and forks as open-source capabilities;
 - adds Japanese human-facing guidance while preserving canonical machine tokens;
 - uses five public Knowledge uploads; the retired [`BSC_EXECUTION_AND_RECEIPTS.md`](standalone/BSC_EXECUTION_AND_RECEIPTS.md) derivative remains standalone repository history but is not uploaded to the official GPT;
-- returns compact human-readable duties 1-9 within explicit 300/650/1,000-word budgets, including tables;
+- returns compact human-readable duties 1-9 for scientific audits within explicit 300/650/1,000-word budgets, including tables; official-product status-only responses bypass duties 1-9 and return only concise supplied canonical states;
 - records source coverage only for case targets and evidence sources actually used or attempted, plus one short protocol-configuration note;
 - keeps unexecuted BSC, formal, and empirical work `not_run`, never `not_applicable`;
 - disables downloadable machine records, the artifact compiler, Base64/shards/transport, and section 10 in the official GPT; the compiler and Return Desk remain supervised standalone tooling.
@@ -53,13 +53,14 @@ The GPT is an authenticated, owner-controlled research-preview interface. It is 
 Before any merge, live Update, or GitHub release:
 
 1. Generate and validate the exact package from a clean candidate tree.
-2. Verify the Instructions character limit and reserved headroom, Profile SHA, five Knowledge filenames and hashes, metadata, capabilities, absence of Apps or Actions, and absence of the execution-and-receipts Knowledge upload.
-3. Run every generated evaluation case in a fresh Builder Preview conversation using its exact fixture and exact depth-explicit `preview_prompt`.
+2. Verify the Instructions character limit and reserved headroom, the five exact Knowledge files and their offline release hashes, zero public-Knowledge digest values, metadata, capabilities, absence of Apps or Actions, and absence of the execution-and-receipts Knowledge upload.
+3. Run the exact 12-case compact roster in a fresh Builder Preview conversation using each declared fixture and current compact `preview_prompt`; the preserved historical 39-case artifact suite is not this gate.
 4. Confirm each response stays within its declared compact budget, completes the human audit, and does not offer machine records, compiler output, Base64, shards, transport, or section 10.
-5. Preserve each raw response and score it against the generated oracle.
-6. Require at least 18/20 and no automatic failure for every case; do not average away one failed case.
-7. Run the repository, Pages, localization, privacy, release-integrity, and Null-Discrimination checks.
-8. Only after all gates pass, update the live GPT and then reverify the public identity and timestamped status record.
+5. Preserve each raw response as exact UTF-8 and require native exit 0 from `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>` before scoring; exits 1 or 2 are automatic failures.
+6. Score each checker-passing response against the generated oracle.
+7. Require at least 18/20 and no automatic failure for every case; do not average away one failed case.
+8. Run the repository, Pages, localization, privacy, release-integrity, and Null-Discrimination checks.
+9. Only after all gates pass, update the live GPT and then reverify the public identity and timestamped status record.
 
 ## Preserved alpha.7 baseline
 

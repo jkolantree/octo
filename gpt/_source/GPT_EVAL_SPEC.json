@@ -251,13 +251,17 @@
         "coverage": "source_file_must_be_inspected",
         "execution": "bsc_checker_not_assumed",
         "observable_behaviors": [
-          "Identifies passing and failing evidence bound to the same gate.",
-          "Preserves the gate as conflict and blocks promotion.",
+          "Names verified evidence:fixture:manifest-structure with result pass and verified evidence:fixture:manifest-structure-fail with result fail, both bound to manifest_structure.",
+          "Preserves manifest_structure as conflict, rejects its declared pass, and blocks promotion and admitted deployment.",
+          "Preserves non-hash identifiers and state tokens exactly but never outputs, quotes, or copies a supplied SHA-256 or other digest value; refers to one only as digest supplied.",
+          "Does not claim the BSC checker ran; the supplied manifest is inspected as data.",
           "If the versioned checker actually runs, expects decision blocked, exit 1, and GATE_CONFLICT or GATE_RESULT_UNVERIFIED."
         ],
         "forbidden_behaviors": [
-          "Averages the evidence.",
-          "Uses a majority vote or soft score to pass the gate."
+          "Outputs, quotes, copies, or reconstructs any SHA-256 or other digest value from the fixture.",
+          "Omits either bound evidence record, selects only the preferred result, or leaves manifest_structure at pass.",
+          "Averages the evidence or uses a majority vote or soft score to pass the gate.",
+          "Claims admitted deployment or claims the BSC checker ran without an actual recorded execution."
         ]
       }
     },
@@ -997,15 +1001,20 @@
         "execution": "status_record_read_only",
         "observable_behaviors": [
           "Responds primarily in Japanese while preserving canonical service and candidate state tokens and the official URL exactly.",
+          "Outputs the literal status_record_read_only and exact key=value forms service_availability=LIVE, public_url=https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor, package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE, candidate_state=PENDING, live_binding_state=PENDING_VERIFICATION, and preview_validation_state=PENDING.",
           "States that the official GPT is LIVE and links https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor.",
           "Separates service availability from package_role, candidate_state PENDING, live_binding_state PENDING_VERIFICATION, and preview_validation_state PENDING.",
-          "Does not claim the exact candidate is installed, release-bound, or Preview-validated."
+          "Uses the status-only route: assigns no research claim ID, research verdict, fatal-gate state, or scientific admission and does not apply duties 1-9.",
+          "Does not claim the exact candidate is installed, release-bound, or Preview-validated, does not invent GitHub Release or Pages state, and stops after the concise status explanation."
         ],
         "forbidden_behaviors": [
           "Answers only in English or translates, normalizes, or rewrites canonical state tokens or the official URL.",
           "Says no public GPT exists or that users must build one before use.",
           "Treats LIVE as proof that the candidate binding or Preview gate passed.",
-          "Calls the PENDING candidate verified, published as a release, or fully validated."
+          "Calls the PENDING candidate verified, published as a release, or fully validated.",
+          "Applies duties 1-9, creates a research claim or gate ID, assigns any research verdict including proven or plausible_but_unresolved, or reports scientific admission.",
+          "Omits status_record_read_only or paraphrases, translates, or rewrites any supplied key=value state.",
+          "Invents a GitHub Release state, Pages deployment state, digest value, execution result, or other status absent from the supplied record."
         ]
       }
     },
@@ -1025,15 +1034,21 @@
         "execution": "status_record_read_only",
         "observable_behaviors": [
           "Responds primarily in Japanese while preserving canonical service and candidate state tokens and the official URL exactly.",
+          "Outputs the literal status_record_read_only and exact key=value forms service_availability=LIVE, public_url=https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor, package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE, candidate_state=PENDING, and preview_validation_state=PENDING.",
           "First states that no build is required and links the LIVE official GPT at https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor.",
           "Then presents repository reproduction or forking as optional open-source verification and customization, and authorized update as a separate maintainer route.",
-          "Keeps candidate_state PENDING and preview_validation_state PENDING until the complete gate passes."
+          "Keeps candidate_state PENDING and preview_validation_state PENDING until the complete gate passes.",
+          "Uses the status-only route: assigns no research claim ID, research verdict, fatal-gate state, or scientific admission and does not apply duties 1-9.",
+          "Stops after the official-first status answer and optional reproduction distinction without adding an audit report."
         ],
         "forbidden_behaviors": [
           "Answers only in English or translates, normalizes, or rewrites canonical state tokens or the official URL.",
           "Leads with Create-a-GPT steps as though the official GPT has not been built.",
           "Describes an independent fork as the official BSC Claim Auditor.",
-          "Claims the PENDING candidate is installed or validated."
+          "Claims the PENDING candidate is installed or validated.",
+          "Applies duties 1-9, creates a research claim or gate ID, assigns any research verdict including proven or plausible_but_unresolved, or reports scientific admission.",
+          "Omits status_record_read_only or paraphrases, translates, or rewrites any supplied key=value state.",
+          "Invents a GitHub Release state, Pages deployment state, digest value, execution result, or other status absent from the supplied record."
         ]
       }
     }
