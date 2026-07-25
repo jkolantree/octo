@@ -2,10 +2,12 @@
 
 This index separates first use, reference material, governance, and release work. The project is a research preview; begin with the route matching your task.
 
+[日本語ドキュメント](ja/index.md) | [Timestamped publication status](PUBLICATION_STATUS.json)
+
 ## Getting started
 
-1. **Public Custom GPT - direct ChatGPT audit:** the link-shared alpha.7 [BSC Claim Auditor](CUSTOM_GPT_STATUS.md) is installed and 27/27 Preview-validated. Uploads are handled through ChatGPT, and the GPT includes no Action or hosted API. The alpha.8 development package is not installed there.
-2. **Local browser Packet Builder and Audit Return Desk:** [paste or attach material locally](https://jkolantree.github.io/octo/), then copy or download the versioned packet and separately choose an LLM. The alpha.8 source adds local inspection of returned envelopes and selected artifact hashes; it is not deployed on the public Pages site until merge and deployment.
+1. **Official Custom GPT - direct ChatGPT audit:** the [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is built and link-shared. Its current controller identifies as alpha.8.dev0, but the complete post-update Preview suite is still pending. Uploads are handled through ChatGPT, and the GPT includes no Action or hosted API. See the exact [live/candidate status](CUSTOM_GPT_STATUS.md).
+2. **Local browser Packet Builder and Audit Return Desk:** [paste or attach material locally in the deployed English interface](https://jkolantree.github.io/octo/), then copy or download the versioned packet and separately choose an LLM. The [Japanese Pages candidate](../pages/ja.html) is pending public deployment and must not be advertised as live until its post-deploy smoke check passes. The Return Desk locally inspects returned envelopes and selected artifact hashes.
 3. **Repository and Python engine - exact checker route:** follow the [Programmer Tutorial](PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and command output.
 
 Additional starting points:
@@ -44,11 +46,11 @@ Additional starting points:
 
 The [LLM Audit Packet](../BSC_AUDIT_LLM_PACKET.md) is a drafting protocol, not an executable verifier. Read its privacy, prompt-injection, and source-coverage rules before attaching material.
 
-The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. The alpha.8 development source also contains the Audit Return Desk. Its committed protocol, return schema, and checksum metadata are mechanically generated and checked for drift.
+The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. The alpha.8 release-candidate source also contains the Audit Return Desk. Its committed protocol, return schema, and checksum metadata are mechanically generated and checked for drift.
 
-The repository also contains a deterministic [Custom GPT setup package](../gpt/README.md). The live alpha.7 configuration passed the complete gate; the alpha.8 development package remains unpublished and uninstalled pending a fresh complete gate. Direct uploads are processed through ChatGPT and do not inherit the Pages module's local-only boundary. The package includes no GPT Action, hosted checker API, account system, or cloud-storage service.
+The repository also contains the deterministic package behind the official [Custom GPT](../gpt/README.md). It supports configuration review, reproducible deployments, compatible forks, and verifiable official updates. Direct uploads are processed through ChatGPT and do not inherit the Pages module's local-only boundary. The package includes no GPT Action, hosted checker API, account system, or cloud-storage service. Live availability, exact configuration binding, Preview validation, GitHub release, and Pages deployment are reported as separate states.
 
-The alpha.8 [Audit Return Desk](AUDIT_RETURN_DESK.md) inspects returned model output and receipts without treating fluent output, hash-shaped strings, or submitted receipts as independent checker evidence.
+The [Audit Return Desk](AUDIT_RETURN_DESK.md) inspects returned model output and receipts without treating fluent output, hash-shaped strings, or submitted receipts as independent checker evidence.
 
 ## Release identity
 

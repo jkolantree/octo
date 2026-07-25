@@ -7,6 +7,7 @@ include CONTRIBUTING.md
 include GOVERNANCE.md
 include PRIVACY.md
 include ERRATA.md
+include README.ja.md
 include privacy-policy.json
 include LICENSE
 include Makefile
@@ -14,12 +15,13 @@ include RELEASE_NOTES_*.md
 include SECURITY.md
 include SHARE_THIS.md
 include START_HERE.html
+include START_HERE.ja.md
 include START_HERE.md
 include run_audit.py
 include toolchain.lock.json
 include .zenodo.json
 include .github/workflows/pages.yml
-recursive-include docs *.md *.css
+recursive-include docs *.md *.css *.json
 recursive-include examples *.json *.md
 recursive-include gpt *
 recursive-include pages *

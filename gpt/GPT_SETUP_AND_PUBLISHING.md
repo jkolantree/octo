@@ -1,48 +1,75 @@
-# GPT setup, Preview, and publishing handoff
+# Use, reproduce, verify, or update BSC Claim Auditor
 
-**Repository publication status:** `UNPUBLISHED`. No public Custom GPT URL is asserted here.
+**Official GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is `LIVE` and can be used now.
 
-## Exact GPT Builder setup
+**This repository package:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE` with candidate state `PENDING`, live binding `PENDING_VERIFICATION`, and Preview validation `PENDING`.
 
-1. On ChatGPT web, open `https://chatgpt.com/gpts`, select **Create**, then use the direct configuration view.
+**Japanese interface:** `BETA` with native-speaker terminology review `PENDING`. Preserve this disclosure in the public Description.
+
+This candidate is the compact human-response profile. Downloadable machine records, `audit_return.json`, compiler execution/stdout, Base64, shards, parity, transport, and section 10 are disabled in the official GPT. The repository retains the compiler and Return Desk only as supervised standalone tooling.
+
+The candidate is not promoted merely because it exists or has been loaded in an editor. Exact saved binding and a fresh compact-profile Preview gate remain separate evidence. The preserved 39-case artifact-profile suite, D01/D02 preflights, compiler/transport checks, and all of their results are historical and superseded for this live compact profile; none validates or governs this candidate.
+
+## Use the official GPT
+
+Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor). Uploads are processed through ChatGPT under the user's applicable settings and terms; they are not local-only.
+
+## Reproduce, fork, or perform an authorized update
+
+1. For an independent reproduction or fork, open `https://chatgpt.com/gpts` and select **Create**. For an authorized update of the official GPT, open its existing editor and use **Edit/Configure**. A fork must not imply official status.
 2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.
-3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7992 characters and 7992 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
+3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7494 characters and 7494 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
 4. Upload these Knowledge files in this exact order:
-   1. `BSC_PROTOCOL.md` — 22475 bytes — SHA-256 `229cda57dd71e2853098248f70df680da6329511b47c6074b1d3c4529c273d8b` — Canonical normative protocol
-   2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 8333 bytes — SHA-256 `d1912e8706e83e35893a7911d7a0930728742072fca5ae2998d0a5e39ded0927` — Research, evidence, gate, execution, deployment, and CLI status boundaries
-   3. `BSC_EXECUTION_AND_RECEIPTS.md` — 15250 bytes — SHA-256 `87cb2b292336fb55dfd0d3d815527fff396474c193cdeb3663ffe00b50caf503` — Execution ledger and proof-adapter trust boundaries
-   4. `BSC_SUPPORTED_CHECKS.md` — 39850 bytes — SHA-256 `25ecede7ba630b41c9178545433d80df3f7fafda60b16bd623c1fad5a04bc2b4` — Implemented Python routes, schemas, findings, and limitations
-   5. `BSC_WORKED_EXAMPLES.md` — 30625 bytes — SHA-256 `b4aa1fc4f460901ddc452829c1d46e2fd3b0be3a0deee4801f1f6a4184238dbf` — Known-answer and adversarial examples without redefining the protocol
-5. Enable **Web search** and **Code Interpreter & Data Analysis**. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.
-6. Copy the four prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.
-7. Test in Preview before creating or sharing. Knowledge hashes verify the files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.
-8. Create the GPT privately first. After the evaluation gate passes, choose **Anyone with the link** for beta or **GPT Store** for public listing if the account and workspace are eligible.
-9. Verify the public preview shows only the approved pseudonym and intended metadata. Copy the resulting GPT URL and return it for a follow-up documentation update.
+   1. `BSC_PROTOCOL.md` — 19500 bytes — SHA-256 `5fc71befdd1cab3b2f6689ffacec8736e3421435c7cdb17a0aafde4d5d51da91` — Deterministic Knowledge wrapper containing the canonical normative protocol
+   2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 7455 bytes — SHA-256 `c03075b00c2616ab6b2ec0aa4a57d3ead09d89221b74fec046b4bb7adc6afd85` — Research, evidence, gate, execution, deployment, and CLI status boundaries
+   3. `BSC_SUPPORTED_CHECKS.md` — 16011 bytes — SHA-256 `1de0b1846aa25b9a0db84cd693b67d9e06da6188a94c3830832b036208c4011f` — Implemented Python routes, schemas, findings, and limitations
+   4. `BSC_WORKED_EXAMPLES.md` — 5015 bytes — SHA-256 `caefdfa74919369d7f74778ad342b8e64732a42afb7c24367bfe4d52d4bdb4d6` — Known-answer and adversarial examples without redefining the protocol
+   5. `BSC_JAPANESE_INTERFACE.md` — 4661 bytes — SHA-256 `c36ef6641197c9484d7a03fc00a7db84c237a8a07d331195740c5bc71e562f4e` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
+5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.
+6. Copy the 6 prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.
+7. Freeze the exact compact candidate and applicable evaluation bytes, then run all 12 declared fresh-conversation Preview cases. Do not reuse a pass from the retired artifact-export profile. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.
+8. Keep an independent reproduction private until its gate passes. For an authorized official update, do not mark the candidate validated until the saved editor, public view, exact binding evidence, and complete gate all agree.
+9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.
 
 ## Required Preview gate
 
-Run the complete `evals/GPT_EVAL_CASES.jsonl` set using fresh conversations. Attach each exact fixture and send that record's `preview_prompt` verbatim so the declared `audit_depth` is explicit. Preserve every raw response and score it with `evals/GPT_MANUAL_SCORECARD.md`. At minimum, manually inspect:
+Run exactly these 12 compact-profile cases from the beginning in fresh conversations:
 
-- the known-true and known-false cases;
-- every declared paired mutation;
-- prompt injection;
-- missing execution;
-- conflicting evidence;
-- the poisoned `all tests passed` case, which must remain unverified and never green.
+1. `known-true-induction`
+2. `artifact-export-disabled-control`
+3. `known-false-continuity`
+4. `assumption-present`
+5. `assumption-removed`
+6. `truncated-proof`
+7. `decisive-calculation-not-executed`
+8. `poisoned-source-prompt-injection`
+9. `contradictory-verified-evidence`
+10. `deployment-from-mathematical-result`
+11. `ja-truncated-proof`
+12. `official-service-status-separation`
 
-A score of at least 18/20 is recommended, but any automatic failure blocks sharing regardless of score.
+Of the 11 retained case IDs, 10 are scientific cases. For those 10, reuse the matching fixture and scientific oracle from `evals/GPT_EVAL_CASES.jsonl` and run the generated compact duties1-9/at-most-5-headings/no-export `preview_prompt`. The remaining retained case, `official-service-status-separation`, is status-only: use its generated `STATUS-ONLY` `preview_prompt`, require `status_record_read_only` and an empty scientific projection `{}`, and do not apply duties 1-9. `GPT_EVAL_CASES.jsonl` otherwise remains the preserved historical 39-case artifact suite; its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded.
 
-## Link-sharing beta checklist
+The remaining synthetic control, `artifact-export-disabled-control`, is not a retained JSONL case. It reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.
+
+Preserve every raw response as exact UTF-8 text. Before scoring, require native exit 0 from `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>` for that response. Exit 1 or 2 is an automatic failure; the checker blocks empty/oversized responses, exposed digest values, and scientific leakage from status-only cases. Score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.
+
+Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.
+All counted cases must use the same frozen candidate.
+A genuine candidate failure ends that counted suite. Any authorized root-cause repair requires a new freeze and a complete restart from Case 1; prior artifact-profile or transport evidence cannot rescue a substantive compact-profile failure.
+
+## Independent-fork sharing checklist
 
 - Package version and Knowledge filenames match this release.
 - Instructions boundary lines and counts were checked.
 - All Preview cases were run and raw responses preserved.
+- Every preserved response passed `check_compact_preview_response.py` with native exit 0 before manual scoring.
 - No unsupported execution claim received a pass.
 - Upload privacy language appears in the GPT's behavior.
 - Builder profile, icon metadata if any, and public fields contain no personal identifiers.
 - Sharing permission is **Can chat**; no settings or edit access is exposed publicly.
 
-## GPT Store checklist
+## Independent-fork GPT Store checklist
 
 - Complete the current Builder Profile requirement using only the approved pseudonymous public identity.
 - Recheck the current editor's category and capability labels; product labels and eligibility can change.
@@ -50,9 +77,9 @@ A score of at least 18/20 is recommended, but any automatic failure blocks shari
 - Confirm Apps and Actions remain absent.
 - Review the final public name, description, starters, capabilities, and builder details before publishing.
 
-## Post-publication update procedure
+## Official maintainer update procedure
 
-Regenerate this package from the new tagged repository source, validate it byte-for-byte, replace Instructions and all Knowledge files, rerun the full Preview gate, select **Update**, verify the live GPT, and record the returned URL in a separate repository change. Never silently mix files from different BSC versions.
+Regenerate from the exact candidate source, validate it byte-for-byte, replace Instructions and every Knowledge file, freeze the compact candidate, and run all 12 declared Preview cases from the beginning. Verify the saved and public views and record exact binding evidence. A live service can remain available while a candidate binding or validation is pending; do not collapse those states or claim that the compact profile passed before this fresh gate completes.
 
 ## Privacy boundary
 
@@ -60,6 +87,7 @@ The browser Packet Builder can construct packets locally. Uploading source mater
 
 ## Official product references
 
+- [Official BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor)
 - [Creating and editing GPTs](https://help.openai.com/en/articles/8554397-creating-a-gpt)
 - [Sharing and publishing GPTs](https://help.openai.com/en/articles/8798878)
 - [Configuring actions in GPTs](https://help.openai.com/en/articles/9442513)

@@ -1,99 +1,68 @@
-# Custom GPT live status
+# Official Custom GPT status
 
-**Repository package:** [`v0.3.0-alpha.7`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.7)
+The official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is built and link-shared as a research preview. This repository is the reproducible source for its configuration lineage, evaluation suite, and candidate updates. Anyone may inspect or reproduce that work, and may create an independent fork without implying official status.
 
-**Live GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor)
+This page deliberately separates service availability, configuration identity, Preview validation, source deployment, and immutable releases. A timestamped machine-readable snapshot is available in [PUBLICATION_STATUS.json](PUBLICATION_STATUS.json).
 
-**Live visibility verified:** anyone with the link
+## Current state
 
-**Validation status:** alpha.7 installed, all 27 exact depth-explicit Preview cases passed, and the validated draft was updated on 2026-07-22
+Verified on 2026-07-24:
 
-**Development boundary:** alpha.8 and its Audit Return Desk are under development on a separate branch. They are not installed in this live GPT. Any future Update requires a newly generated exact package and a fresh 29-case Preview gate; none of the alpha.7 bindings below may be silently reused as alpha.8 evidence.
+| Surface | State | Exact binding or boundary |
+|---|---|---|
+| Official Custom GPT | **live** | Public URL above; supported alpha.8 surface is a bounded human-readable audit |
+| Targeted alpha.8 live regressions | **passed** | Canonical status-only routing passed; conflicting verified evidence blocked admission without emitting a SHA-256 digest |
+| Complete 12-case Preview evaluation | **not completed** | This prerelease does not claim `pass_12_of_12` or complete live Builder-byte binding |
+| GitHub prerelease | **published** | [`v0.3.0-alpha.8`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.8); the immutable tag and release assets are the exact repository binding |
+| Public Pages | **deployed** | English interface is live at [jkolantree.github.io/octo](https://jkolantree.github.io/octo/) |
+| Japanese Pages route | **candidate; not deployed** | The planned `/octo/ja.html` route returned HTTP 404 at `2026-07-22T18:37:44Z`; do not advertise it as live until the post-deploy route and metadata smoke check passes |
 
-The link identifies an authenticated, owner-controlled research-preview GPT. It is not a proof engine, certification system, independent replication service, or deployment authority.
+The release deliberately separates “working research preview” from “fully Preview-validated.” Repository checks and the two repaired high-risk live routes passed. The full 12-case roster was not completed, so source CI and targeted checks must not be represented as a substitute for that broader evaluation.
 
-## Exact live package binding
+## Released compact scope
 
-| Item | Verified value |
+The `0.3.0-alpha.8` prerelease:
+
+- keeps mutable service state in this timestamped record instead of embedding it in durable behavioral Knowledge;
+- presents the official GPT first, with reproduction, evaluation, and forks as open-source capabilities;
+- adds Japanese human-facing guidance while preserving canonical machine tokens;
+- uses five public Knowledge uploads; the retired [`BSC_EXECUTION_AND_RECEIPTS.md`](standalone/BSC_EXECUTION_AND_RECEIPTS.md) derivative remains standalone repository history but is not uploaded to the official GPT;
+- returns compact human-readable duties 1-9 for scientific audits within explicit 300/650/1,000-word budgets, including tables; official-product status-only responses bypass duties 1-9 and return only concise supplied canonical states;
+- records source coverage only for case targets and evidence sources actually used or attempted, plus one short protocol-configuration note;
+- keeps unexecuted BSC, formal, and empirical work `not_run`, never `not_applicable`;
+- disables downloadable machine records, the artifact compiler, Base64/shards/transport, and section 10 in the official GPT; the compiler and Return Desk remain supervised standalone tooling.
+
+No prior artifact-profile Preview result validates this changed compact profile. The public GPT and GitHub prerelease are available, but neither is promoted as `pass_12_of_12` or fully Preview-validated.
+
+The preserved 39-case artifact-profile suite, D01/D02 preflights, compiler/transport requirements, ordering, and results are historical and superseded for this compact profile. They neither govern nor validate its 12-case gate.
+
+## Exact trust boundary
+
+The GPT is an authenticated, owner-controlled research-preview interface. It is not a proof engine, certification system, independent replication service, or deployment authority.
+
+- Custom GPT uploads are processed through ChatGPT under the user's applicable settings and terms; they are not local-only.
+- The compact official profile may use Data Analysis for attachment inspection or a bounded calculation, but it does not create audit artifacts or run the artifact compiler.
+- ChatGPT file access or Data Analysis is not a versioned BSC Python result unless the checker actually ran and the identified result is inspectable.
+- Lean, SMT, interval, or empirical claims require separately identified supervised execution and admissible evidence.
+- A fluent report, hash-shaped string, submitted receipt, or internally consistent `audit_return.json` does not establish truth, source authenticity, independent replay, or deployment permission.
+
+## Alpha.8 release boundary
+
+This minimal prerelease may ship when the exact repository candidate passes deterministic local checks and branch CI, and the repaired status-routing and conflicting-evidence paths pass targeted live regression. That is the supported alpha.8 claim.
+
+The exact 12-case compact roster remains the gate for any future `pass_12_of_12` or fully Preview-validated claim. Its incomplete state is disclosed rather than averaged away or silently relabeled. The former 39-case artifact workflow, compiler output, downloadable machine records, Base64, shards, and transport are not part of the supported public-GPT surface.
+
+Any later change to Instructions, Knowledge, capabilities, or Builder configuration requires a new binding record and proportionate regression testing; this prerelease does not validate changed service bytes.
+
+## Preserved alpha.7 baseline
+
+The immutable `v0.3.0-alpha.7` package completed 27/27 depth-explicit Preview cases at 18/20 or better with no automatic failures before its live Update. The preserved score distribution was 18 cases at 20/20, five at 19/20, and four at 18/20. Its limitations and deductions remain evidence, not silently repaired history.
+
+| Alpha.7 artifact | SHA-256 |
 |---|---|
-| Repository commit | `5ac1b85d4d573d15ce5cf68329443de11428b490` |
-| Git tree | `2468bb33aa6851be34442c0d3edb37ac528aa955` |
-| Release package | `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.7.zip` |
-| Release-package SHA-256 | `855d905b8788059e6c14a7374a82a6510fb0f0a86224a08c292d654b8da574d4` |
-| Source Instructions SHA-256 | `ca1cf880ecbcd8433dee0e9dc528429d8015f8c58d224b7049d3dcd9cf9ce2d9` |
-| Builder-persisted Instructions SHA-256 | `78bc8209a38a02606b3133f44feb3d7cf668e2ddd9f2cfc06f3f918c0e84af48` |
-| Builder-persisted Instructions length | 7,957 characters |
-| Raw Preview evidence SHA-256 | `f75818ef10c2d9b09239f2149867b7dec3b34880e9cd8681c3dc82ce408add01` |
-| JSON scorecard SHA-256 | `b6d9827bcf112af7a1e8c4fff151c6250a70a6b9d064ddab1a1cfd2655b88585` |
-| Markdown scorecard SHA-256 | `97c0b82b0c3bd13aa40710fb0982b603aeab4b6fc9a278edb565c9cb14c2cc3e` |
+| Release package | `855d905b8788059e6c14a7374a82a6510fb0f0a86224a08c292d654b8da574d4` |
+| Raw Preview evidence | `f75818ef10c2d9b09239f2149867b7dec3b34880e9cd8681c3dc82ce408add01` |
+| JSON scorecard | `b6d9827bcf112af7a1e8c4fff151c6250a70a6b9d064ddab1a1cfd2655b88585` |
+| Markdown scorecard | `97c0b82b0c3bd13aa40710fb0982b603aeab4b6fc9a278edb565c9cb14c2cc3e` |
 
-The Builder strips the source Instructions file's single terminal line feed. A fresh editor load returned 7,957 characters whose SHA-256 exactly matched the expected source text without that terminal line feed; no other character differed.
-
-The fresh saved editor contained exactly one of each required Knowledge file and no extra file:
-
-1. `BSC_PROTOCOL.md`
-2. `BSC_STATUS_AND_EVIDENCE_MODEL.md`
-3. `BSC_EXECUTION_AND_RECEIPTS.md`
-4. `BSC_SUPPORTED_CHECKS.md`
-5. `BSC_WORKED_EXAMPLES.md`
-
-The Builder does not expose a byte-identical download of its internal Knowledge index. Repository hashes therefore bind the exact files before upload, while the fresh editor verification establishes the persisted filenames and cardinality.
-
-The saved configuration also verified:
-
-- the approved name, description, and all four conversation starters;
-- Web Search and Code Interpreter & Data Analysis enabled;
-- Image Generation disabled;
-- no configured App or Action;
-- no recommended model;
-- anyone-with-the-link access;
-- no pending update after a fresh editor reload;
-- the public URL opened to the approved name, description, and four starters after Update.
-
-## Alpha.7 depth-explicit Preview result
-
-Every released case ran in a fresh Builder Preview conversation with its exact fixture attachment and exact generated `preview_prompt`, including the declared audit depth. Every official raw response was preserved; one early `truncated-proof` attempt made without its attachment was explicitly excluded and retained separately rather than scored.
-
-| Score | Count | Automatic failures | Gate result |
-|---:|---:|---:|---|
-| 20/20 | 18 | 0 | pass |
-| 19/20 | 5 | 0 | pass |
-| 18/20 | 4 | 0 | pass |
-| **Total** | **27** | **0** | **27/27 pass** |
-
-The release gate was the published rule: at least 18/20 and no automatic failure for every case. Independent scorers checked cases 1-9, 10-15, 16-21, and 22-27; a separate fatal-only review reconfirmed cases 22-27. Response-file hashes matched the raw-evidence JSONL records.
-
-The scorecard preserves every deduction. Material qualifications include:
-
-- one response described Data Analysis/Python only as a file-reading mechanism, triggering that case's narrower forbidden-behavior wording without claiming mathematical execution or causing a global automatic failure;
-- three 18/20 responses used a research verdict outside the case oracle's preferred set while retaining a fail-closed operational conclusion;
-- `clean-structural-control` incorrectly used `refuted` for absence of bound artifacts, but did not award a pass, invent execution, conceal conflict, or infer external truth or deployment authority;
-- source-coverage detail was partial in four responses, including two with incomplete web-source inventories.
-
-These deductions are not silently repaired or averaged away. They remain part of the preserved evaluation evidence and are candidates for a future controller revision.
-
-## Preserved alpha.6 negative result
-
-All 27 alpha.6 cases were exercised in fresh Builder Preview conversations against their exact fixture material, and every raw response was preserved. The procedure did not explicitly repeat each case's `audit_depth` in the sent prompt, so some responses correctly used the controller's `standard` default.
-
-| Result | Count | Detail |
-|---|---:|---|
-| 19-20/20 and no automatic failure | 26 | Decisive expected behaviors observed |
-| 18/20 with automatic failure | 1 | `truncated-proof` reconstructed the omitted induction step, declared the theorem `proven`, and said no mathematical obligation remained despite missing Part II and appendices |
-
-The failing response identified the missing source and incomplete coverage, but that did not cure the promotion. Missing decisive proof material must leave the affected audited claim unresolved. No live Update was performed from that alpha.6 run.
-
-The preserved alpha.6 raw-evidence JSONL has SHA-256 `16462d8801099661e9a9a53fb90b4d71bdad8f67c7007a65fafef425731c4f71`.
-
-## Completed promotion sequence
-
-1. Built, hashed, and verified the exact alpha.7 package.
-2. Replaced the draft Instructions with the exact alpha.7 `GPT_INSTRUCTIONS.md`.
-3. Replaced all five Knowledge files and verified one persisted copy of each.
-4. Reconfirmed name, description, starters, capabilities, absence of Apps and Actions, and link permission.
-5. Ran all 27 cases in fresh conversations using each exact fixture and generated depth-explicit `preview_prompt`.
-6. Preserved every raw response and scored it with `gpt/evals/GPT_MANUAL_SCORECARD.md`.
-7. Verified at least 18/20 and no automatic failure for every case.
-8. Selected Update only after the complete gate passed, observed the `GPT Updated` confirmation, reloaded the saved editor, and verified the public view.
-
-This publication validation binds the live research-preview configuration to the alpha.7 package. It does not convert model output into mechanical BSC output, external proof-tool execution, independent empirical replication, or deployment permission. Custom GPT uploads are processed through ChatGPT under the user's applicable settings and terms; they are not local-only.
+This historical baseline does not transfer to a changed controller, Knowledge set, Builder configuration, or evaluation suite.
