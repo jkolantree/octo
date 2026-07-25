@@ -540,9 +540,10 @@ class CustomGptPackageTests(unittest.TestCase):
                 "or claim full inspection."
             ),
             "separate_status_axes": (
-                "STATUS-ONLY FIRST overrides scientific duties: service/package/candidate/binding/Preview state "
-                "only => exact URL+state tokens in requested language; no research IDs/claims/verdicts/gates/"
-                "admission. Else nonresearch status stays outside research IDs/verdicts; CLI only if BSC ran."
+                "STATUS-ONLY FIRST: official service/package/candidate/binding/Preview overrides duties => output "
+                "status_record_read_only and each supplied canonical key=value exactly; requested language; stop. "
+                "No research IDs/claims/verdicts/gates/admission or invented states. Other status: no research "
+                "verdict; CLI only if BSC ran."
             ),
             "research_verdict_vocabulary": (
                 "Verdicts=proven/strongly_supported/plausible_but_unresolved/refuted/ill_posed/"
