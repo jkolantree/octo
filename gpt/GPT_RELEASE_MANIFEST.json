@@ -72,9 +72,9 @@
       "sha256": "5f60476038d1a20a4b55c79389e2e0fe8ba60b89cd737602a30b39e13308821f"
     },
     {
-      "bytes": 26475,
+      "bytes": 26148,
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "97a05f2ccefc9d61c2e841756c8d97d0588a46b29331312393c9722455842857"
+      "sha256": "1746c1cf77b1e3fb2a8afb3e1fb6a90afa300673c55b20c38eb306a3254b0488"
     },
     {
       "bytes": 75464,
@@ -87,9 +87,9 @@
       "sha256": "25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799"
     },
     {
-      "bytes": 124197,
+      "bytes": 124220,
       "path": "scripts/build_gpt_package.py",
-      "sha256": "197cdc32d6c7745f4e2f5fb35935e5dcfb4ec790c5d7c79a41221d991d7fc9a6"
+      "sha256": "70fb9ddc0100252bef232889026c1f7c2d7c72be2071cefd8485fd456342ffe2"
     },
     {
       "bytes": 7824,
@@ -235,24 +235,24 @@
   "evaluation_schema": "bsc-custom-gpt-eval/v2",
   "generated_artifacts": [
     {
-      "bytes": 715,
+      "bytes": 369,
       "path": "GPT_CONVERSATION_STARTERS.md",
-      "sha256": "6ec673cb59a1de63017eb22cc6b8d204bf8d49f2a2e71bcf2d0e5010bdb2ee27"
+      "sha256": "2cb706726dd7ebee03faf26e02dd5d6963b8213ee613beb9f4cc5f1618c495ce"
     },
     {
-      "bytes": 7494,
+      "bytes": 7491,
       "path": "GPT_INSTRUCTIONS.md",
-      "sha256": "9daabea8e532943683d95158413070f7813e22552b38dfdb4b81f9c69d16424e"
+      "sha256": "cdaf4107404b70893f485303b7baa1ad232bea02a61a62d9b046706780f8b105"
     },
     {
-      "bytes": 3630,
+      "bytes": 3322,
       "path": "GPT_PUBLIC_METADATA.md",
-      "sha256": "12587d488f08f457f9a6e118143960c69e10ecbafdc46f591d851ccd3d381ef4"
+      "sha256": "100ea2e1e5aa58603867d3e3727923f1127d1f75dac8e44b58c8060f119b3eb4"
     },
     {
       "bytes": 9216,
       "path": "GPT_SETUP_AND_PUBLISHING.md",
-      "sha256": "328475f49a558c3e8cb244c2ea99b4542e26c2d799a2dcafc8c17e1ffc2b1118"
+      "sha256": "682c1d2b14031e50a0a0c6b4c2c97d5807766bd411da3e24085d7b6e7e4d8933"
     },
     {
       "bytes": 2592,
@@ -517,7 +517,7 @@
   ],
   "generator": {
     "path": "scripts/build_gpt_package.py",
-    "sha256": "197cdc32d6c7745f4e2f5fb35935e5dcfb4ec790c5d7c79a41221d991d7fc9a6",
+    "sha256": "70fb9ddc0100252bef232889026c1f7c2d7c72be2071cefd8485fd456342ffe2",
     "version": "bsc-custom-gpt-generator-v1"
   },
   "historical_artifact_evaluation_case_count": 39,
