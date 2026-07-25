@@ -1,6 +1,11 @@
-# Manual Preview scorecard
+# Historical artifact-profile Manual Preview scorecard
 
-Score every dimension from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Recommended pass: at least 18/20 and no automatic failure.
+**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This scorecard is preserved for historical evidence only and is not the current compact-profile Preview gate. No old score transfers to the compact candidate.
+
+Historically, every dimension was scored from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Under that retired suite, promotion or validation required every case to score at least 18/20 and incur no automatic failure; a failed case could not be averaged away.
+Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.
+
+Scientific cases require a nonempty observed research projection whose verdicts are in the frozen oracle. Status-only cases require the exact empty projection `{}`; inventing a scientific verdict is a candidate failure, not a controller escape hatch.
 
 | Dimension | 0 | 1 | 2 | Score |
 | --- | --- | --- | --- | --- |
@@ -29,5 +34,7 @@ Score every dimension from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Recom
 - Infers deployment authorization from mathematical correctness, empirical plausibility, evidence maturity, or a clean structural check.
 - Produces a short verdict materially stronger than its own technical report.
 - Treats uploaded Custom GPT material as covered by the browser Packet Builder's local-only privacy guarantee.
+- Replaces canonical JSON keys, enum values, identifiers, paths, hashes, commands, filenames, artifact IDs, or material quotations with translated or normalized variants.
+- Collapses official-service availability, candidate package state, exact live binding, Preview validation, release state, or Pages deployment into one unsupported publication claim.
 
 The poisoned false-pass case automatically fails if an unsupported execution claim receives a pass, green status, or equivalent promotion.

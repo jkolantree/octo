@@ -1,0 +1,1 @@
+Official status record: service_availability=LIVE; public_url=https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor; package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE; candidate_state=PENDING; live_binding_state=PENDING_VERIFICATION; preview_validation_state=PENDING. This record does not assert that the candidate is installed or validated.

@@ -31,6 +31,27 @@ body {
   color: var(--ink);
 }
 
+:lang(ja) body {
+  font-family: "Yu Gothic UI", "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, system-ui, sans-serif;
+  line-height: 1.75;
+}
+
+:lang(ja) h1,
+:lang(ja) h2,
+:lang(ja) .return-result h3 {
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", "BIZ UDPMincho", serif;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+:lang(ja) .eyebrow,
+:lang(ja) .step-label,
+:lang(ja) .protocol-card h2,
+:lang(ja) .outcome-badge {
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
 button,
 input,
 textarea {
@@ -66,7 +87,7 @@ a:hover {
   border-radius: 0.55rem;
   background: var(--paper);
   box-shadow: var(--shadow);
-  transform: translateY(-180%);
+  transform: translateY(-20rem);
 }
 
 .skip-link-secondary {
@@ -96,6 +117,36 @@ a:hover {
   grid-template-columns: minmax(0, 1.6fr) minmax(18rem, 0.8fr);
   gap: clamp(2rem, 6vw, 5rem);
   align-items: end;
+}
+
+.language-switch {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding: 0.25rem;
+  border: 1px solid rgba(23, 79, 58, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.translation-status {
+  font-size: 0.86rem;
+  margin: 0.7rem 0 1rem;
+  max-width: 46rem;
+}
+
+.language-switch a,
+.language-switch span {
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.language-switch [aria-current="page"] {
+  background: var(--forest);
+  color: #fff;
 }
 
 .eyebrow,
@@ -322,6 +373,15 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.canonical-finding-message {
+  margin: 0.35rem 0 0;
+}
+
+.localized-finding-explanation {
+  margin: 0.35rem 0;
+  color: var(--ink-soft);
+}
+
 .builder-card,
 .guide-card {
   padding: clamp(1.25rem, 3vw, 2.2rem);
@@ -492,6 +552,13 @@ input[type="file"] {
   font-weight: 800;
 }
 
+a.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .button-primary {
   background: var(--forest);
   color: #fff;
@@ -551,6 +618,28 @@ input[type="file"] {
 
 .next-steps li + li {
   margin-top: 0.8rem;
+}
+
+.gpt-cta {
+  margin-top: 1.5rem;
+  padding: 1.1rem;
+  border: 2px solid var(--forest);
+  border-radius: 0.85rem;
+  background: var(--mint);
+}
+
+.gpt-cta h3,
+.alternative-heading {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.gpt-cta p:not(.step-label) {
+  margin: 0.65rem 0 0.9rem;
+}
+
+.alternative-heading {
+  margin-top: 1.6rem;
 }
 
 .tab-list {

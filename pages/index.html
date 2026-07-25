@@ -6,9 +6,13 @@
   <meta name="description" content="Build a versioned BSC scientific audit packet and inspect structured audit returns locally in your browser.">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>BSC Audit Packet Builder and Return Desk</title>
+  <link rel="alternate" hreflang="en" href="index.html">
+  <link rel="alternate" hreflang="ja" href="ja.html">
+  <link rel="alternate" hreflang="x-default" href="index.html">
   <link rel="stylesheet" href="styles.css">
   <script src="protocol/meta.js" defer></script>
   <script src="profile.js" defer></script>
+  <script src="locale-en.js" defer></script>
   <script src="return-desk-core.js" defer></script>
   <script src="app.js" defer></script>
 </head>
@@ -21,6 +25,10 @@
   <header class="hero">
     <div class="shell hero-grid">
       <div>
+        <nav class="language-switch" aria-label="Language">
+          <span aria-current="page">English</span>
+          <a href="ja.html" lang="ja" hreflang="ja">日本語</a>
+        </nav>
         <p class="eyebrow">BSC Audit Engine · research preview</p>
         <h1>Turn material into a rigorous audit packet.</h1>
         <p class="lede">Paste a claim or attach a file. This page combines it with the versioned BSC protocol for the language model you choose.</p>
@@ -87,7 +95,17 @@
     </section>
 
     <aside class="guide-card" aria-labelledby="guide-heading">
-      <h2 id="guide-heading">What happens next?</h2>
+      <h2 id="guide-heading">Choose how to run the audit</h2>
+      <section class="gpt-cta" aria-labelledby="gpt-cta-heading">
+        <p class="step-label">Ready-to-use route</p>
+        <h3 id="gpt-cta-heading">Open the official BSC Claim Auditor</h3>
+        <p>No generated packet is required for this route. Open the already-built official GPT and paste or attach the original material directly. Uploading there sends material through ChatGPT under your applicable settings and terms; it is not browser-local.</p>
+        <p class="hint"><strong>Candidate boundary.</strong> This page is generated from the repository's <code>0.3.0-alpha.8</code> release candidate. That does not prove those exact candidate bytes are installed or Preview-validated in the live GPT. <a href="https://github.com/jkolantree/octo/blob/main/docs/CUSTOM_GPT_STATUS.md" target="_blank" rel="noopener noreferrer">Check the current live/candidate status.</a></p>
+        <a class="button button-primary" href="https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor" target="_blank" rel="noopener noreferrer" aria-label="Open BSC Claim Auditor in a new tab">Open BSC Claim Auditor</a>
+      </section>
+
+      <h3 class="alternative-heading">Or build a packet for another compatible model</h3>
+
       <ol class="next-steps">
         <li><strong>Build the packet.</strong> Copy it for pasted text, or download it when you also have files.</li>
         <li><strong>Open a capable LLM.</strong> Attach the generated text file and any companion target files.</li>

@@ -2,9 +2,12 @@
 
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
-**Current release:** `v0.3.0-alpha.7`<br>
-**Development line:** `0.3.0-alpha.8.dev0` (unreleased; not installed in the live GPT)<br>
+**Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) (live research preview)<br>
+**Current GitHub release:** `v0.3.0-alpha.7`<br>
+**Release candidate:** `0.3.0-alpha.8` (pending local, Preview, live-binding, merge, and release gates)<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
+
+[日本語](README.ja.md) | [Timestamped publication status](docs/PUBLICATION_STATUS.json)
 
 BSC is offered as infrastructure for careful imagination. It permits ambition, but not free authority.
 
@@ -32,13 +35,16 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 
 ## Choose an entry point
 
-1. **Public Custom GPT - direct ChatGPT audit:** the link-shared alpha.7 [BSC Claim Auditor](docs/CUSTOM_GPT_STATUS.md) is installed and 27/27 Preview-validated. Uploads go through ChatGPT under the user's applicable settings and terms. The GPT has no Action, hosted API, account, analytics, or cloud-storage integration. The alpha.8 development package is not installed there.
-2. **Local browser Packet Builder and Audit Return Desk:** [open the accessible GitHub Pages module](https://jkolantree.github.io/octo/) to construct a versioned packet locally. The alpha.8 source also inspects returned `audit_return.json` drafts and selected artifact bytes locally. Neither function uploads the target, calls an LLM, or runs Python; the new Return Desk is not deployed on the public Pages site until this development line is merged and deployed.
+1. **Official Custom GPT - direct ChatGPT audit:** open the live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor). It currently reports the alpha.8.dev0 controller identity, but no preserved complete post-update Preview evaluation satisfies that version's gate; treat every output as a research-preview draft. Uploads go through ChatGPT under the user's applicable settings and terms. The GPT has no Action, hosted API, account, analytics, or cloud-storage integration. See the exact [live/candidate status](docs/CUSTOM_GPT_STATUS.md).
+2. **Local browser Packet Builder and Audit Return Desk:** [open the accessible GitHub Pages module](https://jkolantree.github.io/octo/) to construct a versioned packet or inspect a returned `audit_return.json` draft and selected artifact bytes locally. Neither function uploads the target, calls an LLM, or runs Python.
 3. **Repository and Python engine - exact checker route:** use [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and preserved command output. This is the only route here that runs the BSC checker.
+
+The repository contains the deterministic package lineage used to configure and evaluate the official GPT, plus the current update candidate. It supports independent inspection, reproducible deployments, compatible forks, and verifiable official updates. The timestamped status record distinguishes observed live identity from candidate bytes.
 
 Supporting routes:
 
 - **First visit:** [START_HERE.md](START_HERE.md) or the accessible offline [START_HERE.html](START_HERE.html)
+- **Japanese first visit:** use [START_HERE.ja.md](START_HERE.ja.md). The [Japanese Pages candidate](pages/ja.html) is pending public deployment; do not share its planned public URL until the post-deploy smoke check passes.
 - **Human-only audit:** [AUDIT_WORKSHEET.md](AUDIT_WORKSHEET.md)
 - **Manual LLM packet:** [BSC_AUDIT_LLM_PACKET.md](BSC_AUDIT_LLM_PACKET.md)
 - **Documentation map:** [docs/index.md](docs/index.md)
@@ -54,7 +60,7 @@ Supporting routes:
 
 The Pages module's code makes no target-data network request, intentionally persists nothing, verifies the versioned audit protocol before enabling output, and prepares a packet for an LLM you choose. Browser, operating-system, extension, clipboard, and download behavior remains outside the page's control. Sending that packet or uploading directly to a Custom GPT crosses into the selected model service and is not local-only. Do not put sensitive material into any third-party model without separate authorization.
 
-The alpha.8 Return Desk checks a closed return schema, bidirectional references, summary projections, fatal-gate derivation, execution disclosures, receipt limits, and available local artifact hashes. A consistent result is not a finding of truth, proof, source authenticity, independent execution, or deployment permission.
+The Return Desk checks a closed return schema, bidirectional references, summary projections, fatal-gate derivation, execution disclosures, receipt limits, and available local artifact hashes. A consistent result is not a finding of truth, proof, source authenticity, independent execution, or deployment permission.
 
 ## Thirty-second example
 

@@ -1,0 +1,72 @@
+{
+  "manifest_schema": "bsc-localization-manifest/v2",
+  "locale": "ja",
+  "canonical_language": "en",
+  "translation_status": "beta",
+  "native_speaker_terminology_review": "pending",
+  "hash_policy": "sha256_raw_file_bytes_no_normalization",
+  "verification_scope": "exact_byte_binding_and_staleness_only_not_translation_quality",
+  "entries": [
+    {
+      "source": "README.md",
+      "source_sha256": "4d753556638642821ad76d67d5f78b6fac45ac19b3f364af7a93c284d1f276ad",
+      "target": "README.ja.md",
+      "target_sha256": "5132b3e2f57972a6706a6ca7a517d6be3857e2dcd47568db0a8bccf690287153"
+    },
+    {
+      "source": "START_HERE.md",
+      "source_sha256": "8f28d07c997e077c56e75a32ffd29e73789956dfcf08159e1cc753bf3a304ca4",
+      "target": "START_HERE.ja.md",
+      "target_sha256": "993a60160d80b01bbfbc488b6f6496e160e52e14dc36794ce2a5dda93ffcce97"
+    },
+    {
+      "source": "docs/AUDIT_RETURN_DESK.md",
+      "source_sha256": "b07b90918047b63a7a9ebdf021e5bd22499691f0f657bc56e6a34410b84ba1b7",
+      "target": "docs/ja/AUDIT_RETURN_DESK.md",
+      "target_sha256": "e67132831e042f7b5677c61ee51de9eda8e2329999549d6ce40d74cede0c837b"
+    },
+    {
+      "source": "docs/CUSTOM_GPT_STATUS.md",
+      "source_sha256": "3260d474c8cecd5dc6042f1afab01ea18f4d781e0c93dda5a0d9cd0eaa85f56e",
+      "target": "docs/ja/CUSTOM_GPT_STATUS.md",
+      "target_sha256": "4262f18ea35a11d1eed846d3d179f6d54d932364d8ceb15b0afc1329919190a5"
+    },
+    {
+      "source": "docs/STATUS_MODEL.md",
+      "source_sha256": "9e7c769b05431ab829209055af86e4898bca99de7fdc95ba1371445fcd99e1f6",
+      "target": "docs/ja/STATUS_MODEL.md",
+      "target_sha256": "db0f6ca6e96e45ae85bf01c1179d6905cecb415911ad831af0b0dce0026c9174"
+    },
+    {
+      "source": "docs/index.md",
+      "source_sha256": "ceeec941d434a58edab1e16b028314ec58d8d55a102fc93693dd003082d86287",
+      "target": "docs/ja/index.md",
+      "target_sha256": "77c9bbecee0cac398a259535c27c58d6f58b95dda830b6f9e090a43580e8bb02"
+    },
+    {
+      "source": "pages/index.html",
+      "source_sha256": "d4d1e61ec9908230b2034654757437368142f46c6f843dd5d88ea990f5e7e735",
+      "target": "pages/ja.html",
+      "target_sha256": "dc784e2f36f0ccc90d300554da6a879f17620164ca182a19545f1157972ea78b"
+    },
+    {
+      "source": "pages/locale-en.js",
+      "source_sha256": "798cb29fea8bf0896f7004d0b4684bce5e4fc10afcf70b2b8e7776517f191dc4",
+      "target": "pages/locale-ja.js",
+      "target_sha256": "d5fbec0337a414185c06636539da1b8486d4736b661e1537667c8c0875b8a232"
+    }
+  ],
+  "supplements": [
+    {
+      "path": "docs/ja/GLOSSARY.md",
+      "sha256": "add9096ee0692da6421453e749d3acef2022f6f42da47078f834cc2c9c5086b0",
+      "role": "japanese_machine_token_glossary"
+    },
+    {
+      "path": "docs/ja/GPT_INTERFACE.md",
+      "sha256": "8fa844abb279b2aacd9006b20aa68a3e022d5b34e4821745ea7311728b676eb8",
+      "role": "japanese_custom_gpt_usage_guide"
+    }
+  ],
+  "manifest_payload_sha256": "3cce98b485044cec64c82ce7659012c25ee361da26c29b2118326e479ad2b104"
+}

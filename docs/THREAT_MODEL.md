@@ -44,7 +44,7 @@ The project aims to preserve:
 - same-model repetition mistaken for independent review.
 - ChatGPT Code Interpreter or Data Analysis presented as if the versioned BSC Python checker ran;
 - an unsupported `Python passed`, `Lean verified it`, or `all tests passed` statement promoted without a bound execution record;
-- public metadata that confuses the validated live alpha.7 GPT with an unpublished development package, GPT Action, or hosted checker API.
+- public metadata that conflates official-service availability, candidate-package state, exact live binding, Preview validation, GitHub release state, Pages deployment, a GPT Action, or a hosted checker API.
 
 The LLM packet treats target material as untrusted evidence, requires a coverage ledger, and forbids claims of execution without actual output. Users must still review generated artifacts.
 
@@ -52,11 +52,44 @@ The LLM packet treats target material as untrusted evidence, requires a coverage
 
 The three entry points do not share one privacy or execution boundary:
 
-1. The link-shared alpha.7 Custom GPT completed its authenticated setup and 27-case Preview gate. The alpha.8 development package is not installed in that live GPT. Uploads are processed through ChatGPT under the user's applicable settings and terms. Neither package contains an Action, hosted API, account, analytics, or cloud storage.
-2. The browser Packet Builder's page code constructs a versioned packet without a target-data network request or intentional persistence. The alpha.8 Return Desk likewise parses returned JSON and hashes user-selected artifacts without such a request. Browser and operating-system history, crash recovery, swap, extensions, accessibility services, clipboard, and downloaded files remain outside the page's control. Sending a packet to a model is a separate action governed by that service.
+1. The official-service URL and its timestamped availability record are maintained in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). A repository package is reproducible source and an update candidate, not evidence that its exact bytes are installed, bound to the saved editor, or Preview-validated. Uploads are processed through ChatGPT under the user's applicable settings and terms. The official configuration contains no Action, hosted API, account, analytics, or cloud storage.
+2. The browser Packet Builder's page code constructs a versioned packet without a target-data network request or intentional persistence. The Return Desk likewise parses returned JSON and hashes user-selected artifacts without such a request. Browser and operating-system history, crash recovery, swap, extensions, accessibility services, clipboard, and downloaded files remain outside the page's control. Sending a packet to a model is a separate action governed by that service.
 3. The repository and Python engine run versioned finite checks locally or in the operator's selected environment. A GPT response or ChatGPT tool result is not BSC Python output unless the correct checker actually ran and its result is bound to the inputs.
 
 For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
+
+The Custom GPT artifact-transport fallback is generated during the original
+Data Analysis compiler-v9 transaction, after `audit_return.json` is serialized.
+Same-response transport v2 derives one deterministic bounded container from the
+same final in-memory output bytes, zlib-compresses it into contiguous data
+shards of at most 2,048 bytes, and adds one `xor_parity_v1` shard computed over
+zero-padded data shards. The compiler includes the complete envelope in
+canonical no-terminal-LF stdout. The candidate must copy that stdout
+byte-for-byte into one final fenced code block; it must not regenerate, trim,
+reserialize, or independently author any runtime, hash, size, Base64, data, or
+parity value.
+
+The controller may repair only one content-faulted data shard with intact
+metadata and expected ASCII Base64 text length, and only while every other data
+shard and parity is valid. It then reruns all aggregate, container, member, and
+topology checks. Aligned-quartet omission, metadata mutation, multiple bad data
+shards, or bad data together with bad parity remains a candidate transport
+failure. Valid data with only an exact-length parity-content fault is accepted
+without parity as deterministic state `parity_degraded_not_used`.
+
+The controller always validates the already-preserved bundle, uses direct
+acquisition as the primary candidate-byte path, and selects the reconstructed
+member only when no direct bytes exist. If both copies exist, any byte
+difference is a candidate transport failure. The controller binds an explicit
+per-file outcome for every visible direct control; absence of bytes alone cannot
+be relabeled `no_download_event`. It derives the transport ledger from those
+bound observations rather than accepting a model-authored record. A missing,
+malformed, blocked, or noncanonical candidate block is also a candidate
+transport failure.
+Controller loss or mutation of a block demonstrably present in the complete
+raw response instead invalidates the trial. A valid fallback identifies only
+the exported bundle received by the controller; unavailable download-button
+bytes remain `transport_identity_unresolved`, not corrupt.
 
 ## Returned-output threats
 
@@ -134,4 +167,4 @@ Every audit report should disclose:
 
 The strongest defense against overclaiming is a small, reproducible audit that another person can make fail.
 
-The alpha.8 Audit Return Desk is implemented in the development line but is not part of the current alpha.7 release or public Pages deployment until merged. A consistent result remains explicitly non-admissive.
+The Audit Return Desk is an explicitly non-admissive consistency inspector. Whether a particular source version is merged, released, or deployed to Pages is recorded separately and does not change the authority of a `consistent` result.
