@@ -71,7 +71,22 @@ def main() -> int:
     for directory in ("examples", "templates", "schemas", "src/bsc_audit/schema_data"):
         for path in sorted((ROOT / directory).glob("*.json")):
             load_strict_json(path)
-    for relative in (".zenodo.json", "research/zenodo.json", "toolchain.lock.json"):
+
+    source_manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8").splitlines()
+    for required_line in (
+        "include README.ja.md",
+        "include START_HERE.ja.md",
+        "recursive-include docs *.md *.css *.json",
+    ):
+        if source_manifest.count(required_line) != 1:
+            fail(f"source distribution manifest must contain exactly once: {required_line}")
+    for relative in (
+        ".zenodo.json",
+        "docs/PUBLICATION_STATUS.json",
+        "docs/ja/TRANSLATION_MANIFEST.json",
+        "research/zenodo.json",
+        "toolchain.lock.json",
+    ):
         load_strict_json(ROOT / relative)
     privacy_policy = load_strict_json(ROOT / "privacy-policy.json")
     if not isinstance(privacy_policy, dict) or privacy_policy.get("policy_version") != "1.0.0":
@@ -126,8 +141,8 @@ def main() -> int:
         fail("software Zenodo metadata must declare Apache-2.0")
     if not isinstance(paper_zenodo, dict) or paper_zenodo.get("license") != "CC-BY-4.0":
         fail("paper Zenodo metadata must declare CC-BY-4.0")
-    if software_zenodo.get("publication_date") != "2026-07-21":
-        fail("software archive metadata must use the corrected public release date")
+    if software_zenodo.get("publication_date") != "2026-07-23":
+        fail("software archive metadata must use the alpha.8 release date")
 
     toolchain = load_strict_json(ROOT / "toolchain.lock.json")
     if not isinstance(toolchain, dict):
@@ -168,13 +183,16 @@ def main() -> int:
                 fail(f"stale repository identifier in {path.relative_to(ROOT)}")
 
     citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
-    if "date-released: 2026-07-21" not in citation:
-        fail("CITATION.cff must use the corrected public release date")
+    if "date-released: 2026-07-23" not in citation:
+        fail("CITATION.cff must use the alpha.8 release date")
     public_version = __version__.replace("a", "-alpha.", 1)
     if ".dev" in __version__:
-        release_match = re.search(r"\*\*Current release:\*\* `v([^`]+)`", (ROOT / "README.md").read_text(encoding="utf-8"))
+        release_match = re.search(
+            r"\*\*Current GitHub release:\*\* `v([^`]+)`",
+            (ROOT / "README.md").read_text(encoding="utf-8"),
+        )
         if not release_match or f"version: {release_match.group(1)}" not in citation:
-            fail("development builds must preserve citation metadata for the named current release")
+            fail("development builds must preserve citation metadata for the named current GitHub release")
     elif f"version: {public_version}" not in citation:
         fail(f"CITATION.cff does not match package version {__version__}")
 

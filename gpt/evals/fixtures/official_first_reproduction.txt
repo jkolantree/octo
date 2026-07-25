@@ -1,0 +1,1 @@
+The official BSC Claim Auditor is LIVE at https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor. The repository provides a REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE whose candidate_state and preview_validation_state are PENDING. Reproduction, forking, and authorized updating are optional workflows.

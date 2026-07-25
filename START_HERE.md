@@ -4,11 +4,19 @@ The BSC Audit Engine is a research preflight worksheet plus a small exact checke
 
 It is not a truth machine. It cannot turn a plausible idea into a theorem, validate an arbitrary proof, or grant permission to deploy a system.
 
+[日本語](START_HERE.ja.md)
+
 ## Choose your route
 
-### One-page local builder
+### Official Custom GPT
 
-Open the [accessible GitHub Pages module](https://jkolantree.github.io/octo/), paste or attach material, choose an audit depth, then copy or download the generated packet. The page code makes no target-data network request and does not intentionally persist target material; browser and operating-system behavior remains outside its control. The alpha.8 development source also adds an Audit Return Desk for bringing back `audit_return.json` plus declared artifacts and checking their internal bindings locally after the change is merged and deployed. The page does not call an LLM or run the Python checker; sharing the packet with a model is a separate action governed by that service's privacy terms. A Return Desk `consistent` result is not a truth, proof, execution, citation, or deployment certificate.
+Open the live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) for a direct ChatGPT audit. It is already built and link-shared as a research preview. The repository's [Custom GPT package](gpt/README.md) is the reproducible source for inspecting, evaluating, updating, or independently forking that configuration.
+
+The current live controller identifies as alpha.8.dev0, while no preserved complete post-update Preview run satisfies its gate. Do not treat availability as validation. Uploads are processed by ChatGPT under the user's applicable settings and terms and are not local-only. See [Custom GPT live status](docs/CUSTOM_GPT_STATUS.md).
+
+### One-page local builder and Return Desk
+
+Open the [accessible English GitHub Pages module](https://jkolantree.github.io/octo/), paste or attach material, choose an audit depth, then copy or download the generated packet. The [Japanese Pages candidate](pages/ja.html) is included in this source tree but remains pending public deployment; do not share its planned public URL until the post-deploy smoke check passes. You can also bring back `audit_return.json` plus declared artifacts and check their internal bindings locally. The page code makes no target-data network request and does not intentionally persist target material; browser and operating-system behavior remains outside its control. The page does not call an LLM or run the Python checker; sharing the packet with a model is a separate action governed by that service's privacy terms. A Return Desk `consistent` result is not a truth, proof, execution, citation, or deployment certificate.
 
 ### Human route
 

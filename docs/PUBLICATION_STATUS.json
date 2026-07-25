@@ -1,0 +1,58 @@
+{
+  "schema": "bsc-publication-status-v1",
+  "observed_at_utc": "2026-07-22T18:37:44Z",
+  "status_is_a_timestamped_snapshot": true,
+  "official_custom_gpt": {
+    "url": "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor",
+    "availability": "live",
+    "observed_controller_version": "0.3.0-alpha.8.dev0",
+    "observed_profile_sha256": "99d6f78d3af21c68ddb6545b034d340e77b73d2f1ffa657120d4147455128b90",
+    "runtime_identity_smoke": "pass",
+    "complete_preview_gate_for_observed_version": "not_completed",
+    "publication_authority": "research_preview_only"
+  },
+  "github_main": {
+    "commit": "1e5c60360d8473e170f828597241dc9ab5844d3b",
+    "tree": "f1460fb6e84c11ad363e3c8796ea22a3c2a4fde8",
+    "merged_pull_request": "https://github.com/jkolantree/octo/pull/12",
+    "exact_audit": {
+      "status": "pass",
+      "run": "https://github.com/jkolantree/octo/actions/runs/29943461421"
+    }
+  },
+  "github_pages": {
+    "url": "https://jkolantree.github.io/octo/",
+    "deployed_commit": "1e5c60360d8473e170f828597241dc9ab5844d3b",
+    "observed_version": "0.3.0-alpha.8.dev0",
+    "japanese_route": {
+      "url": "https://jkolantree.github.io/octo/ja.html",
+      "state": "candidate_not_deployed",
+      "observed_http_status": 404,
+      "observed_at_utc": "2026-07-22T18:37:44Z"
+    },
+    "publish_workflow": {
+      "status": "pass",
+      "run": "https://github.com/jkolantree/octo/actions/runs/29943461422"
+    }
+  },
+  "latest_github_release": {
+    "tag": "v0.3.0-alpha.7",
+    "commit": "5ac1b85d4d573d15ce5cf68329443de11428b490",
+    "url": "https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.7",
+    "state": "unchanged"
+  },
+  "next_repository_candidate": {
+    "version": "0.3.0-alpha.8",
+    "state": "release_candidate_pending_gates",
+    "complete_preview_gate": "required_before_merge_live_update_or_release",
+    "japanese_pages_deployment": "pending",
+    "japanese_layer": "beta_pending_native_speaker_terminology_review"
+  },
+  "interpretation": {
+    "live_does_not_mean_preview_validated": true,
+    "source_ci_does_not_mean_custom_gpt_preview_validated": true,
+    "repository_package_does_not_prove_builder_configuration": true,
+    "candidate_source_does_not_mean_pages_deployed": true,
+    "pages_local_processing_does_not_extend_to_chatgpt_uploads": true
+  }
+}

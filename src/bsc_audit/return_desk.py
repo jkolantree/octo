@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import codecs
+import hashlib
 import unicodedata
 from collections import Counter
 from pathlib import Path
@@ -20,8 +22,8 @@ CANONICAL_ACTIVITIES = (
     "proposed_computation",
 )
 
-EXPECTED_PROTOCOL_VERSION = "0.3.0-alpha.8.dev0"
-EXPECTED_PROTOCOL_SHA256 = "sha256:13fdeff40bdd82b46f5b6af5fc409b09d584e2c6d035e8cd7a6f557216cd045b"
+EXPECTED_PROTOCOL_VERSION = "0.3.0-alpha.8"
+EXPECTED_PROTOCOL_SHA256 = "sha256:1b587f18e4eb83be8d1ef50294b174f54f339d966f25d2d7b56d1b5b5fb94e31"
 MAX_RETURN_ARTIFACTS = 32
 MAX_RETURN_TOTAL_ARTIFACT_BYTES = 256 * 1024 * 1024
 
@@ -33,6 +35,17 @@ MECHANICAL_ACTIVITIES = {
 }
 
 EVIDENCE_ARTIFACT_ROLES = {"evidence", "source", "execution_output"}
+TEXTUAL_APPLICATION_MEDIA_TYPES = {
+    "application/ecmascript",
+    "application/javascript",
+    "application/json",
+    "application/sql",
+    "application/xml",
+    "application/yaml",
+}
+ALLOWED_TEXT_CONTROL_BYTES = {0x09, 0x0A, 0x0D}
+DATA_ANALYSIS_LEDGER_HEADER = "bsc_chatgpt_data_analysis_output_version: 2"
+DATA_ANALYSIS_LEDGER_SECTION = "finalized_artifacts:"
 WINDOWS_RESERVED_BASENAMES = {
     "CON", "PRN", "AUX", "NUL",
     *(f"COM{number}" for number in range(1, 10)),
@@ -65,6 +78,91 @@ def _has_visible_text(value: str) -> bool:
         not character.isspace() and unicodedata.category(character)[0] not in {"C", "M", "Z"}
         for character in value
     )
+
+
+def _is_textual_media_type(value: str) -> bool:
+    media_type = value.split(";", 1)[0].strip().lower()
+    return (
+        media_type.startswith("text/")
+        or media_type in TEXTUAL_APPLICATION_MEDIA_TYPES
+        or media_type.endswith(("+json", "+xml", "+yaml"))
+    )
+
+
+def _has_exact_runtime_binding(
+    text: str,
+    version: str,
+    expected_rows: Iterable[tuple[str, int, str]],
+) -> bool:
+    normalized_rows = sorted(expected_rows, key=lambda row: row[2])
+    expected_lines = [
+        DATA_ANALYSIS_LEDGER_HEADER,
+        f"session_reported_runtime={version}",
+        "runtime_provenance=session_reported",
+        DATA_ANALYSIS_LEDGER_SECTION,
+        *(
+            f"{digest}  {size}  {filename}"
+            for digest, size, filename in normalized_rows
+        ),
+    ]
+    return text == "\n".join(expected_lines) + "\n"
+
+
+def _inspect_text_artifact(
+    root: Path,
+    filename: str,
+    expected_hash: str,
+    *,
+    max_bytes: int,
+    capture_text: bool,
+) -> tuple[bool, str, Any | None, str | None]:
+    """Re-read a hash-matched textual artifact with strict UTF-8 and byte controls."""
+
+    try:
+        candidate = resolve_local_artifact(root, filename)
+    except (ValueError, OSError, RuntimeError):
+        return False, "unsafe_path", None, None
+
+    digest = hashlib.sha256()
+    decoder = codecs.getincrementaldecoder("utf-8")(errors="strict")
+    decoded_parts: list[str] | None = [] if capture_text else None
+    forbidden: list[dict[str, Any]] = []
+    bytes_read = 0
+    try:
+        with candidate.open("rb") as stream:
+            while True:
+                remaining = max_bytes - bytes_read
+                chunk = stream.read(min(1024 * 1024, remaining + 1))
+                if not chunk:
+                    break
+                chunk_offset = bytes_read
+                bytes_read += len(chunk)
+                if bytes_read > max_bytes:
+                    return False, "artifact_too_large", {"max_bytes": max_bytes}, None
+                digest.update(chunk)
+                if len(forbidden) < 16:
+                    for offset, byte in enumerate(chunk):
+                        if (byte < 0x20 and byte not in ALLOWED_TEXT_CONTROL_BYTES) or byte == 0x7F:
+                            forbidden.append({"offset": chunk_offset + offset, "byte": f"0x{byte:02X}"})
+                            if len(forbidden) == 16:
+                                break
+                decoded = decoder.decode(chunk, final=False)
+                if decoded_parts is not None:
+                    decoded_parts.append(decoded)
+            decoded = decoder.decode(b"", final=True)
+            if decoded_parts is not None:
+                decoded_parts.append(decoded)
+    except UnicodeDecodeError as exc:
+        return False, "invalid_utf8", {"error": str(exc)}, None
+    except OSError:
+        return False, "unreadable_artifact", None, None
+
+    actual_hash = f"sha256:{digest.hexdigest()}"
+    if actual_hash != expected_hash:
+        return False, "hash_mismatch", {"actual_sha256": actual_hash}, None
+    if forbidden:
+        return False, "prohibited_control_bytes", forbidden, None
+    return True, "verified_text", None, ("".join(decoded_parts) if decoded_parts is not None else None)
 
 
 def _preflight_return_artifacts(
@@ -429,8 +527,12 @@ def audit_return_document(raw: dict[str, Any], artifact_root: Path | None) -> li
                 )
             )
 
+    request_id = raw["bindings"]["request_artifact_id"]
+    report_id = raw["bindings"]["report_artifact_id"]
     filenames: dict[str, str] = {}
     artifact_verified: dict[str, bool] = {}
+    verified_artifact_text: dict[str, str] = {}
+    bound_report_text: str | None = None
     for artifact_id, artifact in artifacts.items():
         filename = artifact["filename"]
         filename_key, filename_unsafe = _portable_filename(filename)
@@ -483,7 +585,58 @@ def audit_return_document(raw: dict[str, Any], artifact_root: Path | None) -> li
         else:
             ok, actual = False, None
         artifact_verified[artifact_id] = ok
-        if ok:
+        if ok and artifact_root is not None and _is_textual_media_type(artifact["media_type"]):
+            text_ok, text_reason, text_witness, captured_text = _inspect_text_artifact(
+                artifact_root,
+                filename,
+                artifact["sha256"],
+                max_bytes=min(MAX_ARTIFACT_BYTES, reserved_size),
+                capture_text=(
+                    artifact_id == report_id
+                    or artifact["role"] in {"execution_output", "receipt"}
+                ),
+            )
+            if not text_ok:
+                artifact_verified[artifact_id] = False
+                if text_reason == "invalid_utf8":
+                    findings.append(
+                        _finding(
+                            Severity.BLOCKED,
+                            "RETURN_ARTIFACT_TEXT_ENCODING_INVALID",
+                            f"$.artifacts[{artifact_id}]",
+                            "a locally hash-matched textual artifact must decode as strict UTF-8",
+                            witness=text_witness,
+                            repair="re-export the exact textual artifact as strict UTF-8 and update its SHA-256",
+                        )
+                    )
+                elif text_reason == "prohibited_control_bytes":
+                    findings.append(
+                        _finding(
+                            Severity.BLOCKED,
+                            "RETURN_ARTIFACT_TEXT_CONTROL_INVALID",
+                            f"$.artifacts[{artifact_id}]",
+                            "textual artifacts may contain no ASCII control bytes except TAB, LF, and CR",
+                            witness=text_witness,
+                            repair="remove the prohibited control bytes, re-export, and update the artifact SHA-256",
+                        )
+                    )
+                else:
+                    findings.append(
+                        _finding(
+                            Severity.BLOCKED,
+                            "RETURN_ARTIFACT_BINDING_INVALID",
+                            f"$.artifacts[{artifact_id}]",
+                            "the textual artifact changed or became unreadable during final local inspection",
+                            witness={"artifact_id": artifact_id, "reason": text_reason, "detail": text_witness},
+                            repair="freeze the exact artifact bytes, recompute SHA-256, and inspect again",
+                        )
+                    )
+                continue
+            if captured_text is not None:
+                verified_artifact_text[artifact_id] = captured_text
+            if artifact_id == report_id:
+                bound_report_text = captured_text
+        if artifact_verified[artifact_id]:
             continue
         witness: dict[str, Any] = {"artifact_id": artifact_id, "reason": reason}
         if actual is not None:
@@ -511,8 +664,6 @@ def audit_return_document(raw: dict[str, Any], artifact_root: Path | None) -> li
                 )
             )
 
-    request_id = raw["bindings"]["request_artifact_id"]
-    report_id = raw["bindings"]["report_artifact_id"]
     _missing_refs([request_id], artifacts, "$.bindings.request_artifact_id", "artifact", findings)
     _missing_refs([report_id], artifacts, "$.bindings.report_artifact_id", "artifact", findings)
     if request_id == report_id:
@@ -684,6 +835,53 @@ def audit_return_document(raw: dict[str, Any], artifact_root: Path | None) -> li
         _missing_refs(obligation["claim_ids"], claims, f"$.unresolved_obligations[{obligation_id}].claim_ids", "claim", findings)
         _missing_refs(obligation["gate_ids"], gates, f"$.unresolved_obligations[{obligation_id}].gate_ids", "fatal gate", findings)
         _missing_refs(obligation["evidence_ids"], evidence, f"$.unresolved_obligations[{obligation_id}].evidence_ids", "evidence", findings)
+        declared_claim_ids = set(obligation["claim_ids"])
+        declared_gate_ids = set(obligation["gate_ids"])
+        owning_claim_ids = {
+            claim_id
+            for claim_id, claim in claims.items()
+            if declared_gate_ids & set(claim["fatal_gate_ids"])
+        }
+        if (
+            not declared_claim_ids
+            or not declared_gate_ids
+            or declared_claim_ids != owning_claim_ids
+        ):
+            findings.append(
+                _finding(
+                    Severity.BLOCKED,
+                    "RETURN_OBLIGATION_SCOPE_MISMATCH",
+                    f"$.unresolved_obligations[{obligation_id}]",
+                    "an unresolved obligation must bind exactly the claims that own its declared fatal gates",
+                    witness={
+                        "declared_claim_ids": sorted(declared_claim_ids),
+                        "declared_gate_ids": sorted(declared_gate_ids),
+                        "gate_owner_claim_ids": sorted(owning_claim_ids),
+                    },
+                )
+            )
+        evidence_scope_failures: dict[str, list[str]] = {}
+        for evidence_id in obligation["evidence_ids"]:
+            evidence_record = evidence.get(evidence_id)
+            if evidence_record is None:
+                continue
+            failures: list[str] = []
+            if not declared_claim_ids.issubset(evidence_record["claim_ids"]):
+                failures.append("obligation_claim_scope_not_covered")
+            if not (declared_gate_ids & set(evidence_record["gate_ids"])):
+                failures.append("obligation_gate_scope_not_covered")
+            if failures:
+                evidence_scope_failures[evidence_id] = failures
+        if evidence_scope_failures:
+            findings.append(
+                _finding(
+                    Severity.BLOCKED,
+                    "RETURN_OBLIGATION_SCOPE_MISMATCH",
+                    f"$.unresolved_obligations[{obligation_id}].evidence_ids",
+                    "evidence cited by an unresolved obligation must cover its claim scope and at least one declared gate",
+                    witness=evidence_scope_failures,
+                )
+            )
 
     receipt_artifact_counts = Counter(receipt["artifact_id"] for receipt in receipts.values())
     reused_receipt_artifacts = {
@@ -800,6 +998,149 @@ def audit_return_document(raw: dict[str, Any], artifact_root: Path | None) -> li
                     "file_read_only is valid only for ChatGPT Data Analysis file access",
                 )
             )
+        if activity in {"bsc_python_checker", "external_proof_tool", "empirical_test"} and status == "not_applicable":
+            findings.append(
+                _finding(
+                    Severity.BLOCKED,
+                    "RETURN_EXECUTION_NOT_APPLICABLE_MISUSED",
+                    f"$.execution[{activity}].status",
+                    "an unexecuted BSC checker, external proof tool, or empirical test must be recorded as not_run, never not_applicable",
+                    witness=activity,
+                )
+            )
+        if status == "ran" and activity != "model_reasoning":
+            version = record["version"]
+            support_artifact_ids = set(record["output_artifact_ids"])
+            support_artifact_ids.update(
+                receipts[receipt_id]["artifact_id"]
+                for receipt_id in record["receipt_ids"]
+                if receipt_id in receipts
+            )
+            version_artifact_ids = sorted(
+                artifact_id
+                for artifact_id in support_artifact_ids
+                if (
+                    isinstance(version, str)
+                    and version in verified_artifact_text.get(artifact_id, "")
+                )
+            )
+            if not version_artifact_ids:
+                findings.append(
+                    _finding(
+                        Severity.BLOCKED,
+                        "RETURN_EXECUTION_VERSION_UNBOUND",
+                        f"$.execution[{activity}].version",
+                        "the exact version for every ran non-model activity must appear in a locally verified bound execution output or receipt",
+                        witness={
+                            "activity": activity,
+                            "version": version,
+                            "support_artifact_ids": sorted(support_artifact_ids),
+                            "text_artifact_ids": sorted(
+                                support_artifact_ids & set(verified_artifact_text)
+                            ),
+                        },
+                    )
+                )
+            support_references = sorted(
+                {
+                    reference
+                    for artifact_id in version_artifact_ids
+                    if artifact_id in artifacts
+                    for reference in (
+                        artifact_id,
+                        artifacts[artifact_id]["filename"],
+                    )
+                }
+            )
+            if (
+                bound_report_text is None
+                or not any(
+                    reference in bound_report_text
+                    for reference in support_references
+                )
+            ):
+                findings.append(
+                    _finding(
+                        Severity.BLOCKED,
+                        "RETURN_EXECUTION_OUTPUT_NOT_REFERENCED",
+                        f"$.execution[{activity}]",
+                        "the verified human report must reference a bound version-bearing execution output or receipt instead of independently reproducing its version",
+                        witness={
+                            "activity": activity,
+                            "report_artifact_id": report_id,
+                            "report_text_verified": bound_report_text is not None,
+                            "accepted_references": support_references,
+                        },
+                    )
+                )
+            if activity == "chatgpt_data_analysis":
+                runtime_artifact_ids = sorted(
+                    artifact_id
+                    for artifact_id in record["output_artifact_ids"]
+                    if (
+                        artifact_id in artifacts
+                        and artifacts[artifact_id]["role"] == "execution_output"
+                        and artifacts[artifact_id]["filename"]
+                        == "chatgpt_data_analysis_output.txt"
+                    )
+                )
+                runtime_texts = [
+                    verified_artifact_text.get(artifact_id)
+                    for artifact_id in runtime_artifact_ids
+                ]
+                runtime_ledger_rows: list[tuple[str, int, str]] = []
+                runtime_ledger_members_verified = True
+                runtime_artifact_id = (
+                    runtime_artifact_ids[0]
+                    if len(runtime_artifact_ids) == 1
+                    else None
+                )
+                for artifact_id in record["output_artifact_ids"]:
+                    if artifact_id == runtime_artifact_id:
+                        continue
+                    artifact = artifacts.get(artifact_id)
+                    if artifact is None or artifact["role"] in {"request", "source"}:
+                        continue
+                    reason, size = artifact_preflight.get(
+                        artifact_id, ("unreadable_artifact", None)
+                    )
+                    if (
+                        reason != "ready"
+                        or size is None
+                        or not artifact_verified.get(artifact_id, False)
+                    ):
+                        runtime_ledger_members_verified = False
+                        continue
+                    runtime_ledger_rows.append(
+                        (
+                            artifact["sha256"].removeprefix("sha256:"),
+                            size,
+                            artifact["filename"],
+                        )
+                    )
+                runtime_binding_ok = (
+                    len(runtime_artifact_ids) == 1
+                    and len(runtime_texts) == 1
+                    and isinstance(runtime_texts[0], str)
+                    and isinstance(version, str)
+                    and runtime_ledger_members_verified
+                    and _has_exact_runtime_binding(
+                        runtime_texts[0], version, runtime_ledger_rows
+                    )
+                )
+                if not runtime_binding_ok:
+                    findings.append(
+                        _finding(
+                            Severity.BLOCKED,
+                            "RETURN_DATA_ANALYSIS_RUNTIME_BINDING_INVALID",
+                            f"$.execution[{activity}]",
+                            "ChatGPT Data Analysis must bind one verified chatgpt_data_analysis_output.txt that deterministically projects the structured version as a session-reported, not independently authenticated runtime",
+                            witness={
+                                "runtime_artifact_ids": runtime_artifact_ids,
+                                "structured_version": version,
+                            },
+                        )
+                    )
         if activity == "proposed_computation" and status in {"ran", "file_read_only"}:
             findings.append(
                 _finding(
@@ -967,6 +1308,27 @@ def audit_return_document(raw: dict[str, Any], artifact_root: Path | None) -> li
                     witness=execution_output_failures,
                 )
             )
+        verified_evidence_output_failures = sorted(
+            identifier
+            for identifier in artifact_ids
+            if record["status"] == "verified"
+            and identifier in artifacts
+            and artifacts[identifier]["role"] == "evidence"
+            and not any(
+                activity in execution and identifier in execution[activity]["output_artifact_ids"]
+                for activity in record["execution_activities"]
+            )
+        )
+        if verified_evidence_output_failures:
+            findings.append(
+                _finding(
+                    Severity.BLOCKED,
+                    "RETURN_EVIDENCE_SUPPORT_OUTPUT_MISMATCH",
+                    f"$.evidence[{evidence_id}].artifact_ids",
+                    "every role=evidence artifact in a verified evidence record must be an output of a cited execution activity",
+                    witness=verified_evidence_output_failures,
+                )
+            )
         receipt_ids = record["receipt_ids"]
         receipts_ok = all(receipt_effective.get(identifier, False) for identifier in receipt_ids)
         activities_ok = bool(record["execution_activities"]) and all(
@@ -1060,7 +1422,12 @@ def audit_return_document(raw: dict[str, Any], artifact_root: Path | None) -> li
             identifier in artifacts and artifacts[identifier]["role"] in EVIDENCE_ARTIFACT_ROLES
             for identifier in artifact_ids
         )
-        artifact_roles_ok = not invalid_role_artifacts and not source_scope_failures and not execution_output_failures
+        artifact_roles_ok = (
+            not invalid_role_artifacts
+            and not source_scope_failures
+            and not execution_output_failures
+            and not verified_evidence_output_failures
+        )
         evidence_effective[evidence_id] = (
             record["status"] == "verified"
             and artifacts_ok
