@@ -18,7 +18,7 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
 
 1. For an independent reproduction or fork, open `https://chatgpt.com/gpts` and select **Create**. For an authorized update of the official GPT, open its existing editor and use **Edit/Configure**. A fork must not imply official status.
 2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.
-3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7456 characters and 7456 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
+3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7494 characters and 7494 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
 4. Upload these Knowledge files in this exact order:
    1. `BSC_PROTOCOL.md` — 19500 bytes — SHA-256 `5fc71befdd1cab3b2f6689ffacec8736e3421435c7cdb17a0aafde4d5d51da91` — Deterministic Knowledge wrapper containing the canonical normative protocol
    2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 7455 bytes — SHA-256 `c03075b00c2616ab6b2ec0aa4a57d3ead09d89221b74fec046b4bb7adc6afd85` — Research, evidence, gate, execution, deployment, and CLI status boundaries
