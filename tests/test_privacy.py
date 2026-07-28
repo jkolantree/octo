@@ -31,7 +31,10 @@ class PrivacyTests(unittest.TestCase):
         return {finding.code for finding in findings}
 
     def test_registered_project_identity_contract_is_exact(self) -> None:
-        self.assertEqual(self.policy.project_identities, frozenset({"J. Tree", "Tree, J.", "jtree", "jkolantree"}))
+        self.assertEqual(
+            self.policy.project_identities,
+            frozenset({"J. Tree", "Tree, J.", "jtree", "jkolantree", "tree"}),
+        )
 
     def test_personal_email_fails_closed_without_echoing_it(self) -> None:
         secret = "person" + "@" + "example.com"
@@ -45,8 +48,10 @@ class PrivacyTests(unittest.TestCase):
 
     def test_project_commit_email_must_use_a_registered_noreply_handle(self) -> None:
         self.assertTrue(_noreply_email("J. Tree", "307349551+jkolantree@users.noreply.github.com", self.policy))
+        self.assertTrue(_noreply_email("tree", "307349551+jkolantree@users.noreply.github.com", self.policy))
         unrelated = "unrelated" + "@" + "users.noreply.github.com"
         self.assertFalse(_noreply_email("J. Tree", unrelated, self.policy))
+        self.assertFalse(_noreply_email("tree", unrelated, self.policy))
 
     def test_local_path_and_private_key_fail_closed(self) -> None:
         payload = "/" + "Users/alice/project\n-----BEGIN " + "PRIVATE KEY-----"

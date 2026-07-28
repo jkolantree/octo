@@ -89,7 +89,7 @@ def main() -> int:
     ):
         load_strict_json(ROOT / relative)
     privacy_policy = load_strict_json(ROOT / "privacy-policy.json")
-    if not isinstance(privacy_policy, dict) or privacy_policy.get("policy_version") != "1.0.0":
+    if not isinstance(privacy_policy, dict) or privacy_policy.get("policy_version") != "1.0.1":
         fail("privacy policy is missing or has an unsupported version")
 
     for schema in sorted((ROOT / "schemas").glob("*.json")):

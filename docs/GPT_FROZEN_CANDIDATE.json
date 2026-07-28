@@ -774,10 +774,10 @@
       "sha256": "db953ba55c5eac49f204c8def4cd1ddf00042364fb83ab92a7e1e707d08e23b1"
     },
     {
-      "bytes": 10071,
+      "bytes": 10297,
       "category": "tests",
       "path": "tests/test_privacy.py",
-      "sha256": "53d677a885d55b1f1e91d2f5da7a7648af468df7c42ec426b2f2a0e07d3d1dcb"
+      "sha256": "3d81f83133c28c241c56703b08cb0f3ac372fdd11a8eaec7a5c1e07e25d3c257"
     },
     {
       "bytes": 4135,

@@ -1,10 +1,11 @@
 {
-  "policy_version": "1.0.0",
+  "policy_version": "1.0.1",
   "allowed_project_identities": [
     "J. Tree",
     "Tree, J.",
     "jtree",
-    "jkolantree"
+    "jkolantree",
+    "tree"
   ],
   "allowed_bot_identities": [
     "GitHub",
