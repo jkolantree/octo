@@ -14,7 +14,7 @@
     {
       "bytes": 30272,
       "path": "docs/GPT_FROZEN_CANDIDATE.json",
-      "sha256": "a863fbf8ff37a8e7624900c424f96ecb0b26188de2904846060c69b9f08e4fa1"
+      "sha256": "9fe3bb1d51cb0adadfc98e3fff6ea7cb7444042f72765f7693a216bf82913e7a"
     },
     {
       "bytes": 10099,
@@ -97,9 +97,9 @@
       "sha256": "8871392adac4691458a5b06e4d8ef38bb4d07a8b7ad471512bb59f88ea288259"
     },
     {
-      "bytes": 14307,
+      "bytes": 20139,
       "path": "scripts/check_compact_preview_response.py",
-      "sha256": "aa40d551032c1c2425cf53a5b3987122b361733cdfec546d496f0e6f76e7ea68"
+      "sha256": "fe74e9cc323dd665d9542919eaa2793411e4f5bc863fe7732c197b5cb220ca29"
     },
     {
       "bytes": 134831,
@@ -152,9 +152,9 @@
       "sha256": "7caba1ab2c4deef24c99ba14b2204e6c67ca6b8258c17bc83e8adba0a1bb1201"
     },
     {
-      "bytes": 22040,
+      "bytes": 27609,
       "path": "tests/test_compact_preview_response.py",
-      "sha256": "d57c3283fec6687c645e64959dc52f91d8e55d7e4a4d9f21256bf6dd554fd8cf"
+      "sha256": "94b91a2f3eafe6e249fa1c64502572bd00a5c98d2238c7941d5b683d915aaab0"
     },
     {
       "bytes": 77022,
