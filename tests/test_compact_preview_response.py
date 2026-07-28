@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from check_compact_preview_response import (  # noqa: E402
+    CHECKER_VERSION,
     COMPACT_PREVIEW_CASE_IDS,
     DEFAULT_QUICK_CASE_ID,
     MAX_DEFAULT_QUICK_BLOCKS,
@@ -75,6 +76,7 @@ class CompactPreviewResponseTests(unittest.TestCase):
         )
         self.assertEqual(MAX_DEFAULT_QUICK_WORDS, 250)
         self.assertEqual(MAX_DEFAULT_QUICK_BLOCKS, 4)
+        self.assertEqual(CHECKER_VERSION, "1.3")
 
     def test_no_depth_control_rejects_quick_contract_violations(self) -> None:
         cases = {
@@ -105,9 +107,13 @@ class CompactPreviewResponseTests(unittest.TestCase):
         four_blocks = "\n".join(
             (
                 "# Bottom line: refuted",
+                "The universal claim is false.",
                 "## Why",
+                "A counterexample settles it.",
                 "## Weakest point",
+                "Continuity is insufficient.",
                 "## Best next check",
+                "Test a nonsmooth point.",
             )
         )
         self.assertNotIn(
@@ -128,6 +134,140 @@ class CompactPreviewResponseTests(unittest.TestCase):
                     five_blocks,
                 )
             ),
+        )
+
+    def test_no_depth_control_groups_rendered_heading_math_fragments(self) -> None:
+        rendered_text = "\n\n".join(
+            (
+                "Bottom line",
+                (
+                    "Audit depth: Quick. Verdict: refuted. "
+                    "The universal claim is false."
+                ),
+                "Why",
+                "Take f(x)=|x|. It is continuous at x=0:",
+                "lim\nh→0+\n|h|/h = 1,\n\nlim\nh→0-\n|h|/h = -1.",
+                (
+                    "The one-sided derivatives disagree, so the function "
+                    "is not differentiable at 0."
+                ),
+                "Weakest point",
+                "Continuity does not imply differentiability.",
+                "Best next check",
+                "Repair the implication or test another nonsmooth point.",
+            )
+        )
+        self.assertEqual(
+            validate_compact_preview_response(
+                DEFAULT_QUICK_CASE_ID,
+                rendered_text,
+            ),
+            [],
+        )
+
+    def test_no_depth_control_rejects_invalid_canonical_layouts(self) -> None:
+        cases = {
+            "unlabeled": "\n\n".join(
+                (
+                    "refuted.",
+                    "A counterexample settles it.",
+                    "Continuity is insufficient.",
+                    "Test a nonsmooth point.",
+                )
+            ),
+            "missing": (
+                "Bottom line: refuted.\n\n"
+                "Why: a counterexample settles it.\n\n"
+                "Best next check: test a nonsmooth point."
+            ),
+            "duplicate": (
+                "Bottom line: refuted.\n\n"
+                "Why: a counterexample settles it.\n\n"
+                "Why: the same counterexample remains decisive.\n\n"
+                "Weakest point: continuity is insufficient.\n\n"
+                "Best next check: test a nonsmooth point."
+            ),
+            "out_of_order": (
+                "Why: a counterexample settles it.\n\n"
+                "Bottom line: refuted.\n\n"
+                "Weakest point: continuity is insufficient.\n\n"
+                "Best next check: test a nonsmooth point."
+            ),
+            "out_of_order_list": (
+                "- Why: a counterexample settles it.\n\n"
+                "- Bottom line: refuted.\n\n"
+                "- Weakest point: continuity is insufficient.\n\n"
+                "- Best next check: test a nonsmooth point."
+            ),
+            "empty": (
+                "Bottom line: refuted.\n\n"
+                "Why\n\n"
+                "Weakest point: continuity is insufficient.\n\n"
+                "Best next check: test a nonsmooth point."
+            ),
+            "zero_width_empty": (
+                "Bottom line: refuted.\n\n"
+                "Why\n\n"
+                "\u200b\n\n"
+                "Weakest point: continuity is insufficient.\n\n"
+                "Best next check: test a nonsmooth point."
+            ),
+        }
+        for name, response in cases.items():
+            with self.subTest(name=name):
+                self.assertIn(
+                    "QUICK_BLOCK_LAYOUT_INVALID",
+                    self.finding_codes(
+                        validate_compact_preview_response(
+                            DEFAULT_QUICK_CASE_ID,
+                            response,
+                        )
+                    ),
+                )
+
+    def test_no_depth_control_rejects_preamble_and_extra_heading(self) -> None:
+        canonical = "\n\n".join(
+            (
+                "Bottom line: refuted.",
+                "Why: a counterexample settles it.",
+                "Weakest point: continuity is insufficient.",
+                "Best next check: test a nonsmooth point.",
+            )
+        )
+        for response in (
+            "Introductory preamble.\n\n" + canonical,
+            canonical + "\n\n## Extra section\n\nNo fifth block is allowed.",
+            canonical + "\n\nCaveat\n\nNo fifth block is allowed.",
+            canonical + "\n\n**Caveat**\n\nNo fifth block is allowed.",
+        ):
+            with self.subTest(response=response[:24]):
+                self.assertIn(
+                    "QUICK_BLOCK_LIMIT_EXCEEDED",
+                    self.finding_codes(
+                        validate_compact_preview_response(
+                            DEFAULT_QUICK_CASE_ID,
+                            response,
+                        )
+                    ),
+                )
+
+    def test_no_depth_control_accepts_ordered_list_and_balanced_bold_markers(
+        self,
+    ) -> None:
+        response = "\n\n".join(
+            (
+                "- **Bottom line:** refuted.",
+                "- **Why:** a counterexample settles it.",
+                "- **Weakest point:** continuity is insufficient.",
+                "- **Best next check:** test a nonsmooth point.",
+            )
+        )
+        self.assertEqual(
+            validate_compact_preview_response(
+                DEFAULT_QUICK_CASE_ID,
+                response,
+            ),
+            [],
         )
 
     def test_no_depth_control_counts_leading_prose_plus_markdown_blocks(self) -> None:
@@ -500,7 +640,10 @@ class CompactPreviewResponseTests(unittest.TestCase):
                 env=environment,
             )
             self.assertEqual(passed.returncode, 0, passed.stdout + passed.stderr)
-            self.assertEqual(json.loads(passed.stdout)["status"], "pass")
+            passed_payload = json.loads(passed.stdout)
+            self.assertEqual(passed_payload["status"], "pass")
+            self.assertEqual(passed_payload["checker"], "compact_preview_response")
+            self.assertEqual(passed_payload["checker_version"], CHECKER_VERSION)
 
             response_file.write_text("a" * 64, encoding="utf-8")
             blocked = subprocess.run(
