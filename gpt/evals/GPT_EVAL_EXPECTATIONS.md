@@ -34,7 +34,8 @@ Audit the proof at formal/mathematical depth.
 
 ## `known-false-continuity` — simple known-false claim with a concrete counterexample
 
-- **Audit depth:** `standard`
+- **Historical source depth:** `standard`
+- **Current compact-gate route:** configured default Quick; the exact Preview prompt deliberately names no depth
 - **Fixture:** `evals/fixtures/known_false_continuity.txt`
 - **Exact Preview prompt:**
 
@@ -43,9 +44,9 @@ Target attachment for this case: known_false_continuity.txt
 
 Use this attachment as the sole case target; ambient File Library results are not case targets.
 
-Cover compact audit duties 1-9 in at most 5 visible headings. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10. Never reproduce a hash or digest value; preserve every other canonical token and URL exactly.
+Use the configured default route: at most 250 words and four visible blocks (Bottom line, Why, Weakest point, and Best next check), with no table unless one is materially necessary. Do not apply the nine-duty Deep/Formal template. Do not create or offer files, machine records, compiler output, Base64, shards, transport, or Section 10. Never reproduce a hash or digest value; preserve every other canonical token and URL exactly.
 
-Run this audit at standard depth.
+The case request below names no audit depth; select and state the configured default.
 
 Audit this claim.
 ```

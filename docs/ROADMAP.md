@@ -113,9 +113,20 @@ Exit criterion: a nonexpert can reproduce the package, identify exactly what to 
 - preserve the immutable alpha.7 release while recording that alpha.8.dev0 reached `main`, Pages, and the live GPT before its intended complete Preview sequence.
 - ship the official GPT as a five-Knowledge compact human-audit profile with bounded duties 1-9 and no downloadable machine records, compiler, Base64, shards, parity, transport, or section 10;
 - retain the artifact compiler, controller, 39-case suite, and Return Desk as supervised standalone tooling and historical evidence rather than live GPT behavior;
-- validate the changed live profile with 12 fresh compact cases, including an artifact-export-disabled control.
+- retain 12 fresh compact cases, including an artifact-export-disabled control, as the stronger full-validation target for the changed live profile.
 
-Exit criterion: Python/browser semantic parity, deterministic generation and hashes, English/Japanese accessibility and privacy checks, full regression and Null-Discrimination passes, clean pseudonymous-publication checks, and all 12 fresh compact-profile Preview regressions at 18/20 or better with no automatic failure before live Update, merge, tag, or GitHub release. The historical 39-case artifact suite does not count toward this gate. Native-speaker terminology review remains a separate beta-to-stable gate for Japanese claims.
+Shipped boundary: alpha.8 passed deterministic repository checks and targeted high-risk live regressions, but did not complete the 12-case compact Preview suite and does not claim `pass_12_of_12` or complete live Builder-byte binding. The later live/main Quick-UX hotfix is post-tag and is not contained in alpha.8. The 12-case roster remains the gate for a future fully Preview-validated claim or method/Knowledge promotion. Alpha.9 uses the required new version and tag for those changed bytes. The historical 39-case artifact suite does not count toward this gate. Native-speaker terminology review remains a separate beta-to-stable gate for Japanese claims.
+
+## v0.3.0-alpha.9 - bounded maintenance and exact Quick reconciliation
+
+- reconcile canonical and generated Quick behavior at 250 words, four visible blocks, and normally no table;
+- make the four public bilingual starter slots the complete canonical starter list;
+- preserve literal LaTeX escapes and reject unintended control bytes;
+- lint requester narration, stale current status, privacy, and public HTML;
+- reduce duplicate CI noise without weakening engine, Return Desk, Pages, distribution, or release gates;
+- publish changed bytes only under the new alpha.9 tag while preserving alpha.8 and all historical negative evidence.
+
+Exit criterion: deterministic repository checks, the exact 12-case compact Preview gate for the changed Knowledge candidate, clean-tag reproducible release assets, and separate saved-editor/public starter smoke checks all pass without claiming byte-identical indexed Knowledge binding.
 
 ## v0.3 - rational dictionary and support certificates
 

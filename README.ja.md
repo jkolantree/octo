@@ -5,11 +5,13 @@
 数学的・科学的主張を、調査、反証、再現、降格しやすくするための研究プレビュー版ソフトウェアです。
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor)（live research preview）<br>
-**現行 GitHub prerelease:** `v0.3.0-alpha.8`<br>
-**検証境界:** compact profile は release 済み。complete 12-case Preview suite は post-release hardening として残り、pass 済みとは主張しません<br>
+**現行 GitHub prerelease:** `v0.3.0-alpha.9`<br>
+**検証境界:** exact live binding と 12-case compact Preview の結果は別に報告します。これは certification ではなく research preview です<br>
 **プロジェクト状態:** 実験的。研究監査と既知解テストには利用できますが、無人の科学・臨床・法律・安全・政策判断には使用できません。
 
-[English](README.md) | [Timestamped publication status](docs/PUBLICATION_STATUS.json)
+**関連研究:** *On Boundaries of Evidence / Boundary-State Calculus* は https://github.com/jkolantree/BSC で別に管理されています。この audit engine は experimental companion であり、manuscript を certify せず、theorem status を確立しません。
+
+[English](README.md) | [Historical publication snapshot](docs/PUBLICATION_STATUS.json)
 
 BSC は、慎重な想像力のための基盤です。大胆な仮説は許しますが、根拠のない権威は与えません。
 
@@ -37,16 +39,16 @@ BSC は、慎重な想像力のための基盤です。大胆な仮説は許し�
 
 ## 入口を選ぶ
 
-1. **Official Custom GPT — ChatGPT 上で直接監査:** live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) を開きます。Alpha.8 の public surface は bounded human-readable audit です。large artifact、hash、Base64、shard、transport output はこの public profile から意図的に除外されています。canonical status routing と、digest を漏らさず conflicting verified evidence を扱う targeted live checks は pass しました。complete 12-case Preview suite は未実行なので、すべての output を validated certificate ではなく research-preview draft として扱ってください。upload は applicable ChatGPT settings/terms の下で処理されます。GPT に Action、hosted API、account、analytics、cloud-storage integration はありません。[exact live/candidate status](docs/ja/CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
-2. **ローカル browser Packet Builder と Audit Return Desk:** [deployed English GitHub Pages module](https://jkolantree.github.io/octo/) で versioned packet を作成したり、返却された `audit_return.json` draft と selected artifact bytes をローカル検査したりできます。[Japanese Pages candidate](pages/ja.html) は source tree にありますが、public deployment は pending です。post-deploy English/JA/protocol route/metadata smoke が pass するまで予定 URL を live として共有しないでください。どちらの interface も target を upload せず、LLM を呼び出さず、Python を実行しません。
+1. **Official Custom GPT — ChatGPT 上で直接監査:** live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) を開きます。alpha.9 package は bounded Quick contract と 4 個の bilingual source starter を reconcile します。large artifact、hash、Base64、shard、transport output はこの public profile から除外されています。すべての output を certificate ではなく research-preview draft として扱ってください。upload は applicable ChatGPT settings/terms の下で処理されます。GPT に Action、hosted API、account、analytics、cloud-storage integration はありません。[separately observed live/candidate status](docs/ja/CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
+2. **ローカル browser Packet Builder と Audit Return Desk:** [deployed English GitHub Pages module](https://jkolantree.github.io/octo/) または [deployed Japanese route](https://jkolantree.github.io/octo/ja.html) で versioned packet を作成したり、返却された `audit_return.json` draft と selected artifact bytes をローカル検査したりできます。どちらの interface も target を upload せず、LLM を呼び出さず、Python を実行しません。
 3. **Repository と Python engine — exact checker route:** versioned schema、fixture、finite exact check、保存された command output については [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) を参照してください。ここで BSC checker を実行するのはこのルートだけです。
 
-repository には、official Custom GPT の configure/evaluate に使用した exact package と current update candidate もあります。これにより、independent inspection、reproducible deployment、compatible fork、verifiable official update が可能です。
+repository には、official Custom GPT の configure/evaluate に使用する deterministic alpha.9 package lineage があります。これにより、independent inspection、reproducible deployment、compatible fork、verifiable official update が可能です。
 
 補助的な入口:
 
 - **初回:** [START_HERE.ja.md](START_HERE.ja.md)（規範英語: `START_HERE.md`）または accessible offline [START_HERE.html](START_HERE.html)
-- **Japanese Pages candidate（public deployment pending）:** [pages/ja.html](pages/ja.html)
+- **Deployed Japanese Pages:** [https://jkolantree.github.io/octo/ja.html](https://jkolantree.github.io/octo/ja.html)
 - **Custom GPT 日本語ガイド（ベータ）:** [docs/ja/GPT_INTERFACE.md](docs/ja/GPT_INTERFACE.md)
 - **正規トークン日本語用語集（ベータ）:** [docs/ja/GLOSSARY.md](docs/ja/GLOSSARY.md)
 - **人手のみの監査:** [AUDIT_WORKSHEET.md](AUDIT_WORKSHEET.md)

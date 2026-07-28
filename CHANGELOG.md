@@ -2,6 +2,28 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.9 - 2026-07-28
+
+### Corrected
+
+- made Quick the coherent no-depth route across canonical and generated Custom GPT documentation: verdict first, no more than 250 words and four short visible blocks, normally no table, with Japanese routes primarily in Japanese;
+- reduced the canonical conversation starters to the four public mobile slots, in exact English/Japanese intent-pair order, and added exact source-to-generated-order tests;
+- removed requester-perspective narration from durable documentation, corrected stale release and deployment wording, and added privacy/documentation lint for current Markdown and HTML;
+- added permanent positive escape tests for literal `\forall`, `\frac`, `\begin`, and `\theta`, while preserving control-byte rejection and historical negative fixtures;
+- fixed mixed prose-plus-Markdown block counting so a fifth visible Quick block cannot evade the compact-response checker;
+- regenerated Custom GPT, frozen-candidate, Pages, localization, manifest, and checksum projections from canonical sources;
+- reduced duplicate CI triggers and compacted local test output without weakening engine, Return Desk, source-distribution, Pages, privacy, or release-integrity gates.
+
+### Documentation and product boundary
+
+- documented the BSC research repository as separate related research: this audit engine is an experimental companion and neither certifies the manuscript nor establishes theorem status;
+- preserved the immutable alpha.8 tag, release notes, historical negative evidence, machine identifiers, and superseded 39-case/D01/D02 records without relabeling them as alpha.9 validation;
+- retained five public Knowledge files, disabled Actions and Apps, and the existing compact human-response scope.
+
+### Release and live-validation boundary
+
+Alpha.9 requires the deterministic repository and clean-tag release gates plus the exact 12-case compact Preview gate for the changed Knowledge candidate. The four visible starters and one Quick follow-up are separate post-save smoke checks. Repository hashes bind pre-upload files; ChatGPT does not expose independently hashable indexed Knowledge bytes, so live Knowledge byte identity remains unresolved even when the saved editor, filenames, capabilities, behavior, and public view agree.
+
 ## 0.3.0-alpha.8 - 2026-07-23
 
 ### Added
@@ -13,7 +35,7 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 - added an accessible Return Desk interface with locally verified schema bytes, bounded hashing, cancellable file operations, visible witnesses and repairs, and explicit metadata-disclosure warnings.
 - added a bilingual English/Japanese Pages route, Japanese framework and Custom GPT guidance, and language-aware GPT evaluations while preserving canonical machine tokens and exact source bytes;
 - added a deterministic translation-freshness manifest so Japanese documentation fails closed when its canonical English source changes;
-- added a timestamped publication-status record that separates official GPT availability, observed configuration identity, Preview validation, source/Pages deployment, and immutable GitHub release state.
+- added a timestamped publication-status record that separates official GPT availability, observed configuration identity, Preview validation, source/Pages deployment, exact tag identity, and mutable GitHub release-page state.
 
 ### Corrected
 
@@ -29,7 +51,7 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 - replaced manual runtime, hash, size, and Base64 replication with one acyclic artifact transaction: the executed compiler captures its own `sys.version` once and rejects model-authored overrides, derives byte identities from final artifacts, binds one execution output, references it from the report, and serializes the return last;
 - added a fail-closed evaluation controller that requires the exact target, all six canonical Knowledge files, and generated outputs before replay or scoring, and distinguishes `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`;
 - added synthetic controller regressions for complete and incomplete rosters, deterministic runtime projection, aligned Base64-quartet loss, exact exported-payload identity, and candidate contradictions that an invalid controller or unresolved transport cannot rescue;
-- added a frozen-suite checker that revalidates every manifest-bound candidate snapshot and raw evidence bundle, enforces globally fresh Preview sessions and exact `C001` through `C039` order, and applies the explicitly authorized repair/suite fail-closed ceiling;
+- added a frozen-suite checker that revalidates every manifest-bound candidate snapshot and raw evidence bundle, enforces globally fresh Preview sessions and exact `C001` through `C039` order, and applies the recorded bounded repair/suite fail-closed ceiling;
 - corrected a pre-freeze scoring-oracle defect that made the two official-status cases controller-impossible: score-result v2 now distinguishes `scientific_verdict_required` from `status_only_empty`, enforces exact scientific projections where frozen, and keeps real missing or invented verdicts as `candidate_failed` while forged scorer modes or derived flags remain `trial_invalid_controller`;
 - added the non-destructive [R01 forensic addendum](docs/R01_FORENSIC_ADDENDUM.md), preserving the mathematical pass, execution/representation failure, controller-incomplete replay, exact downstream decode, and unresolved download-byte identity as separate facts.
 - preserved the first D01 development preflight and its superseded candidate hashes in a separate [preflight repair addendum](docs/ALPHA8_PREFLIGHT_REPAIR_ADDENDUM.md); the controller-owned raw-provenance gap makes that trial invalid and unscored even though independently retained fallback bytes exposed the candidate defect that triggered the consolidated repair.
@@ -43,16 +65,18 @@ All notable public changes are recorded here. Pre-1.0 interfaces may change inco
 - used the one post-suite repair allowance for compiler v7, same-response transport v2, controller-record v5, and frozen-evaluation protocol v4: the unchanged 2,048-byte zlib data shards gain one `xor_parity_v1` shard, recovery is restricted to one data-content fault with intact metadata and expected Base64 text length, the controller binds and recomputes the recovery receipt, all original validations rerun after recovery, unrecoverable mutations still fail closed, and unused bad parity records `parity_degraded_not_used`.
 - invalidated the old freeze after the candidate/controller change; all local gates and both preflights, a new exact freeze, and the complete counted suite from C001 are required before any live Update, merge, tag, release, or publication claim.
 - preserved the next frozen D01 boundary at commit `0f753a6d61f3e06ca35e95f6c5a3e25bf13c8544` and tree `977131ac08adab65a91d4eb25123ffd29d5b3079`: all 49 local gates passed, but the controller-valid candidate failed before scoring because its exact 13,194-byte report contained `0x0C` at zero-based offsets 3032 and 3538; the contexts strongly indicate ordinary-string `\f` decoding of intended `\forall`, while the unpreserved model-side construction prevents attributing the exact construction layer.
-- recorded the explicitly authorized 2026-07-24 second consolidated repair as compiler v8: reports use validated `report_body_lines`, every Unicode category `Cc` code point is rejected in each line and in generated JSON keys and values, compiler-owned LF is the only permitted whole-text control layout, and invalid model text is never stripped, split, substituted, or auto-repaired.
+- recorded the bounded 2026-07-24 second consolidated repair as compiler v8: reports use validated `report_body_lines`, every Unicode category `Cc` code point is rejected in each line and in generated JSON keys and values, compiler-owned LF is the only permitted whole-text control layout, and invalid model text is never stripped, split, substituted, or auto-repaired.
 - preserved the next controller-valid counted C004 boundary without weakening its correct `refuted` verdict: the fatal gate correctly failed on x = -1 but omitted the workflow obligation required for every nonpassing gate, so Return Desk blocked it before scoring with `RETURN_UNRESOLVED_GATE_OBLIGATION_OMITTED`.
-- recorded the explicitly authorized third consolidated repair as compiler v9: obligation closure is validated before rendering or hashing, the report projection uses schema field `statement`, and the controller distinguishes a closed scientific refutation from the still-open disposition duty to retire, narrow, or amend a failed claim before admission.
+- recorded the bounded third consolidated repair as compiler v9: obligation closure is validated before rendering or hashing, the report projection uses schema field `statement`, and the controller distinguishes a closed scientific refutation from the still-open disposition duty to retire, narrow, or amend a failed claim before admission.
 - required a new exact freeze, all local gates, fresh D01 and D02 preflights in order, and a complete counted-suite restart from C001; cases, fixtures, scientific expectations and oracles, scorers, rubrics, thresholds, automatic failures, Return Desk negatives, and historical compiler-v7/C001 evidence remain unchanged.
 
 ### Publication boundary
 
 The alpha.8.dev0 source tree was merged and deployed to Pages, and the official GPT reported the alpha.8.dev0 controller identity before the intended complete post-update Preview sequence was preserved. R01 on alpha.8.dev1 then preserved a real execution/representation failure; its original local replay was separately controller-incomplete and did not establish browser or download corruption. Neither CI, a runtime identity smoke, nor an invalid controller trial substitutes for the GPT behavior gate.
 
-The final alpha.8 compact identity is publishable only from the exact commit that passes the isolated repository gates, the fresh frozen 12-case compact Preview regression with every case at least 18/20 and no automatic failure, live GPT binding verification, required CI, and tagged release-build checks. Japanese support remains beta until native-speaker terminology review is recorded. The historical 39-case artifact suite is not substituted into this gate.
+Alpha.8 was published from exact tagged commit `c6120093e49c658318553900028761a171dbf47b` after deterministic repository gates and targeted live regressions. Its disclosed boundary does not include a completed 12-case compact Preview suite or complete live Builder-byte binding. The later live/main Quick-UX hotfix postdates that tag and is not part of alpha.8.
+
+The 12-case compact roster remains the stronger full-validation target. Current post-alpha.8 source changes are unreleased; any next exact package requires a new version and tag. Japanese support remains beta until native-speaker terminology review is recorded. The historical 39-case artifact suite is not substituted into the compact gate.
 
 ## 0.3.0-alpha.7 - 2026-07-21
 
