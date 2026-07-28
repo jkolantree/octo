@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CHECKER_VERSION = "1.2"
+CHECKER_VERSION = "1.3"
 MAX_RESPONSE_CHARACTERS = 12_000
 MAX_RESPONSE_UTF8_BYTES = MAX_RESPONSE_CHARACTERS * 4
 DEFAULT_QUICK_CASE_ID = "known-false-continuity"
@@ -153,6 +153,19 @@ MARKDOWN_VISIBLE_BLOCK_START_RE = re.compile(
     r"(?:```|~~~)"
     r")"
 )
+MARKDOWN_PREFIX_RE = re.compile(
+    r"^[ \t]{0,3}(?:"
+    r"#{1,6}[ \t]+|"
+    r"(?:[-+*]|\d+[.)])[ \t]+"
+    r")"
+)
+INVISIBLE_FORMAT_RE = re.compile("[\ufeff\u200b\u200c\u200d\u2060]")
+QUICK_BLOCK_LABELS = (
+    "Bottom line",
+    "Why",
+    "Weakest point",
+    "Best next check",
+)
 
 
 def _finding(code: str, message: str) -> dict[str, str]:
@@ -203,7 +216,45 @@ def _contains_scientific_gate(response: str) -> bool:
     return False
 
 
-def _default_quick_blocks(response: str) -> list[str]:
+def _quick_block_marker(line: str) -> tuple[str, str] | None:
+    candidate = line.strip()
+    candidate = MARKDOWN_PREFIX_RE.sub("", candidate, count=1)
+    for label in QUICK_BLOCK_LABELS:
+        if candidate == label:
+            return label, ""
+        for separator in (":", "："):
+            prefix = label + separator
+            if candidate.startswith(prefix):
+                return label, candidate[len(prefix) :].strip()
+        for wrapper in ("**", "__"):
+            for inside_separator in ("", ":", "："):
+                wrapped = (
+                    wrapper
+                    + label
+                    + inside_separator
+                    + wrapper
+                )
+                if candidate == wrapped:
+                    return label, ""
+                if not candidate.startswith(wrapped):
+                    continue
+                remainder = candidate[len(wrapped) :]
+                if not remainder or not (
+                    remainder[0].isspace()
+                    or remainder[0] in (":", "：")
+                ):
+                    continue
+                remainder = remainder.strip()
+                if (
+                    not inside_separator
+                    and remainder.startswith((":", "："))
+                ):
+                    remainder = remainder[1:].strip()
+                return label, remainder
+    return None
+
+
+def _fallback_default_quick_blocks(response: str) -> list[str]:
     paragraph_blocks = [
         block
         for block in re.split(r"(?:\r?\n)[ \t]*(?:\r?\n)+", response.strip())
@@ -222,6 +273,118 @@ def _default_quick_blocks(response: str) -> list[str]:
             visible_blocks.append(leading_prose)
         visible_blocks.extend(match.group(0) for match in structural_starts)
     return visible_blocks
+
+
+def _has_visible_content(value: str) -> bool:
+    return bool(INVISIBLE_FORMAT_RE.sub("", value).strip())
+
+
+def _is_bold_only_heading(value: str) -> bool:
+    candidate = value.strip()
+    for wrapper in ("**", "__"):
+        if (
+            candidate.startswith(wrapper)
+            and candidate.endswith(wrapper)
+            and len(candidate) > len(wrapper) * 2
+            and _has_visible_content(
+                candidate[len(wrapper) : -len(wrapper)]
+            )
+        ):
+            return True
+    return False
+
+
+def _is_plain_title_heading(value: str) -> bool:
+    candidate = INVISIBLE_FORMAT_RE.sub("", value).strip()
+    if "\n" in candidate or len(candidate) > 60:
+        return False
+    if not any(character.isalpha() for character in candidate):
+        return False
+    if any(character in candidate for character in ".?!。！？:：;,=<>/\\|{}[]()"):
+        return False
+    words = candidate.split()
+    return 1 <= len(words) <= 6 and (
+        candidate.istitle() or candidate.isupper()
+    )
+
+
+def _extra_quick_blocks(body: str) -> list[str]:
+    extras = [
+        line.strip()
+        for line in body.splitlines()
+        if MARKDOWN_VISIBLE_BLOCK_START_RE.match(line)
+    ]
+    paragraphs = [
+        paragraph
+        for paragraph in re.split(
+            r"(?:\r?\n)[ \t]*(?:\r?\n)+",
+            body.strip(),
+        )
+        if _has_visible_content(paragraph)
+    ]
+    for paragraph in paragraphs:
+        if (
+            MARKDOWN_VISIBLE_BLOCK_START_RE.match(paragraph)
+            or _is_bold_only_heading(paragraph)
+            or _is_plain_title_heading(paragraph)
+        ):
+            if paragraph.strip() not in extras:
+                extras.append(paragraph.strip())
+    return extras
+
+
+def _default_quick_blocks(
+    response: str,
+) -> tuple[list[str], bool]:
+    """Return semantic Quick blocks and whether a detected layout is valid.
+
+    Preview can render one semantic section as a heading, prose paragraphs, and
+    display-math elements. A rendered-text capture then contains blank-line
+    fragments that are not additional top-level blocks. When canonical Quick
+    markers are present, group all following content under the current marker.
+    Fall back to the generic Markdown counter only when no marker is present.
+    """
+
+    lines = response.splitlines()
+    markers: list[tuple[int, str, str]] = []
+    for line_index, line in enumerate(lines):
+        marker = _quick_block_marker(line)
+        if marker is not None:
+            label, inline_content = marker
+            markers.append((line_index, label, inline_content))
+
+    if not markers:
+        return _fallback_default_quick_blocks(response), False
+
+    labels = [label for _, label, _ in markers]
+    if labels != list(QUICK_BLOCK_LABELS):
+        return _fallback_default_quick_blocks(response), False
+
+    visible_blocks: list[str] = []
+    first_marker_index = markers[0][0]
+    preamble = "\n".join(lines[:first_marker_index]).strip()
+    if preamble:
+        visible_blocks.append(preamble)
+
+    layout_valid = True
+    for marker_index, (line_index, _, inline_content) in enumerate(markers):
+        next_line_index = (
+            markers[marker_index + 1][0]
+            if marker_index + 1 < len(markers)
+            else len(lines)
+        )
+        body_lines = lines[line_index + 1 : next_line_index]
+        body = "\n".join(body_lines).strip()
+        if not _has_visible_content(inline_content) and not _has_visible_content(
+            body
+        ):
+            layout_valid = False
+        visible_blocks.append(
+            "\n".join(lines[line_index:next_line_index]).strip()
+        )
+        visible_blocks.extend(_extra_quick_blocks(body))
+
+    return visible_blocks, layout_valid
 
 
 def validate_compact_preview_response(
@@ -282,7 +445,18 @@ def validate_compact_preview_response(
                     ),
                 )
             )
-        block_count = len(_default_quick_blocks(response))
+        quick_blocks, quick_layout_valid = _default_quick_blocks(response)
+        if not quick_layout_valid:
+            findings.append(
+                _finding(
+                    "QUICK_BLOCK_LAYOUT_INVALID",
+                    (
+                        "canonical Quick blocks are missing, "
+                        "duplicated, empty, or out of order"
+                    ),
+                )
+            )
+        block_count = len(quick_blocks)
         if block_count > MAX_DEFAULT_QUICK_BLOCKS:
             findings.append(
                 _finding(

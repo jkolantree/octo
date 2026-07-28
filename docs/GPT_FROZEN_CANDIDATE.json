@@ -678,10 +678,10 @@
       "sha256": "e037776b6d2bca6087078edda442fe031672f5633e5850a3e0b597b7ac6e1e1a"
     },
     {
-      "bytes": 22040,
+      "bytes": 27609,
       "category": "tests",
       "path": "tests/test_compact_preview_response.py",
-      "sha256": "d57c3283fec6687c645e64959dc52f91d8e55d7e4a4d9f21256bf6dd554fd8cf"
+      "sha256": "94b91a2f3eafe6e249fa1c64502572bd00a5c98d2238c7941d5b683d915aaab0"
     },
     {
       "bytes": 1243,
@@ -816,10 +816,10 @@
       "sha256": "1e8827e3310f92f9f0c52bc0e43759ae8c5880df25b045c78aaec3169686c419"
     },
     {
-      "bytes": 14307,
+      "bytes": 20139,
       "category": "tooling",
       "path": "scripts/check_compact_preview_response.py",
-      "sha256": "aa40d551032c1c2425cf53a5b3987122b361733cdfec546d496f0e6f76e7ea68"
+      "sha256": "fe74e9cc323dd665d9542919eaa2793411e4f5bc863fe7732c197b5cb220ca29"
     },
     {
       "bytes": 134831,
