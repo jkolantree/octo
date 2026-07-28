@@ -26,9 +26,46 @@ PHONE_RES = (
     re.compile(r"(?<!\d)\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}(?!\d)"),
 )
 LOCAL_PATH_RES = (
-    re.compile(r"(?:^|[\s\"'=(])/(?:Users|home|workspace|root)/[^\s\"'<>]+"),
-    re.compile(r"(?:^|[\s\"'=(])[A-Za-z]:\\Users\\[^\s\"'<>]+", re.IGNORECASE),
-    re.compile(r"file:" + r"///[^\s\"'<>]+", re.IGNORECASE),
+    re.compile(
+        r"(?:^|[\s\"'=(])"
+        r"(?P<path>/(?:Users|home|workspace|root)/[^\s\"'<>]+)"
+    ),
+    re.compile(
+        r"(?:^|[\s\"'=(])"
+        r"(?P<path>[A-Za-z]:\\Users\\[^\s\"'<>]+)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"(?:^|[\s\"'=(])"
+        r"(?P<path>[A-Za-z]:\\\\Users\\\\[^\s\"'<>]+)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"(?:^|[\s\"'=(])"
+        r"(?P<path>[A-Za-z]:/Users/[^\s\"'<>]+)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"(?:^|[\s\"'=(])"
+        r"(?P<path>/(?:tmp|var/tmp|private/tmp)/[^\s\"'<>;,]+)"
+    ),
+    re.compile(
+        r"(?P<path>file:" + r"///[^ \t\r\n\"'<>]+)",
+        re.IGNORECASE,
+    ),
+)
+INTENTIONAL_GENERIC_TEMP_PATHS = frozenset(
+    {
+        "/tmp/bsc-build-a",
+        "/tmp/bsc-build-b",
+        "/tmp/bsc-build-a/*",
+        "/tmp/bsc-build-b/$name",
+        "/tmp/bsc-sdist",
+        "/tmp/bsc-sdist/bsc_audit_engine-*",
+        "/tmp/bsc-index.html",
+        "/tmp/bsc-ja.html",
+        "/tmp/bsc-protocol-meta.js",
+    }
 )
 SECRET_RES = (
     ("GITHUB_TOKEN", re.compile(r"(?:github_pat_|gh[pousr]_)[A-Za-z0-9_]{20,}")),
@@ -61,6 +98,41 @@ TEXT_SUFFIXES = {
     ".yml",
 }
 ARCHIVE_SUFFIXES = {".docx", ".whl", ".zip"}
+
+CURRENT_PUBLIC_DOCUMENTS = frozenset(
+    {
+        "README.md",
+        "README.ja.md",
+        "SHARE_THIS.md",
+        "START_HERE.html",
+        "START_HERE.md",
+        "START_HERE.ja.md",
+        "docs/CUSTOM_GPT_STATUS.md",
+        "docs/SHARING_GUIDE.md",
+        "docs/index.md",
+        "docs/ja/CUSTOM_GPT_STATUS.md",
+        "docs/ja/index.md",
+    }
+)
+REQUESTER_NARRATION_RES = (
+    re.compile(
+        r"(?im)^\s*(?:[-*]\s+)?(?:On\s+\d{4}-\d{2}-\d{2}\s*,?\s+)?"
+        r"(?:the user|the requester)\s+explicitly authorized\b"
+    ),
+    re.compile(
+        r"(?im)^\s*(?:[-*]\s+)?This\s+"
+        r"(?:(?:first|second|third|additional)\s+)?authorization\b"
+    ),
+)
+STALE_CURRENT_PUBLIC_RES = (
+    re.compile(r"\bpending public deployment\b", re.IGNORECASE),
+    re.compile(r"\bcandidate_not_deployed\b", re.IGNORECASE),
+    re.compile(r"\bcandidate\s*;\s*not deployed\b", re.IGNORECASE),
+    re.compile(r"\bthe immutable tag and release assets are the exact repository binding\b", re.IGNORECASE),
+    re.compile(r"\bthe v0\.3\.0-alpha\.7 release is a research preview\b", re.IGNORECASE),
+    re.compile(r"\bthe current live controller identifies as alpha\.8\.dev0\b", re.IGNORECASE),
+    re.compile(r"\bjapanese pages candidate\b[\s\S]{0,160}\bremains pending public deployment\b", re.IGNORECASE),
+)
 
 DC = "http://purl.org/dc/elements/1.1/"
 DCTERMS = "http://purl.org/dc/terms/"
@@ -151,10 +223,51 @@ def scan_text(label: str, text: str, policy: Policy) -> list[Finding]:
             findings.append(Finding("PHONE_NUMBER_PRESENT", label, f"telephone-like value fingerprint {_redacted(match.group(0))}"))
     for pattern in LOCAL_PATH_RES:
         for match in pattern.finditer(text):
-            findings.append(Finding("LOCAL_PATH_PRESENT", label, f"local path fingerprint {_redacted(match.group(0))}"))
+            path = match.group("path")
+            if path in INTENTIONAL_GENERIC_TEMP_PATHS:
+                continue
+            findings.append(
+                Finding(
+                    "LOCAL_PATH_PRESENT",
+                    label,
+                    f"local path fingerprint {_redacted(path)}",
+                )
+            )
     for code, pattern in SECRET_RES:
         for match in pattern.finditer(text):
             findings.append(Finding(code, label, f"secret-like value fingerprint {_redacted(match.group(0))}"))
+    return findings
+
+
+def scan_documentation(label: str, text: str) -> list[Finding]:
+    """Check durable documentation voice and current-status wording without echoing text."""
+    findings: list[Finding] = []
+    normalized = label.replace("\\", "/").rsplit("!", 1)[-1]
+    for pattern in REQUESTER_NARRATION_RES:
+        if pattern.search(text):
+            findings.append(
+                Finding(
+                    "REQUESTER_PERSPECTIVE_NARRATION",
+                    label,
+                    "durable documentation narrates a past requester authorization",
+                )
+            )
+            break
+    is_current_public = any(
+        normalized == relative or normalized.endswith(f"/{relative}")
+        for relative in CURRENT_PUBLIC_DOCUMENTS
+    )
+    if is_current_public:
+        for pattern in STALE_CURRENT_PUBLIC_RES:
+            if pattern.search(text):
+                findings.append(
+                    Finding(
+                        "STALE_CURRENT_PUBLIC_WORDING",
+                        label,
+                        "current public documentation contains a retired deployment or release-status phrase",
+                    )
+                )
+                break
     return findings
 
 
@@ -172,9 +285,13 @@ def _decode_text(data: bytes) -> str:
 def _scan_payload(label: str, data: bytes, suffix: str, policy: Policy) -> list[Finding]:
     if suffix in TEXT_SUFFIXES:
         try:
-            return scan_text(label, _decode_text(data), policy)
+            text = _decode_text(data)
         except (UnicodeDecodeError, UnicodeError):
             return [Finding("UNSUPPORTED_BINARY", label, "tracked payload declared as text is not UTF-8 text")]
+        findings = scan_text(label, text, policy)
+        if suffix in {".html", ".md"}:
+            findings.extend(scan_documentation(label, text))
+        return findings
     if suffix == ".pdf":
         return scan_pdf_bytes(label, data, policy)
     return [Finding("UNSUPPORTED_BINARY", label, f"binary suffix {suffix or '<none>'} has no registered privacy scanner")]

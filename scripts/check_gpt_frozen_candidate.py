@@ -159,6 +159,7 @@ TEST_FILENAMES = (
     "test_publication_status.py",
     "test_research_packet.py",
     "test_return_desk.py",
+    "test_run_tests.py",
 )
 
 REGISTRY: dict[str, tuple[str, ...]] = {

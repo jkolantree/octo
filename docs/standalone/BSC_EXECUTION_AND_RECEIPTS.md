@@ -1,6 +1,6 @@
 # BSC Execution and Receipt Boundaries
 
-**BSC version:** `0.3.0-alpha.8`
+**BSC version:** `0.3.0-alpha.9`
 
 **Status:** retired public-GPT Knowledge file; preserved only for supervised standalone compiler/controller history
 
@@ -74,7 +74,7 @@ The LLM packet treats target material as untrusted evidence, requires a coverage
 
 The three entry points do not share one privacy or execution boundary:
 
-1. The official-service URL and its timestamped availability record are maintained in [CUSTOM_GPT_STATUS.md](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.8/docs/CUSTOM_GPT_STATUS.md). A repository package is reproducible source and an update candidate, not evidence that its exact bytes are installed, bound to the saved editor, or Preview-validated. Uploads are processed through ChatGPT under the user's applicable settings and terms. The official configuration contains no Action, hosted API, account, analytics, or cloud storage.
+1. The official-service URL and its timestamped availability record are maintained in [CUSTOM_GPT_STATUS.md](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.9/docs/CUSTOM_GPT_STATUS.md). A repository package is reproducible source and an update candidate, not evidence that its exact bytes are installed, bound to the saved editor, or Preview-validated. Uploads are processed through ChatGPT under the user's applicable settings and terms. The official configuration contains no Action, hosted API, account, analytics, or cloud storage.
 2. The browser Packet Builder's page code constructs a versioned packet without a target-data network request or intentional persistence. The Return Desk likewise parses returned JSON and hashes user-selected artifacts without such a request. Browser and operating-system history, crash recovery, swap, extensions, accessibility services, clipboard, and downloaded files remain outside the page's control. Sending a packet to a model is a separate action governed by that service.
 3. The repository and Python engine run versioned finite checks locally or in the operator's selected environment. A GPT response or ChatGPT tool result is not BSC Python output unless the correct checker actually ran and its result is bound to the inputs.
 
@@ -138,7 +138,7 @@ The Desk reduces these structural false-pass risks. It cannot authenticate the e
 
 The repository contains no secure enclave or privacy guarantee. Do not place secrets or identifying, medical, legal, proprietary, classified, or export-controlled information in public issues, fixtures, LLM prompts, or release bundles. Hashes can still identify low-entropy private material. Synthetic data can still leak source records.
 
-Sensitive vulnerability reports follow [SECURITY.md](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.8/SECURITY.md). Scientific false-pass and false-block reports that contain no sensitive information may use the issue forms.
+Sensitive vulnerability reports follow [SECURITY.md](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.9/SECURITY.md). Scientific false-pass and false-block reports that contain no sensitive information may use the issue forms.
 
 ## Input and runtime threats
 

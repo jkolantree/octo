@@ -2,39 +2,39 @@
 
 The official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is built and link-shared as a research preview. This repository is the reproducible source for its configuration lineage, evaluation suite, and candidate updates. Anyone may inspect or reproduce that work, and may create an independent fork without implying official status.
 
-This page deliberately separates service availability, configuration identity, Preview validation, source deployment, and immutable releases. A timestamped machine-readable snapshot is available in [PUBLICATION_STATUS.json](PUBLICATION_STATUS.json).
+This page separates service availability, configuration identity, Preview validation, source deployment, and release identity. [PUBLICATION_STATUS.json](PUBLICATION_STATUS.json) preserves a superseded 2026-07-22 snapshot for historical evidence; it is not a current-state feed.
 
 ## Current state
 
-Verified on 2026-07-24:
+Pre-update read-only verification on 2026-07-28:
 
 | Surface | State | Exact binding or boundary |
 |---|---|---|
-| Official Custom GPT | **live** | Public URL above; supported alpha.8 surface is a bounded human-readable audit |
-| Targeted alpha.8 live regressions | **passed** | Canonical status-only routing passed; conflicting verified evidence blocked admission without emitting a SHA-256 digest |
-| Complete 12-case Preview evaluation | **not completed** | This prerelease does not claim `pass_12_of_12` or complete live Builder-byte binding |
-| GitHub prerelease | **published** | [`v0.3.0-alpha.8`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.8); the immutable tag and release assets are the exact repository binding |
-| Public Pages | **deployed** | English interface is live at [jkolantree.github.io/octo](https://jkolantree.github.io/octo/) |
-| Japanese Pages route | **candidate; not deployed** | The planned `/octo/ja.html` route returned HTTP 404 at `2026-07-22T18:37:44Z`; do not advertise it as live until the post-deploy route and metadata smoke check passes |
+| Official Custom GPT | **live; inspected before alpha.9 update** | Public URL above; owner editor showed `Live`, link access, the Quick-UX Instructions, five Knowledge filenames, Web Search on, Data Analysis on, Image Generation off, and no Action |
+| Conversation-starter boundary | **editor six; public four; alpha.9 source four** | The owner editor contained six starters while the public page rendered only the first four. Alpha.9 intentionally makes those four visible starters the complete canonical list, in exact public order |
+| Exact live/source binding | **unresolved until post-save verification** | The pre-update editor/source starter counts differ. ChatGPT also does not independently expose indexed Knowledge bytes for hashing |
+| Complete 12-case Preview evaluation | **required for this Knowledge-changing candidate** | No `pass_12_of_12` is inferred from historical evidence; the exact alpha.9 freeze must pass all 12 fresh cases |
+| Repository release line | **v0.3.0-alpha.9** | The exact commit, tree, tag, and assets are bound by the immutable tag and `RELEASE_MANIFEST.json`; changed alpha.9 bytes must never be labeled alpha.8 |
+| Prior GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.8`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.8) remains at commit `c6120093e49c658318553900028761a171dbf47b`, tree `a4f7d89ac2e09f2887797c0c16b6f603a29d27ea`; the tag must not move |
+| GitHub release object | **mutable service record** | GitHub reported `immutable=false`; release assets and release-page metadata must not be described as intrinsically immutable |
+| Public Pages | **deployment verified separately** | [English](https://jkolantree.github.io/octo/) and [Japanese](https://jkolantree.github.io/octo/ja.html) routes must match the merged alpha.9 protocol metadata after Pages deployment |
 
-The release deliberately separates “working research preview” from “fully Preview-validated.” Repository checks and the two repaired high-risk live routes passed. The full 12-case roster was not completed, so source CI and targeted checks must not be represented as a substitute for that broader evaluation.
+Availability, targeted regressions, and source CI do not substitute for complete Preview validation. The preserved 39-case artifact-profile campaign, D01/D02 preflights, compiler/transport requirements, and negative results remain historical evidence and must not be restarted or spliced into the compact 12-case gate.
 
-## Released compact scope
+## Current compact contract and maintenance boundary
 
-The `0.3.0-alpha.8` prerelease:
+The live Instructions route an ordinary no-depth claim to Quick: verdict first, at most 250 words and four short blocks, with no table unless materially necessary. Alpha.9 reconciles the generated Knowledge projection to that same contract.
 
-- keeps mutable service state in this timestamped record instead of embedding it in durable behavioral Knowledge;
-- presents the official GPT first, with reproduction, evaluation, and forks as open-source capabilities;
-- adds Japanese human-facing guidance while preserving canonical machine tokens;
-- uses five public Knowledge uploads; the retired [`BSC_EXECUTION_AND_RECEIPTS.md`](standalone/BSC_EXECUTION_AND_RECEIPTS.md) derivative remains standalone repository history but is not uploaded to the official GPT;
-- returns compact human-readable duties 1-9 for scientific audits within explicit 300/650/1,000-word budgets, including tables; official-product status-only responses bypass duties 1-9 and return only concise supplied canonical states;
-- records source coverage only for case targets and evidence sources actually used or attempted, plus one short protocol-configuration note;
-- keeps unexecuted BSC, formal, and empirical work `not_run`, never `not_applicable`;
-- disables downloadable machine records, the artifact compiler, Base64/shards/transport, and section 10 in the official GPT; the compiler and Return Desk remain supervised standalone tooling.
+The canonical starter list is exactly:
 
-No prior artifact-profile Preview result validates this changed compact profile. The public GPT and GitHub prerelease are available, but neither is promoted as `pass_12_of_12` or fully Preview-validated.
+1. Start a 60-second claim audit
+2. 60秒で主張を点検する
+3. Show a simple example first
+4. まず簡単な例を見る
 
-The preserved 39-case artifact-profile suite, D01/D02 preflights, compiler/transport requirements, ordering, and results are historical and superseded for this compact profile. They neither govern nor validate its 12-case gate.
+The official GPT continues to use five public Knowledge uploads; the retired [`BSC_EXECUTION_AND_RECEIPTS.md`](standalone/BSC_EXECUTION_AND_RECEIPTS.md) derivative remains standalone repository history. Downloadable machine records, compiler output, Base64, shards, transport, and section 10 remain outside the public GPT.
+
+No prior artifact-profile result validates this compact profile. The 12-case compact roster remains the gate for any future `pass_12_of_12` or fully Preview-validated claim.
 
 ## Exact trust boundary
 
@@ -46,13 +46,11 @@ The GPT is an authenticated, owner-controlled research-preview interface. It is 
 - Lean, SMT, interval, or empirical claims require separately identified supervised execution and admissible evidence.
 - A fluent report, hash-shaped string, submitted receipt, or internally consistent `audit_return.json` does not establish truth, source authenticity, independent replay, or deployment permission.
 
-## Alpha.8 release boundary
+## Alpha.8 and alpha.9 boundary
 
-This minimal prerelease may ship when the exact repository candidate passes deterministic local checks and branch CI, and the repaired status-routing and conflicting-evidence paths pass targeted live regression. That is the supported alpha.8 claim.
+Alpha.8 is the exact tagged package at `c6120093…`; it does not contain the later live/main UX hotfix or alpha.9 maintenance bytes. Its tagged release notes retain the then-current 300-word Quick description as historical release evidence.
 
-The exact 12-case compact roster remains the gate for any future `pass_12_of_12` or fully Preview-validated claim. Its incomplete state is disclosed rather than averaged away or silently relabeled. The former 39-case artifact workflow, compiler output, downloadable machine records, Base64, shards, and transport are not part of the supported public-GPT surface.
-
-Any later change to Instructions, Knowledge, capabilities, or Builder configuration requires a new binding record and proportionate regression testing; this prerelease does not validate changed service bytes.
+Alpha.9 uses a new version, binding record, deterministic release gates, and immutable tag. Any later changed exact package requires another new version and tag. Existing tags and release history must not be rewritten.
 
 ## Preserved alpha.7 baseline
 

@@ -2,7 +2,7 @@
   "profile_schema": "bsc-custom-gpt-profile/v1",
   "product": {
     "profile_version": "0.3.0",
-    "canonical_protocol_version": "0.3.0-alpha.8",
+    "canonical_protocol_version": "0.3.0-alpha.9",
     "service_availability": "LIVE",
     "public_url": "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor",
     "package_role": "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
@@ -34,9 +34,7 @@
       "Start a 60-second claim audit",
       "60秒で主張を点検する",
       "Show a simple example first",
-      "まず簡単な例を見る",
-      "Find the weakest assumption",
-      "最も弱い仮定を探す"
+      "まず簡単な例を見る"
     ],
     "candidate_update_step": "The official GPT already exists. For an authorized update, load this exact candidate in the authenticated editor, upload all generated Knowledge files in order, run and preserve the complete Preview gate, and verify the saved live binding. For an independent reproduction or fork, create a separate GPT and do not imply official status."
   },

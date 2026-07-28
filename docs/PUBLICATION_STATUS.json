@@ -2,6 +2,10 @@
   "schema": "bsc-publication-status-v1",
   "observed_at_utc": "2026-07-22T18:37:44Z",
   "status_is_a_timestamped_snapshot": true,
+  "snapshot_lifecycle": "historical_superseded",
+  "superseded_at_utc": "2026-07-25T23:00:11Z",
+  "superseded_by": "docs/CUSTOM_GPT_STATUS.md",
+  "historical_scope": "Preserved 2026-07-22 observations; not a current-state feed.",
   "official_custom_gpt": {
     "url": "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor",
     "availability": "live",

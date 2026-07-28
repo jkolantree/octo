@@ -826,11 +826,11 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
         "`controller_valid`, `candidate_failed`, and `transport_identity_unresolved`",
         "zero-based offset 3032",
         "zero-based offset 3538",
-        "explicitly authorized a second consolidated root-cause repair cycle",
+        "The second consolidated root-cause repair cycle opened on 2026-07-24",
         "Compiler v8 takes explicit `report_body_lines`",
         "rejects every Unicode category `Cc` character",
         "controller-valid C004 obligation-topology failure",
-        "explicitly authorized a third consolidated root-cause repair cycle",
+        "The third consolidated root-cause repair cycle opened on 2026-07-24",
         "Compiler v9 validates obligation closure before rendering",
         "refutation closure from admission disposition",
     )
@@ -1107,7 +1107,7 @@ def compact_protocol_projection(markdown: str) -> str:
             "`formal-mathematical` depths require the draft machine-readable audit "
             "record described below. The `quick` and `standard` depths include it "
             "only when the user requests it.",
-            "If no depth is requested, use `standard`. Audit depth changes the rigor "
+            "If no depth is requested, use `quick`. Audit depth changes the rigor "
             "and detail of the visible analysis, not the output medium. The public "
             "Custom GPT returns only a bounded human-readable audit at every depth.",
         ),
@@ -1162,8 +1162,12 @@ def compact_protocol_projection(markdown: str) -> str:
         (
             "Return sections 1 through 9 in order. Return section 10 only when the user "
             "requests it or the selected depth requires it:",
-            "Cover the following nine duties in order. Use terse headings and combine "
-            "adjacent duties only when the relationship remains clear:",
+            "At `standard`, `adversarial`, or `formal-mathematical` depth, cover the "
+            "following nine duties in order. Use terse headings and combine adjacent "
+            "duties only when the relationship remains clear. The default `quick` route "
+            "does not use this nine-duty template; it uses at most four visible blocks: "
+            "Bottom line, Why, Weakest point, and Best next check. Fold a short "
+            "method/omissions note into those blocks only when material:",
         ),
         (
             "10. `Machine-readable audit record` - include only when the user requests "
@@ -1176,7 +1180,8 @@ def compact_protocol_projection(markdown: str) -> str:
             "exported or machine format, state briefly that this profile returns visible "
             "human-readable text and continue with that audit.\n\n"
             "The default report must be beginner-first but technically inspectable. "
-            "Including tables, use at most 300 words for `quick`, 650 for `standard`, "
+            "For `quick`, use at most 250 words and four visible blocks, with no table "
+            "unless one is materially necessary. Use at most 650 words for `standard` "
             "and 1,000 for `adversarial` or `formal-mathematical`, unless the user "
             "explicitly asks for an expanded report. State omitted scope and offer a "
             "focused continuation rather than emitting a giant response.",
@@ -1447,11 +1452,27 @@ def render_preview_prompt(case: dict[str, Any], fixture_filename: str) -> str:
             f"{case['user_request']}"
         )
         return prefix + route
+    if case.get("id") == "known-false-continuity":
+        return (
+            prefix
+            + "Use the configured default route: at most 250 words and four "
+            "visible blocks (Bottom line, Why, Weakest point, and Best next check), "
+            "with no table unless one is materially necessary. Do not apply the "
+            "nine-duty Deep/Formal template. Do not create or offer files, machine "
+            "records, compiler output, Base64, shards, transport, or Section 10. Never "
+            "reproduce a hash or digest value; preserve every other canonical token and "
+            "URL exactly.\n\n"
+            + "The case request below names no audit depth; select and state the "
+            "configured default.\n\n"
+            + case["user_request"]
+        )
     route = (
         "Cover compact audit duties 1-9 in at most 5 visible headings. Do not create "
         "or offer files, machine records, compiler output, Base64, shards, transport, "
         "or Section 10. Never reproduce a hash or digest value; preserve every other "
         "canonical token and URL exactly.\n\n"
+    )
+    route += (
         f"Run this audit at {case['audit_depth']} depth.\n\n{case['user_request']}"
     )
     return prefix + route
@@ -1528,7 +1549,16 @@ def render_eval_expectations(records: list[dict[str, Any]]) -> bytes:
     for case in records:
         expected = case.get("expected", {})
         lines.extend([f"## `{case['id']}` — {case.get('title') or case.get('workflow_requirement')}", ""])
-        lines.append(f"- **Audit depth:** `{case.get('audit_depth') or case.get('audit_mode')}`")
+        if case.get("id") == "known-false-continuity":
+            lines.append(
+                f"- **Historical source depth:** `{case.get('audit_depth') or case.get('audit_mode')}`"
+            )
+            lines.append(
+                "- **Current compact-gate route:** configured default Quick; the exact "
+                "Preview prompt deliberately names no depth"
+            )
+        else:
+            lines.append(f"- **Audit depth:** `{case.get('audit_depth') or case.get('audit_mode')}`")
         lines.append(f"- **Fixture:** `{case['fixture_paths'][0]}`")
         lines.extend(["- **Exact Preview prompt:**", "", "```text", case["preview_prompt"], "```"])
         lines.append(
@@ -1667,6 +1697,8 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "",
         f"**This repository package:** `{product_record['package_role']}` with candidate state `{product_record['candidate_state']}`, live binding `{product_record['live_binding_state']}`, and Preview validation `{product_record['preview_validation_state']}`.",
         "",
+        f"**Version boundary:** this package is `{public_version()}` and may be released only from the exact immutable tag `v{public_version()}` recorded in the release manifest. Before that tag exists it is a candidate; after tagging, the manifest binds the exact commit and tree. Never move an existing tag or relabel changed bytes as an older release; any later changed package requires a new version and tag.",
+        "",
         f"**Japanese interface:** `{product_record['japanese_interface_status']}` with native-speaker terminology review `{product_record['japanese_native_speaker_terminology_review']}`. Preserve this disclosure in the public Description.",
         "",
         "This candidate is the compact human-response profile. Downloadable machine records, `audit_return.json`, compiler execution/stdout, Base64, shards, parity, transport, and section 10 are disabled in the official GPT. The repository retains the compiler and Return Desk only as supervised standalone tooling.",
@@ -1697,11 +1729,11 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "",
         *compact_gate_lines,
         "",
-        "Of the 11 retained case IDs, 10 are scientific cases. For those 10, reuse the matching fixture and scientific oracle from `evals/GPT_EVAL_CASES.jsonl` and run the generated compact duties1-9/at-most-5-headings/no-export `preview_prompt`. The remaining retained case, `official-service-status-separation`, is status-only: use its generated `STATUS-ONLY` `preview_prompt`, require `status_record_read_only` and an empty scientific projection `{}`, and do not apply duties 1-9. `GPT_EVAL_CASES.jsonl` otherwise remains the preserved historical 39-case artifact suite; its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded.",
+        "Of the 11 retained case IDs, 10 are scientific cases. For the nine that explicitly select Standard, Adversarial, or Formal depth, reuse the matching fixture and scientific oracle from `evals/GPT_EVAL_CASES.jsonl` and run the generated compact duties1-9/at-most-5-headings/no-export `preview_prompt`. The `known-false-continuity` prompt deliberately specifies no input depth so it exercises the configured default Quick route; its prompt does not request duties 1-9, and the response checker requires canonical `refuted`, at most 250 words, at most four visible blocks, and no table. The remaining retained case, `official-service-status-separation`, is status-only: use its generated `STATUS-ONLY` `preview_prompt`, require `status_record_read_only` and an empty scientific projection `{}`, and do not apply duties 1-9. `GPT_EVAL_CASES.jsonl` otherwise remains the preserved historical 39-case artifact suite; its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded.",
         "",
         "The remaining synthetic control, `artifact-export-disabled-control`, is not a retained JSONL case. It reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.",
         "",
-        "Preserve every raw response as exact UTF-8 text. Before scoring, require native exit 0 from `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>` for that response. Exit 1 or 2 is an automatic failure; the checker blocks empty/oversized responses, exposed digest values, and scientific leakage from status-only cases. Score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.",
+        "Preserve every raw response as exact UTF-8 text. Before scoring, require native exit 0 from `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>` for that response. Exit 1 or 2 is an automatic failure; the checker blocks empty/oversized responses, exposed digest values, default-Quick contract violations, and scientific leakage from status-only cases. Score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.",
         "",
         "Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.",
         "All counted cases must use the same frozen candidate.",
@@ -1746,9 +1778,11 @@ def render_readme(profile: dict[str, Any]) -> bytes:
     lines = [
         "# BSC Claim Auditor reproducible package",
         "",
-        f"The official [{product_record['name']}]({product_record['public_url']}) is `{product_record['service_availability']}`. This directory is the deterministic, repository-backed BSC `{public_version()}` source and update candidate used to inspect, reproduce, verify, or fork its configuration.",
+        f"The official [{product_record['name']}]({product_record['public_url']}) is `{product_record['service_availability']}`. This directory preserves the deterministic, repository-backed BSC `{public_version()}` package used to inspect, reproduce, verify, or fork its configuration.",
         "",
         f"Candidate state is `{product_record['candidate_state']}`; live binding is `{product_record['live_binding_state']}`; Preview validation is `{product_record['preview_validation_state']}`. These states do not change merely because the official service exists or candidate files were generated.",
+        "",
+        f"This package may be released only from the exact immutable tag `v{public_version()}` recorded in its release manifest. Before tagging it remains a candidate. Never move an existing tag, and use a new version and tag for any later changed package.",
         "",
         f"The current compact gate is exactly {product_record['preview_gate_case_count']} fresh-conversation cases. The preserved 39-case artifact-profile suite, its D01/D02 preflights, compiler/transport requirements, and prior results are historical and superseded; they neither govern nor validate this compact candidate.",
         "",
@@ -2001,9 +2035,9 @@ def validate_payload(
         bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", str(item)))
         for item in starters
     ]
-    if len(starters) != 6 or starter_languages != [False, True] * 3:
+    if len(starters) != 4 or starter_languages != [False, True] * 2:
         failures.append(
-            "GPT profile must contain exactly six starters alternating English and Japanese"
+            "GPT profile must contain exactly four starters alternating English and Japanese"
         )
     if any(not str(item).strip() or len(str(item)) > 32 for item in starters):
         failures.append(
