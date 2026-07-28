@@ -4,38 +4,39 @@
 
 official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) は build/link-share 済みの research preview です。repository package は、その reproducible configuration/evaluation source と current update candidate を提供します。誰でも configuration を inspect/reproduce でき、official status を示唆しない independent fork を作成できます。
 
-この page は service availability、configuration identity、Preview validation、source deployment、immutable release を意図的に分離します。timestamped machine-readable snapshot は [PUBLICATION_STATUS.json](../PUBLICATION_STATUS.json) にあります。
+この page は service availability、configuration identity、Preview validation、source deployment、release identity を分離します。[PUBLICATION_STATUS.json](../PUBLICATION_STATUS.json) は superseded した 2026-07-22 snapshot を historical evidence として保存するもので、current-state feed ではありません。
 
 ## Current state
 
-2026-07-24 に確認:
+2026-07-28 の alpha.9 update 前に read-only 確認:
 
 | Surface | State | Exact binding または boundary |
 |---|---|---|
-| Official Custom GPT | **live** | 上記 public URL。supported alpha.8 surface は bounded human-readable audit |
-| Targeted alpha.8 live regressions | **passed** | canonical status-only routing は pass。conflicting verified evidence は admission を block し、SHA-256 digest を出力しなかった |
-| Complete 12-case Preview evaluation | **not completed** | この prerelease は `pass_12_of_12` または complete live Builder-byte binding を主張しない |
-| GitHub prerelease | **published** | [`v0.3.0-alpha.8`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.8)。immutable tag と release assets が exact repository binding |
-| Public Pages | **deployed** | English interface は [jkolantree.github.io/octo](https://jkolantree.github.io/octo/) で live |
-| Japanese Pages route | **candidate; not deployed** | 予定 `/octo/ja.html` route は `2026-07-22T18:37:44Z` に HTTP 404。post-deploy English/JA/protocol route/metadata smoke が pass するまで live として案内しない |
+| Official Custom GPT | **live; alpha.9 update 前に inspected** | owner editor は `Live`、link access、Quick-UX Instructions、5 Knowledge filenames、Web Search on、Data Analysis on、Image Generation off、Action なしを示した |
+| Conversation-starter boundary | **editor 6; public 4; alpha.9 source 4** | owner editor は 6 starters を保持し、public page は先頭 4 個のみを render した。alpha.9 はその 4 個を exact public order の complete canonical list とする |
+| Exact live/source binding | **post-save verification まで unresolved** | update 前の editor/source starter count は異なる。ChatGPT は indexed Knowledge bytes を independent hash 用に expose しない |
+| Complete 12-case Preview evaluation | **この Knowledge-changing candidate に required** | historical evidence から `pass_12_of_12` を infer しない。exact alpha.9 freeze が fresh 12 cases 全件に pass する必要がある |
+| Repository release line | **v0.3.0-alpha.9** | exact commit、tree、tag、assets は immutable tag と `RELEASE_MANIFEST.json` に bind される。changed alpha.9 bytes を alpha.8 と label しない |
+| Prior GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.8`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.8) は commit `c6120093e49c658318553900028761a171dbf47b`、tree `a4f7d89ac2e09f2887797c0c16b6f603a29d27ea` のまま。tag を move しない |
+| GitHub release object | **mutable service record** | GitHub は `immutable=false` と報告した。release assets と release-page metadata を intrinsically immutable と表現しない |
+| Public Pages | **deployment は separately verified** | [English](https://jkolantree.github.io/octo/) と [Japanese](https://jkolantree.github.io/octo/ja.html) route は Pages deployment 後に merged alpha.9 protocol metadata と一致する必要がある |
 
-この release は「working research preview」と「fully Preview-validated」を明確に分離します。repository checks と、repair された 2 つの high-risk live route は pass しました。full 12-case roster は未完了なので、source CI と targeted checks を broader evaluation の代用として表現してはいけません。
+availability、targeted regression、source CI は complete Preview validation の代用ではありません。preserved 39-case artifact-profile campaign、D01/D02 preflight、compiler/transport requirements、negative results は historical evidence として残し、compact 12-case gate に restart/splice しません。
 
-## Released compact scope
+## Current compact contract and maintenance boundary
 
-`0.3.0-alpha.8` prerelease は、service availability と validation を混同せず、日本語 accessibility と exact evidence boundary を強化します。この release は:
+live Instructions は ordinary no-depth claim を Quick に route します。verdict first、250 words 以下、4 short blocks 以下で、materially necessary でない table は使いません。alpha.9 は generated Knowledge projection を同じ contract に reconcile します。
 
-- uploaded Knowledge から mutable service-state claim を除き、現在状態は timestamped repository record に分離する;
-- 利用者向けの official URL と、任意の reproduction/fork/update route を明確に分ける;
-- canonical machine token を保った Japanese human-facing guidance を追加する;
-- official GPT の Knowledge を 5 files にし、`BSC_EXECUTION_AND_RECEIPTS.md` は standalone repository tooling に限定する;
-- scientific audit では human-readable duties 1-9 のみを 300/650/1,000-word budget 内で返す; official-product status-only response は duties 1-9 を bypass し、提供された canonical state だけを簡潔に返す;
-- downloadable machine record、compiler stdout、Base64、shards、transport、section 10 を official GPT では無効化する;
-- fresh 12-case compact-profile Preview gate で Japanese behavior と corrected evidence boundary を検証する。
+canonical starter list は exactly:
 
-preserved 39-case artifact-profile suite、D01/D02 preflight、compiler/transport results は historical and superseded です。これらは compact candidate を validate せず、12-case gate の代用になりません。
+1. Start a 60-second claim audit
+2. 60秒で主張を点検する
+3. Show a simple example first
+4. まず簡単な例を見る
 
-prior artifact-profile Preview result は、この changed compact profile を validate しません。public GPT と GitHub prerelease は利用できますが、`pass_12_of_12` または fully Preview-validated として promote しません。
+official GPT は引き続き 5 public Knowledge uploads を使います。retired `BSC_EXECUTION_AND_RECEIPTS.md` derivative は standalone repository history です。downloadable machine record、compiler output、Base64、shards、transport、section 10 は public GPT の外に残ります。
+
+prior artifact-profile result は compact profile を validate しません。exact 12-case roster は、将来 `pass_12_of_12` または fully Preview-validated と主張するための gate です。
 
 ## Exact trust boundary
 
@@ -46,13 +47,11 @@ GPT は authenticated owner-controlled research-preview interface です。proof
 - Lean/SMT/interval/empirical claim には separately identified supervised execution と admissible evidence が必要。
 - fluent report、hash-shaped string、submitted receipt、internally consistent `audit_return.json` は truth、source authenticity、independent replay、deployment permission を確立しない。
 
-## Alpha.8 release boundary
+## Alpha.8 and alpha.9 boundary
 
-exact repository candidate が deterministic local checks と branch CI を pass し、repair された status-routing と conflicting-evidence path が targeted live regression を pass した場合、この minimal prerelease を ship できます。これが supported alpha.8 claim です。
+Alpha.8 は `c6120093…` の exact tagged package です。later live/main UX hotfix と alpha.9 maintenance bytes は含みません。tagged release notes の当時の 300-word Quick 記述は historical release evidence として残します。
 
-exact 12-case compact roster は、将来 `pass_12_of_12` または fully Preview-validated と主張するための gate として残ります。未完了状態は明示し、平均化や黙った relabel はしません。former 39-case artifact workflow、compiler output、downloadable machine record、Base64、shards、transport は supported public-GPT surface に含まれません。
-
-Instructions、Knowledge、capabilities、Builder configuration を後から変更する場合は、新しい binding record と相応の regression testing が必要です。この prerelease は changed service bytes を validate しません。
+Alpha.9 は new version、binding record、deterministic release gates、immutable tag を使用します。later changed exact package には another new version/tag が必要です。existing tags と release history を rewrite しません。
 
 ## Preserved alpha.7 baseline
 

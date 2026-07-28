@@ -65,6 +65,7 @@ Pre-1.0 schema versions may change incompatibly. A release must state the schema
 | `0.3.0a6` | `0.3.0`; derived holonomy `0.1.0`; research recovery `v1`; Custom GPT release manifest `bsc-custom-gpt-release-manifest-v1` |
 | `0.3.0a7` | `0.3.0`; derived holonomy `0.1.0`; research recovery `v1`; Custom GPT release manifest `bsc-custom-gpt-release-manifest-v1` |
 | `0.3.0a8` | prior formats plus non-admissive audit return `0.1.0` |
+| `0.3.0a9` | same machine schemas as `0.3.0a8`; maintenance and compact-profile reconciliation only |
 
 The independent derived-holonomy route is governed by
 [`derived-holonomy-v0.1.schema.json`](../schemas/derived-holonomy-v0.1.schema.json).
@@ -74,4 +75,4 @@ Consumers must reject an unknown major or minor schema unless an explicit migrat
 
 The `v0.3.0-alpha.7` Custom GPT package did not enlarge the claim-manifest schema or the Python checker's authority. Its exact controller and Knowledge package completed the authenticated 27-case Preview gate recorded in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Uploads go through ChatGPT, and no GPT Action or hosted BSC API is included.
 
-The alpha.8 release candidate adds the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json). It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).
+Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.9 preserves it unchanged. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).

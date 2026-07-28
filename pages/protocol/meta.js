@@ -1,1 +1,1 @@
-window.BSC_PROTOCOL = Object.freeze({"path":"protocol/BSC_AUDIT_LLM_PACKET.md","sha256":"1b587f18e4eb83be8d1ef50294b174f54f339d966f25d2d7b56d1b5b5fb94e31","version":"0.3.0-alpha.8"});
+window.BSC_PROTOCOL = Object.freeze({"path":"protocol/BSC_AUDIT_LLM_PACKET.md","sha256":"74480f42788a3cb3d6d94b2962a9113a98e90f165cbd56de246567d6d478d97f","version":"0.3.0-alpha.9"});
