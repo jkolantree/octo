@@ -180,7 +180,7 @@ def load_policy(path: Path = POLICY_PATH) -> Policy:
     project = frozenset(raw["allowed_project_identities"])
     bots = frozenset(raw["allowed_bot_identities"])
     bot_emails = frozenset(raw["allowed_bot_emails"])
-    if project != frozenset({"J. Tree", "Tree, J.", "jtree", "jkolantree"}):
+    if project != frozenset({"J. Tree", "Tree, J.", "jtree", "jkolantree", "tree"}):
         raise ValueError("project identity allowlist has drifted")
     if bots != frozenset({"GitHub", "github-actions[bot]", "web-flow"}):
         raise ValueError("GitHub bot identity allowlist has drifted")
