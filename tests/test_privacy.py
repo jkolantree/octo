@@ -12,6 +12,7 @@ from scripts.check_privacy import (
     _noreply_email,
     load_policy,
     scan_docx,
+    scan_documentation,
     scan_history,
     scan_pdf_bytes,
     scan_path,
@@ -52,6 +53,80 @@ class PrivacyTests(unittest.TestCase):
         findings = scan_text("fixture", payload, self.policy)
         self.assertIn("LOCAL_PATH_PRESENT", self.codes(findings))
         self.assertIn("PRIVATE_KEY", self.codes(findings))
+
+    def test_forward_slash_windows_user_path_fails_closed(self) -> None:
+        payload = "C:/" + "Us" + "ers/alice/private/record.json"
+        findings = scan_text("fixture", payload, self.policy)
+        self.assertIn("LOCAL_PATH_PRESENT", self.codes(findings))
+
+    def test_json_escaped_windows_user_path_fails_closed(self) -> None:
+        separator = "\\" * 2
+        payload = (
+            '{"path":"C:'
+            + separator
+            + "Us"
+            + "ers"
+            + separator
+            + "alice"
+            + separator
+            + 'private.json"}'
+        )
+        findings = scan_text("fixture", payload, self.policy)
+        self.assertIn("LOCAL_PATH_PRESENT", self.codes(findings))
+        self.assertNotIn("alice", repr(findings))
+
+    def test_temporary_path_fails_closed_except_registered_build_paths(self) -> None:
+        private_path = "/" + "tmp/private-browser-profile/Default/Cookies"
+        findings = scan_text("fixture", private_path, self.policy)
+        self.assertIn("LOCAL_PATH_PRESENT", self.codes(findings))
+        self.assertNotIn(private_path, repr(findings))
+
+        registered_path = "/" + "tmp/bsc-index.html"
+        self.assertEqual(scan_text("fixture", registered_path, self.policy), [])
+
+    def test_requester_perspective_narration_fails_closed_in_markdown(self) -> None:
+        findings = scan_documentation(
+            "docs/report.md",
+            "On 2026-07-24 the user explicitly authorized another repair.\n",
+        )
+        self.assertIn("REQUESTER_PERSPECTIVE_NARRATION", self.codes(findings))
+        self.assertNotIn("2026-07-24", repr(findings))
+
+    def test_machine_identifiers_and_prospective_protocol_language_are_preserved(self) -> None:
+        text = (
+            "`second_repair_authorization` remains an immutable machine identifier.\n"
+            "Stop unless the user explicitly authorizes execution.\n"
+        )
+        self.assertEqual(scan_documentation("docs/protocol.md", text), [])
+
+    def test_stale_status_wording_is_limited_to_current_public_documents(self) -> None:
+        phrase = "The Japanese candidate is pending public deployment."
+        current = scan_documentation("README.md", phrase)
+        historical = scan_documentation("docs/historical-observation.md", phrase)
+        self.assertIn("STALE_CURRENT_PUBLIC_WORDING", self.codes(current))
+        self.assertEqual(historical, [])
+
+    def test_stale_release_and_html_status_wording_fails_closed(self) -> None:
+        fixtures = (
+            (
+                "docs/SHARING_GUIDE.md",
+                "The v0.3.0-alpha.7 release is a research preview.",
+            ),
+            (
+                "START_HERE.html",
+                "<p>The current live controller identifies as alpha.8.dev0.</p>",
+            ),
+            (
+                "START_HERE.html",
+                "<a>Japanese Pages candidate</a> is included but remains pending public deployment.",
+            ),
+        )
+        for path, text in fixtures:
+            with self.subTest(path=path, text=text):
+                self.assertIn(
+                    "STALE_CURRENT_PUBLIC_WORDING",
+                    self.codes(scan_documentation(path, text)),
+                )
 
     def test_javascript_is_scanned_as_utf8_text(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

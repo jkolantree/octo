@@ -1,22 +1,22 @@
 # Sharing and Release Guide
 
-The v0.3.0-alpha.7 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
+The v0.3.0-alpha.9 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
 
 ## Public surfaces
 
 1. **The official Custom GPT is the direct audit interface.** It is already built and link-shared; its runtime identity and Preview-validation state are reported separately.
-2. **GitHub Pages is the local browser interface.** The English Packet Builder and Return Desk are deployed. The Japanese route is a candidate pending public deployment and must not be described as live until its post-deploy smoke check passes.
+2. **GitHub Pages is the local browser interface.** The English and Japanese Packet Builder and Return Desk routes are deployed.
 3. **GitHub is the reproducible workshop.** Source history, issues, pull requests, fixtures, configuration packages, and active releases live there.
 4. **Zenodo is the immutable archive.** Frozen software releases and foundations papers receive separate citable records linked in both directions.
 
-## Existing v0.3.0-alpha.7 release contents
+## v0.3.0-alpha.9 release contents
 
-The immutable `v0.3.0-alpha.7` tag already exists. Its release contains:
+The immutable `v0.3.0-alpha.9` tag identifies the exact release tree. Its release contains:
 
 - `START_HERE.txt`, `BSC_AUDIT_COPY_PASTE.txt`, `BSC_AUDIT_UPLOAD_TO_LLM.txt`, and `BSC_AUDIT_SYSTEM_PROMPT.txt`;
 - the canonical LLM packet, schema, example archive, and `BSC_AUDIT_PUBLICATION.json`;
-- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.7.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
-- `bsc-audit-complete.zip` and `bsc-audit-engine-0.3.0-alpha.7.zip`;
+- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.9.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
+- `bsc-audit-complete.zip` and `bsc-audit-engine-0.3.0-alpha.9.zip`;
 - the wheel and source distribution;
 - the conformance packet;
 - `RELEASE_MANIFEST.json` and `SBOM.spdx.json`;
@@ -31,18 +31,18 @@ archives include the tracked `research/` PDF and DOCX. Their
 `research/LICENSE` applies to those paths; the root Apache-2.0 license does not
 replace it.
 
-Do not manually zip a working directory containing caches or untracked files. Build from the tagged tree. Preserve the existing `v0.2.1` and `v0.3.0-alpha.7` tags rather than moving either one.
+Do not manually zip a working directory containing caches or untracked files. Build from the tagged tree. Preserve every existing tag, including `v0.3.0-alpha.8`; never move or relabel one.
 
 Permanent release links:
 
 ```text
-https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.7
-https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.7/BSC_AUDIT_LLM_PACKET.md
+https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.9
+https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.9/BSC_AUDIT_LLM_PACKET.md
 https://jkolantree.github.io/octo/
 https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
 ```
 
-The planned Japanese Pages URL is `https://jkolantree.github.io/octo/ja.html`. It is not a permanent public route until the candidate is deployed and the English page, Japanese page, and protocol metadata all pass the post-deploy smoke check.
+The deployed Japanese Pages URL is `https://jkolantree.github.io/octo/ja.html`. English, Japanese, and protocol metadata routes were rechecked against current-main bytes on 2026-07-25.
 
 The repository release publishes a reproducible package, not proof of the authenticated Custom GPT state. The official GPT's availability, exact observed binding, Preview validation, GitHub release, and Pages deployment are recorded separately in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Lead with the existing official service; present the package as its reproducible source and optional fork/update path. Never infer live or validated state from a release ZIP. A changed package remains an **unvalidated candidate** until its own complete Preview gate passes. The package contains no GPT Action, hosted API, account, analytics, or cloud-storage service.
 
@@ -106,8 +106,8 @@ The README states:
 
 The three product entry points have different trust and privacy boundaries:
 
-1. **Official Custom GPT - direct ChatGPT audit:** the link-shared GPT is live and reports alpha.8.dev0, while its complete post-update Preview gate remains pending. Uploads go through ChatGPT under the user's applicable settings and terms.
-2. **Local browser Packet Builder and Audit Return Desk:** the deployed English interface constructs packets and inspects returned envelopes and selected hashes locally. The Japanese interface remains a candidate pending public deployment. Sending a packet to a model is a separate action.
+1. **Official Custom GPT - direct ChatGPT audit:** the link-shared GPT is live, while exact live/source binding and compact Preview results remain separately observed states. Uploads go through ChatGPT under the user's applicable settings and terms.
+2. **Local browser Packet Builder and Audit Return Desk:** the deployed English and Japanese interfaces construct packets and inspect returned envelopes and selected hashes locally. Sending a packet to a model is a separate action.
 3. **Repository and Python engine - exact checker route:** runs the versioned finite checker and preserves structured output; it does not turn an interpretive GPT audit into mechanical evidence retroactively.
 
 ### Curious reader
@@ -120,7 +120,7 @@ Share the tagged repository and [PROGRAMMER_TUTORIAL.md](PROGRAMMER_TUTORIAL.md)
 
 ### LLM user
 
-Share the official URL with its exact [status record](CUSTOM_GPT_STATUS.md). The current GPT is available but must not be described as alpha.8 Preview-validated. Share the [deterministic package](../gpt/README.md) as the open-source reproduction, evaluation, update, and fork route, or share the versioned [BSC_AUDIT_LLM_PACKET.md](../BSC_AUDIT_LLM_PACKET.md) for manual cross-model use. Never invent a GPT URL or invite a user to upload confidential material casually. ChatGPT uploads are not local-only.
+Share the official URL with its exact [status record](CUSTOM_GPT_STATUS.md). Do not infer Preview validation or exact indexed-Knowledge binding from availability alone. Share the [deterministic package](../gpt/README.md) as the open-source reproduction, evaluation, update, and fork route, or share the versioned [BSC_AUDIT_LLM_PACKET.md](../BSC_AUDIT_LLM_PACKET.md) for manual cross-model use. Never invent a GPT URL or invite a user to upload confidential material casually. ChatGPT uploads are not local-only.
 
 ### Scientific reviewer
 
@@ -160,4 +160,4 @@ Avoid:
 - “BSC compliant”;
 - claims that an LLM ran the Python checker without actual output.
 
-The Audit Return Desk is implemented in the alpha.8 release candidate for non-admissive inspection of returned output and receipts. It is not part of the immutable alpha.7 release; its presence in a Pages or GPT interface does not turn a returned draft into admissible evidence.
+The Audit Return Desk was introduced in alpha.8 and remains in alpha.9 for non-admissive inspection of returned output and receipts. Its presence in a Pages or GPT interface does not turn a returned draft into admissible evidence.

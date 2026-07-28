@@ -1,10 +1,10 @@
 {
-  "bsc_version": "0.3.0-alpha.8",
+  "bsc_version": "0.3.0-alpha.9",
   "canonical_sources": [
     {
       "bytes": 30376,
       "path": "BSC_AUDIT_LLM_PACKET.md",
-      "sha256": "1b587f18e4eb83be8d1ef50294b174f54f339d966f25d2d7b56d1b5b5fb94e31"
+      "sha256": "74480f42788a3cb3d6d94b2962a9113a98e90f165cbd56de246567d6d478d97f"
     },
     {
       "bytes": 5084,
@@ -12,9 +12,9 @@
       "sha256": "68e7938c55e88642e47824c7d92610014f606336697dc67983357eab9767e295"
     },
     {
-      "bytes": 30086,
+      "bytes": 30272,
       "path": "docs/GPT_FROZEN_CANDIDATE.json",
-      "sha256": "4d540ca484194c146ed5999410605462472d4dcf5fb7527e74c1c32d81eb2a92"
+      "sha256": "a95ade7a3d9f17c224e17cda3b3fa5479624af00cf1a9a9e8b9659324e104f1c"
     },
     {
       "bytes": 10099,
@@ -27,9 +27,9 @@
       "sha256": "b8ad039964660b704a1076348c834af9201c9463e7d6ca1fabcec91c3213212c"
     },
     {
-      "bytes": 5128,
+      "bytes": 5242,
       "path": "docs/SCHEMA.md",
-      "sha256": "ed42f2f65972f57d86c8e4d198eafc9a3d970db68012ce71a28eaf589b29b506"
+      "sha256": "7b3766e547e0f1cc2671da004efc5d45ac137650de133f7347761470e508c31c"
     },
     {
       "bytes": 7759,
@@ -52,9 +52,9 @@
       "sha256": "f4b21b969fafd195d91e131e22a5ee0d884f2e7bc46dd37d93966b0276d40b77"
     },
     {
-      "bytes": 30533,
+      "bytes": 30489,
       "path": "gpt/_source/GPT_EVAL_PROVENANCE.md",
-      "sha256": "929d81debb5e58bd4688ecf6d7cd8a087cd3c50c7fcf98e1829b1962e120fc8f"
+      "sha256": "28a5da245a46b4744519f47abade0181f693b522949869187b647ad42d7c5215"
     },
     {
       "bytes": 68963,
@@ -67,14 +67,14 @@
       "sha256": "628ca9979755880b059ce4b5dd21c5becaab8f12515632d0259abe942252ffd5"
     },
     {
-      "bytes": 17364,
+      "bytes": 17350,
       "path": "gpt/_source/GPT_INVARIANT_ENFORCEMENT_MATRIX.md",
-      "sha256": "5f60476038d1a20a4b55c79389e2e0fe8ba60b89cd737602a30b39e13308821f"
+      "sha256": "371977e98d4465045dee4c3c8a732dd9db87b701ebbde969dca0d1d731214e49"
     },
     {
-      "bytes": 26148,
+      "bytes": 26074,
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "1746c1cf77b1e3fb2a8afb3e1fb6a90afa300673c55b20c38eb306a3254b0488"
+      "sha256": "af4f0867e09d009a454b346e864d424323ffe08dcde899b16ede0e808d19ff18"
     },
     {
       "bytes": 75464,
@@ -87,9 +87,9 @@
       "sha256": "25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799"
     },
     {
-      "bytes": 124220,
+      "bytes": 126946,
       "path": "scripts/build_gpt_package.py",
-      "sha256": "70fb9ddc0100252bef232889026c1f7c2d7c72be2071cefd8485fd456342ffe2"
+      "sha256": "1e8827e3310f92f9f0c52bc0e43759ae8c5880df25b045c78aaec3169686c419"
     },
     {
       "bytes": 7824,
@@ -97,9 +97,9 @@
       "sha256": "8871392adac4691458a5b06e4d8ef38bb4d07a8b7ad471512bb59f88ea288259"
     },
     {
-      "bytes": 11293,
+      "bytes": 14307,
       "path": "scripts/check_compact_preview_response.py",
-      "sha256": "37dc7abe97e98c4c18660ff7a267741a5409aa1fe96b347f4523bc186e3a7841"
+      "sha256": "aa40d551032c1c2425cf53a5b3987122b361733cdfec546d496f0e6f76e7ea68"
     },
     {
       "bytes": 134831,
@@ -112,9 +112,9 @@
       "sha256": "cfe1d850884348af9e4d0aca746081c246574ec6532c556b7a7512a7430e1f69"
     },
     {
-      "bytes": 43170,
+      "bytes": 43195,
       "path": "scripts/check_gpt_frozen_candidate.py",
-      "sha256": "074bfe4605ca06f462ee9b61201682d5c9ee07e4d610da39d2d9e2694edeb5a5"
+      "sha256": "bb0a6f86c8a1b167c45f57da603eff60bed50a44d200851ca9fe93291a0dd54b"
     },
     {
       "bytes": 91394,
@@ -139,7 +139,7 @@
     {
       "bytes": 82022,
       "path": "src/bsc_audit/return_desk.py",
-      "sha256": "1968c07c01e2aba5fcd689359aa86b54feabd9d5ba0850d63d3c992c7a72564a"
+      "sha256": "3d68a3321ed7c590d41c4d16fb49e4c05380fee3df6428375081cb3863f684cc"
     },
     {
       "bytes": 7944,
@@ -149,17 +149,17 @@
     {
       "bytes": 51063,
       "path": "tests/return_desk_runtime.test.cjs",
-      "sha256": "bad03cfee1d54962675168b8be07af9ea1f800724028fd894216c2303023c067"
+      "sha256": "7caba1ab2c4deef24c99ba14b2204e6c67ca6b8258c17bc83e8adba0a1bb1201"
     },
     {
-      "bytes": 18600,
+      "bytes": 22040,
       "path": "tests/test_compact_preview_response.py",
-      "sha256": "5de97ae164769affe2c1ce424bc6ddedf43bfbaa5a8b2752ce33afce18681f7d"
+      "sha256": "d57c3283fec6687c645e64959dc52f91d8e55d7e4a4d9f21256bf6dd554fd8cf"
     },
     {
-      "bytes": 75101,
+      "bytes": 77022,
       "path": "tests/test_gpt_artifact_compiler.py",
-      "sha256": "53e63616ace707ad671e306b9f4aeb993b9a47165d58455c1fc51115a1b73a28"
+      "sha256": "5a2b60671ac7ee542acd3f531339c33e59e2e51cf311883d06abc2b7798885c5"
     },
     {
       "bytes": 118928,
@@ -169,7 +169,7 @@
     {
       "bytes": 86725,
       "path": "tests/test_gpt_eval_controller.py",
-      "sha256": "ffe263d2cdfdd08c8bbe59aa3e89ff139d3feba467461b63537ba0866f8f1ecb"
+      "sha256": "ba06de092fc8f0d4564dc529aa3fde0d147ecaf09a2eaa74e5bef157c45afc1d"
     },
     {
       "bytes": 41919,
@@ -179,17 +179,17 @@
     {
       "bytes": 20370,
       "path": "tests/test_gpt_frozen_candidate.py",
-      "sha256": "7d4992827d8d6d9a08dbaabfe63f9b19f7befb463f5115fbf6d375ddff33e911"
+      "sha256": "d27b9a53d509d215d76d5ff20d73b940d1d42d54d81d9b6d51542e5e60cc43d6"
     },
     {
       "bytes": 56653,
       "path": "tests/test_return_desk.py",
-      "sha256": "4ef64b47c34ace1735eac59040977ee7a23260f118e9d60fbcfaf6508985d106"
+      "sha256": "fd539e6725bbf39029889ee7bc34555057d2d3fcf250c19f4c50e56b4f6ad096"
     },
     {
       "bytes": 406,
       "path": "toolchain.lock.json",
-      "sha256": "22d26a2b0dad6018690e18d9c98009051c33b0f579e2ac35c3689d5864fa19b0"
+      "sha256": "af2d5916eec38dfca91ca77e624ae47a4f519f4da4c1bdfd025909df579e1167"
     }
   ],
   "capability_declarations": {
@@ -231,18 +231,18 @@
     "ja-truncated-proof",
     "official-service-status-separation"
   ],
-  "engine_version": "0.3.0a8",
+  "engine_version": "0.3.0a9",
   "evaluation_schema": "bsc-custom-gpt-eval/v2",
   "generated_artifacts": [
     {
-      "bytes": 369,
+      "bytes": 259,
       "path": "GPT_CONVERSATION_STARTERS.md",
-      "sha256": "2cb706726dd7ebee03faf26e02dd5d6963b8213ee613beb9f4cc5f1618c495ce"
+      "sha256": "7d213e96253df7b669289588acff596168581d082e7e83c3e6ec13bc42499a1a"
     },
     {
       "bytes": 7491,
       "path": "GPT_INSTRUCTIONS.md",
-      "sha256": "cdaf4107404b70893f485303b7baa1ad232bea02a61a62d9b046706780f8b105"
+      "sha256": "044f58fc77741a5cf96e26094ecd513a68af1886d770d9a4a7442cf6c65caaca"
     },
     {
       "bytes": 3322,
@@ -250,29 +250,29 @@
       "sha256": "100ea2e1e5aa58603867d3e3727923f1127d1f75dac8e44b58c8060f119b3eb4"
     },
     {
-      "bytes": 9216,
+      "bytes": 9990,
       "path": "GPT_SETUP_AND_PUBLISHING.md",
-      "sha256": "682c1d2b14031e50a0a0c6b4c2c97d5807766bd411da3e24085d7b6e7e4d8933"
+      "sha256": "28e0cc9189b525e46749645fb367756d3411c2842785cf27a39732bf7b536a32"
     },
     {
-      "bytes": 2592,
+      "bytes": 2822,
       "path": "README.md",
-      "sha256": "f0d00935a09d575d36cfe7f45d57cb1ec89c644c52997ab7955d11bf19150adb"
+      "sha256": "ea0720c20be3c40202f5cc84963791a89757fa4bcd80e3bc57e830106f565b09"
     },
     {
-      "bytes": 84288,
+      "bytes": 84509,
       "path": "evals/GPT_EVAL_CASES.jsonl",
-      "sha256": "4cc0c2f2c221a69af201c124111b1821ccb9cc9077e853befe802c4bea413d64"
+      "sha256": "67ad79d5bae7c319f655df7ed34b9b5e5082ec724417e05860c74f3cb5340a89"
     },
     {
-      "bytes": 71895,
+      "bytes": 72241,
       "path": "evals/GPT_EVAL_EXPECTATIONS.md",
-      "sha256": "a0067405770f73a1d503eac2f94f464c72cf92524c92fe34f9450c508091bf25"
+      "sha256": "67d9c35966d0e37f1e5c49708cf3e2c67babc83c865d5c5dac202a780ee0684a"
     },
     {
-      "bytes": 30533,
+      "bytes": 30489,
       "path": "evals/GPT_EVAL_PROVENANCE.md",
-      "sha256": "929d81debb5e58bd4688ecf6d7cd8a087cd3c50c7fcf98e1829b1962e120fc8f"
+      "sha256": "28a5da245a46b4744519f47abade0181f693b522949869187b647ad42d7c5215"
     },
     {
       "bytes": 15616,
@@ -280,9 +280,9 @@
       "sha256": "628ca9979755880b059ce4b5dd21c5becaab8f12515632d0259abe942252ffd5"
     },
     {
-      "bytes": 17364,
+      "bytes": 17350,
       "path": "evals/GPT_INVARIANT_ENFORCEMENT_MATRIX.md",
-      "sha256": "5f60476038d1a20a4b55c79389e2e0fe8ba60b89cd737602a30b39e13308821f"
+      "sha256": "371977e98d4465045dee4c3c8a732dd9db87b701ebbde969dca0d1d731214e49"
     },
     {
       "bytes": 6092,
@@ -492,32 +492,32 @@
     {
       "bytes": 4661,
       "path": "knowledge/BSC_JAPANESE_INTERFACE.md",
-      "sha256": "c36ef6641197c9484d7a03fc00a7db84c237a8a07d331195740c5bc71e562f4e"
+      "sha256": "4a487b2eae569aa8d1c917e71c91ac54b1bfe465cc0af8030b8a9771c664860a"
     },
     {
-      "bytes": 19500,
+      "bytes": 19861,
       "path": "knowledge/BSC_PROTOCOL.md",
-      "sha256": "5fc71befdd1cab3b2f6689ffacec8736e3421435c7cdb17a0aafde4d5d51da91"
+      "sha256": "9c0e3713ad0949645bffac9eda427d88ffb78a0bf783273c2d6e184e49809bc3"
     },
     {
       "bytes": 7455,
       "path": "knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md",
-      "sha256": "c03075b00c2616ab6b2ec0aa4a57d3ead09d89221b74fec046b4bb7adc6afd85"
+      "sha256": "68509a73cb99857443ac458469de9889f69ffe5cae6b293a349e20e1548e4974"
     },
     {
       "bytes": 16011,
       "path": "knowledge/BSC_SUPPORTED_CHECKS.md",
-      "sha256": "1de0b1846aa25b9a0db84cd693b67d9e06da6188a94c3830832b036208c4011f"
+      "sha256": "d5a7bedcdc57083d00dc8986c0fc6712a5ba92eb813be8347427ad6a1ef02b6b"
     },
     {
       "bytes": 5015,
       "path": "knowledge/BSC_WORKED_EXAMPLES.md",
-      "sha256": "caefdfa74919369d7f74778ad342b8e64732a42afb7c24367bfe4d52d4bdb4d6"
+      "sha256": "bf3bc168db21cae8ad33ab20710cd281bdde2255633969c6fcfd540599dbbe9d"
     }
   ],
   "generator": {
     "path": "scripts/build_gpt_package.py",
-    "sha256": "70fb9ddc0100252bef232889026c1f7c2d7c72be2071cefd8485fd456342ffe2",
+    "sha256": "1e8827e3310f92f9f0c52bc0e43759ae8c5880df25b045c78aaec3169686c419",
     "version": "bsc-custom-gpt-generator-v1"
   },
   "historical_artifact_evaluation_case_count": 39,

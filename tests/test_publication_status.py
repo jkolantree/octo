@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import unittest
@@ -11,8 +10,6 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 STATUS_PATH = ROOT / "docs" / "PUBLICATION_STATUS.json"
-PROFILE_PATH = ROOT / "gpt" / "_source" / "GPT_PROFILE.json"
-PROTOCOL_META_PATH = ROOT / "pages" / "protocol" / "meta.js"
 HEX_40 = re.compile(r"[0-9a-f]{40}\Z")
 HEX_64 = re.compile(r"[0-9a-f]{64}\Z")
 OFFICIAL_GPT_URL = "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor"
@@ -29,6 +26,10 @@ class PublicationStatusTests(unittest.TestCase):
                 "schema",
                 "observed_at_utc",
                 "status_is_a_timestamped_snapshot",
+                "snapshot_lifecycle",
+                "superseded_at_utc",
+                "superseded_by",
+                "historical_scope",
                 "official_custom_gpt",
                 "github_main",
                 "github_pages",
@@ -40,6 +41,24 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertEqual(self.status["schema"], "bsc-publication-status-v1")
         self.assertIs(self.status["status_is_a_timestamped_snapshot"], True)
         datetime.strptime(self.status["observed_at_utc"], "%Y-%m-%dT%H:%M:%SZ")
+        self.assertEqual(
+            self.status["snapshot_lifecycle"],
+            "historical_superseded",
+        )
+        self.assertEqual(
+            self.status["superseded_by"],
+            "docs/CUSTOM_GPT_STATUS.md",
+        )
+        self.assertGreater(
+            datetime.strptime(
+                self.status["superseded_at_utc"],
+                "%Y-%m-%dT%H:%M:%SZ",
+            ),
+            datetime.strptime(
+                self.status["observed_at_utc"],
+                "%Y-%m-%dT%H:%M:%SZ",
+            ),
+        )
 
     def test_hashes_and_urls_are_well_formed(self) -> None:
         gpt = self.status["official_custom_gpt"]
@@ -95,20 +114,16 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertIs(self.status["interpretation"]["live_does_not_mean_preview_validated"], True)
         self.assertIs(self.status["interpretation"]["source_ci_does_not_mean_custom_gpt_preview_validated"], True)
 
-    def test_candidate_and_observed_live_identities_follow_the_validation_state(self) -> None:
-        profile = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
-        candidate_version = self.status["next_repository_candidate"]["version"]
-        self.assertEqual(candidate_version, profile["product"]["canonical_protocol_version"])
-        metadata = PROTOCOL_META_PATH.read_text(encoding="utf-8")
-        self.assertIn(f'"version":"{candidate_version}"', metadata)
-        observed = self.status["official_custom_gpt"]
-        gate = observed["complete_preview_gate_for_observed_version"]
-        if gate == "pass_12_of_12":
-            self.assertEqual(observed["observed_controller_version"], candidate_version)
-            self.assertEqual(
-                observed["observed_profile_sha256"],
-                hashlib.sha256(PROFILE_PATH.read_bytes()).hexdigest(),
-            )
+    def test_historical_snapshot_is_not_bound_to_current_candidate_bytes(self) -> None:
+        self.assertEqual(
+            self.status["historical_scope"],
+            "Preserved 2026-07-22 observations; not a current-state feed.",
+        )
+        current_status = (ROOT / "docs" / "CUSTOM_GPT_STATUS.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("superseded 2026-07-22 snapshot", current_status)
+        self.assertIn("Alpha.8 and alpha.9 boundary", current_status)
 
     def test_japanese_pages_state_is_internally_consistent(self) -> None:
         route = self.status["github_pages"]["japanese_route"]
@@ -131,7 +146,7 @@ class PublicationStatusTests(unittest.TestCase):
     def test_public_docs_lead_with_official_gpt_and_link_status(self) -> None:
         public_url = self.status["official_custom_gpt"]["url"]
         reproduction_markers = {
-            "README.md": "The repository contains the deterministic package lineage",
+            "README.md": "The repository contains the deterministic alpha.9 package lineage",
             "START_HERE.md": "The repository's [Custom GPT package]",
             "docs/index.md": "The repository also contains the deterministic package",
             "docs/CUSTOM_GPT_STATUS.md": "This repository is the reproducible source",
@@ -144,7 +159,7 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertIn("PUBLICATION_STATUS.json", (ROOT / "docs" / "CUSTOM_GPT_STATUS.md").read_text(encoding="utf-8"))
 
         required_positioning = {
-            "README.md": "The repository contains the deterministic package lineage used to configure and evaluate the official GPT",
+            "README.md": "The repository contains the deterministic alpha.9 package lineage used to configure and evaluate the official GPT",
             "START_HERE.md": "It is already built and link-shared as a research preview",
             "docs/index.md": "is built and link-shared",
             "docs/CUSTOM_GPT_STATUS.md": "is built and link-shared as a research preview",
@@ -155,33 +170,29 @@ class PublicationStatusTests(unittest.TestCase):
             self.assertIn(public_url, text, relative)
             self.assertIn(phrase, text, relative)
 
-    def test_public_docs_match_the_observed_japanese_pages_state(self) -> None:
-        route = self.status["github_pages"]["japanese_route"]
-        if route["state"] == "deployed":
-            for relative in (
-                "README.md",
-                "START_HERE.md",
-                "docs/index.md",
-                "docs/CUSTOM_GPT_STATUS.md",
-                "docs/SHARING_GUIDE.md",
-                "SHARE_THIS.md",
-            ):
-                text = (ROOT / relative).read_text(encoding="utf-8")
-                self.assertIn(route["url"], text, relative)
-                self.assertNotIn("candidate pending public deployment", text, relative)
-            return
-
-        required_pending_language = {
-            "README.md": "pending public deployment",
-            "START_HERE.md": "pending public deployment",
-            "docs/index.md": "pending public deployment",
-            "docs/CUSTOM_GPT_STATUS.md": "candidate; not deployed",
-            "docs/SHARING_GUIDE.md": "candidate pending public deployment",
-            "SHARE_THIS.md": "candidate pending public deployment",
-        }
-        for relative, phrase in required_pending_language.items():
+    def test_current_public_docs_advertise_deployed_japanese_pages(self) -> None:
+        japanese_url = "https://jkolantree.github.io/octo/ja.html"
+        for relative in (
+            "README.md",
+            "README.ja.md",
+            "START_HERE.md",
+            "START_HERE.ja.md",
+            "docs/index.md",
+            "docs/ja/index.md",
+            "docs/CUSTOM_GPT_STATUS.md",
+            "docs/ja/CUSTOM_GPT_STATUS.md",
+            "docs/SHARING_GUIDE.md",
+            "SHARE_THIS.md",
+        ):
             text = (ROOT / relative).read_text(encoding="utf-8")
-            self.assertIn(phrase, text, relative)
+            self.assertIn(japanese_url, text, relative)
+            for stale_phrase in (
+                "candidate pending public deployment",
+                "pending public deployment",
+                "public deployment pending",
+                "candidate; not deployed",
+            ):
+                self.assertNotIn(stale_phrase, text, relative)
 
 
 if __name__ == "__main__":
