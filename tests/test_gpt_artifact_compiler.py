@@ -351,10 +351,14 @@ class GptArtifactCompilerTests(unittest.TestCase):
             self.finalize(template)
 
     def test_report_preserves_unicode_math_and_literal_latex_backslashes(self):
+        literal_latex = (
+            r"\forall n,\quad \frac{1}{2},\quad "
+            r"\begin{aligned}x&=1\end{aligned},\quad \theta"
+        )
         report_body = (
             "# BSC audit report\n\n"
             "∀ n ∈ ℤ, n ≥ 1 ⇒ ∑_{k=1}^{n}(2k−1)=n².\n\n"
-            r"A literal LaTeX fallback remains byte-exact: \forall."
+            f"A literal LaTeX fallback remains byte-exact: {literal_latex}."
         )
         finalized = finalize_candidate_artifacts(
             session_reported_runtime=RUNTIME,
@@ -364,7 +368,12 @@ class GptArtifactCompilerTests(unittest.TestCase):
         )
         report = finalized.files[BOUND_REPORT_ARTIFACT].decode("utf-8")
         self.assertIn("∀ n ∈ ℤ, n ≥ 1 ⇒ ∑_{k=1}^{n}(2k−1)=n²", report)
-        self.assertIn(r"\forall", report)
+        for command in (r"\forall", r"\frac", r"\begin", r"\theta"):
+            self.assertIn(command, report)
+        self.assertIn(
+            literal_latex.encode("utf-8"),
+            finalized.files[BOUND_REPORT_ARTIFACT],
+        )
         self.assertFalse(
             any(
                 unicodedata.category(character) == "Cc"
@@ -1812,6 +1821,42 @@ class GptArtifactCompilerTests(unittest.TestCase):
                         BOUND_RETURN_ARTIFACT,
                     ):
                         self.assertFalse((output_root / filename).exists())
+
+    def test_decoded_compile_spec_preserves_literal_latex_escape_family(self):
+        literal_latex = (
+            r"\forall n,\quad \frac{1}{2},\quad "
+            r"\begin{aligned}x&=1\end{aligned},\quad \theta"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            spec_path, output_root, spec = self.prepare_compile_fixture(root)
+            spec["report_body_lines"] = [
+                "# BSC audit report",
+                "",
+                f"Literal commands: {literal_latex}.",
+            ]
+            spec_path.write_bytes(canonical_json_bytes(spec))
+            decoded = json.loads(spec_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                decoded["report_body_lines"][2],
+                f"Literal commands: {literal_latex}.",
+            )
+            output = io.StringIO()
+            with redirect_stdout(output):
+                status = compiler_main(
+                    [
+                        "compile",
+                        "--spec",
+                        str(spec_path),
+                        "--output-dir",
+                        str(output_root),
+                    ]
+                )
+            self.assertEqual(status, 0, output.getvalue())
+            report_bytes = (output_root / BOUND_REPORT_ARTIFACT).read_bytes()
+            self.assertIn(literal_latex.encode("utf-8"), report_bytes)
+            for command in (r"\forall", r"\frac", r"\begin", r"\theta"):
+                self.assertIn(command.encode("ascii"), report_bytes)
 
     def test_compile_textual_input_control_blocks_before_hash_transport_or_writes(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -2,6 +2,8 @@
 
 Alpha.8 ships as a GitHub prerelease of the BSC Audit Engine and the repository-backed compact BSC Claim Auditor configuration. Its supported public-GPT surface is bounded human-readable auditing. It does not claim that the complete 12-case Preview suite passed, that every live Builder byte is independently bound to this tag, or that the retained standalone artifact workflow is suitable for the public GPT.
 
+> **Post-release identity note (2026-07-25):** this tag remains at commit `c6120093e49c658318553900028761a171dbf47b`, tree `a4f7d89ac2e09f2887797c0c16b6f603a29d27ea`. The later live/main Quick-UX hotfix and current maintenance candidate are not contained in alpha.8. The 300-word Quick description below records the tagged release; the reconciled 250-word default-Quick source contract is unreleased and any exact package containing it requires a new version and tag.
+
 ## Compact public GPT pivot
 
 The official GPT now performs one bounded human-readable job per route. Scientific audit responses cover duties 1-9 within 300 words at `quick`, 650 at `standard`, and 1,000 at `adversarial` or `formal-mathematical` depth unless the user explicitly requests expansion. Official-product status-only responses bypass duties 1-9 and return only concise supplied canonical states. Neither route generates files, hashes, `audit_return.json`, compiler stdout, Base64, shards, parity, transport, or section 10.
@@ -31,7 +33,7 @@ For explicitly selected offline repository workflows, this release replaces mode
 
 The retained historical/offline evaluation controller validates the exact target, the legacy six-file Knowledge roster, and generated outputs before Return Desk replay or candidate scoring. It records visible output controls and explicit per-file direct-acquisition outcomes separately from acquired bytes, never infers `no_download_event` from absence alone, validates the complete original-response compiler block and every container/member identity before local reconstruction, and preserves three independent outcomes: `candidate_failed`, `trial_invalid_controller`, and `transport_identity_unresolved`. Parity may recover exactly one content-faulted data shard only when its metadata and expected ASCII Base64 text length are intact and all other data plus parity are valid; the controller then reruns every aggregate, container, member, and topology check. Aligned-quartet omission, metadata mutation, multiple bad data, or bad data plus bad parity remains unrecoverable. Valid data with only exact-length bad parity records `parity_degraded_not_used`. This controller is not invoked by the compact public GPT.
 
-The frozen-suite checker independently revalidates each trial's manifest-bound candidate snapshot and raw evidence, enforces fresh Preview-session identities and the exact `C001` through `C039` order, and encodes the explicitly authorized three-repair/four-complete-suite release ceiling without allowing controller or transport states to rescue a substantive candidate contradiction.
+The frozen-suite checker independently revalidates each trial's manifest-bound candidate snapshot and raw evidence, enforces fresh Preview-session identities and the exact `C001` through `C039` order, and encodes the recorded three-repair/four-complete-suite release ceiling without allowing controller or transport states to rescue a substantive candidate contradiction.
 
 A pre-freeze synthetic audit found that the two official-status cases intentionally have no scientific verdict, while the prior checker required one for every case. The corrected score-result v2 contract makes every generated case explicit: scientific cases require a nonempty allowed projection, exact claim/verdict mappings are enforced where frozen, and status-only cases require `{}` with no scientific verdict. A real omission or invented verdict is `candidate_failed`; a forged scoring mode or derived flag is `trial_invalid_controller`.
 
@@ -126,17 +128,17 @@ Python- or JSON-string `\f` escape decoding is the strong explanation, but the
 exact model-side construction layer was not preserved and is therefore not
 claimed as proven.
 
-The user explicitly authorized one additional consolidated root-cause repair
-cycle on 2026-07-24. Compiler v8 changes only the construction and validation
-contract: explicit `report_body_lines` must contain no Unicode category `Cc`
+One additional consolidated root-cause repair cycle opened on 2026-07-24.
+Compiler v8 changes only the construction and validation contract: explicit
+`report_body_lines` must contain no Unicode category `Cc`
 characters, compiler-owned LF joins validated lines, and JSON keys and values
 must contain no `Cc`, including LF, TAB, and CR. It rejects rather than
 silently repairing invalid text. Regression coverage binds the ordinary-string
 collisions for `\forall`, `\theta`, `\rho`, and `\nabla` while accepting the
 corresponding Unicode mathematics and safely doubled literal backslashes.
 
-This second authorization did not rewrite the historical compiler-v7/C001
-failure or parity repair. That artifact-capable candidate subsequently failed
+This second bounded repair cycle did not rewrite the historical
+compiler-v7/C001 failure or parity repair. That artifact-capable candidate subsequently failed
 again and was superseded by the compact product scope above. Its cases,
 fixtures, controller results, and Return Desk negatives remain preserved as
 history; they are not counted toward the new 12-case compact gate.
@@ -154,9 +156,9 @@ machine record correctly preserved x = -1 as a decisive counterexample,
 Return Desk therefore blocked it with
 `RETURN_UNRESOLVED_GATE_OBLIGATION_OMITTED`.
 
-The user explicitly authorized a third consolidated root-cause repair cycle on
-2026-07-24. Compiler v9 validates unique claim, gate, evidence, and obligation
-identifiers; pass/nonpass obligation closure; exact bidirectional bindings;
+The third consolidated root-cause repair cycle opened on 2026-07-24. Compiler
+v9 validates unique claim, gate, evidence, and obligation identifiers;
+pass/nonpass obligation closure; exact bidirectional bindings;
 claim-owner and cited-evidence scope; and exact summary projection before any
 report, hash, serialization, or transport bytes are derived. It also corrects
 the deterministic report projection from nonexistent field `description` to

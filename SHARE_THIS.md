@@ -4,7 +4,7 @@ Lead with the existing official GPT for a direct audit, the Pages module for a l
 
 - **Official GPT:** https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
 - **Local Pages:** https://jkolantree.github.io/octo/
-- **Japanese Pages:** candidate pending public deployment; planned URL `https://jkolantree.github.io/octo/ja.html` must not be shared as live until its smoke check passes
+- **Japanese Pages:** https://jkolantree.github.io/octo/ja.html
 - **Exact current status:** https://github.com/jkolantree/octo/blob/main/docs/CUSTOM_GPT_STATUS.md
 
 ## Short description
@@ -39,7 +39,7 @@ It is not a truth machine or automated peer reviewer. A no-blocking result means
 There are three routes:
 
 1. the official link-shared Custom GPT for direct research-preview audits;
-2. a deployed English browser Packet Builder and Audit Return Desk, with a Japanese candidate pending public deployment;
+2. deployed English and Japanese browser Packet Builder and Audit Return Desk routes;
 3. a deterministic Python checker and reproducible GPT package for supported artifacts and independent forks.
 
 The most useful contribution is often a compact counterexample, false-pass report, false-block report, or better kill condition. Negative results are preserved as release artifacts.
@@ -50,7 +50,7 @@ Current validation status: https://github.com/jkolantree/octo/blob/main/docs/CUS
 
 ## Short post
 
-The official BSC Claim Auditor is live as an experimental open-source research preview. It freezes scope, separates observation from inference, preserves fatal gates, and pairs a Custom GPT with local browser and exact Python routes. The complete alpha.8 Preview gate is still pending, so it is not a truth certificate or deployment authority. https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
+The official BSC Claim Auditor is live as an experimental open-source research preview. It freezes scope, separates observation from inference, preserves fatal gates, and pairs a Custom GPT with local browser and exact Python routes. Alpha.9 reconciles the bounded Quick contract and four bilingual starters; exact live binding and compact Preview results are reported separately. It is not a truth certificate or deployment authority. https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
 
 ## Direct message
 

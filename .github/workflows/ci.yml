@@ -2,6 +2,10 @@ name: exact-audit
 
 on:
   push:
+    branches:
+      - main
+    tags:
+      - "v*"
   pull_request:
   workflow_dispatch:
 
@@ -29,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: python scripts/run_tests.py
       - run: python scripts/run_null_discrimination.py
-      - name: Fail-closed privacy and commit-identity scan
+      - name: Fail-closed privacy, documentation, and commit-identity scan
         env:
           PRIVACY_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python scripts/check_privacy.py --protected-history "$PRIVACY_COMMIT"

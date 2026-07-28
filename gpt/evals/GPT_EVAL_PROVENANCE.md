@@ -363,9 +363,9 @@ distinguish which construction layer introduced the bytes. Exact transport
 reconstruction shows that the controller did not manufacture or silently
 repair them.
 
-The user explicitly authorized a second consolidated root-cause repair cycle
-on 2026-07-24. Because the input and validation contract changes, the new
-identity is compiler v8; the historical compiler-v7 parity repair and C001
+The second consolidated root-cause repair cycle opened on 2026-07-24. Because
+the input and validation contract changes, the new identity is compiler v8;
+the historical compiler-v7 parity repair and C001
 record remain immutable. Compiler v8 takes explicit `report_body_lines`,
 rejects every Unicode category `Cc` character in each line, joins only
 validated lines with compiler-owned LF separators, and rejects `Cc` in every
@@ -411,9 +411,9 @@ The compiler canonicalized execution topology but did not validate obligation
 closure, and its deterministic report projection also requested nonexistent
 obligation field `description` instead of schema field `statement`.
 
-On 2026-07-24 the user explicitly authorized a third consolidated root-cause
-repair cycle. Compiler v9 validates obligation closure before rendering,
-hashing, serialization, or transport. It rejects passing gates with open
+The third consolidated root-cause repair cycle opened on 2026-07-24. Compiler
+v9 validates obligation closure before rendering, hashing, serialization, or
+transport. It rejects passing gates with open
 obligations; nonpassing gates without an obligation; asymmetric
 gate/obligation bindings; claim-owner or evidence-scope mismatches; duplicate
 IDs; and incomplete summary obligation projection. Its report projection uses

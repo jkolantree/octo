@@ -420,10 +420,10 @@ The exact reconstructed bytes and successful controller validation rule out
 silently relabeling this result as controller loss, parser damage, download
 corruption, or a passing candidate.
 
-On 2026-07-24 the user explicitly authorized one additional consolidated
-root-cause repair cycle for this boundary. The repair is a contract change and
-therefore advances the artifact compiler identity to v8 rather than modifying
-compiler v7 in place. Compiler v8 accepts the report body as explicit
+One additional consolidated root-cause repair cycle opened on 2026-07-24 for
+this boundary. The repair is a contract change and therefore advances the
+artifact compiler identity to v8 rather than modifying compiler v7 in place.
+Compiler v8 accepts the report body as explicit
 `report_body_lines`; rejects every Unicode category `Cc` code point in each
 line before joining the validated lines with compiler-owned LF separators; and
 rejects `Cc` in every generated JSON key and value, including LF, TAB, and CR.
@@ -434,8 +434,8 @@ ordinary-literal collision family `\forall`/form feed, `\theta`/tab,
 `\rho`/carriage return, and `\nabla`/line feed, plus positive Unicode
 `∀`, `θ`, `ρ`, and `∇` and safely doubled literal backslashes.
 
-This authorization does not spend or erase the historical compiler-v7/C001
-record above. It does not change any evaluation case, fixture, scientific
+This bounded repair cycle does not spend or erase the historical
+compiler-v7/C001 record above. It does not change any evaluation case, fixture, scientific
 oracle or expectation, scorer, rubric, threshold, automatic-failure rule, or
 Return Desk negative. All local gates and both development preflights must
 restart under a new exact freeze: D01 must pass in a new Preview session before
@@ -471,9 +471,9 @@ no mathematical proof duty remains for an exact refutation. In this case that
 obligation is to retire, narrow, or amend the frozen failed claim before any
 admission. It does not demote or reopen `research_verdict: "refuted"`.
 
-On 2026-07-24 the user explicitly authorized a third consolidated root-cause
-repair cycle. The contract change advances the artifact compiler identity to
-v9. Compiler v9 validates obligation closure before rendering, hashing,
+The third consolidated root-cause repair cycle opened on 2026-07-24. The
+contract change advances the artifact compiler identity to v9. Compiler v9
+validates obligation closure before rendering, hashing,
 serialization, or transport. It fails closed on pass-with-obligation,
 nonpass-without-obligation, duplicate identifiers, asymmetric bindings,
 claim-owner or evidence-scope mismatch, and incomplete summary projection.
@@ -482,8 +482,8 @@ instead of the nonexistent `description` key. The compact controller now
 states the nonpassing-gate obligation invariant and distinguishes scientific
 refutation closure from admission disposition.
 
-This authorization preserves every historical attempt and does not change any
-evaluation case, fixture, scientific oracle or expectation, scorer, rubric,
+This bounded repair cycle preserves every historical attempt and does not
+change any evaluation case, fixture, scientific oracle or expectation, scorer, rubric,
 threshold, automatic-failure rule, or Return Desk negative. All local gates
 and both development preflights must restart under a new exact freeze, D01
 must pass before D02 is consumed, and the complete 39-case counted suite must

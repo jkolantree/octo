@@ -14,6 +14,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from check_compact_preview_response import (  # noqa: E402
     COMPACT_PREVIEW_CASE_IDS,
+    DEFAULT_QUICK_CASE_ID,
+    MAX_DEFAULT_QUICK_BLOCKS,
+    MAX_DEFAULT_QUICK_WORDS,
     MAX_RESPONSE_CHARACTERS,
     MAX_RESPONSE_UTF8_BYTES,
     OFFICIAL_GPT_URL,
@@ -56,6 +59,96 @@ class CompactPreviewResponseTests(unittest.TestCase):
             "The exact argument closes by induction. No digest value is reproduced.",
         )
         self.assertEqual(findings, [])
+
+    def test_no_depth_control_enforces_default_quick_contract(self) -> None:
+        valid = "\n\n".join(
+            (
+                "Bottom line: refuted.",
+                "Why: f(x)=abs(x) is continuous on the real line but has unequal one-sided derivatives at x=0.",
+                "Weakest point: continuity does not imply differentiability.",
+                "Best next check: test a universal claim at nonsmooth points.",
+            )
+        )
+        self.assertEqual(
+            validate_compact_preview_response(DEFAULT_QUICK_CASE_ID, valid),
+            [],
+        )
+        self.assertEqual(MAX_DEFAULT_QUICK_WORDS, 250)
+        self.assertEqual(MAX_DEFAULT_QUICK_BLOCKS, 4)
+
+    def test_no_depth_control_rejects_quick_contract_violations(self) -> None:
+        cases = {
+            "QUICK_WORD_LIMIT_EXCEEDED": "refuted " + "word " * 250,
+            "QUICK_BLOCK_LIMIT_EXCEEDED": "\n\n".join(
+                ("refuted", "two", "three", "four", "five")
+            ),
+            "QUICK_TABLE_FORBIDDEN": (
+                "refuted\n\n| Claim | Result |\n|---|---|\n| universal | false |"
+            ),
+            "QUICK_REFUTED_REQUIRED": (
+                "The counterexample f(x)=abs(x) defeats the universal claim at x=0."
+            ),
+        }
+        for expected_code, response in cases.items():
+            with self.subTest(expected_code=expected_code):
+                self.assertIn(
+                    expected_code,
+                    self.finding_codes(
+                        validate_compact_preview_response(
+                            DEFAULT_QUICK_CASE_ID,
+                            response,
+                        )
+                    ),
+                )
+
+    def test_no_depth_control_counts_markdown_blocks_without_blank_lines(self) -> None:
+        four_blocks = "\n".join(
+            (
+                "# Bottom line: refuted",
+                "## Why",
+                "## Weakest point",
+                "## Best next check",
+            )
+        )
+        self.assertNotIn(
+            "QUICK_BLOCK_LIMIT_EXCEEDED",
+            self.finding_codes(
+                validate_compact_preview_response(
+                    DEFAULT_QUICK_CASE_ID,
+                    four_blocks,
+                )
+            ),
+        )
+        five_blocks = four_blocks + "\n## Extra section"
+        self.assertIn(
+            "QUICK_BLOCK_LIMIT_EXCEEDED",
+            self.finding_codes(
+                validate_compact_preview_response(
+                    DEFAULT_QUICK_CASE_ID,
+                    five_blocks,
+                )
+            ),
+        )
+
+    def test_no_depth_control_counts_leading_prose_plus_markdown_blocks(self) -> None:
+        mixed_five_blocks = "\n".join(
+            (
+                "Bottom line: refuted.",
+                "- Why: a counterexample defeats the universal claim.",
+                "- Weakest point: continuity is insufficient.",
+                "- Best next check: test a nonsmooth point.",
+                "- Extra: this fifth visible block is forbidden.",
+            )
+        )
+        self.assertIn(
+            "QUICK_BLOCK_LIMIT_EXCEEDED",
+            self.finding_codes(
+                validate_compact_preview_response(
+                    DEFAULT_QUICK_CASE_ID,
+                    mixed_five_blocks,
+                )
+            ),
+        )
 
     def test_digest_guard_is_global_and_does_not_echo_digest(self) -> None:
         digests = (
