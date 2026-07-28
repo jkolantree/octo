@@ -10,9 +10,12 @@ from pathlib import Path
 from typing import Sequence
 
 
-CHECKER_VERSION = "1.0"
+CHECKER_VERSION = "1.2"
 MAX_RESPONSE_CHARACTERS = 12_000
 MAX_RESPONSE_UTF8_BYTES = MAX_RESPONSE_CHARACTERS * 4
+DEFAULT_QUICK_CASE_ID = "known-false-continuity"
+MAX_DEFAULT_QUICK_WORDS = 250
+MAX_DEFAULT_QUICK_BLOCKS = 4
 OFFICIAL_GPT_URL = (
     "https://chatgpt.com/g/"
     "g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor"
@@ -131,6 +134,25 @@ STATUS_LITERAL_TERMINATOR_RE = re.compile(
     r"[，。、；！？：（）【】『』「」〈〉《》〔〕…—–]|"
     r"[.,;:!?](?=$|[\s)\]}*`]))"
 )
+WORD_RE = re.compile(r"\b[\w'-]+\b", re.UNICODE)
+CANONICAL_REFUTED_RE = re.compile(
+    r"(?<![A-Za-z0-9_])refuted(?![A-Za-z0-9_])",
+    re.IGNORECASE,
+)
+MARKDOWN_TABLE_DELIMITER_RE = re.compile(
+    r"(?m)^[ \t]*\|?[ \t]*:?-{3,}:?[ \t]*"
+    r"(?:\|[ \t]*:?-{3,}:?[ \t]*)+\|?[ \t]*$"
+)
+HTML_TABLE_RE = re.compile(r"<[ \t]*/?[ \t]*(?:table|thead|tbody|tr|th|td)\b", re.IGNORECASE)
+GRID_TABLE_RE = re.compile(r"(?m)^[ \t]*\+-{3,}\+(?:-{3,}\+)+[ \t]*$")
+MARKDOWN_VISIBLE_BLOCK_START_RE = re.compile(
+    r"(?m)^[ \t]{0,3}(?:"
+    r"#{1,6}[ \t]+\S|"
+    r"(?:[-+*]|\d+[.)])[ \t]+\S|"
+    r">[ \t]*\S|"
+    r"(?:```|~~~)"
+    r")"
+)
 
 
 def _finding(code: str, message: str) -> dict[str, str]:
@@ -181,6 +203,27 @@ def _contains_scientific_gate(response: str) -> bool:
     return False
 
 
+def _default_quick_blocks(response: str) -> list[str]:
+    paragraph_blocks = [
+        block
+        for block in re.split(r"(?:\r?\n)[ \t]*(?:\r?\n)+", response.strip())
+        if block.strip()
+    ]
+    visible_blocks: list[str] = []
+    for paragraph in paragraph_blocks:
+        structural_starts = list(
+            MARKDOWN_VISIBLE_BLOCK_START_RE.finditer(paragraph)
+        )
+        if not structural_starts:
+            visible_blocks.append(paragraph)
+            continue
+        leading_prose = paragraph[: structural_starts[0].start()]
+        if leading_prose.strip():
+            visible_blocks.append(leading_prose)
+        visible_blocks.extend(match.group(0) for match in structural_starts)
+    return visible_blocks
+
+
 def validate_compact_preview_response(
     case_id: str,
     response: str,
@@ -226,6 +269,48 @@ def validate_compact_preview_response(
             )
         )
         return findings
+
+    if case_id == DEFAULT_QUICK_CASE_ID:
+        word_count = len(WORD_RE.findall(response))
+        if word_count > MAX_DEFAULT_QUICK_WORDS:
+            findings.append(
+                _finding(
+                    "QUICK_WORD_LIMIT_EXCEEDED",
+                    (
+                        "the default-Quick response exceeds the "
+                        f"{MAX_DEFAULT_QUICK_WORDS}-word ceiling"
+                    ),
+                )
+            )
+        block_count = len(_default_quick_blocks(response))
+        if block_count > MAX_DEFAULT_QUICK_BLOCKS:
+            findings.append(
+                _finding(
+                    "QUICK_BLOCK_LIMIT_EXCEEDED",
+                    (
+                        "the default-Quick response exceeds the "
+                        f"{MAX_DEFAULT_QUICK_BLOCKS}-block ceiling"
+                    ),
+                )
+            )
+        if (
+            MARKDOWN_TABLE_DELIMITER_RE.search(response)
+            or HTML_TABLE_RE.search(response)
+            or GRID_TABLE_RE.search(response)
+        ):
+            findings.append(
+                _finding(
+                    "QUICK_TABLE_FORBIDDEN",
+                    "the default-Quick control case must not use a table",
+                )
+            )
+        if CANONICAL_REFUTED_RE.search(response) is None:
+            findings.append(
+                _finding(
+                    "QUICK_REFUTED_REQUIRED",
+                    "the default-Quick control case must contain canonical refuted",
+                )
+            )
 
     required_status_literals = REQUIRED_STATUS_LITERALS_BY_CASE.get(case_id)
     if required_status_literals is None:

@@ -23,15 +23,3 @@ Show a simple example first
 ```text
 まず簡単な例を見る
 ```
-
-## Starter 5
-
-```text
-Find the weakest assumption
-```
-
-## Starter 6
-
-```text
-最も弱い仮定を探す
-```

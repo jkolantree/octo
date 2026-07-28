@@ -12,13 +12,13 @@ truth machine ではありません。もっともらしい着想を theorem に
 
 direct ChatGPT audit には live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) を開きます。すでに build 済みで、research preview として link-shared されています。repository の [Custom GPT package](gpt/README.md) は、この configuration を inspect/evaluate/update し、independent fork を再現するための source です。
 
-Alpha.8 の supported public surface は bounded human-readable audit です。large artifact、hash、Base64、shard、transport output は standalone repository tooling として残ります。canonical status routing と、digest を漏らさず conflicting verified evidence を扱う targeted live checks は pass しましたが、complete 12-case Preview suite は未実行です。availability は certification ではなく research preview として扱ってください。upload は applicable ChatGPT settings/terms の下で処理され、local-only ではありません。[Custom GPT live status](docs/ja/CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
+alpha.9 package の supported public surface は、4 個の bilingual source starter を備えた bounded human-readable Quick audit です。large artifact、hash、Base64、shard、transport output は standalone repository tooling として残ります。exact live binding と 12-case compact Preview の結果は別に記録します。availability は certification ではなく research preview として扱ってください。upload は applicable ChatGPT settings/terms の下で処理され、local-only ではありません。[Custom GPT live status](docs/ja/CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
 
 日本語での依頼方法と再現 route は [Custom GPT 日本語ガイド](docs/ja/GPT_INTERFACE.md)、machine token の意味は [日本語用語集](docs/ja/GLOSSARY.md) を参照してください。どちらも日本語ベータ版で、母語話者による用語レビューは未完了です。
 
 ### 1 ページの local builder と Return Desk
 
-[deployed English GitHub Pages module](https://jkolantree.github.io/octo/) を開き、material を paste/attach し、audit depth を選び、generated packet を copy/download します。[Japanese Pages candidate](pages/ja.html) は source tree に含まれますが、public deployment は pending です。post-deploy English/JA/protocol route/metadata smoke が pass するまで予定 URL を live として共有しないでください。`audit_return.json` と declared artifacts を持ち帰り、internal binding をローカル検査することもできます。page code は target-data network request を行わず、target material を意図的に保存しません。ただし browser と OS の挙動は管理外です。
+[deployed English GitHub Pages module](https://jkolantree.github.io/octo/) または [deployed Japanese route](https://jkolantree.github.io/octo/ja.html) を開き、material を paste/attach し、audit depth を選び、generated packet を copy/download します。`audit_return.json` と declared artifacts を持ち帰り、internal binding をローカル検査することもできます。page code は target-data network request を行わず、target material を意図的に保存しません。ただし browser と OS の挙動は管理外です。
 
 page は LLM を呼び出さず Python checker も実行しません。packet を model と共有する行為は別であり、その service の privacy terms に従います。Return Desk の `consistent` は truth、proof、execution、citation、deployment certificate ではありません。
 

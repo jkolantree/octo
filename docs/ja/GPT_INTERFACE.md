@@ -6,7 +6,7 @@
 
 ## 公式 GPT を使う
 
-公式の [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) は、固定 URL と [timestamped status record](../PUBLICATION_STATUS.json) から利用状況を確認できます。通常の利用者には公式サービスを先に案内し、repository package は任意の検証、reproducible deployment、fork、authorized update に使用します。
+公式の [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) は、固定 URL と [current status page](../CUSTOM_GPT_STATUS.md) から利用状況を確認できます。preserved [2026-07-22 snapshot](../PUBLICATION_STATUS.json) は historical evidence であり、current-state feed ではありません。通常の利用者には公式サービスを先に案内し、repository package は任意の検証、reproducible deployment、fork、authorized update に使用します。
 
 このリポジトリの GPT パッケージは、公式構成を検査・再現・フォークし、次の更新候補を評価するための公開ソースです。パッケージが存在することだけでは、その候補が公式 GPT に導入済み、特定の Git コミットに結合済み、または Preview 評価済みであることを意味しません。次の状態は必ず分けて扱います。
 
@@ -56,7 +56,7 @@ GitHub Pages の Packet Builder と Audit Return Desk のページコードは�
 
 ## 独立して再現・フォークする
 
-再現手順は、公式サービスの現在状態にかかわらず、透明性、独立検証、研究用フォーク、または権限を持つ保守担当者による更新のための選択肢です。公式 URL の利用可否は、再現手順ではなく timestamped status record で確認します。
+再現手順は、公式サービスの現在状態にかかわらず、透明性、独立検証、研究用フォーク、または権限を持つ保守担当者による更新のための選択肢です。公式 URL の利用可否は、再現手順ではなく current status page で確認します。
 
 1. 厳密な候補パッケージと SHA-256 台帳を検証します。
 2. `GPT_INSTRUCTIONS.md` と指定順の Knowledge ファイルを使用します。

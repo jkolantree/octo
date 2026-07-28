@@ -85,7 +85,7 @@ class CustomGptPackageTests(unittest.TestCase):
         binding = {
             "source_commit": "1" * 40,
             "source_tree": "2" * 40,
-            "source_tag": "v0.3.0-alpha.8",
+            "source_tag": "v0.3.0-alpha.9",
         }
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-bound-zip-") as directory:
             path = write_gpt_release_asset(Path(directory), **binding)
@@ -99,8 +99,8 @@ class CustomGptPackageTests(unittest.TestCase):
             )
 
     def test_final_tree_has_the_exact_release_identity(self) -> None:
-        self.assertEqual(RELEASE_ENGINE_VERSION, "0.3.0a8")
-        self.assertEqual(PUBLIC_VERSION, "0.3.0-alpha.8")
+        self.assertEqual(RELEASE_ENGINE_VERSION, "0.3.0a9")
+        self.assertEqual(PUBLIC_VERSION, "0.3.0-alpha.9")
         self.assertIsNone(require_release_version())
 
     def test_final_knowledge_links_target_the_exact_release_tag(self) -> None:
@@ -110,10 +110,10 @@ class CustomGptPackageTests(unittest.TestCase):
             for path, data in payload.items()
             if path.parts and path.parts[0] == "knowledge"
         )
-        self.assertNotIn("/blob/v0.3.0-alpha.8.dev1/", knowledge)
+        self.assertNotIn("/blob/v0.3.0-alpha.9.dev1/", knowledge)
         self.assertNotIn("https://github.com/jkolantree/octo/blob/main/", knowledge)
         self.assertIn(
-            "https://github.com/jkolantree/octo/blob/v0.3.0-alpha.8/",
+            "https://github.com/jkolantree/octo/blob/v0.3.0-alpha.9/",
             knowledge,
         )
 
@@ -188,6 +188,13 @@ class CustomGptPackageTests(unittest.TestCase):
                 self.assertIn("status_record_read_only", prompt)
                 self.assertIn("exact key=value form", prompt)
                 self.assertNotIn("Cover compact audit duties 1-9", prompt)
+            elif record["id"] == "known-false-continuity":
+                self.assertIn("Use the configured default route", prompt)
+                self.assertIn("select and state the configured default", prompt)
+                self.assertNotIn("Quick", prompt)
+                self.assertNotIn("`quick`", prompt)
+                self.assertNotIn("Cover compact audit duties 1-9", prompt)
+                self.assertNotIn("Run this audit at standard depth", prompt)
             else:
                 self.assertIn("Cover compact audit duties 1-9", prompt)
                 self.assertIn("Never reproduce a hash or digest value", prompt)
@@ -298,6 +305,8 @@ class CustomGptPackageTests(unittest.TestCase):
         for text in (setup, readme):
             self.assertIn("12", text)
             self.assertIn("compact", text.lower())
+            self.assertIn("exact immutable tag `v0.3.0-alpha.9`", text)
+            self.assertIn("new version and tag", text)
             self.assertIn("freeze", text.lower())
             self.assertIn("historical", text.lower())
             self.assertIn("39", text)
@@ -474,6 +483,19 @@ class CustomGptPackageTests(unittest.TestCase):
             "it never grounds a `proven` verdict or closed proof obligations.",
             protocol_text,
         )
+        self.assertIn("If no depth is requested, use `quick`.", protocol_text)
+        self.assertIn(
+            "For `quick`, use at most 250 words and four visible blocks, with no table "
+            "unless one is materially necessary.",
+            protocol_text,
+        )
+        self.assertIn(
+            "The default `quick` route does not use this nine-duty template; it uses at "
+            "most four visible blocks",
+            protocol_text,
+        )
+        self.assertNotIn("If no depth is requested, use `standard`.", protocol_text)
+        self.assertNotIn("Including tables, use at most 300 words for `quick`", protocol_text)
         self.assertIn(
             "Requested language; preserve exact non-hash canonical tokens and URLs; "
             "label translations. Hash-value ban overrides.",
@@ -688,6 +710,26 @@ class CustomGptPackageTests(unittest.TestCase):
                 .splitlines()
             )
         }
+        default_quick_prompt = generated_cases["known-false-continuity"][
+            "preview_prompt"
+        ]
+        self.assertIn("Use the configured default route", default_quick_prompt)
+        self.assertIn(
+            "select and state the configured default",
+            default_quick_prompt,
+        )
+        self.assertNotIn("Quick", default_quick_prompt)
+        self.assertNotIn("`quick`", default_quick_prompt)
+        self.assertNotIn("Cover compact audit duties 1-9", default_quick_prompt)
+        self.assertNotIn("Run this audit at standard depth", default_quick_prompt)
+        self.assertNotIn("Run this audit at quick depth", default_quick_prompt)
+        expectations = generated_payload()[
+            Path("evals/GPT_EVAL_EXPECTATIONS.md")
+        ].decode("utf-8")
+        self.assertIn(
+            "**Current compact-gate route:** configured default Quick",
+            expectations,
+        )
         self.assertEqual(
             generated_cases["nonadmissive-adapter-receipt"]["expected"][
                 "research_projection_exact"
@@ -1083,8 +1125,6 @@ class CustomGptPackageTests(unittest.TestCase):
                 "60秒で主張を点検する",
                 "Show a simple example first",
                 "まず簡単な例を見る",
-                "Find the weakest assumption",
-                "最も弱い仮定を探す",
             ],
         )
         self.assertEqual(
@@ -1092,7 +1132,7 @@ class CustomGptPackageTests(unittest.TestCase):
                 bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", item))
                 for item in starters
             ],
-            [False, True] * 3,
+            [False, True] * 2,
         )
         self.assertTrue(all(0 < len(item) <= 32 for item in starters))
         self.assertFalse(
@@ -1115,6 +1155,14 @@ class CustomGptPackageTests(unittest.TestCase):
         )
 
         payload = generated_payload()
+        rendered_starters = payload[Path("GPT_CONVERSATION_STARTERS.md")].decode("utf-8")
+        self.assertEqual(
+            re.findall(r"```text\n([^\n]+)\n```", rendered_starters),
+            starters,
+        )
+        self.assertEqual(rendered_starters.count("## Starter "), 4)
+        setup = payload[Path("GPT_SETUP_AND_PUBLISHING.md")].decode("utf-8")
+        self.assertIn("Copy the 4 prompts", setup)
         public_text = "\n".join(
             data.decode("utf-8")
             for path, data in payload.items()
@@ -1131,13 +1179,13 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertIn("**Japanese interface:** `BETA`", setup)
         self.assertIn("Preserve this disclosure in the public Description", setup)
         self.assertIn(
-            "Copy the 6 prompts from `GPT_CONVERSATION_STARTERS.md`",
+            "Copy the 4 prompts from `GPT_CONVERSATION_STARTERS.md`",
             setup,
         )
         rendered_starters = payload[Path("GPT_CONVERSATION_STARTERS.md")].decode(
             "utf-8"
         )
-        self.assertEqual(rendered_starters.count("## Starter "), 6)
+        self.assertEqual(rendered_starters.count("## Starter "), 4)
         manifest = json.loads(payload[Path("GPT_RELEASE_MANIFEST.json")])
         self.assertEqual(manifest["official_service_and_candidate_state"]["public_url"], OFFICIAL_GPT_URL)
         self.assertEqual(manifest["official_service_and_candidate_state"]["preview_gate_case_count"], 12)
