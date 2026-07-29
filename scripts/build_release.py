@@ -2,7 +2,8 @@
 """Build a deterministic, certificate-bearing public preview bundle.
 
 The script runs the repository's checks before it writes any release manifest.
-It does not sign artifacts; signing remains a maintainer-controlled operation.
+It does not embed signatures. The exact-release tag workflow keyless-attests
+every final file before it creates or publishes the GitHub prerelease.
 """
 
 from __future__ import annotations
@@ -132,6 +133,7 @@ def conformance_bundle(destination: Path) -> None:
         ("broken-transport", "complex", "examples/complex_broken_transport.json", 1),
         ("atomic-record", "atomic", "examples/atomic_modulus_valid.json", 0),
         ("defect-understatement", "defect", "examples/defect_composition_understated.json", 1),
+        ("q-polynomial-identity", "theorem", "examples/theorem_binomial_identity.json", 0),
     ]
     with tempfile.TemporaryDirectory(prefix="bsc-conformance-") as temporary:
         base = Path(temporary) / f"bsc-audit-conformance-{PUBLIC_VERSION}"
@@ -293,7 +295,8 @@ def main() -> int:
             "clean_git_tree": "pass",
             "exact_release_tag": "pass",
             "tracked_source_archive": "pass",
-            "artifact_signatures": "not_performed",
+            "embedded_artifact_signatures": "not_performed",
+            "keyless_release_attestations": "required_before_publication",
         },
         "artifacts": [{"name": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)} for path in sorted(artifacts)],
     }

@@ -50,7 +50,7 @@ Current validation status: https://github.com/jkolantree/octo/blob/main/docs/CUS
 
 ## Short post
 
-The official BSC Claim Auditor is live as an experimental open-source research preview. It freezes scope, separates observation from inference, preserves fatal gates, and pairs a Custom GPT with local browser and exact Python routes. Alpha.10 explicitly routes all four bilingual starter literals while preserving the bounded Quick contract; exact live binding and compact Preview results are reported separately. It is not a truth certificate or deployment authority. https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
+The official BSC Claim Auditor is live as an experimental open-source research preview. It freezes scope, separates observation from inference, preserves fatal gates, and pairs a Custom GPT with local browser and exact Python routes. Alpha.10 explicitly routes all four bilingual starter literals while preserving the bounded Quick contract; indexed Knowledge binding is `NON_ADMISSIBLE_UNHASHABLE`, while compact Preview remains a separate product observation. It is not a truth certificate or deployment authority. https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
 
 ## Direct message
 

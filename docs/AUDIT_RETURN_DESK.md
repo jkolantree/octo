@@ -5,7 +5,7 @@ The Audit Return Desk inspects structured audit returns under an explicitly non-
 - the browser-local Desk in `pages/`, for strict JSON parsing and hashes of files selected by the user; and
 - `python run_audit.py return-desk PATH`, for the same semantic inspection with artifacts read from the return file's directory.
 
-Current official-service availability is recorded separately in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Official-service availability, exact candidate binding, Preview validation, GitHub release state, and Pages deployment are separate facts; none can be inferred solely from the presence of this source feature.
+Current official-service availability is recorded separately in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Official-service availability, observable editor state, Preview validation, GitHub release state, and Pages deployment are separate facts; none can be inferred solely from the presence of this source feature. An unhashable live controller or indexed Knowledge state remains `NON_ADMISSIBLE_UNHASHABLE`; a returned envelope cannot launder that opaque state into an engine gate, theorem replay, or scientific admission.
 
 The official compact Custom GPT does not generate or export machine records and does not upload `BSC_EXECUTION_AND_RECEIPTS.md`. This Desk and its compiler workflow remain available only as supervised standalone repository tooling; their presence does not imply that the public GPT ran them.
 

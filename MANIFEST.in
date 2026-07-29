@@ -21,6 +21,7 @@ include run_audit.py
 include toolchain.lock.json
 include .zenodo.json
 include .github/workflows/pages.yml
+include .github/workflows/release.yml
 recursive-include docs *.md *.css *.json
 recursive-include examples *.json *.md
 recursive-include gpt *

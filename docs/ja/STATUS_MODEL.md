@@ -28,7 +28,7 @@ manifest field `claim.evidence_maturity` は workflow maturity を記録しま�
 - `empirically_passed`
 - `externally_replicated`
 
-後の state ほど強い attached record を必要としますが、存在は authenticity を意味しません。proof、dataset、replication の名前を持つ string は、それだけでは artifact の verification ではありません。同様に、local SHA-256 の一致は inspected bytes の identity を示すだけで、その bytes に valid proof が含まれることを示しません。supervised semantic replay contract が存在するまでは、claim-manifest route は theorem gate を `unrun` に保ち、proof-like file が hash-bound でも theorem promotion を block します。
+後の state ほど強い attached record を必要としますが、存在は authenticity を意味しません。proof、dataset、replication の名前を持つ string は、それだけでは artifact の verification ではありません。同様に、local SHA-256 の一致は inspected bytes の identity を示すだけで、その bytes に valid proof が含まれることを示しません。manifest `0.4.0` の唯一の closed exception は `q-polynomial-identity-v0.1` です。authoritative formal AST と residual を exact symbolic replay した claim-bound certificate だけが decisive です。general theorem prose、external-tool receipt、legacy manifest `0.3.0`、その他の proof-like artifact は non-admissive のままです。
 
 ## 3. Execution status
 
@@ -130,9 +130,20 @@ Return Desk は returned-envelope consistency という別 coordinate を追加�
 
 automation は exit code と structured JSON の両方を検査する必要があります。exit code `0` を “scientifically true” や “BSC compliant” に変換してはいけません。
 
+## 10. External and live binding
+
+successful holonomy audit は `HOLONOMY_EXTERNAL_INTERPRETATION_NON_ADMISSIBLE`
+を emit します。submitted finite maps の algebra だけが scope であり、source
+authenticity と scientific truth は `not_established` です。
+
+live Custom GPT の indexed Knowledge state は
+`NON_ADMISSIBLE_UNHASHABLE` です。saved editor、filename、public behavior は
+observe できますが、independently retrievable な indexed bytes ではないため、
+engine gate、theorem replay、scientific admission の evidence にはなりません。
+
 ## Separation rule
 
-Research verdict、evidence maturity、execution status、deployment status、gate state、CLI decision、source coverage、Return Desk outcome は別の質問に答えます。相互に推論してはいけません。特に:
+Research verdict、evidence maturity、execution status、deployment status、gate state、CLI decision、source coverage、Return Desk outcome、live binding は別の質問に答えます。相互に推論してはいけません。特に:
 
 - coherent/proven claim は proposed execution が走ったことを意味しない;
 - ran finite check は broader theory を prove しない;

@@ -6,7 +6,7 @@
 
 **Candidate state:** `PENDING`
 
-**Live binding:** `PENDING_VERIFICATION`
+**Live binding:** `NON_ADMISSIBLE_UNHASHABLE`
 
 **Preview validation:** `PENDING` — 12 fresh-conversation cases required
 

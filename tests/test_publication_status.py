@@ -123,7 +123,7 @@ class PublicationStatusTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("superseded 2026-07-22 snapshot", current_status)
-        self.assertIn("Alpha.8 through alpha.11 boundary", current_status)
+        self.assertIn("Alpha.8 through alpha.12 boundary", current_status)
 
     def test_japanese_pages_state_is_internally_consistent(self) -> None:
         route = self.status["github_pages"]["japanese_route"]
@@ -159,7 +159,7 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertIn("PUBLICATION_STATUS.json", (ROOT / "docs" / "CUSTOM_GPT_STATUS.md").read_text(encoding="utf-8"))
 
         required_positioning = {
-            "README.md": "Alpha.10 is the separately observed live baseline; alpha.11 is an unvalidated repository update candidate",
+            "README.md": "Alpha.10 is the separately observed live baseline; alpha.12 is an unvalidated repository update candidate",
             "START_HERE.md": "It is already built and link-shared as a research preview",
             "docs/index.md": "is built and link-shared",
             "docs/CUSTOM_GPT_STATUS.md": "is built and link-shared as a research preview",

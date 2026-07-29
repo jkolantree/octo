@@ -1,6 +1,6 @@
 # Programmer Tutorial
 
-The current public prerelease is `v0.3.0-alpha.11`. The `holonomy` route first appeared in alpha.3. Preserve the exact engine version with every output.
+The current public prerelease is `v0.3.0-alpha.12`. The `holonomy` route first appeared in alpha.3; the closed `theorem` route first appears in alpha.12. Preserve the exact engine version with every output.
 
 This is the repository and Python exact-checker route. It is distinct from the official live [Custom GPT](CUSTOM_GPT_STATUS.md) and the [local browser Pages module](https://jkolantree.github.io/octo/). The repository GPT package is reproducible source and an update candidate; its existence does not prove that its exact bytes are installed or Preview-validated in the live service. ChatGPT uploads are not local-only, ChatGPT tools are not automatically BSC Python, and neither surface provides a GPT Action or hosted checker API.
 
@@ -26,7 +26,7 @@ python run_audit.py --version
 The output must identify the source you intended to audit. The current development checkout reports:
 
 ```text
-bsc-audit 0.3.0a11
+bsc-audit 0.3.0a12
 ```
 
 The published alpha.3 release reports:
@@ -43,6 +43,8 @@ Run a fixture directly:
 
 ```bash
 python run_audit.py audit examples/claim_valid.json
+python run_audit.py theorem examples/theorem_binomial_identity.json
+python run_audit.py audit examples/claim_polynomial_identity.json
 python run_audit.py observe examples/observation_failure.json
 python run_audit.py return-desk examples/audit_return_valid.json
 python run_audit.py return-desk examples/audit_return_missing_artifact.json
@@ -91,6 +93,7 @@ bsc-audit --version
 | `defect` | exact rational defect path | affine propagation and understatement check |
 | `adapter` | hash-bound external-tool receipt | non-admissive receipt structure and consistency only |
 | `holonomy` | finite rational complexes and path relations | strict, chain-homotopy, and observed-derived equivalence certificates |
+| `theorem` | closed exact-Q polynomial certificate | symbolic canonical-normal-form proof or countercertificate |
 | `return-desk` | draft `audit_return.json` plus sibling artifacts | non-admissive protocol, projection, reference, execution, receipt, and local-byte consistency |
 
 Each command checks only the supplied finite representation. For example, `observe` does not prove that the declared relation exhausts a real instrument’s observational equivalence.
@@ -105,7 +108,7 @@ Example shape:
 
 ```json
 {
-  "engine_version": "0.3.0a11",
+  "engine_version": "0.3.0a12",
   "checks": {
     "run": ["strict_json_parse", "finite_observation_descent"],
     "not_run": ["claim_manifest_lint", "gate_product", "domain_plugins"]
@@ -158,7 +161,7 @@ python run_audit.py lint work/my_claim.json
 python run_audit.py audit work/my_claim.json
 ```
 
-The claim-manifest contract is [schemas/claim-manifest-v0.3.schema.json](../schemas/claim-manifest-v0.3.schema.json). The separate returned-audit contract is [schemas/audit-return-v0.1.schema.json](../schemas/audit-return-v0.1.schema.json). Their schema versions are independent of the release candidate's PEP 440 version `0.3.0a11`.
+The current claim-manifest contract is [schemas/claim-manifest-v0.4.schema.json](../schemas/claim-manifest-v0.4.schema.json); immutable manifest `0.3.0` remains accepted. The closed theorem certificate is [schemas/theorem-certificate-v0.1.schema.json](../schemas/theorem-certificate-v0.1.schema.json). The separate returned-audit contract is [schemas/audit-return-v0.1.schema.json](../schemas/audit-return-v0.1.schema.json). Their schema versions are independent of the release candidate's PEP 440 version `0.3.0a12`.
 
 ## 7. Evidence and hashes
 
@@ -196,7 +199,7 @@ Treat generated JSON as untrusted source code:
 
 Never report checker execution from simulated output. If ChatGPT Code Interpreter or Data Analysis ran, record that as ChatGPT tool execution. Record a BSC Python run only when the correct versioned checker actually executed and its output is preserved with the relevant input.
 
-The official Custom GPT is live. Each candidate update still requires exact saved-configuration binding and a fresh complete Preview gate before that candidate is recorded as validated. The [Audit Return Desk](AUDIT_RETURN_DESK.md) inspects returned output and receipts for internal consistency only; it does not turn them into admissible evidence or certify that an external execution occurred.
+The official Custom GPT is live. A candidate still requires a fresh complete Preview gate before it can be called behaviorally validated, but indexed Knowledge bytes are not independently retrievable: `live_binding_state=NON_ADMISSIBLE_UNHASHABLE`. Saved-editor and public observations cannot satisfy engine gates. The [Audit Return Desk](AUDIT_RETURN_DESK.md) inspects returned output and receipts for internal consistency only; it does not turn them into admissible evidence or certify that an external execution occurred.
 
 ## 9. Add a domain gate
 

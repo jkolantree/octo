@@ -2,6 +2,29 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.12 - 2026-07-29
+
+### Added
+
+- added claim manifest `0.4.0` and a closed exact-Q polynomial-identity certificate language;
+- added symbolic sparse-normal-form theorem replay with exact positive proofs and nonzero-residual countercertificates;
+- added a strict 17-file release-directory verifier and keyless, pre-publication GitHub artifact attestations.
+
+### Corrected
+
+- made only claim-bound, statement-bound, recomputed theorem certificates decisive for theorem-schema gates while preserving manifest `0.3.0` hash-only behavior;
+- emitted a machine-readable non-admissive external-interpretation boundary on successful finite holonomy audits;
+- replaced the unattainable live Knowledge state `PENDING_VERIFICATION` with `NON_ADMISSIBLE_UNHASHABLE`;
+- regenerated package, Pages, localization, schema, manifest, and checksum projections under the alpha.12 identity.
+
+### Preserved boundary
+
+The exact polynomial kernel proves or refutes only its authoritative formal AST
+over `Q`; it does not validate free-form theorem prose or scientific
+declarations. The official Custom GPT remains on its separately observed
+alpha.10 state and is not updated in this lane. Alpha.11 and all earlier tags,
+releases, assets, histories, and negative evidence remain unchanged.
+
 ## 0.3.0-alpha.11 - 2026-07-28
 
 ### Added

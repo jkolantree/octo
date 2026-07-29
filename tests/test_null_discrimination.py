@@ -51,6 +51,29 @@ class NullDiscriminationTests(unittest.TestCase):
                 self.assertEqual(payload["decision"], "prohibited")
                 self.assertIn("SCHEMA_VALIDATION", {finding["code"] for finding in payload["findings"]})
 
+    def test_exact_holonomy_success_is_explicitly_non_admissive(self):
+        status, payload = self.invoke(
+            "holonomy",
+            ROOT / "examples" / "holonomy_observed_exact_kernel_pass.json",
+        )
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["decision"], "no_blocking_findings_with_warnings")
+        boundary = next(
+            finding
+            for finding in payload["findings"]
+            if finding["code"] == "HOLONOMY_EXTERNAL_INTERPRETATION_NON_ADMISSIBLE"
+        )
+        self.assertEqual(boundary["severity"], "WARNING")
+        self.assertEqual(
+            boundary["witness"],
+            {
+                "authority": "non_admissive_declared_input",
+                "algebraic_scope": "declared_finite_maps",
+                "scientific_truth": "not_established",
+                "source_authenticity": "not_established",
+            },
+        )
+
     def test_audit_return_controls_and_poisoned_mutations_are_distinguished(self):
         control_status, control = self.invoke("return-desk", ROOT / "examples" / "audit_return_valid.json")
         self.assertEqual(control_status, 0)

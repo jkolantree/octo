@@ -122,10 +122,15 @@ EVAL_GOVERNANCE_SOURCES: dict[str, str] = {
 
 EXECUTABLE_TRUST_BOUNDARY_SOURCES = {
     "src/bsc_audit/cli.py",
+    "src/bsc_audit/gates.py",
+    "src/bsc_audit/manifest.py",
     "src/bsc_audit/provenance.py",
     "src/bsc_audit/return_desk.py",
     "src/bsc_audit/schema_validation.py",
+    "src/bsc_audit/theorem.py",
     "schemas/audit-return-v0.1.schema.json",
+    "schemas/claim-manifest-v0.4.schema.json",
+    "schemas/theorem-certificate-v0.1.schema.json",
     "pages/return-desk-core.js",
     "scripts/build_publication_assets.py",
     "scripts/check_compact_preview_response.py",
@@ -140,7 +145,9 @@ EXECUTABLE_TRUST_BOUNDARY_SOURCES = {
     "tests/test_gpt_eval_suite.py",
     "tests/test_gpt_frozen_candidate.py",
     "tests/test_gpt_eval_controller.py",
+    "tests/test_manifest.py",
     "tests/test_return_desk.py",
+    "tests/test_theorem.py",
     "tests/return_desk_runtime.test.cjs",
     "toolchain.lock.json",
 }
@@ -1269,7 +1276,7 @@ def drop_markdown_sections(
 
 def compact_status_projection(markdown: str) -> str:
     projected = drop_markdown_sections(markdown, ("return desk",))
-    projected = projected.replace(", and Return Desk outcome", "")
+    projected = projected.replace(", Return Desk outcome", "")
     if "return desk" in projected.casefold():
         raise ValueError("public status projection retained Return Desk instructions")
     return projected
@@ -2056,7 +2063,7 @@ def validate_payload(
         "public_url": OFFICIAL_GPT_URL,
         "package_role": "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
         "candidate_state": "PENDING",
-        "live_binding_state": "PENDING_VERIFICATION",
+        "live_binding_state": "NON_ADMISSIBLE_UNHASHABLE",
         "preview_validation_state": "PENDING",
     }
     if any(product_record.get(key) != value for key, value in expected_product_state.items()):
@@ -2242,7 +2249,7 @@ def validate_payload(
         "LIVE",
         "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
         "PENDING",
-        "PENDING_VERIFICATION",
+        "NON_ADMISSIBLE_UNHASHABLE",
         "VERIFIED",
     ):
         if token not in japanese_knowledge:

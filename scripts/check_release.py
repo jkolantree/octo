@@ -76,6 +76,7 @@ def main() -> int:
     for required_line in (
         "include README.ja.md",
         "include START_HERE.ja.md",
+        "include .github/workflows/release.yml",
         "recursive-include docs *.md *.css *.json",
     ):
         if source_manifest.count(required_line) != 1:
@@ -141,8 +142,8 @@ def main() -> int:
         fail("software Zenodo metadata must declare Apache-2.0")
     if not isinstance(paper_zenodo, dict) or paper_zenodo.get("license") != "CC-BY-4.0":
         fail("paper Zenodo metadata must declare CC-BY-4.0")
-    if software_zenodo.get("publication_date") != "2026-07-28":
-        fail("software archive metadata must use the alpha.11 release date")
+    if software_zenodo.get("publication_date") != "2026-07-29":
+        fail("software archive metadata must use the alpha.12 release date")
 
     toolchain = load_strict_json(ROOT / "toolchain.lock.json")
     if not isinstance(toolchain, dict):
@@ -171,9 +172,59 @@ def main() -> int:
     if pages_workflow.count("node --test tests/return_desk_runtime.test.cjs") != 1:
         fail("Pages must run the Return Desk runtime suite before deployment")
     release_builder = (ROOT / "scripts" / "build_release.py").read_text(encoding="utf-8")
-    for token in ('require_node(lock)', '[node, "--test", "tests/return_desk_runtime.test.cjs"]', '"return_desk_runtime": "pass"'):
+    for token in (
+        'require_node(lock)',
+        '[node, "--test", "tests/return_desk_runtime.test.cjs"]',
+        '"return_desk_runtime": "pass"',
+        '"embedded_artifact_signatures": "not_performed"',
+        '"keyless_release_attestations": "required_before_publication"',
+    ):
         if token not in release_builder:
             fail(f"release builder is missing the exact Return Desk runtime gate: {token}")
+    release_workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+    required_release_tokens = (
+        "permissions: {}",
+        "contents: write",
+        "id-token: write",
+        "attestations: write",
+        "artifact-metadata: write",
+        "persist-credentials: false",
+        "actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0",
+        'subject-path: "${{ github.workspace }}/release/*"',
+        "python scripts/check_release_directory.py",
+        "--expected-count 17",
+        "gh attestation verify",
+        "--source-digest \"$GITHUB_SHA\"",
+        "--signer-workflow \"$GITHUB_REPOSITORY/.github/workflows/release.yml\"",
+        "--deny-self-hosted-runners",
+        "--draft",
+        "--verify-tag",
+        "--draft=false",
+    )
+    for token in required_release_tokens:
+        if token not in release_workflow:
+            fail(f"exact-release workflow is missing required token: {token}")
+    if release_workflow.count("python scripts/check_release_directory.py") != 3:
+        fail("exact-release workflow must verify build, draft download, and published download")
+    if release_workflow.count("--expected-count 17") != 3:
+        fail("exact-release workflow must bind all three release checks to 17 files")
+    attestation = release_workflow.index(
+        "actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6"
+    )
+    prepublication_verify = release_workflow.index(
+        "Verify keyless provenance before creating a release"
+    )
+    draft = release_workflow.index("Create a draft release with the attested bytes")
+    publish = release_workflow.index("Publish the verified prerelease")
+    published_verify = release_workflow.index(
+        "Verify the published assets and provenance"
+    )
+    if not attestation < prepublication_verify < draft < publish < published_verify:
+        fail("exact-release workflow must attest and verify before draft publication")
+    if not (ROOT / "scripts" / "check_release_directory.py").is_file():
+        fail("closed release-directory verifier is missing")
 
     stale_identifier = "jkolantree/" + "bsc-audit-engine"
     text_suffixes = {".cjs", ".css", ".html", ".js", ".json", ".jsonl", ".md", ".mjs", ".py", ".toml", ".ts", ".txt", ".yml", ".yaml", ".cff"}
@@ -183,8 +234,8 @@ def main() -> int:
                 fail(f"stale repository identifier in {path.relative_to(ROOT)}")
 
     citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
-    if "date-released: 2026-07-28" not in citation:
-        fail("CITATION.cff must use the alpha.11 release date")
+    if "date-released: 2026-07-29" not in citation:
+        fail("CITATION.cff must use the alpha.12 release date")
     public_version = __version__.replace("a", "-alpha.", 1)
     if ".dev" in __version__:
         release_match = re.search(

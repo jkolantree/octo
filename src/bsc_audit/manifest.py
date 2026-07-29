@@ -1,18 +1,27 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from .findings import Finding, Severity
 from .provenance import (
+    MAX_ARTIFACT_BYTES,
     is_placeholder_sha256,
     is_sha256,
+    sha256_json,
     verify_local_artifact,
+)
+from .theorem import (
+    LANGUAGE,
+    MAX_CERTIFICATE_BYTES,
+    TheoremReplay,
+    load_and_replay_theorem_certificate,
 )
 
 
-SUPPORTED_MANIFEST_VERSIONS = {"0.3.0"}
+SUPPORTED_MANIFEST_VERSIONS = {"0.3.0", "0.4.0"}
 REQUIRED_TOP = (
     "manifest_version",
     "draft",
@@ -65,6 +74,79 @@ PLACEHOLDERS = {
     "not set",
 }
 
+ArtifactVerification = tuple[bool, str, str | None]
+ArtifactVerificationKey = tuple[str | None, str, str, int]
+TheoremArtifactKey = tuple[str | None, str, str]
+TheoremReplayKey = tuple[str, str, str]
+
+MAX_THEOREM_ARTIFACTS_PER_AUDIT = 32
+MAX_THEOREM_REPLAYS_PER_AUDIT = 16
+
+
+@dataclass
+class ManifestAuditCache:
+    """Per-audit cache for immutable artifact verification and theorem replay."""
+
+    artifact_verifications: dict[ArtifactVerificationKey, ArtifactVerification] = field(
+        default_factory=dict
+    )
+    theorem_artifacts: set[TheoremArtifactKey] = field(default_factory=set)
+    theorem_replays: dict[TheoremReplayKey, TheoremReplay] = field(
+        default_factory=dict
+    )
+    theorem_replays_started: int = 0
+
+
+def _root_cache_key(root: Path | None) -> str | None:
+    if root is None:
+        return None
+    try:
+        return str(root.resolve())
+    except (OSError, RuntimeError):
+        return None
+
+
+def _verify_local_artifact_cached(
+    cache: ManifestAuditCache,
+    root: Path | None,
+    relative_path: object,
+    expected_hash: object,
+    *,
+    max_bytes: int = MAX_ARTIFACT_BYTES,
+    theorem_artifact: bool = False,
+) -> ArtifactVerification:
+    if not isinstance(relative_path, str) or not isinstance(expected_hash, str):
+        return verify_local_artifact(
+            root,
+            relative_path,
+            expected_hash,
+            max_bytes=max_bytes,
+        )
+    key = (_root_cache_key(root), relative_path, expected_hash, max_bytes)
+    if key not in cache.artifact_verifications:
+        theorem_key = key[:3]
+        if (
+            theorem_artifact
+            and is_sha256(expected_hash)
+            and not is_placeholder_sha256(expected_hash)
+            and theorem_key not in cache.theorem_artifacts
+        ):
+            if len(cache.theorem_artifacts) >= MAX_THEOREM_ARTIFACTS_PER_AUDIT:
+                cache.artifact_verifications[key] = (
+                    False,
+                    "theorem_artifact_limit",
+                    None,
+                )
+                return cache.artifact_verifications[key]
+            cache.theorem_artifacts.add(theorem_key)
+        cache.artifact_verifications[key] = verify_local_artifact(
+            root,
+            relative_path,
+            expected_hash,
+            max_bytes=max_bytes,
+        )
+    return cache.artifact_verifications[key]
+
 
 def get_path(raw: dict[str, Any], path: str, default: Any = None) -> Any:
     value: Any = raw
@@ -103,7 +185,23 @@ def _evidence_records(raw: dict[str, Any]) -> list[dict[str, Any]]:
     return [item for item in evidence if isinstance(item, dict)] if isinstance(evidence, list) else []
 
 
-def verified_evidence_ids(raw: dict[str, Any], artifact_root: Path | None) -> set[str]:
+def _closed_theorem_contract(raw: dict[str, Any]) -> bool:
+    claim = raw.get("claim")
+    return (
+        raw.get("manifest_version") == "0.4.0"
+        and isinstance(claim, dict)
+        and claim.get("type") == "theorem_schema"
+        and claim.get("family") == LANGUAGE
+    )
+
+
+def verified_evidence_ids(
+    raw: dict[str, Any],
+    artifact_root: Path | None,
+    audit_cache: ManifestAuditCache | None = None,
+) -> set[str]:
+    audit_cache = audit_cache or ManifestAuditCache()
+    theorem_contract = _closed_theorem_contract(raw)
     verified: set[str] = set()
     for item in _evidence_records(raw):
         evidence_id = item.get("id")
@@ -111,7 +209,18 @@ def verified_evidence_ids(raw: dict[str, Any], artifact_root: Path | None) -> se
             continue
         if item.get("status") != "verified":
             continue
-        ok, _, _ = verify_local_artifact(artifact_root, item.get("artifact"), item.get("sha256"))
+        theorem_artifact = (
+            theorem_contract and item.get("kind") == "exact_certificate"
+        )
+        max_bytes = MAX_CERTIFICATE_BYTES if theorem_artifact else MAX_ARTIFACT_BYTES
+        ok, _, _ = _verify_local_artifact_cached(
+            audit_cache,
+            artifact_root,
+            item.get("artifact"),
+            item.get("sha256"),
+            max_bytes=max_bytes,
+            theorem_artifact=theorem_artifact,
+        )
         if ok:
             verified.add(evidence_id)
     return verified
@@ -126,12 +235,143 @@ def evidence_index(raw: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return result
 
 
+def replayed_theorem_evidence(
+    raw: dict[str, Any],
+    artifact_root: Path | None,
+    verified_ids: set[str] | None = None,
+    audit_cache: ManifestAuditCache | None = None,
+) -> tuple[dict[str, str], list[Finding]]:
+    """Replay only the closed v0.4 exact-Q theorem evidence contract."""
+
+    audit_cache = audit_cache or ManifestAuditCache()
+    claim = raw.get("claim")
+    if not _closed_theorem_contract(raw):
+        return {}, []
+    assert isinstance(claim, dict)
+    claim_id = claim.get("id")
+    formal_statement = claim.get("formal_statement")
+    if not isinstance(claim_id, str) or not isinstance(formal_statement, dict):
+        return {}, []
+    if verified_ids is None:
+        verified_ids = verified_evidence_ids(raw, artifact_root, audit_cache)
+    try:
+        formal_statement_sha256 = sha256_json(formal_statement)
+    except (TypeError, ValueError):
+        formal_statement_sha256 = None
+
+    results: dict[str, str] = {}
+    findings: list[Finding] = []
+    for index, item in enumerate(_evidence_records(raw)):
+        evidence_id = item.get("id")
+        claim_bindings = item.get("verifies_claims", [])
+        if (
+            not isinstance(evidence_id, str)
+            or evidence_id not in verified_ids
+            or item.get("kind") != "exact_certificate"
+            or not isinstance(claim_bindings, list)
+            or claim_id not in claim_bindings
+        ):
+            continue
+        path = f"evidence.{index}"
+        artifact = item.get("artifact")
+        digest = item.get("sha256")
+        replay_key = (
+            (digest, claim_id, formal_statement_sha256)
+            if (
+                isinstance(artifact, str)
+                and isinstance(digest, str)
+                and isinstance(formal_statement_sha256, str)
+            )
+            else None
+        )
+        if replay_key is not None and replay_key in audit_cache.theorem_replays:
+            replay = audit_cache.theorem_replays[replay_key]
+        else:
+            if audit_cache.theorem_replays_started >= MAX_THEOREM_REPLAYS_PER_AUDIT:
+                findings.append(
+                    Finding(
+                        Severity.ERROR,
+                        "THEOREM_RESOURCE_LIMIT",
+                        f"{path}.artifact",
+                        "exact theorem replay exceeds the per-audit unique-certificate limit",
+                        witness={
+                            "evidence_id": evidence_id,
+                            "max_unique_certificate_digests": MAX_THEOREM_REPLAYS_PER_AUDIT,
+                        },
+                    )
+                )
+                continue
+            audit_cache.theorem_replays_started += 1
+            replay = load_and_replay_theorem_certificate(
+                artifact_root,
+                artifact,
+                expected_sha256=digest,
+                expected_claim_id=claim_id,
+                expected_formal_statement=formal_statement,
+            )
+            if replay_key is not None:
+                audit_cache.theorem_replays[replay_key] = replay
+        if not replay.valid or replay.result is None:
+            for finding in replay.findings:
+                suffix = "" if finding.path == "$" else finding.path.removeprefix("$")
+                witness = {
+                    "evidence_id": evidence_id,
+                    "replay_witness": finding.witness,
+                }
+                findings.append(
+                    Finding(
+                        finding.severity,
+                        finding.code,
+                        f"{path}.artifact{suffix}",
+                        finding.message,
+                        witness=witness,
+                        repair=finding.repair,
+                    )
+                )
+            continue
+        if item.get("result") != replay.result:
+            findings.append(
+                Finding(
+                    Severity.ERROR,
+                    "THEOREM_EVIDENCE_RESULT_MISMATCH",
+                    f"{path}.result",
+                    "declared evidence result differs from exact theorem replay",
+                    witness={
+                        "evidence_id": evidence_id,
+                        "declared": item.get("result"),
+                        "computed": replay.result,
+                        "formal_statement_sha256": replay.formal_statement_sha256,
+                    },
+                )
+            )
+            continue
+        results[evidence_id] = replay.result
+        for finding in replay.findings:
+            suffix = "" if finding.path == "$" else finding.path.removeprefix("$")
+            findings.append(
+                Finding(
+                    finding.severity,
+                    finding.code,
+                    f"{path}.artifact{suffix}",
+                    finding.message,
+                    witness={
+                        "evidence_id": evidence_id,
+                        "replay_witness": finding.witness,
+                    },
+                    repair=finding.repair,
+                )
+            )
+    return results, findings
+
+
 def lint_manifest(
     raw: dict[str, Any],
     artifact_root: Path | None = None,
     *,
     checks_run: list[str] | None = None,
+    audit_cache: ManifestAuditCache | None = None,
 ) -> list[Finding]:
+    audit_cache = audit_cache or ManifestAuditCache()
     findings: list[Finding] = []
     if checks_run is not None and "claim_manifest_lint" not in checks_run:
         checks_run.append("claim_manifest_lint")
@@ -163,6 +403,7 @@ def lint_manifest(
         return findings
 
     claim = raw["claim"]
+    theorem_contract = _closed_theorem_contract(raw)
     if "epistemic_status" in claim:
         findings.append(
             Finding(
@@ -238,7 +479,12 @@ def lint_manifest(
         if is_placeholder_sha256(digest):
             findings.append(Finding(Severity.ERROR, "HASH_PLACEHOLDER", f"preservation.{hash_field}", "all-zero hashes are placeholders, not provenance"))
             continue
-        ok, reason, actual = verify_local_artifact(artifact_root, artifact, digest)
+        ok, reason, actual = _verify_local_artifact_cached(
+            audit_cache,
+            artifact_root,
+            artifact,
+            digest,
+        )
         if not ok:
             severity = Severity.ERROR if reason in {"invalid_hash", "placeholder_hash", "unsafe_path"} else Severity.BLOCKED
             findings.append(
@@ -320,7 +566,20 @@ def lint_manifest(
             if not artifact_pair_valid:
                 ok, reason, actual = False, "artifact_hash_pair_invalid", None
             else:
-                ok, reason, actual = verify_local_artifact(artifact_root, item.get("artifact"), item.get("sha256"))
+                theorem_artifact = theorem_contract and kind == "exact_certificate"
+                max_bytes = (
+                    MAX_CERTIFICATE_BYTES
+                    if theorem_artifact
+                    else MAX_ARTIFACT_BYTES
+                )
+                ok, reason, actual = _verify_local_artifact_cached(
+                    audit_cache,
+                    artifact_root,
+                    item.get("artifact"),
+                    item.get("sha256"),
+                    max_bytes=max_bytes,
+                    theorem_artifact=theorem_artifact,
+                )
             if ok:
                 verified_ids.add(evidence_id)
                 if result == "pass":
@@ -332,16 +591,52 @@ def lint_manifest(
                 if kind == "independent_replication" and result == "pass":
                     independently_replicated_ids.add(evidence_id)
             else:
-                severity = Severity.ERROR if reason in {"invalid_hash", "placeholder_hash", "unsafe_path"} else Severity.BLOCKED
+                theorem_resource_limit = reason == "theorem_artifact_limit"
+                severity = (
+                    Severity.ERROR
+                    if theorem_resource_limit
+                    or reason in {"invalid_hash", "placeholder_hash", "unsafe_path"}
+                    else Severity.BLOCKED
+                )
                 findings.append(
                     Finding(
                         severity,
-                        "EVIDENCE_ARTIFACT_UNVERIFIED",
+                        (
+                            "THEOREM_RESOURCE_LIMIT"
+                            if theorem_resource_limit
+                            else "EVIDENCE_ARTIFACT_UNVERIFIED"
+                        ),
                         path,
-                        "verified evidence requires a matching local artifact hash",
-                        witness={"id": evidence_id, "reason": reason, "actual_hash": actual} if actual else {"id": evidence_id, "reason": reason},
+                        (
+                            "closed theorem evidence exceeds the per-audit unique-artifact limit"
+                            if theorem_resource_limit
+                            else "verified evidence requires a matching local artifact hash"
+                        ),
+                        witness=(
+                            {
+                                "id": evidence_id,
+                                "reason": reason,
+                                "max_unique_artifacts": MAX_THEOREM_ARTIFACTS_PER_AUDIT,
+                            }
+                            if theorem_resource_limit
+                            else (
+                                {"id": evidence_id, "reason": reason, "actual_hash": actual}
+                                if actual
+                                else {"id": evidence_id, "reason": reason}
+                            )
+                        ),
                     )
                 )
+
+    replay_results, replay_findings = replayed_theorem_evidence(
+        raw,
+        artifact_root,
+        verified_ids,
+        audit_cache,
+    )
+    findings.extend(replay_findings)
+    if checks_run is not None and "semantic_theorem_replay" not in checks_run:
+        checks_run.append("semantic_theorem_replay")
 
     if maturity in {"structurally_checked", "empirically_passed", "externally_replicated"} and not verified_pass_ids:
         findings.append(Finding(Severity.BLOCKED, "EVIDENCE_MATURITY_UNSUPPORTED", "claim.evidence_maturity", "artifact-backed maturity requires at least one locally verified passing artifact"))
@@ -349,15 +644,15 @@ def lint_manifest(
         findings.append(Finding(Severity.BLOCKED, "EMPIRICAL_EVIDENCE_MISSING", "claim.evidence_maturity", "empirical maturity requires verified passing data, statistical, experimental, or replication evidence"))
     if maturity == "externally_replicated" and not independently_replicated_ids:
         findings.append(Finding(Severity.BLOCKED, "REPLICATION_EVIDENCE_MISSING", "evidence", "independent maturity requires a verified independent-replication artifact"))
-    if claim.get("type") in {"theorem", "theorem_schema"}:
+    if claim.get("type") in {"theorem", "theorem_schema"} and not replay_results:
         findings.append(
             Finding(
                 Severity.BLOCKED,
                 "THEOREM_CERTIFICATE_MISSING",
                 "evidence",
-                "a theorem requires supervised semantic replay; matching local proof bytes do not establish proof validity",
+                "no admissible semantic theorem replay is bound to this claim; matching local proof bytes alone do not establish proof validity",
                 witness={"hash_bound_proof_evidence": sorted(hash_bound_proof_ids)},
-                repair="run and replay a claim-bound checker under a future admissive supervised-replay contract",
+                repair=f"use manifest 0.4.0 with a claim-bound {LANGUAGE} exact certificate, or leave the theorem blocked",
             )
         )
 

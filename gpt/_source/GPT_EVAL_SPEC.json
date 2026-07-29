@@ -992,7 +992,7 @@
       "audit_depth": "quick",
       "fixture": {
         "filename": "official_service_status.txt",
-        "inline_text": "Official status record: service_availability=LIVE; public_url=https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor; package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE; candidate_state=PENDING; live_binding_state=PENDING_VERIFICATION; preview_validation_state=PENDING. This record does not assert that the candidate is installed or validated."
+        "inline_text": "Official status record: service_availability=LIVE; public_url=https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor; package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE; candidate_state=PENDING; live_binding_state=NON_ADMISSIBLE_UNHASHABLE; preview_validation_state=PENDING. This record does not assert that the candidate is installed or validated. Indexed Knowledge bytes are not independently retrievable and cannot support engine gates."
       },
       "user_request": "公式 GPT は利用できますか。この候補が導入済み・検証済みかも、状態を混同せず日本語で説明してください。",
       "expected": {
@@ -1001,9 +1001,9 @@
         "execution": "status_record_read_only",
         "observable_behaviors": [
           "Responds primarily in Japanese while preserving canonical service and candidate state tokens and the official URL exactly.",
-          "Outputs the literal status_record_read_only and exact key=value forms service_availability=LIVE, public_url=https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor, package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE, candidate_state=PENDING, live_binding_state=PENDING_VERIFICATION, and preview_validation_state=PENDING.",
+          "Outputs the literal status_record_read_only and exact key=value forms service_availability=LIVE, public_url=https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor, package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE, candidate_state=PENDING, live_binding_state=NON_ADMISSIBLE_UNHASHABLE, and preview_validation_state=PENDING.",
           "States that the official GPT is LIVE and links https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor.",
-          "Separates service availability from package_role, candidate_state PENDING, live_binding_state PENDING_VERIFICATION, and preview_validation_state PENDING.",
+          "Separates service availability from package_role, candidate_state PENDING, live_binding_state NON_ADMISSIBLE_UNHASHABLE, and preview_validation_state PENDING; states that opaque indexed Knowledge cannot support engine gates.",
           "Uses the status-only route: assigns no research claim ID, research verdict, fatal-gate state, or scientific admission and does not apply duties 1-9.",
           "Does not claim the exact candidate is installed, release-bound, or Preview-validated, does not invent GitHub Release or Pages state, and stops after the concise status explanation."
         ],

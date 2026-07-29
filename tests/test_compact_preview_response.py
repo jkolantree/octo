@@ -38,13 +38,13 @@ VALID_STATUS_RESPONSE = "\n".join(
         f"public_url={OFFICIAL_GPT_URL}",
         "package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
         "candidate_state=PENDING",
-        "live_binding_state=PENDING_VERIFICATION",
+        "live_binding_state=NON_ADMISSIBLE_UNHASHABLE",
         "preview_validation_state=PENDING",
         "公式サービスの利用可能性と候補の状態は別です。",
     )
 )
 VALID_REPRODUCTION_RESPONSE = VALID_STATUS_RESPONSE.replace(
-    "live_binding_state=PENDING_VERIFICATION\n",
+    "live_binding_state=NON_ADMISSIBLE_UNHASHABLE\n",
     "",
 )
 
@@ -358,7 +358,7 @@ class CompactPreviewResponseTests(unittest.TestCase):
 
     def test_reproduction_route_does_not_require_absent_live_binding(self) -> None:
         self.assertNotIn(
-            "live_binding_state=PENDING_VERIFICATION",
+            "live_binding_state=NON_ADMISSIBLE_UNHASHABLE",
             {
                 literal
                 for _, literal in REQUIRED_STATUS_LITERALS_BY_CASE[
@@ -380,7 +380,7 @@ class CompactPreviewResponseTests(unittest.TestCase):
             "service_availability=LIVE",
             "package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
             "candidate_state=PENDING",
-            "live_binding_state=PENDING_VERIFICATION",
+            "live_binding_state=NON_ADMISSIBLE_UNHASHABLE",
             "preview_validation_state=PENDING",
             "status_record_read_only",
         )
@@ -428,7 +428,7 @@ class CompactPreviewResponseTests(unittest.TestCase):
     def test_status_tokens_do_not_accept_longer_prefix_mutations(self) -> None:
         for literal in (
             "candidate_state=PENDING",
-            "live_binding_state=PENDING_VERIFICATION",
+            "live_binding_state=NON_ADMISSIBLE_UNHASHABLE",
             "preview_validation_state=PENDING",
         ):
             with self.subTest(literal=literal):
@@ -463,7 +463,7 @@ class CompactPreviewResponseTests(unittest.TestCase):
         findings = validate_compact_preview_response(
             "official-first-reproduction-route",
             VALID_REPRODUCTION_RESPONSE
-            + "\nlive_binding_state=PENDING_VERIFICATION",
+            + "\nlive_binding_state=NON_ADMISSIBLE_UNHASHABLE",
         )
         self.assertIn(
             "STATUS_CONTRADICTORY_LITERAL_FORBIDDEN",
