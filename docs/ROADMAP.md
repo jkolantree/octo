@@ -173,6 +173,20 @@ build, 17-file closed-directory checks, keyless attestations, and draft and
 published redownload comparisons all pass from the exact alpha.13 tag. No
 alpha.12 release is backfilled and no live GPT update is part of this repair.
 
+## v0.3.0-alpha.14 - exact checked-judgment consolidation
+
+- express chain-map defects and chain-homotopy systems through one exact mapping-complex differential;
+- require the sign convention to satisfy `delta_(r-1) delta_r = 0` on nontrivial fixtures;
+- separate primal/dual certificate replay from witness generation;
+- make the exact dual obstruction decisive without mandatory, basis-dependent least-squares diagnostics;
+- preserve the public holonomy schemas while testing rational basis-change invariance;
+- make hash verification provenance-only unless a registered exact replay recomputes the result;
+- bind theorem output to one deterministic AST projection and formal-only authority;
+- separate protocol, theorem-kernel, return-contract, and distribution identities;
+- consolidate CI, Pages, and release verification behind one executable spine.
+
+Exit criterion: the strict and derived verdicts remain unchanged on every preserved fixture, the shared degree-0/degree-1 compiler passes sign, gap, basis-change, forged-witness, and resource-limit tests, no coordinate-dependent magnitude participates in admission, both demonstrated semantic-laundering attacks block, component identities remain independently hash-bound, and the complete clean-tag release gates pass.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;

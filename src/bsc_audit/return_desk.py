@@ -7,6 +7,10 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable
 
+from .contracts import (
+    PROTOCOL_SHA256 as EXPECTED_PROTOCOL_SHA256,
+    PROTOCOL_VERSION as EXPECTED_PROTOCOL_VERSION,
+)
 from .findings import BLOCKING, Finding, Severity
 from .provenance import MAX_ARTIFACT_BYTES, is_placeholder_sha256, resolve_local_artifact, verify_local_artifact
 
@@ -22,8 +26,6 @@ CANONICAL_ACTIVITIES = (
     "proposed_computation",
 )
 
-EXPECTED_PROTOCOL_VERSION = "0.3.0-alpha.13"
-EXPECTED_PROTOCOL_SHA256 = "sha256:3615c6d81e2c297e68a6ee798fe1a34aa4014a75e0670580ec002c28a933fd1a"
 MAX_RETURN_ARTIFACTS = 32
 MAX_RETURN_TOTAL_ARTIFACT_BYTES = 256 * 1024 * 1024
 

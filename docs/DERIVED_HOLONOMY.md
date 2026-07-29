@@ -13,6 +13,14 @@ For two chain-map paths `f,g: C -> D`, define `Omega = f - g`.
 
 The derived equivalence is implemented only for bounded finite-dimensional complexes over the exact rational field `Q`. The field hypothesis is essential; the engine rejects other coefficient declarations rather than extending the theorem to arbitrary rings.
 
+All chain-map and chain-homotopy equations use one homological mapping-complex differential:
+
+```text
+(delta_r phi)_n = d_D phi_n - (-1)^r phi_(n-1) d_C
+```
+
+Degree `r = 0` is the chain-map defect and degree `r = 1` is the homotopy system. The internal kernel also checks the sign-sensitive identity `delta_(r-1) delta_r = 0`; this consolidation does not add a new input route or enlarge the public schema.
+
 ## Fail-closed execution order
 
 For each document the checker:
@@ -41,11 +49,11 @@ A pass finding includes:
 - degreewise homotopy matrices;
 - an exact zero residual.
 
-A failure includes a rational vector `y` with `y^T A = 0` and `y^T omega != 0`. It also includes the exact least-squares vector `h_*`, residual `r = omega - A h_*`, the replayed condition `A^T r = 0`, and `eta_squared = r^T r > 0`.
+A failure includes a rational vector `y` with `y^T A = 0` and `y^T omega != 0`. This dual obstruction is decisive: if `A h = omega` held, then `y^T omega = y^T A h = 0`, a contradiction.
 
-The solver uses rational row operations only and bounds equations, variables, coefficient cells, input rational sizes, and intermediate bit growth. Path composition has a separate document-wide budget of 1,000,000 scalar products, checks every intermediate numerator and denominator against the 8,192-bit ceiling, and memoizes repeated path tuples.
+Earlier findings could additionally include a least-squares vector, coordinate residual, and `eta_squared`. Those fields were non-authoritative diagnostics in the declared bases: they never determined pass or failure, were not basis-invariant, and are no longer required or emitted for a dual obstruction. Consumers must use `dual` and `pairing` as the replayable failure certificate.
 
-`eta_squared` uses the ordinary Euclidean norm in the declared coordinate bases. It is exact for those registered bases, but it is not a canonical basis-free magnitude and can change under basis rescaling.
+The solver uses rational row operations only and bounds equations, variables, coefficient cells, input rational sizes, and intermediate bit growth. Certificate replay is separate from witness generation. Path composition has a separate document-wide budget of 1,000,000 scalar products, checks every intermediate numerator and denominator against the 8,192-bit ceiling, and memoizes repeated path tuples.
 
 ## Lawful observation projection
 
@@ -95,4 +103,4 @@ The current public contract is [`derived-holonomy-v0.2.schema.json`](../schemas/
 
 ## Current boundary
 
-The route does not implement invariant naturality, higher coherent homotopies, a query-holonomy Galois search, physical truth validation, or proof-assistant certification. A clear result establishes only the finite equations and bindings actually checked. The explicit non-admissive warning is permanent output semantics, not an invitation to infer that an external declaration is true or false.
+The route does not expose higher coherent homotopies, invariant naturality, a query-holonomy Galois search, physical truth validation, or proof-assistant certification. The shared mapping-complex kernel is a prerequisite for later degree-2 coherence work, not evidence that such a public contract already exists. A clear result establishes only the finite equations and bindings actually checked. The explicit non-admissive warning is permanent output semantics, not an invitation to infer that an external declaration is true or false.

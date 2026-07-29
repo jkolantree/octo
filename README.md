@@ -3,7 +3,7 @@
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) (live research preview)<br>
-**Current GitHub prerelease:** `v0.3.0-alpha.13`<br>
+**Current GitHub prerelease:** `v0.3.0-alpha.14`<br>
 **Validation boundary:** the live indexed-Knowledge state is `NON_ADMISSIBLE_UNHASHABLE`; product observations and engine proofs remain separate, and this is a research preview rather than certification<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
@@ -24,7 +24,7 @@ The engine checks a narrow set of declared structural obligations. Current route
 - square holonomy and path-dependence checks;
 - arbitrary-path strict, derived, and observed-derived holonomy over exact rationals;
 - short-exact-sequence certificates binding an observed quotient to its declared null subcomplex;
-- replayable chain-homotopy or dual-obstruction certificates with exact residuals;
+- replayable chain-homotopy solutions or dual-obstruction certificates over exact rationals;
 - finite observation/query descent witnesses;
 - product-valued gates with non-averaged conflict states;
 - fatal dependency propagation in acyclic claim graphs;
@@ -35,7 +35,7 @@ The engine checks a narrow set of declared structural obligations. Current route
 - non-admissive inspection of returned audit envelopes, ledgers, projections, receipts, and local artifact hashes;
 - canonical JSON hashing.
 
-The engine does **not** determine whether an arbitrary theory is true, reconstruct an arbitrary proof, validate an external evidence identifier, certify empirical replication, or grant moral, legal, clinical, or deployment permission. Claim manifest `0.4.0` admits one closed theorem family: exact polynomial identities over `Q` whose authoritative AST and residual are recomputed by the bundled kernel. Every other matching proof-file hash remains provenance rather than semantic replay. A `no_blocking_findings` result means only that the checks actually run found no blocking condition.
+The engine does **not** determine whether an arbitrary theory is true, reconstruct an arbitrary proof, validate an external evidence identifier, certify empirical replication, or grant moral, legal, clinical, or deployment permission. Claim manifest `0.4.0` admits one closed theorem family: exact polynomial identities over `Q` whose authoritative AST, title, statement, and residual are deterministically recomputed by the bundled kernel. Every other declared result—including hash-matched proofs, datasets, replications, and arithmetic-obligation evidence—remains provenance unless a registered exact replay recomputes it. A `no_blocking_findings` result means only that the checks actually run found no blocking condition.
 
 ## Choose an entry point
 
@@ -43,7 +43,7 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 2. **Local browser Packet Builder and Audit Return Desk:** [open the accessible English GitHub Pages module](https://jkolantree.github.io/octo/) or the deployed [Japanese route](https://jkolantree.github.io/octo/ja.html) to construct a versioned packet or inspect a returned `audit_return.json` draft and selected artifact bytes locally. Neither function uploads the target, calls an LLM, or runs Python.
 3. **Repository and Python engine - exact checker route:** use [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and preserved command output. This is the only route here that runs the BSC checker.
 
-The repository contains the deterministic Custom GPT package lineage used for independent inspection, reproducible deployments, compatible forks, and verifiable updates. Alpha.10 is the separately observed live baseline; alpha.13 is an unvalidated repository update candidate and is not installed live in this release lane. Indexed Knowledge bytes are not independently retrievable, so they cannot support engine gates. The older timestamped JSON snapshot is preserved as historical evidence.
+The repository contains the deterministic Custom GPT package lineage used for independent inspection, reproducible deployments, compatible forks, and verifiable updates. Alpha.10 is the separately observed live baseline; alpha.14 is an unvalidated repository update candidate and is not installed live in this release lane. The byte-identical protocol component remains versioned `0.3.0-alpha.13`, independently of the engine release. Indexed Knowledge bytes are not independently retrievable, so they cannot support engine gates. The older timestamped JSON snapshot is preserved as historical evidence.
 
 Supporting routes:
 
@@ -103,10 +103,14 @@ The first fixture is internally consistent and explicitly non-admissive. The sec
 Run the tests from a source checkout on every supported platform:
 
 ```bash
-python scripts/run_tests.py
+python scripts/verify.py core
 ```
 
-For an installed command, create a virtual environment and run `python -m pip install -e .`; then use `bsc-audit` instead of `python run_audit.py`.
+Use `python scripts/verify.py pages` for the browser publication surface and
+`python scripts/verify.py candidate` for the complete fail-fast integration
+profile. For an installed command, create a virtual environment and run
+`python -m pip install -e .`; then use `bsc-audit` instead of
+`python run_audit.py`.
 
 ## Status model
 
