@@ -2,6 +2,29 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.14 - 2026-07-29
+
+### Corrected
+
+- made artifact hashes provenance-only unless a registered exact replay recomputes the bound result, closing generic empirical, arithmetic-obligation, and theorem-gloss status laundering;
+- bound the closed polynomial profile's title, statement, and scope to deterministic formal projections, structural maturity, and non-operational deployment states;
+- made exact dual obstructions decisive without requiring a coordinate-dependent least-squares calculation after inconsistency is already proved.
+
+### Added
+
+- added one exact rational mapping-complex differential for chain-map legality, chain homotopy, and tested degree-2 coherence;
+- added a strict component contract separating distribution, protocol, theorem-kernel, and return-contract identities;
+- added one fail-fast verification spine used by local checks, CI, Pages, and clean-tag release assembly;
+- made release sources come from verified Git objects, with tracked-link rejection and post-gate tree checks preventing mutable-workspace provenance drift.
+
+### Preserved boundary
+
+The public protocol packet and Return Desk contract remain byte-identical to
+their `0.3.0-alpha.13` component identities. The separately observed alpha.10
+live Custom GPT is unchanged and its indexed Knowledge remains
+`NON_ADMISSIBLE_UNHASHABLE`. Alpha.13 and every earlier tag, release, asset,
+failure record, and research-repository history remain unchanged.
+
 ## 0.3.0-alpha.13 - 2026-07-29
 
 ### Corrected

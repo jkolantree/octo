@@ -1,0 +1,21 @@
+{
+  "contract_schema": "bsc-component-contract/v1",
+  "protocol": {
+    "sha256": "3615c6d81e2c297e68a6ee798fe1a34aa4014a75e0670580ec002c28a933fd1a",
+    "source_path": "BSC_AUDIT_LLM_PACKET.md",
+    "version": "0.3.0-alpha.13"
+  },
+  "return_contract": {
+    "authority": "non_admissive_return_inspection",
+    "schema": "audit-return-v0.1.schema.json",
+    "schema_sha256": "25714690651ca078c69f7e920c18d5087ec93b245a8cfed1f17633b2ea572799",
+    "version": "0.1.0"
+  },
+  "theorem_kernel": {
+    "certificate_version": "0.1.0",
+    "gate_id": "exact_polynomial_identity",
+    "language": "q-polynomial-identity-v0.1",
+    "schema": "theorem-certificate-v0.1.schema.json",
+    "schema_sha256": "39d1c174d92c7d7383f1ae094af5d7d3796ca2e49082ac2f74f3764a34dd44f9"
+  }
+}

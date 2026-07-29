@@ -26,7 +26,7 @@ def _bound_evidence_is_valid(
     references: object,
     records: dict[str, dict[str, Any]],
     verified_ids: set[str],
-    theorem_replays: dict[str, str],
+    semantic_replays: dict[str, str],
     claim_type: object,
 ) -> tuple[bool, str, dict[str, Any]]:
     if not isinstance(references, list) or not all(isinstance(value, str) for value in references):
@@ -47,29 +47,27 @@ def _bound_evidence_is_valid(
             evidence_id
             for evidence_id in bound_ids & verified_ids
             if records[evidence_id].get("kind") in PROOF_KINDS
-            and evidence_id not in theorem_replays
+            and evidence_id not in semantic_replays
         }
         if claim_type == "theorem"
         else set()
     )
-    admissible_theorem_replays = (
-        theorem_replays
+    admissible_semantic_replays = (
+        semantic_replays
         if claim_type == "theorem_schema" and gate_id == THEOREM_GATE_ID
         else {}
     )
     nonsemantic_theorem_ids = (
-        (bound_ids & verified_ids) - set(admissible_theorem_replays)
+        (bound_ids & verified_ids) - set(admissible_semantic_replays)
         if claim_type == "theorem_schema"
         else set()
     )
-    ignored_ids = hash_only_proof_ids | nonsemantic_theorem_ids
+    nonsemantic_ids = (bound_ids & verified_ids) - set(
+        admissible_semantic_replays
+    )
     observed_results = {
-        admissible_theorem_replays.get(
-            evidence_id,
-            records[evidence_id].get("result"),
-        )
-        for evidence_id in (bound_ids & verified_ids) - ignored_ids
-        if evidence_id in records
+        admissible_semantic_replays[evidence_id]
+        for evidence_id in bound_ids & set(admissible_semantic_replays)
     }
     decisive = observed_results & {"pass", "fail"}
     if not decisive:
@@ -91,10 +89,15 @@ def _bound_evidence_is_valid(
         "unverified": unverified,
         "hash_only_proof_evidence": sorted(hash_only_proof_ids),
         "nonsemantic_theorem_evidence": sorted(nonsemantic_theorem_ids),
+        "nonsemantic_evidence": sorted(nonsemantic_ids),
+        "nonsemantic_declared_results": {
+            evidence_id: records[evidence_id].get("result")
+            for evidence_id in sorted(nonsemantic_ids)
+        },
         "semantic_theorem_replay": {
-            evidence_id: admissible_theorem_replays[evidence_id]
+            evidence_id: admissible_semantic_replays[evidence_id]
             for evidence_id in sorted(
-                bound_ids & set(admissible_theorem_replays)
+                bound_ids & set(admissible_semantic_replays)
             )
         },
         "observed_results": sorted(value for value in observed_results if isinstance(value, str)),
@@ -182,7 +185,7 @@ def audit_gate_product(
                     Severity.BLOCKED,
                     "GATE_RESULT_UNVERIFIED",
                     path,
-                    "gate conclusion is not backed by verified evidence with a matching result and gate binding",
+                    "gate conclusion is not backed by a matching result recomputed by a registered exact replay; artifact hashes establish provenance only",
                     witness=witness,
                 )
             )

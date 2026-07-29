@@ -9,6 +9,8 @@ from pathlib import Path
 from bsc_audit.theorem import (
     MAX_VARIABLES,
     audit_theorem_certificate,
+    canonical_formal_title,
+    canonical_formal_statement,
     load_and_replay_theorem_certificate,
     replay_theorem_certificate,
 )
@@ -89,6 +91,56 @@ class TheoremCertificateTests(unittest.TestCase):
                 finding.severity.value in {"ERROR", "BLOCKED", "DEMOTION"}
                 for finding in audit_theorem_certificate(certificate)
             )
+        )
+
+    def test_canonical_projection_and_authority_boundary_are_explicit(self):
+        certificate = self.positive_certificate()
+        expected = (
+            "Q[x,y] polynomial identity: ((x + y)^2) = "
+            "((x^2) + (2 * x * y) + (y^2))"
+        )
+        expected_title = "Exact polynomial identity in Q[x,y]"
+        self.assertEqual(
+            canonical_formal_title(certificate["formal_statement"]),
+            expected_title,
+        )
+        self.assertEqual(
+            canonical_formal_statement(certificate["formal_statement"]),
+            expected,
+        )
+        witness = replay_theorem_certificate(certificate).findings[0].witness
+        self.assertEqual(witness["canonical_formal_title"], expected_title)
+        self.assertEqual(witness["canonical_formal_statement"], expected)
+        self.assertEqual(witness["authority"], "bsc_internal_exact_replay")
+        self.assertEqual(
+            witness["authority_scope"],
+            "canonical_formal_statement_only",
+        )
+        self.assertEqual(witness["human_gloss"], "non_admissible")
+        self.assertEqual(witness["scientific_truth"], "not_established")
+        self.assertEqual(witness["deployment_authority"], "not_granted")
+
+    def test_canonical_projection_parenthesizes_signed_rationals(self):
+        statement = {
+            "language": "q-polynomial-identity-v0.1",
+            "field": "Q",
+            "variables": [],
+            "relation": {
+                "op": "eq",
+                "left": power(
+                    const("-1/2"),
+                    2,
+                ),
+                "right": const("1/4"),
+            },
+        }
+        self.assertEqual(
+            canonical_formal_title(statement),
+            "Exact polynomial identity in Q",
+        )
+        self.assertEqual(
+            canonical_formal_statement(statement),
+            "Q polynomial identity: ((-1/2)^2) = (1/4)",
         )
 
     def test_nonidentity_has_a_replayable_coefficient_countercertificate(self):

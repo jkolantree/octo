@@ -7,13 +7,18 @@ import argparse
 import hashlib
 import json
 import os
-import re
+import sys
 import time
 import zipfile
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from bsc_audit.contracts import PROTOCOL_SHA256_HEX, PROTOCOL_VERSION  # noqa: E402
+
+
 PROTOCOL = ROOT / "BSC_AUDIT_LLM_PACKET.md"
 SCHEMA = ROOT / "schemas" / "claim-manifest-v0.4.schema.json"
 RETURN_SCHEMA = ROOT / "schemas" / "audit-return-v0.1.schema.json"
@@ -22,16 +27,10 @@ SOURCE_DATE_EPOCH = int(os.environ.get("SOURCE_DATE_EPOCH", "1784505600"))
 ZIP_TIME = time.gmtime(max(SOURCE_DATE_EPOCH, 315532800))[:6]
 
 
-def engine_version() -> str:
-    source = (ROOT / "src" / "bsc_audit" / "__init__.py").read_text(encoding="utf-8")
-    match = re.search(r'^__version__ = "([^"]+)"$', source, re.MULTILINE)
-    if match is None:
-        raise RuntimeError("unable to read the package version")
-    return match.group(1)
-
-
 def public_version() -> str:
-    return engine_version().replace("a", "-alpha.", 1)
+    """Return the protocol version used by public protocol projections."""
+
+    return PROTOCOL_VERSION
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -39,14 +38,21 @@ def sha256_bytes(data: bytes) -> str:
 
 
 def protocol_bytes() -> bytes:
-    return PROTOCOL.read_bytes()
+    data = PROTOCOL.read_bytes()
+    actual = sha256_bytes(data)
+    if actual != PROTOCOL_SHA256_HEX:
+        raise ValueError(
+            "canonical protocol differs from the package-owned component contract: "
+            f"expected {PROTOCOL_SHA256_HEX}, found {actual}"
+        )
+    return data
 
 
 def publication_header(purpose: str) -> str:
     digest = sha256_bytes(protocol_bytes())
     return (
         "BSC SCIENTIFIC AUDIT PROTOCOL\n"
-        f"Protocol version: {public_version()}\n"
+        f"Protocol version: {PROTOCOL_VERSION}\n"
         f"Protocol SHA-256: {digest}\n"
         f"Edition purpose: {purpose}\n\n"
     )
@@ -64,7 +70,7 @@ def site_outputs() -> dict[Path, bytes]:
             {
                 "path": "protocol/BSC_AUDIT_LLM_PACKET.md",
                 "sha256": sha256_bytes(protocol),
-                "version": public_version(),
+                "version": PROTOCOL_VERSION,
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -75,7 +81,7 @@ def site_outputs() -> dict[Path, bytes]:
         "window.BSC_AUDIT_PROFILE = Object.freeze("
         + json.dumps(
             {
-                "version": public_version(),
+                "version": PROTOCOL_VERSION,
                 "profile_sha256": sha256_bytes(profile_bytes),
                 "return_contract": {
                     "authority": return_schema_value["properties"]["authority"]["const"],
@@ -138,7 +144,7 @@ def write_release_assets(output: Path) -> list[Path]:
     protocol = protocol_bytes()
     protocol_text = protocol.decode("utf-8")
     digest = sha256_bytes(protocol)
-    version = public_version()
+    version = PROTOCOL_VERSION
     assets: dict[str, bytes] = {
         "START_HERE.txt": (
             publication_header("plain-text orientation")
@@ -193,7 +199,10 @@ def main() -> int:
         write_release_assets(args.release_output.resolve())
     if failures:
         raise SystemExit("; ".join(failures))
-    print(f"publication assets {'verified' if args.check else 'generated'} for {public_version()}")
+    print(
+        f"publication assets {'verified' if args.check else 'generated'} "
+        f"for protocol {PROTOCOL_VERSION}"
+    )
     return 0
 
 
