@@ -1,6 +1,6 @@
 # Sharing and Release Guide
 
-The v0.3.0-alpha.15 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
+The v0.3.0-alpha.16 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
 
 ## Public surfaces
 
@@ -9,14 +9,14 @@ The v0.3.0-alpha.15 release is a research preview. Every public description shou
 3. **GitHub is the reproducible workshop.** Source history, issues, pull requests, fixtures, configuration packages, and active releases live there.
 4. **Zenodo is the immutable archive.** Frozen software releases and foundations papers receive separate citable records linked in both directions.
 
-## v0.3.0-alpha.15 release contents
+## v0.3.0-alpha.16 release contents
 
-The immutable `v0.3.0-alpha.15` tag identifies the exact release tree. Its release contains:
+The immutable `v0.3.0-alpha.16` tag identifies the exact release tree. Its release contains:
 
 - `START_HERE.txt`, `BSC_AUDIT_COPY_PASTE.txt`, `BSC_AUDIT_UPLOAD_TO_LLM.txt`, and `BSC_AUDIT_SYSTEM_PROMPT.txt`;
 - the canonical LLM packet, schema, example archive, and `BSC_AUDIT_PUBLICATION.json`;
-- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.15.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
-- `bsc-audit-engine-0.3.0-alpha.15.zip`, the versioned tracked-source archive;
+- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.16.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
+- `bsc-audit-engine-0.3.0-alpha.16.zip`, the versioned tracked-source archive;
 - the wheel and source distribution;
 - the conformance packet;
 - `RELEASE_MANIFEST.json` and `SBOM.spdx.json`;
@@ -42,15 +42,15 @@ Do not manually zip a working directory containing caches or untracked files. Bu
 Permanent release links:
 
 ```text
-https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.15
-https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.15/BSC_AUDIT_LLM_PACKET.md
+https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.16
+https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.16/BSC_AUDIT_LLM_PACKET.md
 https://jkolantree.github.io/octo/
 https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
 ```
 
 The deployed Japanese Pages URL is `https://jkolantree.github.io/octo/ja.html`. English, Japanese, and protocol metadata routes were rechecked against current-main bytes on 2026-07-25.
 
-The repository release publishes a reproducible package, not proof of the authenticated Custom GPT state. The official GPT's availability, observable saved state, Preview validation, GitHub release, and Pages deployment are recorded separately in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Lead with the existing official service; present the package as its reproducible source and optional fork/update path. Never infer live or validated state from a release ZIP. The alpha.15 package remains an **unvalidated candidate** and is not installed in the live GPT in this release lane. Its indexed Knowledge state is `NON_ADMISSIBLE_UNHASHABLE`, so it cannot support engine gates. The package contains no GPT Action, hosted API, account, analytics, or cloud-storage service. Its component contract records that the byte-identical public protocol remains version `0.3.0-alpha.13`.
+The repository release publishes a reproducible package, not proof of the authenticated Custom GPT state. The official GPT's availability, observable saved state, Preview validation, GitHub release, and Pages deployment are recorded separately in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Lead with the existing official service; present the package as its reproducible source and optional fork/update path. Never infer live or validated state from a release ZIP. The alpha.16 package remains an **unvalidated candidate** and is not installed in the live GPT in this release lane. Its indexed Knowledge state is `NON_ADMISSIBLE_UNHASHABLE`, so it cannot support engine gates. The package contains no GPT Action, hosted API, account, analytics, or cloud-storage service. Its component contract records that the byte-identical public protocol remains version `0.3.0-alpha.13`.
 
 ## Reproduce the Custom GPT package
 
@@ -70,7 +70,7 @@ Verify a downloaded asset against the repository's signed attestation:
 gh attestation verify PATH/TO/ASSET \
   --repo jkolantree/octo \
   --signer-workflow jkolantree/octo/.github/workflows/release.yml \
-  --source-ref refs/tags/v0.3.0-alpha.15
+  --source-ref refs/tags/v0.3.0-alpha.16
 ```
 
 This authenticates the asset digest and GitHub workflow provenance; it does not establish scientific truth. See GitHub's [artifact-attestation documentation](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations).
@@ -176,4 +176,4 @@ Avoid:
 - “BSC compliant”;
 - claims that an LLM ran the Python checker without actual output.
 
-The Audit Return Desk was introduced in alpha.8 and remains in alpha.15, under the independently versioned alpha.13 protocol component, for non-admissive inspection of returned output and receipts. Its presence in a Pages or GPT interface does not turn a returned draft into admissible evidence.
+The Audit Return Desk was introduced in alpha.8 and remains in alpha.16, under the independently versioned alpha.13 protocol component, for non-admissive inspection of returned output and receipts. Its presence in a Pages or GPT interface does not turn a returned draft into admissible evidence.

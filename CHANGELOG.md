@@ -2,7 +2,32 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
-## 0.3.0-alpha.15 - 2026-07-29
+## 0.3.0-alpha.16 - 2026-07-29
+
+### Corrected
+
+- carried the alpha.15 typed-coherence candidate forward without weakening its
+  mathematical or authority boundaries;
+- made every release-artifact sequence and checksum ledger use explicit UTF-8
+  filename-byte order across host filesystems;
+- added a Windows-path regression and a correctly rehashed, incorrectly
+  case-fold-ordered receipt negative.
+
+### Preserved prepublication failure
+
+The local annotated `v0.3.0-alpha.15` tag object
+`8f9b0e1a046f4d578a203d17162155faa9166578` remains fixed at commit
+`e1beb91d48e4db64f0a1c51a8753f97a56bd504d`, tree
+`2be8cad2047bd678d85fb23888c24ea6cc709ea7`. Its exact clean-tag build failed
+closed before the tag was pushed and before any GitHub asset, attestation,
+draft, or release existed. The tag was not moved or relabeled; corrected bytes
+use alpha.16.
+
+The live alpha.10 Custom GPT, the byte-identical alpha.13 protocol component,
+every public tag and release through alpha.14, and the separate BSC research
+repository remain unchanged.
+
+## 0.3.0-alpha.15 - 2026-07-29 (prepublication; no GitHub release)
 
 ### Corrected
 

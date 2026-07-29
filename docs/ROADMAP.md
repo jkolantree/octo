@@ -203,13 +203,35 @@ same-count/wrong-role release directories fail, deterministic clean-tag
 rebuilding and all existing engine/browser/privacy/localization/Pages/release
 gates pass, and no live GPT or research-repository mutation occurs.
 
-## v0.3.0-alpha.16 - proof-relevant degree-two coherence
+Promotion status: the exact local alpha.15 tag build failed before publication
+because Windows path comparison produced a case-folded release-artifact order.
+The annotated tag remains fixed and was never pushed; no GitHub release or
+asset exists for alpha.15. Its mathematical scope carries forward unchanged.
+
+## v0.3.0-alpha.16 - typed coherence release recovery
+
+- carry the alpha.15 mathematical and authority-typing scope forward without
+  weakening it;
+- order every release-artifact projection and checksum ledger by explicit
+  UTF-8 filename bytes rather than host `Path` comparison;
+- reject a correctly rehashed receipt whose artifact references use the
+  Windows case-fold order;
+- preserve the failed local alpha.15 tag, every earlier public tag and release,
+  the live alpha.10 GPT, and the separately versioned alpha.13 protocol.
+
+Exit criterion: opposite host path semantics produce the same receipt,
+manifest, and checksum order; the exact clean alpha.16 tag build passes the
+complete engine, browser, privacy, localization, Pages, package,
+reproducibility, attestation, and redownload gates; no live GPT or
+research-repository mutation occurs.
+
+## v0.3.0-alpha.17 - proof-relevant degree-two coherence
 
 - accept two explicitly identified degree-one homotopies `H` and `K` with the same boundary;
 - solve `delta_2 Q = H - K` over exact rationals and emit `Q` as the coherence certificate;
 - when no `Q` exists, emit an exact dual annihilator with nonzero pairing against `H - K`;
 - bind every result to the two homotopy identities, mapping-complex coordinates, basis meanings, method, evidence bytes, and formal-only authority;
-- expose this route only after the alpha.15 typed substrate is independently replayed and stable.
+- expose this route only after the alpha.16 typed substrate is independently replayed and stable.
 
 Exit criterion: positive and dual-obstruction fixtures, basis-change
 invariance, sign-law tests, forged-binding tests, resource ceilings with

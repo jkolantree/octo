@@ -1,6 +1,6 @@
 # Programmer Tutorial
 
-The current public prerelease is `v0.3.0-alpha.15`. The `holonomy` route first appeared in alpha.3; the closed `theorem` route first appeared in alpha.12. Preserve the exact engine version with every output.
+The current public prerelease is `v0.3.0-alpha.16`. The `holonomy` route first appeared in alpha.3; the closed `theorem` route first appeared in alpha.12. Preserve the exact engine version with every output.
 
 This is the repository and Python exact-checker route. It is distinct from the official live [Custom GPT](CUSTOM_GPT_STATUS.md) and the [local browser Pages module](https://jkolantree.github.io/octo/). The repository GPT package is reproducible source and an update candidate; its existence does not prove that its exact bytes are installed or Preview-validated in the live service. ChatGPT uploads are not local-only, ChatGPT tools are not automatically BSC Python, and neither surface provides a GPT Action or hosted checker API.
 
@@ -26,7 +26,7 @@ python run_audit.py --version
 The output must identify the source you intended to audit. The current development checkout reports:
 
 ```text
-bsc-audit 0.3.0a15
+bsc-audit 0.3.0a16
 ```
 
 The published alpha.3 release reports:
@@ -114,7 +114,7 @@ Example shape:
 
 ```json
 {
-  "engine_version": "0.3.0a15",
+  "engine_version": "0.3.0a16",
   "checks": {
     "run": ["strict_json_parse", "finite_observation_descent"],
     "not_run": ["claim_manifest_lint", "gate_product", "domain_plugins"]
@@ -167,7 +167,7 @@ python run_audit.py lint work/my_claim.json
 python run_audit.py audit work/my_claim.json
 ```
 
-The current claim-manifest contract is [schemas/claim-manifest-v0.4.schema.json](../schemas/claim-manifest-v0.4.schema.json); immutable manifest `0.3.0` remains accepted. The closed theorem certificate is [schemas/theorem-certificate-v0.1.schema.json](../schemas/theorem-certificate-v0.1.schema.json). The separate returned-audit contract is [schemas/audit-return-v0.1.schema.json](../schemas/audit-return-v0.1.schema.json). Their schema versions are independent of the release candidate's PEP 440 version `0.3.0a15`; the public protocol component separately remains `0.3.0-alpha.13`.
+The current claim-manifest contract is [schemas/claim-manifest-v0.4.schema.json](../schemas/claim-manifest-v0.4.schema.json); immutable manifest `0.3.0` remains accepted. The closed theorem certificate is [schemas/theorem-certificate-v0.1.schema.json](../schemas/theorem-certificate-v0.1.schema.json). The separate returned-audit contract is [schemas/audit-return-v0.1.schema.json](../schemas/audit-return-v0.1.schema.json). Their schema versions are independent of the release candidate's PEP 440 version `0.3.0a16`; the public protocol component separately remains `0.3.0-alpha.13`.
 
 ## 7. Evidence and hashes
 
