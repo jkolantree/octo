@@ -6,16 +6,16 @@ This page separates service availability, configuration identity, Preview valida
 
 ## Current state
 
-Observed alpha.10 release, live Update, and post-save verification on 2026-07-28, followed by the alpha.14 engine-mathematics candidate:
+Observed alpha.10 release, live Update, and post-save verification on 2026-07-28, followed by the alpha.15 typed-coherence engine candidate:
 
 | Surface | State | Exact binding or boundary |
 |---|---|---|
 | Official Custom GPT | **live; alpha.10 saved state observed** | The saved owner editor and public page showed the exact four starters below. Web Search and Data Analysis were on, Image Generation was off, and no App or Action was configured |
 | Alpha.10 compact Preview gate | **pass_12_of_12 before live Update** | The exact alpha.10 candidate passed the predetermined 12 fresh-conversation cases in normal/default Preview mode; the historical 39-case campaign was not restarted or counted |
 | Alpha.10 post-save starter smoke | **pass** | All four fresh-session starters and one short Quick follow-up matched the bounded language and routing contract |
-| Alpha.14 repository package | **unvalidated candidate; not installed live** | The regenerated package documents the exact mapping-complex, replay-only evidence firewall, and component-contract work. No owner-editor Update or alpha.14 Preview claim is part of this lane |
+| Alpha.15 repository package | **unvalidated candidate; not installed live** | The regenerated package documents strict certificate variants, authority-typed judgments, and execution-derived release receipts. No owner-editor Update or alpha.15 Preview claim is part of this lane |
 | Exact live/source binding | **`NON_ADMISSIBLE_UNHASHABLE`** | Saved-editor fields, public starter order, capabilities, filenames, and behavior are observable. ChatGPT does not independently expose indexed Knowledge bytes for hashing, so the live index cannot satisfy engine gates, theorem replay, or scientific admission |
-| Repository release line | **v0.3.0-alpha.14** | The exact commit, tree, tag, assets, and keyless attestations are bound by the corrected tag workflow. The byte-identical public protocol remains component version `0.3.0-alpha.13`; no prior tag is moved or relabeled |
+| Repository release line | **v0.3.0-alpha.15** | The exact commit, tree, tag, semantically typed assets, and keyless attestations are bound by the corrected tag workflow. The byte-identical public protocol remains component version `0.3.0-alpha.13`; no prior tag is moved or relabeled |
 | Alpha.12 failed promotion tag | **preserved; no GitHub release** | [`v0.3.0-alpha.12`](https://github.com/jkolantree/octo/tree/v0.3.0-alpha.12) remains an annotated tag at merge commit `57208f1abc1fdfc2ae4ced96707a7de94b76dd34`. Its first exact-release run failed before build because checkout replaced the local annotated tag ref with the event commit; no asset, draft, attestation, or release was created |
 | Prior GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.11`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.11) remains at commit `f4d9f43ed5301a768a5957163cf86c1c326a5cba`, tree `6da321083a6b97749615bc978c76d81d57263ff0` |
 | Prior GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.10`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.10) remains at commit `99b0804e161a4cfeb166785bd35920aa64f53c40`, tree `e5c7ef2fbc6e311b6fe97bf22f1e05ee98ed5f96` |
@@ -51,13 +51,13 @@ The GPT is an authenticated, owner-controlled research-preview interface. It is 
 - Lean, SMT, interval, or empirical claims require separately identified supervised execution and admissible evidence.
 - A fluent report, hash-shaped string, submitted receipt, or internally consistent `audit_return.json` does not establish truth, source authenticity, independent replay, or deployment permission.
 
-## Alpha.8 through alpha.14 boundary
+## Alpha.8 through alpha.15 boundary
 
 Alpha.8 is the exact tagged package at `c6120093…`; it does not contain the later live/main UX hotfix or alpha.9 maintenance bytes. Its tagged release notes retain the then-current 300-word Quick description as historical release evidence.
 
 Alpha.9 is the exact tagged package at `b87d9e28…`. It contains the bounded maintenance release and passed its predetermined 12-case candidate gate, but its fresh post-save smoke preserved one real Japanese intake-starter failure. The tag, release, assets, and failure record remain unchanged.
 
-Alpha.10 is the exact tagged package at `99b0804e…` and the separately observed live GPT baseline. Alpha.11 is preserved at `f4d9f43e…`. Alpha.12 introduced the exact theorem-replay bytes but its release workflow failed closed before building when checkout locally dereferenced the annotated tag; that tag remains fixed and has no release. Alpha.13 carries that mathematical scope and restores the remote annotated tag object before the release guard checks it. Alpha.14 consolidates exact mapping-complex mathematics, makes unreplayed manifest declarations non-decisive, and separates component identity from distribution identity. Its regenerated GPT package remains an unvalidated update candidate and is not loaded into the live GPT in this lane. Existing tags and release history must not be rewritten.
+Alpha.10 is the exact tagged package at `99b0804e…` and the separately observed live GPT baseline. Alpha.11 is preserved at `f4d9f43e…`. Alpha.12 introduced the exact theorem-replay bytes but its release workflow failed closed before building when checkout locally dereferenced the annotated tag; that tag remains fixed and has no release. Alpha.13 carries that mathematical scope and restores the remote annotated tag object before the release guard checks it. Alpha.14 consolidates exact mapping-complex mathematics, makes unreplayed manifest declarations non-decisive, and separates component identity from distribution identity. Alpha.15 makes certificate variants and registered judgments authority-explicit and derives release claims from observed stage receipts. Its regenerated GPT package remains an unvalidated update candidate and is not loaded into the live GPT in this lane. Existing tags and release history must not be rewritten.
 
 ## Preserved alpha.7 baseline
 

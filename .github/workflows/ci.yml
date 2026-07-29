@@ -66,22 +66,29 @@ jobs:
           PRIVACY_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python scripts/check_privacy.py --protected-history "$PRIVACY_COMMIT" --artifacts dist
       - name: Reproducible distributions
+        env:
+          REPRO_BUILD_B: ${{ runner.temp }}/bsc-build-b
         run: |
-          mkdir /tmp/bsc-build-a /tmp/bsc-build-b
-          SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py --outdir /tmp/bsc-build-a
-          SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py --outdir /tmp/bsc-build-b
-          for artifact in /tmp/bsc-build-a/*; do
+          mkdir "$REPRO_BUILD_B"
+          SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py --outdir "$REPRO_BUILD_B"
+          for artifact in dist/*; do
             name="${artifact##*/}"
-            test -f "/tmp/bsc-build-b/$name"
-            cmp "$artifact" "/tmp/bsc-build-b/$name"
+            test -f "$REPRO_BUILD_B/$name"
+            cmp "$artifact" "$REPRO_BUILD_B/$name"
+          done
+          for artifact in "$REPRO_BUILD_B"/*; do
+            name="${artifact##*/}"
+            test -f "dist/$name"
           done
       - run: python -m pip install --force-reinstall dist/*.whl
       - run: bsc-audit --version
       - run: bsc-audit audit examples/claim_polynomial_identity.json
       - name: Test the source distribution payload
+        env:
+          SDIST_TEST_ROOT: ${{ runner.temp }}/bsc-sdist
         run: |
-          mkdir -p /tmp/bsc-sdist
-          tar -xzf dist/*.tar.gz -C /tmp/bsc-sdist
-          cd /tmp/bsc-sdist/bsc_audit_engine-*
+          mkdir -p "$SDIST_TEST_ROOT"
+          tar -xzf dist/*.tar.gz -C "$SDIST_TEST_ROOT"
+          cd "$SDIST_TEST_ROOT"/bsc_audit_engine-*
           python scripts/run_tests.py
           node --test tests/return_desk_runtime.test.cjs

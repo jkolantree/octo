@@ -79,28 +79,60 @@ class LinearCertificate:
     solution: tuple[Fraction, ...] | None
     dual: tuple[Fraction, ...] | None
     pairing: Fraction | None
-    least_squares_solution: tuple[Fraction, ...] | None = None
     residual: tuple[Fraction, ...] | None = None
     eta_squared: Fraction | None = None
 
-    def to_json(self) -> dict[str, object]:
-        payload: dict[str, object] = {
-            "kind": "exact_solution" if self.consistent else "dual_obstruction",
+    def __post_init__(self) -> None:
+        if type(self.consistent) is not bool:
+            raise TypeError("linear certificate consistency tag must be boolean")
+        primal_shape = (
+            self.solution is not None
+            and self.dual is None
+            and self.pairing is None
+            and self.residual is not None
+            and self.eta_squared is not None
+        )
+        dual_shape = (
+            self.solution is None
+            and self.dual is not None
+            and self.pairing is not None
+            and self.residual is None
+            and self.eta_squared is None
+        )
+        if (self.consistent and not primal_shape) or (
+            not self.consistent and not dual_shape
+        ):
+            raise ValueError("linear certificate variant has an invalid witness shape")
+
+    def to_json(
+        self,
+        matrix: Sequence[Sequence[Fraction]],
+        rhs: Sequence[Fraction],
+        *,
+        ncols: int | None = None,
+    ) -> dict[str, object]:
+        """Serialize only after replay against the exact system being claimed."""
+
+        replay_linear_certificate(matrix, rhs, self, ncols=ncols)
+        if self.consistent:
+            assert self.solution is not None
+            assert self.residual is not None
+            assert self.eta_squared is not None
+            return {
+                "kind": "exact_solution",
+                "field": "Q",
+                "solution": [scalar_json(value) for value in self.solution],
+                "residual": [scalar_json(value) for value in self.residual],
+                "eta_squared": scalar_json(self.eta_squared),
+            }
+        assert self.dual is not None
+        assert self.pairing is not None
+        return {
+            "kind": "dual_obstruction",
             "field": "Q",
+            "dual": [scalar_json(value) for value in self.dual],
+            "pairing": scalar_json(self.pairing),
         }
-        if self.residual is not None:
-            payload["residual"] = [scalar_json(value) for value in self.residual]
-        if self.eta_squared is not None:
-            payload["eta_squared"] = scalar_json(self.eta_squared)
-        if self.solution is not None:
-            payload["solution"] = [scalar_json(value) for value in self.solution]
-        if self.dual is not None:
-            payload["dual"] = [scalar_json(value) for value in self.dual]
-        if self.pairing is not None:
-            payload["pairing"] = scalar_json(self.pairing)
-        if self.least_squares_solution is not None:
-            payload["least_squares_solution"] = [scalar_json(value) for value in self.least_squares_solution]
-        return payload
 
 
 def replay_linear_certificate(
@@ -118,18 +150,33 @@ def replay_linear_certificate(
             certificate.solution is None
             or certificate.dual is not None
             or certificate.pairing is not None
+            or certificate.residual is None
+            or certificate.eta_squared is None
             or len(certificate.solution) != columns
+            or len(certificate.residual) != rows
         ):
             raise ValueError("consistent certificate has an invalid witness shape")
         solution = tuple(_bounded(value) for value in certificate.solution)
-        if _matvec(matrix, solution) != list(rhs):
+        residual = tuple(_bounded(value) for value in certificate.residual)
+        computed_residual = tuple(
+            _bounded(left - right)
+            for left, right in zip(_matvec(matrix, solution), rhs)
+        )
+        if residual != computed_residual:
+            raise ValueError("exact-solution certificate has an invalid residual")
+        if any(residual):
             raise ValueError("exact-solution certificate does not replay")
+        eta_squared = _bounded(certificate.eta_squared)
+        if eta_squared != _dot(residual, residual):
+            raise ValueError("exact-solution certificate has an invalid eta_squared")
         return
 
     if (
         certificate.solution is not None
         or certificate.dual is None
         or certificate.pairing is None
+        or certificate.residual is not None
+        or certificate.eta_squared is not None
         or len(certificate.dual) != rows
     ):
         raise ValueError("inconsistent certificate has an invalid witness shape")

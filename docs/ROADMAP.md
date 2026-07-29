@@ -187,6 +187,35 @@ alpha.12 release is backfilled and no live GPT update is part of this repair.
 
 Exit criterion: the strict and derived verdicts remain unchanged on every preserved fixture, the shared degree-0/degree-1 compiler passes sign, gap, basis-change, forged-witness, and resource-limit tests, no coordinate-dependent magnitude participates in admission, both demonstrated semantic-laundering attacks block, component identities remain independently hash-bound, and the complete clean-tag release gates pass.
 
+## v0.3.0-alpha.15 - typed coherence foundation
+
+- make primal and dual exact-linear certificates disjoint and replay every emitted field;
+- carry registered replay conclusions as checked judgments bound to subject, predicate, scope, method, evidence identity, authority, and result;
+- reject unknown domain-check keys rather than treating them as implicitly checked;
+- project the release manifest from an execution-derived stage receipt;
+- validate release completeness by semantic asset roles and remove the redundant unversioned source archive;
+- keep publication attestations, external truth, and deployment authority outside local execution judgments;
+- preserve the live alpha.10 Custom GPT and the byte-identical alpha.13 protocol component.
+
+Exit criterion: forged diagnostics and wrong-variant certificates fail,
+cross-subject/method/evidence/authority reuse fails, stale receipts and
+same-count/wrong-role release directories fail, deterministic clean-tag
+rebuilding and all existing engine/browser/privacy/localization/Pages/release
+gates pass, and no live GPT or research-repository mutation occurs.
+
+## v0.3.0-alpha.16 - proof-relevant degree-two coherence
+
+- accept two explicitly identified degree-one homotopies `H` and `K` with the same boundary;
+- solve `delta_2 Q = H - K` over exact rationals and emit `Q` as the coherence certificate;
+- when no `Q` exists, emit an exact dual annihilator with nonzero pairing against `H - K`;
+- bind every result to the two homotopy identities, mapping-complex coordinates, basis meanings, method, evidence bytes, and formal-only authority;
+- expose this route only after the alpha.15 typed substrate is independently replayed and stable.
+
+Exit criterion: positive and dual-obstruction fixtures, basis-change
+invariance, sign-law tests, forged-binding tests, resource ceilings with
+explicit headroom, and a versioned closed schema all pass without implying
+quantum, scientific-truth, or deployment authority.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;

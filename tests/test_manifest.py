@@ -8,10 +8,12 @@ from unittest.mock import patch
 import bsc_audit.manifest as manifest_module
 from bsc_audit.cli import audit_claim
 from bsc_audit.findings import decision
+from bsc_audit.gates import audit_gate_product
 from bsc_audit.manifest import (
     MAX_THEOREM_ARTIFACTS_PER_AUDIT,
     MAX_THEOREM_REPLAYS_PER_AUDIT,
     lint_manifest,
+    replayed_theorem_evidence,
 )
 from bsc_audit.provenance import sha256_bytes
 from bsc_audit.theorem import (
@@ -804,6 +806,181 @@ class ManifestTests(unittest.TestCase):
             all(finding.witness == [evidence_id] for finding in rejected)
         )
         self.assertEqual(decision(findings), "blocked")
+
+    def test_registered_theorem_result_is_a_typed_judgment(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            findings = lint_manifest(raw, root)
+            judgments, replay_findings = replayed_theorem_evidence(raw, root)
+
+        self.assertFalse(
+            any(finding.code == "THEOREM_CERTIFICATE_MISSING" for finding in findings)
+        )
+        self.assertTrue(
+            any(
+                finding.code == "THEOREM_IDENTITY_REPLAYED"
+                for finding in replay_findings
+            )
+        )
+        judgment = judgments[raw["evidence"][0]["id"]]
+        self.assertEqual(judgment.subject_id, raw["claim"]["id"])
+        self.assertEqual(judgment.predicate, "exact_polynomial_identity")
+        self.assertEqual(judgment.scope, "canonical_formal_statement_only")
+        self.assertEqual(judgment.method_id, "q-polynomial-identity-v0.1")
+        self.assertEqual(judgment.authority, "bsc_internal_exact_replay")
+        self.assertEqual(judgment.result, "pass")
+
+    def test_public_audit_entrypoints_reject_preloaded_cache_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            with self.assertRaises(TypeError):
+                lint_manifest(raw, root, audit_cache=object())  # type: ignore[call-arg]
+            with self.assertRaises(TypeError):
+                audit_gate_product(raw, root, audit_cache=object())  # type: ignore[call-arg]
+
+    def test_unknown_domain_check_is_not_silently_ignored(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_manifest(root)
+            raw["domain_checks"] = {"misspelled_checker": {}}
+            findings = lint_manifest(raw, root)
+
+        self.assertTrue(
+            any(
+                finding.code == "DOMAIN_CHECK_UNREGISTERED"
+                and finding.path == "domain_checks.misspelled_checker"
+                for finding in findings
+            )
+        )
+
+    def test_unknown_nested_domain_field_is_not_silently_ignored(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_manifest(root)
+            raw["domain_checks"] = {
+                "global_recovery": {
+                    "local_nondegenerate": True,
+                    "claims_global_recoveri": True,
+                }
+            }
+            findings = lint_manifest(raw, root)
+
+        self.assertTrue(
+            any(
+                finding.code == "DOMAIN_CHECK_FIELD_UNREGISTERED"
+                and finding.path
+                == "domain_checks.global_recovery.claims_global_recoveri"
+                for finding in findings
+            )
+        )
+
+    def test_unknown_arithmetic_obligation_is_not_silently_ignored(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_manifest(root)
+            raw["claim"]["family"] = "arithmetic_trace"
+            raw["domain_checks"] = {
+                "arithmetic_trace": {
+                    "model_dimension": "infinite",
+                    "target": "distributional_prime_increment",
+                    "uses_zero_ordinates": False,
+                    "primary_gram_uses_zero_table": False,
+                    "counterterm_singular_support": ["origin"],
+                    "certified_obligations": [],
+                    "obligation_evidence": {"atomic_rigidty": ["evidence:x"]},
+                }
+            }
+            findings = lint_manifest(raw, root)
+
+        self.assertTrue(
+            any(
+                finding.code == "DOMAIN_CHECK_FIELD_UNREGISTERED"
+                and finding.path
+                == "domain_checks.arithmetic_trace.obligation_evidence.atomic_rigidty"
+                for finding in findings
+            )
+        )
+
+    def test_unknown_certified_obligation_is_rejected_by_lint(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_manifest(root)
+            raw["claim"]["family"] = "arithmetic_trace"
+            raw["domain_checks"] = {
+                "arithmetic_trace": {
+                    "model_dimension": "infinite",
+                    "target": "distributional_prime_increment",
+                    "uses_zero_ordinates": False,
+                    "primary_gram_uses_zero_table": False,
+                    "counterterm_singular_support": ["origin"],
+                    "certified_obligations": ["unknown_obligation"],
+                    "obligation_evidence": {},
+                }
+            }
+            findings = lint_manifest(raw, root)
+
+        self.assertTrue(
+            any(
+                finding.code == "DOMAIN_CHECK_VALUE_UNREGISTERED"
+                and finding.path.endswith(".certified_obligations.0")
+                and finding.witness == "unknown_obligation"
+                for finding in findings
+            )
+        )
+
+    def test_public_gate_wrapper_rejects_malformed_gate_bindings(self):
+        for malformed in (
+            "exact_polynomial_identity",
+            17,
+            {"exact_polynomial_identity": True},
+            ["exact_polynomial_identity", 17],
+        ):
+            with self.subTest(malformed=malformed):
+                with tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    raw = self.make_polynomial_manifest(root)
+                    raw["evidence"][0]["verifies_gates"] = malformed
+                    findings = audit_gate_product(raw, root)
+
+                blocked = [
+                    finding
+                    for finding in findings
+                    if finding.code == "GATE_RESULT_UNVERIFIED"
+                ]
+                self.assertEqual(len(blocked), 1)
+                self.assertEqual(
+                    blocked[0].witness["malformed_gate_bindings"],
+                    [raw["evidence"][0]["id"]],
+                )
+
+    def test_arithmetic_check_on_wrong_claim_family_is_not_applicable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_manifest(root)
+            raw["claim"]["family"] = "theorem"
+            raw["domain_checks"] = {
+                "arithmetic_trace": {
+                    "model_dimension": "finite",
+                    "target": "finite_truncation",
+                    "uses_zero_ordinates": False,
+                    "primary_gram_uses_zero_table": False,
+                    "counterterm_singular_support": [],
+                    "certified_obligations": [],
+                    "obligation_evidence": {},
+                }
+            }
+            findings = audit_claim(raw, root)
+
+        self.assertTrue(
+            any(
+                finding.code == "DOMAIN_CHECK_NOT_APPLICABLE"
+                and finding.path == "domain_checks.arithmetic_trace"
+                for finding in findings
+            )
+        )
+        self.assertEqual(decision(findings), "prohibited")
 
     def test_wrong_top_level_type_is_a_finding(self):
         raw = {field: {} for field in ("claim", "system", "observation", "representation", "target", "experiment", "admission", "demotion", "preservation")}
