@@ -5,7 +5,7 @@
 数学的・科学的主張を、調査、反証、再現、降格しやすくするための研究プレビュー版ソフトウェアです。
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor)（live research preview）<br>
-**現行 GitHub prerelease:** `v0.3.0-alpha.14`<br>
+**現行 GitHub prerelease:** `v0.3.0-alpha.15`<br>
 **検証境界:** indexed Knowledge bytes は independently retrievable ではないため、exact live binding は `NON_ADMISSIBLE_UNHASHABLE` です。product observation と engine proof は分離し、これは certification ではなく research preview です<br>
 **プロジェクト状態:** 実験的。研究監査と既知解テストには利用できますが、無人の科学・臨床・法律・安全・政策判断には使用できません。
 
@@ -33,11 +33,12 @@ BSC は、慎重な想像力のための基盤です。大胆な仮説は許し�
 - finite atomic-modulus record 検査;
 - 宣言された affine upper bound の厳密な伝播;
 - 限定された arithmetic-trace と local/global recovery gate;
+- subject、evidence、method、scope、authority に bind された replay judgment;
 - 非 admissive で hash-bound な Lean/SMT/interval adapter receipt;
 - 返却された audit envelope、ledger、projection、receipt、local artifact hash の非 admissive 検査;
 - canonical JSON hashing。
 
-エンジンは、任意の理論の真偽を決定したり、任意の証明を再構成したり、外部 evidence identifier を認証したり、経験的追試を保証したり、道徳・法律・臨床・配備の許可を与えたりはしません。claim manifest `0.4.0` が admit する closed theorem family では、authoritative AST、title、statement、residual を bundled kernel が deterministically recompute します。それ以外の declared result は、hash-matched proof、dataset、replication、arithmetic-obligation evidence を含め、registered exact replay が recompute しない限り provenance のままです。`no_blocking_findings` は、実際に走った検査が blocking condition を見つけなかった、という意味に限られます。
+エンジンは、任意の理論の真偽を決定したり、任意の証明を再構成したり、外部 evidence identifier を認証したり、経験的追試を保証したり、道徳・法律・臨床・配備の許可を与えたりはしません。claim manifest `0.4.0` が admit する closed theorem family では、authoritative AST、title、statement、residual を bundled kernel が deterministically recompute します。replay result が decisive なのは、checked judgment に記録された exact subject、evidence bytes、predicate、scope、method、authority がすべて一致する場合だけです。`pass` のような共有 label はこれらの座標を transfer しません。それ以外の declared result は、hash-matched proof、dataset、replication、arithmetic-obligation evidence を含め、registered exact replay が recompute しない限り provenance のままです。`no_blocking_findings` は、実際に走った検査が blocking condition を見つけなかった、という意味に限られます。
 
 ## 入口を選ぶ
 
@@ -45,7 +46,7 @@ BSC は、慎重な想像力のための基盤です。大胆な仮説は許し�
 2. **ローカル browser Packet Builder と Audit Return Desk:** [deployed English GitHub Pages module](https://jkolantree.github.io/octo/) または [deployed Japanese route](https://jkolantree.github.io/octo/ja.html) で versioned packet を作成したり、返却された `audit_return.json` draft と selected artifact bytes をローカル検査したりできます。どちらの interface も target を upload せず、LLM を呼び出さず、Python を実行しません。
 3. **Repository と Python engine — exact checker route:** versioned schema、fixture、finite exact check、保存された command output については [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) を参照してください。ここで BSC checker を実行するのはこのルートだけです。
 
-repository には、independent inspection、reproducible deployment、compatible fork、verifiable update に使う deterministic Custom GPT package lineage があります。alpha.10 は separately observed live baseline、alpha.14 は unvalidated repository update candidate であり、この release lane では live に install しません。byte-identical protocol component は engine release とは独立して `0.3.0-alpha.13` のままです。indexed Knowledge bytes は independently retrievable ではないため、`NON_ADMISSIBLE_UNHASHABLE` であり engine gate の evidence にはなりません。
+repository には、independent inspection、reproducible deployment、compatible fork、verifiable update に使う deterministic Custom GPT package lineage があります。alpha.10 は separately observed live baseline、alpha.15 は unvalidated repository update candidate であり、この release lane では live に install しません。byte-identical protocol component は engine release とは独立して `0.3.0-alpha.13` のままです。indexed Knowledge bytes は independently retrievable ではないため、`NON_ADMISSIBLE_UNHASHABLE` であり engine gate の evidence にはなりません。
 
 補助的な入口:
 

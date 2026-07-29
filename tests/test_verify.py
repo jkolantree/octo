@@ -195,9 +195,10 @@ class VerifySpineTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertEqual(
-            release_builder.count('"scripts/verify.py", "candidate"'),
+            release_builder.count('"scripts/verify.py"'),
             1,
         )
+        self.assertIn("candidate_command = [", release_builder)
         for duplicate in (
             '"scripts/run_tests.py"',
             '"scripts/run_null_discrimination.py"',

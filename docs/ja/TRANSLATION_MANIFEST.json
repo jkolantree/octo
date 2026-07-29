@@ -9,9 +9,9 @@
   "entries": [
     {
       "source": "README.md",
-      "source_sha256": "87a9950f3f8dbc360cd30e979fec05db8ee009fd2920f3cd0e8ea4c65b42f1e5",
+      "source_sha256": "bea5efe3cc1483db6e0fd45d0b724744c899f1c5d693856d979d6c85741cda11",
       "target": "README.ja.md",
-      "target_sha256": "1d2a1966afe3c421a3bca14a4522ce896f2feaede8c535ab218a7aba5f6d40bc"
+      "target_sha256": "c9a0378841a8dbd5a317c314de00b6d3dc6afdf980c995e4b0231ce9417cc8c2"
     },
     {
       "source": "START_HERE.md",
@@ -27,21 +27,21 @@
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "5d017aa1f73ff42c841f5630e17d57a8d44d065ae7bfa4f03fec305986eb4864",
+      "source_sha256": "deb747f5ec246a7c4f5604d9f8ff80a6c422de5e0fdc694f3ee3bdaf2aecd279",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
-      "target_sha256": "d5794cea22a77b294b820297b6e069686069936da3ec5ed58a0f3a12f59d54c1"
+      "target_sha256": "9078d209546d679d113f6f549235be6969b2b926f78509c65ca2d41f7e21b455"
     },
     {
       "source": "docs/STATUS_MODEL.md",
-      "source_sha256": "129f05f0e87e6ad47ff11e4a0b6b2869bf9b8fe964885057213e7a407700ee92",
+      "source_sha256": "6fbce621b3a436b3870193bfe215127d3e4ebb645a6b5851ae35a9f519b99c97",
       "target": "docs/ja/STATUS_MODEL.md",
-      "target_sha256": "3e17300d3bcb1882cbded332775a3a394fd8b74a395cf1cac0cc3bee7e5ce169"
+      "target_sha256": "336a39169ab5a0765b4c598ce0c0c6748a82c91b07b299da30c507d04d18e624"
     },
     {
       "source": "docs/index.md",
-      "source_sha256": "4ef5d0d4f0beca3ad4a5dcc064e533207a02228faa43235f573b7b822053f834",
+      "source_sha256": "7921bb60f6cf41fa97787b8ed31440799dfc48be4a3186da0b6bf62da1cdb325",
       "target": "docs/ja/index.md",
-      "target_sha256": "db37c808b15e8cdc2074936f7aec7901237e26efd67f8a6dee24bb78867a4208"
+      "target_sha256": "b207211f228702e60f2fe2e3be6cde4682a313dcd77f2136a3a2e39ecd51cf31"
     },
     {
       "source": "pages/index.html",
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "f7ae71694387c5e4692ff73f87cecb6ce1f2441de79e62054cc959e2696c4028"
+  "manifest_payload_sha256": "f7c8641dfb4c2e6a932d54b5c04e16ff4c4e139c9a9af27a02c6903c8e0d0e3e"
 }

@@ -46,7 +46,7 @@ Additional starting points:
 
 The [LLM Audit Packet](../BSC_AUDIT_LLM_PACKET.md) is a drafting protocol, not an executable verifier. Read its privacy, prompt-injection, and source-coverage rules before attaching material.
 
-The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. Alpha.14 retains the Audit Return Desk introduced in alpha.8, consolidates the exact-Q mapping-complex kernel, and makes hash-only manifest evidence provenance-only. The independently versioned protocol component remains byte-identical to alpha.13; its committed packet, return schema, and checksum metadata are mechanically checked for drift.
+The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. Alpha.15 retains the Audit Return Desk introduced in alpha.8, makes exact certificate variants and checked-judgment authority explicit, and derives release observations from typed stage receipts and semantic artifact roles. The independently versioned protocol component remains byte-identical to alpha.13; its committed packet, return schema, and checksum metadata are mechanically checked for drift.
 
 The repository also contains the deterministic package behind the official [Custom GPT](../gpt/README.md). It supports configuration review, reproducible deployments, compatible forks, and verifiable official updates. Direct uploads are processed through ChatGPT and do not inherit the Pages module's local-only boundary. The package includes no GPT Action, hosted checker API, account system, or cloud-storage service. Live availability, exact configuration binding, Preview validation, GitHub release, and Pages deployment are reported as separate states.
 

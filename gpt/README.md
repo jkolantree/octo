@@ -1,10 +1,10 @@
 # BSC Claim Auditor reproducible package
 
-The official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is `LIVE`. This directory preserves the deterministic, repository-backed BSC engine `0.3.0-alpha.14` package used to inspect, reproduce, verify, or fork its configuration. Its byte-identical public protocol component remains independently versioned `0.3.0-alpha.13`.
+The official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is `LIVE`. This directory preserves the deterministic, repository-backed BSC engine `0.3.0-alpha.15` package used to inspect and reproduce the configuration lineage, verify candidate updates, or create a compatible fork. It does not establish byte-identical binding to the live indexed state. Its byte-identical public protocol component remains independently versioned `0.3.0-alpha.13`.
 
 Candidate state is `PENDING`; live binding is `NON_ADMISSIBLE_UNHASHABLE`; Preview validation is `PENDING`. These states do not change merely because the official service exists or candidate files were generated.
 
-This package may be released only from the exact immutable tag `v0.3.0-alpha.14` recorded in its release manifest. Before tagging it remains a candidate. Never move an existing tag, and use a new version and tag for any later changed package.
+This package may be released only from the exact immutable tag `v0.3.0-alpha.15` recorded in its release manifest. Before tagging it remains a candidate. Never move an existing tag, and use a new version and tag for any later changed package.
 
 The current compact gate is exactly 12 fresh-conversation cases. The preserved 39-case artifact-profile suite, its D01/D02 preflights, compiler/transport requirements, and prior results are historical and superseded; they neither govern nor validate this compact candidate.
 
