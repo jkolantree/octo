@@ -18,9 +18,11 @@ import sys
 import tempfile
 import time
 import zipfile
+from collections.abc import Iterable
 from datetime import datetime, timezone
 from importlib.metadata import version as distribution_version
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePath, PurePosixPath
+from typing import TypeVar
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,6 +49,7 @@ EXCLUDED_TRACKED_FILES = {
     "research/Audit_Descent_Calculus.docx",
     "research/Audit_Descent_Calculus.pdf",
 }
+PathT = TypeVar("PathT", bound=PurePath)
 
 
 def run(command: list[str], *, expected: int = 0, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
@@ -75,6 +78,12 @@ def sha256(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def ordered_artifact_paths(paths: Iterable[PathT]) -> list[PathT]:
+    """Return one host-independent UTF-8 filename-byte ordering."""
+
+    return sorted(paths, key=lambda path: path.name.encode("utf-8"))
 
 
 def write_json(path: Path, value: object) -> None:
@@ -438,7 +447,7 @@ def main() -> int:
         sys.stderr.write(build.stdout)
         sys.stderr.write(build.stderr)
         raise SystemExit("distribution build failed")
-    first_distributions = sorted(
+    first_distributions = ordered_artifact_paths(
         path for path in output.iterdir() if path.suffix in {".whl", ".gz"}
     )
     judgments.append(
@@ -472,10 +481,12 @@ def main() -> int:
         }
         second_map = {
             path.name: sha256(path)
-            for path in sorted(
-                candidate
-                for candidate in second_output.iterdir()
-                if candidate.is_file()
+            for path in ordered_artifact_paths(
+                (
+                    candidate
+                    for candidate in second_output.iterdir()
+                    if candidate.is_file()
+                )
             )
         }
         if first_map != second_map:
@@ -527,7 +538,7 @@ def main() -> int:
             evidence={
                 "artifacts": [
                     {"name": path.name, "sha256": sha256(path)}
-                    for path in sorted(publication_paths)
+                    for path in ordered_artifact_paths(publication_paths)
                 ]
             },
         )
@@ -545,15 +556,17 @@ def main() -> int:
             evidence={"name": gpt_path.name, "sha256": sha256(gpt_path)},
         )
     )
-    artifacts = sorted(
-        path
-        for path in output.iterdir()
-        if path.is_file()
-        and path.name not in {
-            "SHA256SUMS",
-            "RELEASE_MANIFEST.json",
-            "SBOM.spdx.json",
-        }
+    artifacts = ordered_artifact_paths(
+        (
+            path
+            for path in output.iterdir()
+            if path.is_file()
+            and path.name not in {
+                "SHA256SUMS",
+                "RELEASE_MANIFEST.json",
+                "SBOM.spdx.json",
+            }
+        )
     )
     sbom_path = output / "SBOM.spdx.json"
     wheel = next(path for path in artifacts if path.suffix == ".whl")
@@ -570,6 +583,7 @@ def main() -> int:
         )
     )
     artifacts.append(sbom_path)
+    artifacts = ordered_artifact_paths(artifacts)
     require_tracked_tree_clean(
         commit,
         tree,
@@ -606,14 +620,14 @@ def main() -> int:
                 "scan_scope": "role_artifact_payloads_before_manifest",
                 "artifacts": [
                     {"name": path.name, "sha256": sha256(path)}
-                    for path in sorted(artifacts)
+                    for path in artifacts
                 ],
             },
         )
     )
     artifact_records = []
     observed_roles: set[str] = set()
-    for path in sorted(artifacts):
+    for path in artifacts:
         role = role_for_artifact_name(
             path.name,
             engine_version=__version__,
@@ -676,7 +690,7 @@ def main() -> int:
     }
     manifest_path = output / "RELEASE_MANIFEST.json"
     write_json(manifest_path, manifest)
-    checksum_paths = sorted(artifacts + [manifest_path])
+    checksum_paths = ordered_artifact_paths([*artifacts, manifest_path])
     (output / "SHA256SUMS").write_text("".join(f"{sha256(path)}  {path.name}\n" for path in checksum_paths), encoding="utf-8")
     # Re-scan the closed directory, including its receipt, manifest, and ledger.
     run([sys.executable, "scripts/check_privacy.py", "--protected-history", "HEAD", "--artifacts", str(output)])

@@ -18,9 +18,9 @@ from scripts.release_contract import (
 
 COMMIT = "1" * 40
 TREE = "2" * 40
-TAG = "v0.3.0-alpha.15"
-ENGINE_VERSION = "0.3.0a15"
-PUBLIC_VERSION = "0.3.0-alpha.15"
+TAG = "v0.3.0-alpha.16"
+ENGINE_VERSION = "0.3.0a16"
+PUBLIC_VERSION = "0.3.0-alpha.16"
 
 
 class ReleaseContractTests(unittest.TestCase):
@@ -213,6 +213,25 @@ class ReleaseContractTests(unittest.TestCase):
         )
         self.assertTrue(
             any("differ from the semantic release roster" in item for item in failures)
+        )
+
+    def test_correctly_hashed_casefold_order_is_still_rejected(self) -> None:
+        receipt = self.receipt()
+        judgment = next(
+            item
+            for item in receipt["judgments"]
+            if item["stage_id"] == "artifact-payload-privacy"
+        )
+        references = judgment["evidence"]["artifacts"]
+        references.sort(key=lambda item: item["name"].casefold())
+        judgment["evidence_record_sha256"] = sha256_identity(
+            judgment["evidence"]
+        )
+        self.assertTrue(
+            any(
+                "must be sorted by artifact name" in failure
+                for failure in self.failures(receipt)
+            )
         )
 
     def test_toolchain_evidence_is_bound_to_authoritative_lock(self) -> None:
