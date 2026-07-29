@@ -1,5 +1,5 @@
 {
-  "bsc_version": "0.3.0-alpha.15",
+  "bsc_version": "0.3.0-alpha.16",
   "canonical_sources": [
     {
       "bytes": 30377,
@@ -14,7 +14,7 @@
     {
       "bytes": 35296,
       "path": "docs/GPT_FROZEN_CANDIDATE.json",
-      "sha256": "1583cda05f4c7bf9a6af9281a716b279a915f5ae7a5e1dab5e7fdf1be786b93f"
+      "sha256": "12aed23e8a38639a8ad7061ef570c518f439539177527050db7ead7eb009810f"
     },
     {
       "bytes": 14083,
@@ -29,7 +29,7 @@
     {
       "bytes": 9215,
       "path": "docs/SCHEMA.md",
-      "sha256": "eb189ae7dec53f06be5f95e98b99a922f3f5cab9af22030181289ba0a5ad9095"
+      "sha256": "4c03296592943532c16a0806fef23295d80e54b79429e7c3c1a89ff0eeaa3d2f"
     },
     {
       "bytes": 10123,
@@ -224,7 +224,7 @@
     {
       "bytes": 407,
       "path": "toolchain.lock.json",
-      "sha256": "df8e1f0a0ff22d8fbe3862f9c64c22286413c6173fb46edb1ef2d5d8a53f30b5"
+      "sha256": "23d9780f8e869f22aabe655a234003e14a59098d8937f4bd35aa57152f2a48f5"
     }
   ],
   "capability_declarations": {
@@ -266,7 +266,7 @@
     "ja-truncated-proof",
     "official-service-status-separation"
   ],
-  "engine_version": "0.3.0a15",
+  "engine_version": "0.3.0a16",
   "evaluation_schema": "bsc-custom-gpt-eval/v2",
   "generated_artifacts": [
     {
@@ -277,7 +277,7 @@
     {
       "bytes": 6006,
       "path": "GPT_INSTRUCTIONS.md",
-      "sha256": "93842f49dddef687ced93be659001917336246be639bb0d6b4dce364839ab184"
+      "sha256": "c63228a90c5a19315027ac25be921ee8fe9497679746f29d1aa51c675b11e1c6"
     },
     {
       "bytes": 3327,
@@ -287,12 +287,12 @@
     {
       "bytes": 10340,
       "path": "GPT_SETUP_AND_PUBLISHING.md",
-      "sha256": "226802e3d9f9a0ad8c011320bea3deee61ec5933798d3b92fe60183e2584256b"
+      "sha256": "4313b2099bcc6b967310af971f7a91ea209d6656f0c8e678184084ce3f4d40a1"
     },
     {
       "bytes": 3133,
       "path": "README.md",
-      "sha256": "ff3abe8cdfc3a0e81a764ebf5908fb72b186f7081ceafb0323b02cf864413261"
+      "sha256": "8d54c93e40ea360aa6dd9ee804a8ada561c8dc304309c9016eb27cdac641148f"
     },
     {
       "bytes": 84585,
@@ -527,27 +527,27 @@
     {
       "bytes": 4699,
       "path": "knowledge/BSC_JAPANESE_INTERFACE.md",
-      "sha256": "1aa92089137e12b264556dee9efdc06bef76aa1661ec2098068abe6ab8ae5d04"
+      "sha256": "4ba436ff9cf5bb3a17438b4379b9e131aea4ce9e9a77a282e432a3088068483a"
     },
     {
       "bytes": 19863,
       "path": "knowledge/BSC_PROTOCOL.md",
-      "sha256": "38363b235b72da80f6e4f3f683d733403cf3ad3998232a94876437596e7027c8"
+      "sha256": "d1eebca870d0340b0c2e7f2759c4a8cde17bcd50accf23c1a47f9bb0f7b6094e"
     },
     {
       "bytes": 9824,
       "path": "knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md",
-      "sha256": "a45efcf182c10b8654060e0a817debe0f1464df7e8dfd86dcdbfbd026e1f5025"
+      "sha256": "00df48804d87ebf112408d2cb528b85cb26190620c1ce59bcfa3971be3df9ed1"
     },
     {
       "bytes": 23100,
       "path": "knowledge/BSC_SUPPORTED_CHECKS.md",
-      "sha256": "ff14a1173af75f9b46b279c448cf1840a945bfc1c4006d821fdf4f5b68a7657e"
+      "sha256": "3260af10aba7f26029a53a4627eb12242d7afd37af9abfeefd9c624cfb1a6b12"
     },
     {
       "bytes": 5811,
       "path": "knowledge/BSC_WORKED_EXAMPLES.md",
-      "sha256": "39a75148f57ba2fd9b5759b17cb802e5f9964e6fe4e09ef7b8ba35056713dc9a"
+      "sha256": "84c639785256ec726b993a922cd381476a240db1f4bb77a701417cc1b9e97547"
     }
   ],
   "generator": {
