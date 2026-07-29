@@ -2,6 +2,26 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.10 - 2026-07-28
+
+### Corrected
+
+- made exact conversation-starter literals take precedence over generic no-claim/example intent inference;
+- bound the English and Japanese claim-audit starters to ask-only intake in the mapped language, with no example and an immediate stop;
+- bound the English and Japanese example starters to one concise Quick example in the mapped language;
+- added generator validation and positive/negative regression tests for exact four-starter order, uniqueness, and behavior mapping;
+- capped live Instructions at 6,000 characters—75% of the 8,000-character Builder maximum—while keeping every reviewed fatal and required rule text in the live field; internal rule IDs remain exact in the canonical profile instead of consuming live prompt space;
+- made the Quick-response checker recognize ordered semantic sections with short heading qualifiers and rendered display-math fragments, while still rejecting missing, duplicated, reordered, empty, or fifth sections;
+- regenerated protocol, Custom GPT, frozen-candidate, localization, Pages, manifest, and checksum projections under the new alpha.10 identity.
+
+### Preserved boundary
+
+Alpha.9 remains the immutable release at `b87d9e28a98518933347a867dced11d83267e1b2`. Its exact candidate passed the predetermined 12-case compact Preview gate, but the fresh post-save smoke preserved one real failure: `60秒で主張を点検する` returned an example before asking for a one-sentence claim. Alpha.10 corrects that behavior under a new version and tag; it does not rewrite alpha.9, reuse its failed smoke as a pass, or restart the retired 39-case campaign.
+
+The first alpha.10 freeze was stopped and preserved when the Quick checker rejected a correct four-section response because its first heading had a short qualifier. That was classified as a controller-format defect, repaired in checker 1.4, and not counted as a candidate pass or failure. The counted alpha.10 suite restarts from Case 1 in ChatGPT Preview's normal/default model mode, distinct from the BSC audit-depth default of Quick.
+
+Repository hashes bind the pre-upload Instructions and Knowledge files. ChatGPT still does not expose independently hashable indexed Knowledge bytes, so byte-identical live Knowledge binding remains unresolved.
+
 ## 0.3.0-alpha.9 - 2026-07-28
 
 ### Corrected

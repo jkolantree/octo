@@ -128,6 +128,16 @@ Shipped boundary: alpha.8 passed deterministic repository checks and targeted hi
 
 Exit criterion: deterministic repository checks, the exact 12-case compact Preview gate for the changed Knowledge candidate, clean-tag reproducible release assets, and separate saved-editor/public starter smoke checks all pass without claiming byte-identical indexed Knowledge binding.
 
+## v0.3.0-alpha.10 - exact four-starter dispatch
+
+- match each of the four canonical starter literals before generic intent inference;
+- route the two claim-audit starters to ask-only intake in the mapped language;
+- route the two example starters to one concise Quick example in the mapped language;
+- reject starter order, duplication, omission, and behavior remapping in permanent generator tests;
+- preserve the alpha.9 tag, release, assets, 12-case pass, and failed Japanese post-save smoke as historical evidence.
+
+Exit criterion: deterministic repository checks, the exact 12-case compact Preview gate for the changed Instructions candidate, clean-tag reproducible release assets, and all four post-save starters plus one Quick follow-up pass without retrying or claiming byte-identical indexed Knowledge binding.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;

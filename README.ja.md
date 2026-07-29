@@ -5,7 +5,7 @@
 数学的・科学的主張を、調査、反証、再現、降格しやすくするための研究プレビュー版ソフトウェアです。
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor)（live research preview）<br>
-**現行 GitHub prerelease:** `v0.3.0-alpha.9`<br>
+**現行 GitHub prerelease:** `v0.3.0-alpha.10`<br>
 **検証境界:** exact live binding と 12-case compact Preview の結果は別に報告します。これは certification ではなく research preview です<br>
 **プロジェクト状態:** 実験的。研究監査と既知解テストには利用できますが、無人の科学・臨床・法律・安全・政策判断には使用できません。
 
@@ -39,11 +39,11 @@ BSC は、慎重な想像力のための基盤です。大胆な仮説は許し�
 
 ## 入口を選ぶ
 
-1. **Official Custom GPT — ChatGPT 上で直接監査:** live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) を開きます。alpha.9 package は bounded Quick contract と 4 個の bilingual source starter を reconcile します。large artifact、hash、Base64、shard、transport output はこの public profile から除外されています。すべての output を certificate ではなく research-preview draft として扱ってください。upload は applicable ChatGPT settings/terms の下で処理されます。GPT に Action、hosted API、account、analytics、cloud-storage integration はありません。[separately observed live/candidate status](docs/ja/CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
+1. **Official Custom GPT — ChatGPT 上で直接監査:** live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) を開きます。alpha.10 package は bounded Quick contract を保持しながら、4 個の bilingual starter literal に explicit intake/example route を与えます。large artifact、hash、Base64、shard、transport output はこの public profile から除外されています。すべての output を certificate ではなく research-preview draft として扱ってください。upload は applicable ChatGPT settings/terms の下で処理されます。GPT に Action、hosted API、account、analytics、cloud-storage integration はありません。[separately observed live/candidate status](docs/ja/CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
 2. **ローカル browser Packet Builder と Audit Return Desk:** [deployed English GitHub Pages module](https://jkolantree.github.io/octo/) または [deployed Japanese route](https://jkolantree.github.io/octo/ja.html) で versioned packet を作成したり、返却された `audit_return.json` draft と selected artifact bytes をローカル検査したりできます。どちらの interface も target を upload せず、LLM を呼び出さず、Python を実行しません。
 3. **Repository と Python engine — exact checker route:** versioned schema、fixture、finite exact check、保存された command output については [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) を参照してください。ここで BSC checker を実行するのはこのルートだけです。
 
-repository には、official Custom GPT の configure/evaluate に使用する deterministic alpha.9 package lineage があります。これにより、independent inspection、reproducible deployment、compatible fork、verifiable official update が可能です。
+repository には、official Custom GPT の configure/evaluate に使用する deterministic alpha.10 package lineage があります。これにより、independent inspection、reproducible deployment、compatible fork、verifiable official update が可能です。
 
 補助的な入口:
 

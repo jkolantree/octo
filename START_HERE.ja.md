@@ -12,7 +12,7 @@ truth machine ではありません。もっともらしい着想を theorem に
 
 direct ChatGPT audit には live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) を開きます。すでに build 済みで、research preview として link-shared されています。repository の [Custom GPT package](gpt/README.md) は、この configuration を inspect/evaluate/update し、independent fork を再現するための source です。
 
-alpha.9 package の supported public surface は、4 個の bilingual source starter を備えた bounded human-readable Quick audit です。large artifact、hash、Base64、shard、transport output は standalone repository tooling として残ります。exact live binding と 12-case compact Preview の結果は別に記録します。availability は certification ではなく research preview として扱ってください。upload は applicable ChatGPT settings/terms の下で処理され、local-only ではありません。[Custom GPT live status](docs/ja/CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
+alpha.10 package の supported public surface は、4 個の bilingual starter literal を intake/example behavior に explicit route する bounded human-readable Quick audit です。large artifact、hash、Base64、shard、transport output は standalone repository tooling として残ります。exact live binding と 12-case compact Preview の結果は別に記録します。availability は certification ではなく research preview として扱ってください。upload は applicable ChatGPT settings/terms の下で処理され、local-only ではありません。[Custom GPT live status](docs/ja/CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
 
 日本語での依頼方法と再現 route は [Custom GPT 日本語ガイド](docs/ja/GPT_INTERFACE.md)、machine token の意味は [日本語用語集](docs/ja/GLOSSARY.md) を参照してください。どちらも日本語ベータ版で、母語話者による用語レビューは未完了です。
 

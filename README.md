@@ -3,7 +3,7 @@
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) (live research preview)<br>
-**Current GitHub prerelease:** `v0.3.0-alpha.9`<br>
+**Current GitHub prerelease:** `v0.3.0-alpha.10`<br>
 **Validation boundary:** exact live binding and the 12-case compact Preview outcome are reported separately; this remains a research preview, not certification<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
@@ -37,11 +37,11 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 
 ## Choose an entry point
 
-1. **Official Custom GPT - direct ChatGPT audit:** open the live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor). The alpha.9 package reconciles the bounded Quick contract and four bilingual source starters; large artifact, hash, Base64, shard, and transport output is excluded from this public profile. Treat every output as a research-preview draft rather than a certificate. Uploads go through ChatGPT under the user's applicable settings and terms. The GPT has no Action, hosted API, account, analytics, or cloud-storage integration. See the separately observed [live/candidate status](docs/CUSTOM_GPT_STATUS.md).
+1. **Official Custom GPT - direct ChatGPT audit:** open the live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor). The alpha.10 package gives all four bilingual starter literals explicit intake or example routes while preserving the bounded Quick contract; large artifact, hash, Base64, shard, and transport output is excluded from this public profile. Treat every output as a research-preview draft rather than a certificate. Uploads go through ChatGPT under the user's applicable settings and terms. The GPT has no Action, hosted API, account, analytics, or cloud-storage integration. See the separately observed [live/candidate status](docs/CUSTOM_GPT_STATUS.md).
 2. **Local browser Packet Builder and Audit Return Desk:** [open the accessible English GitHub Pages module](https://jkolantree.github.io/octo/) or the deployed [Japanese route](https://jkolantree.github.io/octo/ja.html) to construct a versioned packet or inspect a returned `audit_return.json` draft and selected artifact bytes locally. Neither function uploads the target, calls an LLM, or runs Python.
 3. **Repository and Python engine - exact checker route:** use [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and preserved command output. This is the only route here that runs the BSC checker.
 
-The repository contains the deterministic alpha.9 package lineage used to configure and evaluate the official GPT. It supports independent inspection, reproducible deployments, compatible forks, and verifiable official updates. The current status page distinguishes observed live identity from source-package bytes; the older timestamped JSON snapshot is preserved as historical evidence.
+The repository contains the deterministic alpha.10 package lineage used to configure and evaluate the official GPT. It supports independent inspection, reproducible deployments, compatible forks, and verifiable official updates. The current status page distinguishes observed live identity from source-package bytes; the older timestamped JSON snapshot is preserved as historical evidence.
 
 Supporting routes:
 

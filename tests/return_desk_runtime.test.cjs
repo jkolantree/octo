@@ -25,7 +25,7 @@ function execution(activity, status) {
     activity,
     status,
     tool: ran ? "BSC Custom GPT" : null,
-    version: ran ? "0.3.0-alpha.9" : null,
+    version: ran ? "0.3.0-alpha.10" : null,
     input_artifact_ids: ran ? ["artifact.request", "artifact.source"] : [],
     output_artifact_ids: ran ? ["artifact.report", "artifact.evidence"] : [],
     receipt_ids: [],
@@ -38,7 +38,7 @@ function validRecord() {
     return_version: "0.1.0",
     authority: "non_admissive_return_inspection",
     draft: true,
-    protocol: { version: "0.3.0-alpha.9", sha256: HASHES.protocol },
+    protocol: { version: "0.3.0-alpha.10", sha256: HASHES.protocol },
     bindings: { request_artifact_id: "artifact.request", report_artifact_id: "artifact.report" },
     audit_depth: "standard",
     primary_claim_id: "claim.main",
@@ -104,7 +104,7 @@ function artifactBytes(record, artifact) {
     return Buffer.from(`Audit report.\nExecution details: ${outputReferences.join(", ")}\n`, "utf8");
   }
   if (artifact.id === "artifact.bsc-output") {
-    return Buffer.from("tool=bsc-audit\nversion=0.3.0a9\n", "utf8");
+    return Buffer.from("tool=bsc-audit\nversion=0.3.0a10\n", "utf8");
   }
   if (artifact.id === "artifact.da-output") {
     const run = record.execution.find((item) => item.activity === "chatgpt_data_analysis");
@@ -182,7 +182,7 @@ function bindEffectiveBscRun(record) {
   Object.assign(run, {
     status: "ran",
     tool: "bsc-audit",
-    version: "0.3.0a9",
+    version: "0.3.0a10",
     input_artifact_ids: ["artifact.request", "artifact.source"],
     output_artifact_ids: ["artifact.bsc-output"],
     receipt_ids: ["receipt.bsc"],
@@ -506,7 +506,7 @@ test("ran non-model execution versions bind once in an output that the report re
   bindEffectiveBscRun(record);
   const positive = options(record);
   const reportBytes = positive.artifacts.find((item) => item.name === "report.txt").bytes;
-  assert.equal(reportBytes.includes(Buffer.from("0.3.0a9", "utf8")), false);
+  assert.equal(reportBytes.includes(Buffer.from("0.3.0a10", "utf8")), false);
   assert.equal(inspect(record, positive).outcome, "consistent");
 
   const unboundVersion = options(record);
