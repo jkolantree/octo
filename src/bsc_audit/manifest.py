@@ -260,7 +260,7 @@ def lint_manifest(
     seen_ids: set[str] = set()
     verified_ids: set[str] = set()
     independently_replicated_ids: set[str] = set()
-    proof_ids: set[str] = set()
+    hash_bound_proof_ids: set[str] = set()
     verified_pass_ids: set[str] = set()
     empirical_pass_ids: set[str] = set()
     empirical_kinds = {"dataset", "statistical_certificate", "experimental_record", "independent_replication"}
@@ -326,7 +326,7 @@ def lint_manifest(
                 if result == "pass":
                     verified_pass_ids.add(evidence_id)
                 if kind in PROOF_KINDS and result == "pass" and claim.get("id") in claim_bindings:
-                    proof_ids.add(evidence_id)
+                    hash_bound_proof_ids.add(evidence_id)
                 if kind in empirical_kinds and result == "pass":
                     empirical_pass_ids.add(evidence_id)
                 if kind == "independent_replication" and result == "pass":
@@ -349,8 +349,17 @@ def lint_manifest(
         findings.append(Finding(Severity.BLOCKED, "EMPIRICAL_EVIDENCE_MISSING", "claim.evidence_maturity", "empirical maturity requires verified passing data, statistical, experimental, or replication evidence"))
     if maturity == "externally_replicated" and not independently_replicated_ids:
         findings.append(Finding(Severity.BLOCKED, "REPLICATION_EVIDENCE_MISSING", "evidence", "independent maturity requires a verified independent-replication artifact"))
-    if claim.get("type") in {"theorem", "theorem_schema"} and not proof_ids:
-        findings.append(Finding(Severity.BLOCKED, "THEOREM_CERTIFICATE_MISSING", "evidence", "a theorem requires a locally verified passing proof or exact certificate bound to this claim"))
+    if claim.get("type") in {"theorem", "theorem_schema"}:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "THEOREM_CERTIFICATE_MISSING",
+                "evidence",
+                "a theorem requires supervised semantic replay; matching local proof bytes do not establish proof validity",
+                witness={"hash_bound_proof_evidence": sorted(hash_bound_proof_ids)},
+                repair="run and replay a claim-bound checker under a future admissive supervised-replay contract",
+            )
+        )
 
     if not any(f.severity in {Severity.ERROR, Severity.BLOCKED, Severity.DEMOTION} for f in findings):
         findings.append(Finding(Severity.INFO, "MANIFEST_STRUCTURALLY_VALID", "$", "manifest structure and declared local artifact bindings are valid; scientific truth has not been inferred"))

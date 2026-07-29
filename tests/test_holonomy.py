@@ -9,6 +9,7 @@ from bsc_audit.exact import Matrix
 from bsc_audit.exact_linear import solve_exact
 from bsc_audit.holonomy import _homotopy_system, audit_holonomy_document
 from bsc_audit.bicomplex import ChainComplex
+from bsc_audit.schema_validation import validate_route_schema
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -83,6 +84,100 @@ class HolonomyTests(unittest.TestCase):
         self.assertIn("OBSERVATION_PROJECTION_LAWFUL", codes)
         self.assertIn("HOLONOMY_DERIVED_FAIL", codes)
         self.assertIn("HOLONOMY_OBSERVED_DERIVED_PASS", codes)
+
+    def test_exact_kernel_sequence_attests_the_declared_null_subcomplex(self):
+        raw = self.load("holonomy_observed_exact_kernel_pass.json")
+        codes = {finding.code: finding for finding in audit_holonomy_document(raw)}
+        certificate = codes["OBSERVATION_KERNEL_SEQUENCE_EXACT"].witness["degrees"]
+        self.assertEqual(
+            certificate,
+            [
+                {
+                    "degree": 0,
+                    "null_dimension": 1,
+                    "ambient_dimension": 2,
+                    "observed_dimension": 1,
+                    "inclusion_rank": 1,
+                    "projection_rank": 1,
+                    "kernel_dimension": 1,
+                }
+            ],
+        )
+        self.assertIn("HOLONOMY_OBSERVED_DERIVED_PASS", codes)
+
+    def test_exact_kernel_sequence_blocks_hidden_over_quotienting(self):
+        raw = self.load("holonomy_observed_exact_kernel_overquotient.json")
+        codes = {finding.code: finding for finding in audit_holonomy_document(raw)}
+        failure = codes["OBSERVATION_KERNEL_SEQUENCE_FAIL"].witness["failures"][0]
+        self.assertIn("declared dimensions do not balance", failure["reasons"])
+        self.assertIn("declared kernel image has the wrong dimension", failure["reasons"])
+        self.assertNotIn("HOLONOMY_OBSERVED_DERIVED_PASS", codes)
+
+    def test_exact_kernel_sequence_replays_nonzero_projection_composite(self):
+        raw = self.load("holonomy_observed_exact_kernel_pass.json")
+        raw["transports"]["include_null"]["maps"]["0"] = [[0], [1]]
+        codes = {finding.code: finding for finding in audit_holonomy_document(raw)}
+        failure = codes["OBSERVATION_KERNEL_SEQUENCE_FAIL"].witness["failures"][0]
+        self.assertIn("the projection does not annihilate the declared kernel image", failure["reasons"])
+        self.assertEqual(
+            failure["composite_witness"],
+            {"basis_index": 0, "residual": [1], "degree": 0},
+        )
+        self.assertNotIn("HOLONOMY_OBSERVED_DERIVED_PASS", codes)
+
+    def test_exact_kernel_sequence_requires_an_injective_inclusion(self):
+        raw = self.load("holonomy_observed_exact_kernel_pass.json")
+        raw["transports"]["include_null"]["maps"]["0"] = [[0], [0]]
+        codes = {finding.code: finding for finding in audit_holonomy_document(raw)}
+        failure = codes["OBSERVATION_KERNEL_SEQUENCE_FAIL"].witness["failures"][0]
+        self.assertIn("kernel inclusion is not injective", failure["reasons"])
+        self.assertNotIn("HOLONOMY_OBSERVED_DERIVED_PASS", codes)
+
+    def test_exact_kernel_route_is_versioned_and_schema_requires_inclusion(self):
+        raw = self.load("holonomy_observed_exact_kernel_pass.json")
+        raw["relations"]["exact_null_direction"].pop("kernel_inclusion")
+        self.assertIn(
+            "SCHEMA_VALIDATION",
+            {finding.code for finding in validate_route_schema("holonomy", raw)},
+        )
+
+        raw = self.load("holonomy_observed_exact_kernel_pass.json")
+        raw["holonomy_version"] = "0.1.0"
+        self.assertIn(
+            "HOLONOMY_EQUIVALENCE_VERSION",
+            {finding.code for finding in audit_holonomy_document(raw)},
+        )
+
+    def test_legacy_schema_rejects_ignored_exact_kernel_fields(self):
+        raw = self.load("holonomy_observed_quotient_pass.json")
+        raw["relations"]["null_direction"]["kernel_inclusion"] = "observe"
+        self.assertIn(
+            "SCHEMA_VALIDATION",
+            {finding.code for finding in validate_route_schema("holonomy", raw)},
+        )
+
+        raw = self.load("holonomy_observed_quotient_pass.json")
+        raw["holonomy_version"] = "0.2.0"
+        self.assertIn(
+            "SCHEMA_VALIDATION",
+            {finding.code for finding in validate_route_schema("holonomy", raw)},
+        )
+        self.assertIn(
+            "HOLONOMY_EQUIVALENCE_VERSION",
+            {finding.code for finding in audit_holonomy_document(raw)},
+        )
+
+    def test_v02_schema_and_runtime_reject_exact_fields_on_weaker_modes(self):
+        raw = self.load("holonomy_observed_exact_kernel_overquotient.json")
+        raw["relations"]["hidden_over_quotient"]["required_equivalence"] = "derived"
+        self.assertIn(
+            "SCHEMA_VALIDATION",
+            {finding.code for finding in validate_route_schema("holonomy", raw)},
+        )
+        self.assertIn(
+            "HOLONOMY_RELATION_FIELD_NOT_APPLICABLE",
+            {finding.code for finding in audit_holonomy_document(raw)},
+        )
 
     def test_non_chain_map_blocks_derived_construction(self):
         codes = self.codes("holonomy_non_chain_map.json")

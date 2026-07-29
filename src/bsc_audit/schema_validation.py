@@ -17,7 +17,7 @@ ROUTE_SCHEMAS = {
     "atomic": "atomic-modulus-v0.3.schema.json",
     "defect": "defect-v0.3.schema.json",
     "adapter": "adapter-receipt-v0.1.schema.json",
-    "holonomy": "derived-holonomy-v0.1.schema.json",
+    "holonomy": "derived-holonomy-v0.2.schema.json",
     "return-desk": "audit-return-v0.1.schema.json",
 }
 
@@ -164,7 +164,14 @@ def load_schema(route: str) -> dict[str, Any]:
 def validate_route_schema(route: str, value: dict[str, Any]) -> list[Finding]:
     if route not in ROUTE_SCHEMAS:
         return []
-    schema = load_schema(route)
+    if route == "holonomy" and value.get("holonomy_version") == "0.1.0":
+        resource = files("bsc_audit").joinpath(
+            "schema_data",
+            "derived-holonomy-v0.1.schema.json",
+        )
+        schema = json.loads(resource.read_text(encoding="utf-8"))
+    else:
+        schema = load_schema(route)
     violations = _validate(value, schema, schema, "$")
     return [
         Finding(Severity.ERROR, "SCHEMA_VALIDATION", violation.path, violation.message)
