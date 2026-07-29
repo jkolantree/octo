@@ -3,8 +3,8 @@
   "authority": "non_admissive_return_inspection",
   "draft": true,
   "protocol": {
-    "version": "0.3.0-alpha.10",
-    "sha256": "sha256:91d7c5fb4068236eee49c8cb1b63fe776454ba5a855d098d6d27f6cb048825b0"
+    "version": "0.3.0-alpha.11",
+    "sha256": "sha256:7f033c95fe033859ce14e44efdcfb2ce7624ef2a970616d6bdcc3a89aa86f122"
   },
   "bindings": {
     "request_artifact_id": "artifact:request",
@@ -99,7 +99,7 @@
       "activity": "model_reasoning",
       "status": "ran",
       "tool": "BSC Custom GPT",
-      "version": "0.3.0-alpha.10",
+      "version": "0.3.0-alpha.11",
       "input_artifact_ids": ["artifact:request", "artifact:source"],
       "output_artifact_ids": ["artifact:report", "artifact:evidence"],
       "receipt_ids": [],

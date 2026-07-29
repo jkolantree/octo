@@ -26,7 +26,7 @@ class ManifestTests(unittest.TestCase):
             "claim": {
                 "id": "bsc:test:claim",
                 "title": "Exact fixture claim",
-                "type": "theorem",
+                "type": "definition",
                 "evidence_maturity": "structurally_checked",
                 "deployment_status": "sandboxed",
                 "statement": "The frozen fixture satisfies its declared exact identity.",
@@ -58,7 +58,7 @@ class ManifestTests(unittest.TestCase):
             "evidence": [
                 {
                     "id": "evidence:proof",
-                    "kind": "exact_certificate",
+                    "kind": "audit_report",
                     "status": "verified",
                     "result": "pass",
                     "artifact": "proof.json",
@@ -80,6 +80,45 @@ class ManifestTests(unittest.TestCase):
             findings = audit_claim(self.make_manifest(root), root)
         self.assertFalse(any(f.severity.value in {"ERROR", "BLOCKED", "DEMOTION"} for f in findings))
         self.assertTrue(any(f.code == "MANIFEST_STRUCTURALLY_VALID" for f in findings))
+
+    def test_hash_bound_proof_cannot_admit_a_false_theorem(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_manifest(root)
+            raw["claim"].update(
+                {
+                    "type": "theorem",
+                    "statement": "Every integer is even.",
+                    "scope": "all integers",
+                    "deployment_status": "admitted",
+                }
+            )
+            raw["system"]["domain"] = "integers"
+            raw["evidence"][0]["kind"] = "exact_certificate"
+            findings = audit_claim(raw, root)
+        blocked = next(
+            finding
+            for finding in findings
+            if finding.code == "THEOREM_CERTIFICATE_MISSING"
+        )
+        self.assertEqual(
+            blocked.witness,
+            {"hash_bound_proof_evidence": ["evidence:proof"]},
+        )
+        self.assertEqual(blocked.severity.value, "BLOCKED")
+        self.assertFalse(
+            any(finding.code == "MANIFEST_STRUCTURALLY_VALID" for finding in findings)
+        )
+        gate = next(
+            finding
+            for finding in findings
+            if finding.code == "GATE_RESULT_UNVERIFIED"
+        )
+        self.assertEqual(gate.witness["computed_state"], "unrun")
+        self.assertEqual(
+            gate.witness["hash_only_proof_evidence"],
+            ["evidence:proof"],
+        )
 
     def test_missing_demotion_is_malformed(self):
         with tempfile.TemporaryDirectory() as directory:

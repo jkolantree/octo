@@ -180,6 +180,30 @@ An observation-reduced comparison applies the same theorem after an explicitly s
 
 This theorem depends on the field and finite-dimensional splitting hypotheses. The implementation does not claim the same equivalence over arbitrary rings. See [Exact Derived Holonomy](DERIVED_HOLONOMY.md) for the executable contract.
 
-## 10. Status
+## 10. Exact observed quotients
+
+Let `i: N -> D` and `pi: D -> O` be chain maps between finite-dimensional complexes over `Q`. Suppose degreewise that:
+
+\[
+\operatorname{rank}(i_n)=\dim N_n,\qquad
+\operatorname{rank}(\pi_n)=\dim O_n,\qquad
+\pi_n i_n=0,
+\]
+
+and
+
+\[
+\dim N_n+\dim O_n=\dim D_n.
+\]
+
+Injectivity gives `dim image(i_n) = dim N_n`. Surjectivity gives `dim ker(pi_n) = dim D_n - dim O_n = dim N_n`. The zero composite gives \(\operatorname{image}(i_n)\subseteq\ker(\pi_n)\). Equal finite dimensions therefore force:
+
+\[
+\operatorname{image}(i_n)=\ker(\pi_n).
+\]
+
+Thus `0 -> N -> D -> O -> 0` is a short exact sequence of chain complexes. The v0.2 exact-kernel holonomy route replays these rational rank and composition conditions before constructing an observed-derived class. This certifies the supplied finite quotient algebra; it does not establish that `N` is the scientifically correct nuisance or null subcomplex.
+
+## 11. Status
 
 The algebraic identities above are proved. Their use as a universal scientific ontology is not claimed. The proposed originality lies in the audit assembly, certificate semantics, and executable witness formats; historical priority requires independent review.

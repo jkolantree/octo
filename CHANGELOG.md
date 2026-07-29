@@ -2,6 +2,29 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.11 - 2026-07-28
+
+### Added
+
+- added a v0.2 observed-derived holonomy route that proves the declared null inclusion and observation projection form a short exact sequence over exact rationals;
+- emitted replayable degreewise rank, kernel-dimension, and nonzero-composite witnesses;
+- added positive exact-kernel and negative hidden-over-quotient fixtures.
+
+### Corrected
+
+- stopped hash-matched proof-like files from satisfying theorem gates or theorem support without supervised semantic replay;
+- dispatched v0.1 and v0.2 holonomy records to separate closed schemas, preventing cross-version fields from being accepted and ignored;
+- discriminated v0.2 relation modes so exact-kernel fields cannot be silently ignored under a weaker mode;
+- regenerated package, Pages, localization, schema, manifest, and checksum projections under the new alpha.11 identity.
+
+### Preserved boundary
+
+The official Custom GPT remains on its separately verified alpha.10 live state.
+The alpha.11 repository package is an unvalidated update candidate and is not
+installed live in this lane. Alpha.10 and all earlier tags, releases, assets,
+and negative evidence remain unchanged. No alpha.11 Preview-validation or
+byte-identical indexed Knowledge claim is made.
+
 ## 0.3.0-alpha.10 - 2026-07-28
 
 ### Corrected

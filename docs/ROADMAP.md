@@ -138,6 +138,17 @@ Exit criterion: deterministic repository checks, the exact 12-case compact Previ
 
 Exit criterion: deterministic repository checks, the exact 12-case compact Preview gate for the changed Instructions candidate, clean-tag reproducible release assets, and all four post-save starters plus one Quick follow-up pass without retrying or claiming byte-identical indexed Knowledge binding.
 
+## v0.3.0-alpha.11 - exact quotient kernels and theorem-evidence honesty
+
+- add a versioned exact-kernel observed-derived route over finite-dimensional rational complexes;
+- replay injectivity, surjectivity, the zero composite, and dimension balance as a short-exact-sequence certificate;
+- reject projections whose actual kernel strictly exceeds the declared null image;
+- dispatch v0.1 and v0.2 holonomy documents to separate closed schemas;
+- treat matching proof-file hashes as provenance only, never as supervised semantic proof replay;
+- keep the live Custom GPT on its separately verified alpha.10 state while publishing the regenerated alpha.11 package only as an unvalidated update candidate.
+
+Exit criterion: permanent positive and negative fixtures, full engine and browser-runtime suites, privacy/localization/Pages/package checks, and clean-tag reproducible release assets pass. No live GPT update or Preview-validation claim is part of this engine-mathematics release.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;
