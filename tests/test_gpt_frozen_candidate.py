@@ -38,9 +38,9 @@ class FrozenCandidateManifestTests(unittest.TestCase):
     def test_registry_contract_is_explicit_complete_and_current(self) -> None:
         document, findings = checker.build_manifest(ROOT)
         self.assertEqual(findings, [])
-        self.assertEqual(len(checker.registry_entries()), 145)
-        self.assertEqual(document["file_count"], 145)
-        self.assertEqual(len(document["files"]), 145)
+        self.assertEqual(len(checker.registry_entries()), 147)
+        self.assertEqual(document["file_count"], 147)
+        self.assertEqual(len(document["files"]), 147)
         self.assertEqual(
             [(entry["category"], entry["path"]) for entry in document["files"]],
             list(checker.registry_entries()),
@@ -80,7 +80,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             },
             {f"tests/{filename}" for filename in checker.TEST_FILENAMES},
         )
-        self.assertEqual(len(checker.SCHEMA_FILENAMES), 9)
+        self.assertEqual(len(checker.SCHEMA_FILENAMES), 10)
         self.assertEqual(
             {
                 path

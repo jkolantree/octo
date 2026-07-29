@@ -19,6 +19,7 @@ from .findings import Finding, Severity
 
 
 MAX_COMPOSITION_SCALAR_PRODUCTS = 1_000_000
+SUPPORTED_HOLONOMY_VERSIONS = {"0.1.0", "0.2.0"}
 
 
 class HolonomyResourceLimit(ValueError):
@@ -278,7 +279,130 @@ def _projection_findings(name: str, projection: Transport, expected_source: Chai
     return findings
 
 
+def _kernel_sequence_findings(
+    name: str,
+    inclusion: Transport,
+    projection: Transport,
+    budget: CompositionBudget,
+) -> list[Finding]:
+    """Verify ``0 -> N -> D -> O -> 0`` degreewise over ``Q``.
+
+    Injectivity, surjectivity, a zero composite, and the dimension identity
+    prove that the declared image is exactly the projection kernel.  Chain-map
+    legality then upgrades the degreewise sequence to a short exact sequence
+    of the supplied complexes.
+    """
+
+    path = f"relations.{name}.kernel_inclusion"
+    if inclusion.target.name != projection.source.name:
+        return [
+            Finding(
+                Severity.ERROR,
+                "OBSERVATION_KERNEL_INCLUSION_TARGET",
+                path,
+                "kernel inclusion must end at the observation projection source",
+            )
+        ]
+    shape_findings = inclusion.validate_shapes()
+    if shape_findings:
+        return [
+            Finding(
+                Severity.ERROR,
+                "OBSERVATION_KERNEL_INCLUSION_SHAPE",
+                path,
+                "kernel inclusion has invalid component shapes",
+            )
+        ]
+    nonzero_theta = [degree for degree, defect in inclusion.theta().items() if not defect.is_zero()]
+    if nonzero_theta:
+        return [
+            Finding(
+                Severity.ERROR,
+                "OBSERVATION_KERNEL_INCLUSION_CHAIN_MAP",
+                path,
+                "kernel inclusion must be a chain map",
+                {"degrees": nonzero_theta},
+            )
+        ]
+
+    degrees = sorted(
+        set(inclusion.source.groups)
+        | set(projection.source.groups)
+        | set(projection.target.groups)
+    )
+    certificate: list[dict[str, Any]] = []
+    failures: list[dict[str, Any]] = []
+    for degree in degrees:
+        null_dimension = inclusion.source.groups.get(degree, 0)
+        ambient_dimension = projection.source.groups.get(degree, 0)
+        observed_dimension = projection.target.groups.get(degree, 0)
+        inclusion_map = inclusion.map_at(degree)
+        projection_map = projection.map_at(degree)
+        inclusion_rank = inclusion_map.rank()
+        projection_rank = projection_map.rank()
+        composite = _bounded_matmul(projection_map, inclusion_map, budget)
+        composite_witness = matrix_witness(composite.first_nonzero_column(), degree)
+        kernel_dimension = ambient_dimension - projection_rank
+        reasons: list[str] = []
+        if inclusion_rank != null_dimension:
+            reasons.append("kernel inclusion is not injective")
+        if projection_rank != observed_dimension:
+            reasons.append("observation projection is not surjective")
+        if composite_witness is not None:
+            reasons.append("the projection does not annihilate the declared kernel image")
+        if null_dimension + observed_dimension != ambient_dimension:
+            reasons.append("declared dimensions do not balance")
+        if inclusion_rank != kernel_dimension:
+            reasons.append("declared kernel image has the wrong dimension")
+        degree_record: dict[str, Any] = {
+            "degree": degree,
+            "null_dimension": null_dimension,
+            "ambient_dimension": ambient_dimension,
+            "observed_dimension": observed_dimension,
+            "inclusion_rank": inclusion_rank,
+            "projection_rank": projection_rank,
+            "kernel_dimension": kernel_dimension,
+        }
+        if composite_witness is not None:
+            degree_record["composite_witness"] = composite_witness
+        certificate.append(degree_record)
+        if reasons:
+            failures.append({**degree_record, "reasons": reasons})
+
+    if failures:
+        return [
+            Finding(
+                Severity.ERROR,
+                "OBSERVATION_KERNEL_SEQUENCE_FAIL",
+                path,
+                "the declared inclusion and projection do not form a degreewise short exact sequence",
+                {"failures": failures},
+                "supply an injective chain-map inclusion whose image is exactly the projection kernel",
+            )
+        ]
+    return [
+        Finding(
+            Severity.INFO,
+            "OBSERVATION_KERNEL_SEQUENCE_EXACT",
+            path,
+            "the declared null subcomplex is exactly the observation kernel in every degree",
+            {"degrees": certificate},
+        )
+    ]
+
+
 def audit_holonomy_document(raw: dict[str, Any]) -> list[Finding]:
+    version = raw.get("holonomy_version")
+    if version not in SUPPORTED_HOLONOMY_VERSIONS:
+        return [
+            Finding(
+                Severity.ERROR,
+                "HOLONOMY_VERSION",
+                "holonomy_version",
+                f"supported holonomy versions are {sorted(SUPPORTED_HOLONOMY_VERSIONS)}",
+                version,
+            )
+        ]
     if raw.get("field") != "Q":
         return [Finding(Severity.ERROR, "HOLONOMY_FIELD", "field", "derived-holonomy certificates currently require the exact field Q")]
     contexts_raw = raw.get("contexts")
@@ -372,6 +496,43 @@ def audit_holonomy_document(raw: dict[str, Any]) -> list[Finding]:
             continue
 
         required = relation["required_equivalence"]
+        exact_kernel_required = required == "observed_derived_exact_kernel"
+        observed_required = required in {"observed_derived", "observed_derived_exact_kernel"}
+        if exact_kernel_required and version != "0.2.0":
+            findings.append(
+                Finding(
+                    Severity.ERROR,
+                    "HOLONOMY_EQUIVALENCE_VERSION",
+                    f"{path}.required_equivalence",
+                    "exact-kernel observed-derived comparison requires holonomy_version 0.2.0",
+                )
+            )
+            continue
+        if required == "observed_derived" and version != "0.1.0":
+            findings.append(
+                Finding(
+                    Severity.ERROR,
+                    "HOLONOMY_EQUIVALENCE_VERSION",
+                    f"{path}.required_equivalence",
+                    "legacy observed-derived comparison is supported only by holonomy_version 0.1.0",
+                )
+            )
+            continue
+        if version == "0.2.0" and not exact_kernel_required:
+            ignored_exact_fields = sorted(
+                {"observation_projection", "kernel_inclusion"} & set(relation)
+            )
+            if ignored_exact_fields:
+                findings.append(
+                    Finding(
+                        Severity.ERROR,
+                        "HOLONOMY_RELATION_FIELD_NOT_APPLICABLE",
+                        path,
+                        "v0.2 exact-kernel fields are forbidden on weaker equivalence modes",
+                        {"fields": ignored_exact_fields, "required_equivalence": required},
+                    )
+                )
+                continue
         defects = _strict_defects(left, right)
         if not defects:
             findings.append(Finding(Severity.INFO, "HOLONOMY_STRICT_PASS", path, "the two path transports agree exactly"))
@@ -395,7 +556,7 @@ def audit_holonomy_document(raw: dict[str, Any]) -> list[Finding]:
             continue
 
         projection: Transport | None = None
-        if required == "observed_derived":
+        if observed_required:
             projection_name = relation["observation_projection"]
             projection = transports.get(projection_name)
             if projection is None:
@@ -405,6 +566,32 @@ def audit_holonomy_document(raw: dict[str, Any]) -> list[Finding]:
             findings.extend(projection_checks)
             if any(finding.severity == Severity.ERROR for finding in projection_checks):
                 continue
+            if exact_kernel_required:
+                inclusion_name = relation["kernel_inclusion"]
+                inclusion = transports.get(inclusion_name)
+                if inclusion is None:
+                    findings.append(
+                        Finding(
+                            Severity.ERROR,
+                            "OBSERVATION_KERNEL_INCLUSION_REFERENCE",
+                            f"{path}.kernel_inclusion",
+                            "kernel inclusion must name a valid transport",
+                        )
+                    )
+                    continue
+                try:
+                    kernel_checks = _kernel_sequence_findings(
+                        name,
+                        inclusion,
+                        projection,
+                        composition_budget,
+                    )
+                except HolonomyResourceLimit as exc:
+                    findings.append(Finding(Severity.ERROR, "HOLONOMY_RESOURCE_LIMIT", path, str(exc)))
+                    continue
+                findings.extend(kernel_checks)
+                if any(finding.severity == Severity.ERROR for finding in kernel_checks):
+                    continue
 
         try:
             derived, derived_json = _derived_certificate(left, right)

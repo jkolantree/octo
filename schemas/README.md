@@ -13,7 +13,7 @@ exact chain equations, hash verification, and evidence-to-gate bindings.
 | `atomic` | `atomic-modulus-v0.3.schema.json` |
 | `defect` | `defect-v0.3.schema.json` |
 | `adapter` | `adapter-receipt-v0.1.schema.json` |
-| `holonomy` | `derived-holonomy-v0.1.schema.json` |
+| `holonomy` | version-dispatched: `derived-holonomy-v0.1.schema.json` or `derived-holonomy-v0.2.schema.json` |
 | `return-desk` | `audit-return-v0.1.schema.json` |
 
 No external JSON Schema package is required at runtime. Producers can use any
@@ -36,5 +36,7 @@ admissibility, or deployment authority. See
 The derived-holonomy format is exact only over `field: "Q"`. JSON Schema checks
 the closed record shape; the engine additionally checks semantic-basis digest
 coverage, chain-map legality, path composition, projection surjectivity, and
-the emitted rational primal or dual certificate. See
+the emitted rational primal or dual certificate. The v0.2 exact-kernel route
+also certifies a degreewise short exact sequence for the declared null
+subcomplex and observation quotient. See
 [`docs/DERIVED_HOLONOMY.md`](../docs/DERIVED_HOLONOMY.md).
