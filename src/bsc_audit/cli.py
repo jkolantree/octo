@@ -15,12 +15,13 @@ from .defect import audit_defect_composition
 from .findings import Finding, Severity, decision, exit_code
 from .gates import audit_gate_product
 from .holonomy import audit_holonomy_document
-from .manifest import lint_manifest
+from .manifest import ManifestAuditCache, lint_manifest
 from .observation import audit_observation_document
 from .plugins import arithmetic_trace_findings, recovery_findings
 from .provenance import sha256_bytes, sha256_json
 from .return_desk import audit_return_document
 from .schema_validation import ROUTE_SCHEMAS, validate_route_schema
+from .theorem import audit_theorem_certificate
 
 
 MAX_INPUT_BYTES = 8 * 1024 * 1024
@@ -168,7 +169,12 @@ def _emit(payload: dict[str, Any]) -> None:
 
 
 def _manifest_check_order(command_name: str) -> list[str]:
-    checks = [f"schema_validation:{command_name}", "claim_manifest_lint", "local_artifact_hashes"]
+    checks = [
+        f"schema_validation:{command_name}",
+        "claim_manifest_lint",
+        "local_artifact_hashes",
+        "semantic_theorem_replay",
+    ]
     if command_name == "audit":
         checks.extend(["gate_product", "dependency_graph"])
         checks.extend(f"domain_plugin:{name}" for name in sorted(DOMAIN_CHECKS))
@@ -183,26 +189,39 @@ def _semantic_check_name(command_name: str) -> str:
         "defect": "affine_upper_bound_propagation",
         "adapter": "proof_carrying_adapter_receipt",
         "holonomy": "exact_derived_holonomy",
+        "theorem": "exact_q_polynomial_identity",
         "return-desk": "non_admissive_audit_return_inspection",
     }.get(command_name, "custom_auditor")
 
 
 def _lint_stages(raw: dict[str, Any], artifact_root: Path | None) -> AuditResult:
     executed: list[str] = []
-    findings = lint_manifest(raw, artifact_root, checks_run=executed)
+    audit_cache = ManifestAuditCache()
+    findings = lint_manifest(
+        raw,
+        artifact_root,
+        checks_run=executed,
+        audit_cache=audit_cache,
+    )
     order = _manifest_check_order("lint")
     return AuditResult(findings, executed, [name for name in order if name not in executed])
 
 
 def _audit_stages(raw: dict[str, Any], artifact_root: Path | None) -> AuditResult:
     executed: list[str] = []
-    findings = lint_manifest(raw, artifact_root, checks_run=executed)
+    audit_cache = ManifestAuditCache()
+    findings = lint_manifest(
+        raw,
+        artifact_root,
+        checks_run=executed,
+        audit_cache=audit_cache,
+    )
     order = _manifest_check_order("audit")
     if any(finding.severity == Severity.ERROR for finding in findings):
         return AuditResult(findings, executed, [name for name in order if name not in executed])
 
     executed.append("gate_product")
-    findings.extend(audit_gate_product(raw, artifact_root))
+    findings.extend(audit_gate_product(raw, artifact_root, audit_cache))
     if raw.get("dependency_graph"):
         executed.append("dependency_graph")
 
@@ -317,6 +336,7 @@ def main(argv: list[str] | None = None) -> int:
         ("defect", "audit compositional transport-defect bounds"),
         ("adapter", "audit a non-admissive proof-carrying adapter receipt"),
         ("holonomy", "audit strict, derived, observed-derived, and exact-kernel path holonomy"),
+        ("theorem", "replay a closed exact-Q polynomial identity certificate"),
         ("return-desk", "inspect a non-admissive audit-return envelope and its local byte bindings"),
     ):
         child = subparsers.add_parser(name, help=help_text)
@@ -331,6 +351,7 @@ def main(argv: list[str] | None = None) -> int:
         "defect": lambda raw, _root: audit_defect_composition(raw),
         "adapter": audit_adapter_receipt,
         "holonomy": lambda raw, _root: audit_holonomy_document(raw),
+        "theorem": audit_theorem_certificate,
         "return-desk": audit_return_document,
     }
     return command(args.path, auditors[args.command], args.command)

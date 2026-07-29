@@ -85,7 +85,7 @@ Return Desk の browser outcome は `consistent`、`needs_review`、`blocked` �
 | `LIVE` | 公式サービスへアクセスできる |
 | `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE` | 公開ソースから再現できる更新候補 |
 | `PENDING` | 必要な結合確認または Preview 評価が完了していない |
-| `PENDING_VERIFICATION` | 保存済み構成と候補パッケージの厳密な対応をまだ確認していない |
+| `NON_ADMISSIBLE_UNHASHABLE` | indexed Knowledge bytes を独立に取得・hash 化できないため、engine gate の証拠として採用できない |
 | `VERIFIED` | 定義された確認手順と証拠がそろっている |
 
 公式サービスが `LIVE` でも、特定候補の binding または Preview validation が `PENDING` の場合があります。これらを一つの「公開済み／未公開」状態にまとめてはいけません。

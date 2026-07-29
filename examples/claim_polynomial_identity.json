@@ -1,0 +1,133 @@
+{
+  "manifest_version": "0.4.0",
+  "draft": false,
+  "claim": {
+    "id": "bsc:example:binomial-square",
+    "title": "Exact binomial-square identity",
+    "type": "theorem_schema",
+    "family": "q-polynomial-identity-v0.1",
+    "evidence_maturity": "structurally_checked",
+    "deployment_status": "sandboxed",
+    "statement": "For all rational x and y, (x + y)^2 equals x^2 + 2xy + y^2.",
+    "scope": "The authoritative formal statement is the attached identity in Q[x,y]; this prose is only a gloss.",
+    "formal_statement": {
+      "language": "q-polynomial-identity-v0.1",
+      "field": "Q",
+      "variables": ["x", "y"],
+      "relation": {
+        "op": "eq",
+        "left": {
+          "op": "pow",
+          "base": {
+            "op": "add",
+            "args": [
+              {"op": "var", "name": "x"},
+              {"op": "var", "name": "y"}
+            ]
+          },
+          "exponent": 2
+        },
+        "right": {
+          "op": "add",
+          "args": [
+            {
+              "op": "pow",
+              "base": {"op": "var", "name": "x"},
+              "exponent": 2
+            },
+            {
+              "op": "mul",
+              "args": [
+                {"op": "const", "value": 2},
+                {"op": "var", "name": "x"},
+                {"op": "var", "name": "y"}
+              ]
+            },
+            {
+              "op": "pow",
+              "base": {"op": "var", "name": "y"},
+              "exponent": 2
+            }
+          ]
+        }
+      }
+    }
+  },
+  "system": {
+    "domain": "the exact polynomial ring Q[x,y]",
+    "boundary": "the closed formal_statement AST and exact rational arithmetic",
+    "state_type": "canonical sparse polynomials over Q",
+    "local_kernel": "symbolic normalization of left minus right"
+  },
+  "observation": {
+    "kernel_or_instrument": "q-polynomial-identity-v0.1 exact normalizer",
+    "legal_filtration": {
+      "available_at_decision": ["manifest bytes", "certificate bytes", "exact AST"],
+      "forbidden_future_fields": ["free-form proof prose", "external scientific interpretation"]
+    }
+  },
+  "representation": {
+    "kind": "exact_polynomial_identity",
+    "preserved_queries": ["formal equality in Q[x,y]", "canonical residual"],
+    "known_non_descending_queries": ["scientific truth", "source authenticity", "empirical interpretation"]
+  },
+  "target": {
+    "outcome": "zero exact polynomial residual",
+    "horizon": "the closed certificate language v0.1",
+    "loss_or_score": "exact equality of canonical sparse normal forms"
+  },
+  "experiment": {
+    "baseline_model": "symbolic expansion over fractions with no sampling",
+    "candidate_operators": ["const", "var", "neg", "add", "mul", "pow"],
+    "matched_null_library": ["tests/test_theorem.py", "tests/test_manifest.py"],
+    "search_budget": "one bounded deterministic normalization"
+  },
+  "admission": {
+    "hard_gates": ["exact_polynomial_identity"],
+    "gate_results": [
+      {
+        "id": "exact_polynomial_identity",
+        "state": "pass",
+        "fatal": true,
+        "evidence": ["evidence:binomial-normal-form"]
+      }
+    ]
+  },
+  "demotion": {
+    "owner": "project maintainers",
+    "rules": [
+      {"if": "exact replay produces a nonzero residual", "then": "refute the formal identity"},
+      {"if": "the certificate or claim binding changes", "then": "block admission until replayed"}
+    ],
+    "negative_result_destination": "tests/regressions"
+  },
+  "preservation": {
+    "known_failures": [
+      "The kernel proves only the authoritative closed polynomial identity.",
+      "The human-readable statement does not enlarge the formal theorem.",
+      "No scientific, empirical, or source-authenticity conclusion is encoded."
+    ]
+  },
+  "evidence": [
+    {
+      "id": "evidence:binomial-normal-form",
+      "kind": "exact_certificate",
+      "status": "verified",
+      "result": "pass",
+      "artifact": "theorem_binomial_identity.json",
+      "sha256": "sha256:df8a003bbe49ed986f887b31c0d096e4c892707296660a778449696dde30beb6",
+      "verifies_gates": ["exact_polynomial_identity"],
+      "verifies_claims": ["bsc:example:binomial-square"]
+    }
+  ],
+  "dependency_graph": {
+    "root": "bsc:example:binomial-square",
+    "nodes": ["exact_polynomial_identity", "bsc:example:binomial-square"],
+    "edges": [
+      {
+        "source": "exact_polynomial_identity",
+        "target": "bsc:example:binomial-square"
+      }
+    ]
+  }
+}

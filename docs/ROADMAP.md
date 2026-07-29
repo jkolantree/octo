@@ -149,6 +149,18 @@ Exit criterion: deterministic repository checks, the exact 12-case compact Previ
 
 Exit criterion: permanent positive and negative fixtures, full engine and browser-runtime suites, privacy/localization/Pages/package checks, and clean-tag reproducible release assets pass. No live GPT update or Preview-validation claim is part of this engine-mathematics release.
 
+## v0.3.0-alpha.12 - closed theorem replay and signed provenance
+
+- add claim manifest `0.4.0` with an authoritative closed formal statement for exact polynomial identities over `Q`;
+- normalize bounded AST terms to canonical sparse polynomials and treat a nonzero residual as a replayable countercertificate;
+- allow only claim-bound, statement-bound, hash-verified, result-matched exact certificates to determine theorem-schema gates;
+- preserve manifest `0.3.0`, general theorem prose, external-tool receipts, and scientific declarations as non-admissive;
+- emit an exact machine boundary separating successful finite holonomy algebra from source authenticity and scientific truth;
+- classify opaque live indexed Knowledge as `NON_ADMISSIBLE_UNHASHABLE` without changing the live alpha.10 GPT;
+- keylessly attest every exact-tag release file before draft creation and byte-compare every redownload before and after publication.
+
+Exit criterion: theorem positives and adversarial countercertificates, full source/browser/package/privacy/localization/Pages checks, exact clean-tag build, all 17 files keylessly attested, and release redownload comparison pass. The release workflow owns prerelease creation; no live GPT update or Preview-validation claim is part of this engine-mathematics release.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;

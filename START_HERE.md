@@ -12,7 +12,7 @@ It is not a truth machine. It cannot turn a plausible idea into a theorem, valid
 
 Open the live [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) for a direct ChatGPT audit. It is already built and link-shared as a research preview. The repository's [Custom GPT package](gpt/README.md) is the reproducible source for inspecting, evaluating, updating, or independently forking that configuration.
 
-The alpha.10 package supports a bounded human-readable Quick audit with four bilingual starter literals explicitly routed to intake or example behavior. Large artifact, hash, Base64, shard, and transport output remains standalone repository tooling. Exact live binding and the 12-case compact Preview outcome are recorded separately. Treat availability as a research preview, not certification. Uploads are processed by ChatGPT under the user's applicable settings and terms and are not local-only. See [Custom GPT live status](docs/CUSTOM_GPT_STATUS.md).
+The alpha.10 package supports a bounded human-readable Quick audit with four bilingual starter literals explicitly routed to intake or example behavior. Large artifact, hash, Base64, shard, and transport output remains standalone repository tooling. The live service's indexed Knowledge bytes are not independently retrievable, so exact live binding is `NON_ADMISSIBLE_UNHASHABLE`; the 12-case compact Preview outcome is a separate product observation. Treat availability as a research preview, not certification. Uploads are processed by ChatGPT under the user's applicable settings and terms and are not local-only. See [Custom GPT live status](docs/CUSTOM_GPT_STATUS.md).
 
 ### One-page local builder and Return Desk
 

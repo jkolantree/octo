@@ -641,4 +641,22 @@ def audit_holonomy_document(raw: dict[str, Any]) -> list[Finding]:
                 observed_json,
             )
         )
+    if not any(
+        finding.severity in {Severity.ERROR, Severity.BLOCKED}
+        for finding in findings
+    ):
+        findings.append(
+            Finding(
+                Severity.WARNING,
+                "HOLONOMY_EXTERNAL_INTERPRETATION_NON_ADMISSIBLE",
+                "$",
+                "exact checks over the declared finite maps do not establish their external interpretation, source authenticity, or scientific truth",
+                witness={
+                    "authority": "non_admissive_declared_input",
+                    "algebraic_scope": "declared_finite_maps",
+                    "scientific_truth": "not_established",
+                    "source_authenticity": "not_established",
+                },
+            )
+        )
     return findings

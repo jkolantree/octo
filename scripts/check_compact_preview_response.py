@@ -60,7 +60,7 @@ REQUIRED_STATUS_LITERALS_BY_CASE = {
     + (
         (
             "live_binding_state",
-            "live_binding_state=PENDING_VERIFICATION",
+            "live_binding_state=NON_ADMISSIBLE_UNHASHABLE",
         ),
     ),
 }

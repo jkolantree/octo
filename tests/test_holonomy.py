@@ -104,6 +104,17 @@ class HolonomyTests(unittest.TestCase):
             ],
         )
         self.assertIn("HOLONOMY_OBSERVED_DERIVED_PASS", codes)
+        boundary = codes["HOLONOMY_EXTERNAL_INTERPRETATION_NON_ADMISSIBLE"]
+        self.assertEqual(boundary.severity.value, "WARNING")
+        self.assertEqual(
+            boundary.witness,
+            {
+                "authority": "non_admissive_declared_input",
+                "algebraic_scope": "declared_finite_maps",
+                "scientific_truth": "not_established",
+                "source_authenticity": "not_established",
+            },
+        )
 
     def test_exact_kernel_sequence_blocks_hidden_over_quotienting(self):
         raw = self.load("holonomy_observed_exact_kernel_overquotient.json")
@@ -112,6 +123,7 @@ class HolonomyTests(unittest.TestCase):
         self.assertIn("declared dimensions do not balance", failure["reasons"])
         self.assertIn("declared kernel image has the wrong dimension", failure["reasons"])
         self.assertNotIn("HOLONOMY_OBSERVED_DERIVED_PASS", codes)
+        self.assertNotIn("HOLONOMY_EXTERNAL_INTERPRETATION_NON_ADMISSIBLE", codes)
 
     def test_exact_kernel_sequence_replays_nonzero_projection_composite(self):
         raw = self.load("holonomy_observed_exact_kernel_pass.json")
@@ -223,8 +235,18 @@ class HolonomyTests(unittest.TestCase):
                 }
             },
         }
-        codes = {finding.code for finding in audit_holonomy_document(raw)}
+        findings = audit_holonomy_document(raw)
+        codes = {finding.code for finding in findings}
         self.assertIn("HOLONOMY_STRICT_PASS", codes)
+        self.assertIn("HOLONOMY_EXTERNAL_INTERPRETATION_NON_ADMISSIBLE", codes)
+        self.assertEqual(
+            next(
+                finding
+                for finding in findings
+                if finding.code == "HOLONOMY_EXTERNAL_INTERPRETATION_NON_ADMISSIBLE"
+            ).severity.value,
+            "WARNING",
+        )
 
     def test_flattened_system_resource_cap_is_fail_closed(self):
         source_basis = [basis(f"c{i}", f"source coordinate {i}") for i in range(12)]

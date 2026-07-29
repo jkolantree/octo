@@ -204,6 +204,33 @@ Injectivity gives `dim image(i_n) = dim N_n`. Surjectivity gives `dim ker(pi_n) 
 
 Thus `0 -> N -> D -> O -> 0` is a short exact sequence of chain complexes. The v0.2 exact-kernel holonomy route replays these rational rank and composition conditions before constructing an observed-derived class. This certifies the supplied finite quotient algebra; it does not establish that `N` is the scientifically correct nuisance or null subcomplex.
 
-## 11. Status
+## 11. Exact polynomial-identity kernel
+
+Let `Q[x_1,...,x_n]` be the polynomial ring in the certificate's sorted,
+declared variables. The closed term language contains rational constants,
+variables, negation, finite addition and multiplication, and nonnegative
+integer powers. Define `N(t)` recursively as the canonical sparse polynomial
+represented by term `t`.
+
+For a formal equality `L = R`, the engine computes
+
+\[
+\rho = N(L)-N(R).
+\]
+
+Because sparse coefficients are exact rational numbers and like monomials are
+combined canonically, `rho` is zero if and only if `L` and `R` denote the same
+element of `Q[x_1,...,x_n]`. This is a complete decision procedure for the
+closed language, not a probabilistic identity test. A nonzero coefficient and
+power vector is an exact countercertificate.
+
+The theorem is deliberately narrow. It does not interpret the human gloss,
+import axioms, divide by a symbolic expression, handle inequalities or
+transcendental functions, validate an external proof assistant, or establish a
+scientific declaration. Manifest `0.4.0` makes the formal AST authoritative and
+requires the certificate claim ID, statement, residual, evidence result, local
+artifact hash, and gate bindings to agree.
+
+## 12. Status
 
 The algebraic identities above are proved. Their use as a universal scientific ontology is not claimed. The proposed originality lies in the audit assembly, certificate semantics, and executable witness formats; historical priority requires independent review.
