@@ -8,10 +8,13 @@ from .findings import Finding, Severity
 from .manifest import (
     DEPLOYMENT_STATES,
     EVIDENCE_MATURITY,
+    ManifestAuditCache,
     PROOF_KINDS,
     evidence_index,
+    replayed_theorem_evidence,
     verified_evidence_ids,
 )
+from .theorem import THEOREM_GATE_ID
 
 
 GATE_STATES = {"unrun", "pass", "fail", "conflict"}
@@ -23,6 +26,7 @@ def _bound_evidence_is_valid(
     references: object,
     records: dict[str, dict[str, Any]],
     verified_ids: set[str],
+    theorem_replays: dict[str, str],
     claim_type: object,
 ) -> tuple[bool, str, dict[str, Any]]:
     if not isinstance(references, list) or not all(isinstance(value, str) for value in references):
@@ -43,13 +47,28 @@ def _bound_evidence_is_valid(
             evidence_id
             for evidence_id in bound_ids & verified_ids
             if records[evidence_id].get("kind") in PROOF_KINDS
+            and evidence_id not in theorem_replays
         }
-        if claim_type in {"theorem", "theorem_schema"}
+        if claim_type == "theorem"
         else set()
     )
+    admissible_theorem_replays = (
+        theorem_replays
+        if claim_type == "theorem_schema" and gate_id == THEOREM_GATE_ID
+        else {}
+    )
+    nonsemantic_theorem_ids = (
+        (bound_ids & verified_ids) - set(admissible_theorem_replays)
+        if claim_type == "theorem_schema"
+        else set()
+    )
+    ignored_ids = hash_only_proof_ids | nonsemantic_theorem_ids
     observed_results = {
-        records[evidence_id].get("result")
-        for evidence_id in (bound_ids & verified_ids) - hash_only_proof_ids
+        admissible_theorem_replays.get(
+            evidence_id,
+            records[evidence_id].get("result"),
+        )
+        for evidence_id in (bound_ids & verified_ids) - ignored_ids
         if evidence_id in records
     }
     decisive = observed_results & {"pass", "fail"}
@@ -71,6 +90,13 @@ def _bound_evidence_is_valid(
         "missing_records": missing_records,
         "unverified": unverified,
         "hash_only_proof_evidence": sorted(hash_only_proof_ids),
+        "nonsemantic_theorem_evidence": sorted(nonsemantic_theorem_ids),
+        "semantic_theorem_replay": {
+            evidence_id: admissible_theorem_replays[evidence_id]
+            for evidence_id in sorted(
+                bound_ids & set(admissible_theorem_replays)
+            )
+        },
         "observed_results": sorted(value for value in observed_results if isinstance(value, str)),
         "declared_state": state,
     }
@@ -85,9 +111,14 @@ def _bound_evidence_is_valid(
     return valid, computed_state, witness
 
 
-def audit_gate_product(raw: dict[str, Any], artifact_root: Path | None = None) -> list[Finding]:
+def audit_gate_product(
+    raw: dict[str, Any],
+    artifact_root: Path | None = None,
+    audit_cache: ManifestAuditCache | None = None,
+) -> list[Finding]:
     """Audit independent gate coordinates and verified failure propagation."""
 
+    audit_cache = audit_cache or ManifestAuditCache()
     findings: list[Finding] = []
     claim = raw.get("claim")
     admission = raw.get("admission")
@@ -108,7 +139,13 @@ def audit_gate_product(raw: dict[str, Any], artifact_root: Path | None = None) -
         return findings + [Finding(Severity.ERROR, "GATE_RESULTS_TYPE", "admission.gate_results", "gate results must be a list")]
     declared_hard = set(hard_values)
     records = evidence_index(raw)
-    verified_ids = verified_evidence_ids(raw, artifact_root)
+    verified_ids = verified_evidence_ids(raw, artifact_root, audit_cache)
+    theorem_replays, _ = replayed_theorem_evidence(
+        raw,
+        artifact_root,
+        verified_ids,
+        audit_cache,
+    )
     by_id: dict[str, dict[str, Any]] = {}
     verified_results: set[str] = set()
     verified_failures: set[str] = set()
@@ -135,6 +172,7 @@ def audit_gate_product(raw: dict[str, Any], artifact_root: Path | None = None) -
             record.get("evidence", []),
             records,
             verified_ids,
+            theorem_replays,
             claim.get("type"),
         )
         computed_states[gate_id] = computed_state

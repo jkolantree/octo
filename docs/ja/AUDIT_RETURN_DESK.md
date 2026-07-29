@@ -7,7 +7,7 @@ Audit Return Desk は、明示的に non-admissive な contract の下で struct
 - `pages/` 内の browser-local Desk: strict JSON parsing と user-selected file の hash;
 - `python run_audit.py return-desk PATH`: 同じ semantic inspection を行い、return file の directory から artifact を読む。
 
-official service の現在の availability は [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md) に分けて記録します。official-service availability、exact candidate binding、Preview validation、GitHub release state、Pages deployment は別々の fact であり、この source feature の存在だけからどれも推論できません。
+official service の現在の availability は [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md) に分けて記録します。official-service availability、observable editor state、Preview validation、GitHub release state、Pages deployment は別々の fact であり、この source feature の存在だけからどれも推論できません。unhashable live controller または indexed Knowledge state は `NON_ADMISSIBLE_UNHASHABLE` のままであり、return envelope から engine gate、theorem replay、scientific admission へ昇格できません。
 
 official compact Custom GPT は machine record を生成・export せず、`BSC_EXECUTION_AND_RECEIPTS.md` も upload しません。この Desk と compiler workflow は supervised standalone repository tooling としてのみ利用できます。source に存在することは public GPT が実行したことを意味しません。
 

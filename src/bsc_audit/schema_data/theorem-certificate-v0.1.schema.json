@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bsc-audit:schema:theorem-certificate:v0.1",
+  "title": "BSC exact-Q polynomial theorem certificate 0.1.0",
+  "type": "object",
+  "required": ["certificate_version", "claim_id", "formal_statement", "residual"],
+  "properties": {
+    "certificate_version": {"const": "0.1.0"},
+    "claim_id": {"$ref": "#/$defs/id"},
+    "formal_statement": {"$ref": "#/$defs/formalStatement"},
+    "residual": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {"$ref": "#/$defs/monomial"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,191}$"
+    },
+    "variable": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]{0,31}$"
+    },
+    "rational": {
+      "oneOf": [
+        {"type": "integer"},
+        {
+          "type": "string",
+          "maxLength": 514,
+          "pattern": "^-?(?:0|[1-9][0-9]*)/[1-9][0-9]*$"
+        }
+      ]
+    },
+    "formalStatement": {
+      "type": "object",
+      "required": ["language", "field", "variables", "relation"],
+      "properties": {
+        "language": {"const": "q-polynomial-identity-v0.1"},
+        "field": {"const": "Q"},
+        "variables": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/variable"}
+        },
+        "relation": {"$ref": "#/$defs/equality"}
+      },
+      "additionalProperties": false
+    },
+    "equality": {
+      "type": "object",
+      "required": ["op", "left", "right"],
+      "properties": {
+        "op": {"const": "eq"},
+        "left": {"$ref": "#/$defs/term"},
+        "right": {"$ref": "#/$defs/term"}
+      },
+      "additionalProperties": false
+    },
+    "term": {
+      "type": "object",
+      "required": ["op"],
+      "properties": {
+        "op": {"enum": ["const", "var", "neg", "add", "mul", "pow"]}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"op": {"const": "const"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "value"],
+            "properties": {
+              "op": {"const": "const"},
+              "value": {"$ref": "#/$defs/rational"}
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {"op": {"const": "var"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "name"],
+            "properties": {
+              "op": {"const": "var"},
+              "name": {"$ref": "#/$defs/variable"}
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {"op": {"const": "neg"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "arg"],
+            "properties": {
+              "op": {"const": "neg"},
+              "arg": {"$ref": "#/$defs/term"}
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {"op": {"const": "add"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "args"],
+            "properties": {
+              "op": {"const": "add"},
+              "args": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 16,
+                "items": {"$ref": "#/$defs/term"}
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {"op": {"const": "mul"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "args"],
+            "properties": {
+              "op": {"const": "mul"},
+              "args": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 16,
+                "items": {"$ref": "#/$defs/term"}
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {"op": {"const": "pow"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "base", "exponent"],
+            "properties": {
+              "op": {"const": "pow"},
+              "base": {"$ref": "#/$defs/term"},
+              "exponent": {"type": "integer", "minimum": 0, "maximum": 16}
+            },
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "monomial": {
+      "type": "object",
+      "required": ["powers", "coefficient"],
+      "properties": {
+        "powers": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "integer", "minimum": 0}
+        },
+        "coefficient": {"$ref": "#/$defs/rational"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "certificate_version": "0.1.0",
+  "claim_id": "bsc:example:binomial-square",
+  "formal_statement": {
+    "language": "q-polynomial-identity-v0.1",
+    "field": "Q",
+    "variables": ["x", "y"],
+    "relation": {
+      "op": "eq",
+      "left": {
+        "op": "pow",
+        "base": {
+          "op": "add",
+          "args": [
+            {"op": "var", "name": "x"},
+            {"op": "var", "name": "y"}
+          ]
+        },
+        "exponent": 2
+      },
+      "right": {
+        "op": "add",
+        "args": [
+          {
+            "op": "pow",
+            "base": {"op": "var", "name": "x"},
+            "exponent": 2
+          },
+          {
+            "op": "mul",
+            "args": [
+              {"op": "const", "value": 2},
+              {"op": "var", "name": "x"},
+              {"op": "var", "name": "y"}
+            ]
+          },
+          {
+            "op": "pow",
+            "base": {"op": "var", "name": "y"},
+            "exponent": 2
+          }
+        ]
+      }
+    }
+  },
+  "residual": []
+}

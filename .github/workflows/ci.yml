@@ -48,6 +48,8 @@ jobs:
       - run: python run_audit.py complex examples/complex_valid_transport.json
       - run: python run_audit.py atomic examples/atomic_modulus_valid.json
       - run: python run_audit.py defect examples/defect_composition_valid.json
+      - run: python run_audit.py theorem examples/theorem_binomial_identity.json
+      - run: python run_audit.py audit examples/claim_polynomial_identity.json
       - name: Negative examples must fail closed
         run: |
           if python run_audit.py audit examples/claim_arithmetic_no_go.json; then exit 1; fi

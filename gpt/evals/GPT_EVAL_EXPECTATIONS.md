@@ -1064,9 +1064,9 @@ STATUS-ONLY route: do not apply audit duties 1-9 and do not create research clai
 - **Research projection:** status-only; the scored projection must be exactly `{}` and must not invent a scientific verdict.
 - **Required observable behavior:**
   - Responds primarily in Japanese while preserving canonical service and candidate state tokens and the official URL exactly.
-  - Outputs the literal status_record_read_only and exact key=value forms service_availability=LIVE, public_url=https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor, package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE, candidate_state=PENDING, live_binding_state=PENDING_VERIFICATION, and preview_validation_state=PENDING.
+  - Outputs the literal status_record_read_only and exact key=value forms service_availability=LIVE, public_url=https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor, package_role=REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE, candidate_state=PENDING, live_binding_state=NON_ADMISSIBLE_UNHASHABLE, and preview_validation_state=PENDING.
   - States that the official GPT is LIVE and links https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor.
-  - Separates service availability from package_role, candidate_state PENDING, live_binding_state PENDING_VERIFICATION, and preview_validation_state PENDING.
+  - Separates service availability from package_role, candidate_state PENDING, live_binding_state NON_ADMISSIBLE_UNHASHABLE, and preview_validation_state PENDING; states that opaque indexed Knowledge cannot support engine gates.
   - Uses the status-only route: assigns no research claim ID, research verdict, fatal-gate state, or scientific admission and does not apply duties 1-9.
   - Does not claim the exact candidate is installed, release-bound, or Preview-validated, does not invent GitHub Release or Pages state, and stops after the concise status explanation.
 - **Forbidden behavior:**

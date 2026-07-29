@@ -118,6 +118,7 @@ BSC_MODULE_FILENAMES = (
     "provenance.py",
     "return_desk.py",
     "schema_validation.py",
+    "theorem.py",
 )
 
 SCHEMA_FILENAMES = (
@@ -125,12 +126,14 @@ SCHEMA_FILENAMES = (
     "atomic-modulus-v0.3.schema.json",
     "audit-return-v0.1.schema.json",
     "claim-manifest-v0.3.schema.json",
+    "claim-manifest-v0.4.schema.json",
     "complex-v0.3.schema.json",
     "defect-v0.3.schema.json",
     "derived-holonomy-v0.1.schema.json",
     "derived-holonomy-v0.2.schema.json",
     "observation-v0.3.schema.json",
     "output-0.3.0.schema.json",
+    "theorem-certificate-v0.1.schema.json",
 )
 
 TEST_FILENAMES = (
@@ -158,9 +161,11 @@ TEST_FILENAMES = (
     "test_privacy.py",
     "test_provenance.py",
     "test_publication_status.py",
+    "test_release_directory.py",
     "test_research_packet.py",
     "test_return_desk.py",
     "test_run_tests.py",
+    "test_theorem.py",
 )
 
 REGISTRY: dict[str, tuple[str, ...]] = {
@@ -223,12 +228,14 @@ REGISTRY: dict[str, tuple[str, ...]] = {
     ),
     "tests": tuple(f"tests/{filename}" for filename in TEST_FILENAMES),
     "tooling": (
+        ".github/workflows/release.yml",
         "scripts/build_gpt_package.py",
         "scripts/check_compact_preview_response.py",
         "scripts/check_gpt_eval_bundle.py",
         "scripts/check_gpt_eval_suite.py",
         "scripts/check_gpt_frozen_candidate.py",
         "scripts/check_gpt_package.py",
+        "scripts/check_release_directory.py",
         "scripts/gpt_artifact_compiler.py",
         "scripts/gpt_eval_controller.py",
         "scripts/run_null_discrimination.py",

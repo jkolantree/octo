@@ -1,17 +1,38 @@
 import json
 import tempfile
 import unittest
+from copy import deepcopy
 from pathlib import Path
+from unittest.mock import patch
 
+import bsc_audit.manifest as manifest_module
 from bsc_audit.cli import audit_claim
-from bsc_audit.manifest import lint_manifest
+from bsc_audit.manifest import (
+    MAX_THEOREM_ARTIFACTS_PER_AUDIT,
+    MAX_THEOREM_REPLAYS_PER_AUDIT,
+    lint_manifest,
+)
 from bsc_audit.provenance import sha256_bytes
+from bsc_audit.theorem import MAX_CERTIFICATE_BYTES
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class ManifestTests(unittest.TestCase):
+    def make_polynomial_manifest(self, root: Path) -> dict:
+        raw = json.loads(
+            (ROOT / "examples" / "claim_polynomial_identity.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        certificate = (
+            ROOT / "examples" / "theorem_binomial_identity.json"
+        ).read_bytes()
+        (root / "theorem_binomial_identity.json").write_bytes(certificate)
+        raw["evidence"][0]["sha256"] = sha256_bytes(certificate)
+        return raw
+
     def make_manifest(self, root: Path) -> dict:
         artifacts = {
             "proof.json": b'{"proof":"exact fixture"}\n',
@@ -118,6 +139,308 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(
             gate.witness["hash_only_proof_evidence"],
             ["evidence:proof"],
+        )
+
+    def test_v04_exact_polynomial_theorem_replays_into_its_gate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            findings = audit_claim(self.make_polynomial_manifest(root), root)
+        self.assertFalse(
+            any(
+                finding.severity.value in {"ERROR", "BLOCKED", "DEMOTION"}
+                for finding in findings
+            )
+        )
+        replay = next(
+            finding
+            for finding in findings
+            if finding.code == "THEOREM_IDENTITY_REPLAYED"
+        )
+        self.assertEqual(
+            replay.witness["evidence_id"],
+            "evidence:binomial-normal-form",
+        )
+        self.assertFalse(
+            any(
+                finding.code
+                in {"THEOREM_CERTIFICATE_MISSING", "GATE_RESULT_UNVERIFIED"}
+                for finding in findings
+            )
+        )
+
+    def test_v04_forged_residual_is_not_semantically_admissible(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            certificate_path = root / "theorem_binomial_identity.json"
+            certificate = json.loads(certificate_path.read_text(encoding="utf-8"))
+            certificate["residual"] = [{"powers": [0, 0], "coefficient": 1}]
+            payload = (
+                json.dumps(certificate, indent=2, ensure_ascii=False).encode("utf-8")
+                + b"\n"
+            )
+            certificate_path.write_bytes(payload)
+            raw["evidence"][0]["sha256"] = sha256_bytes(payload)
+            findings = audit_claim(raw, root)
+        self.assertTrue(
+            any(
+                finding.code == "THEOREM_CERTIFICATE_RESIDUAL_MISMATCH"
+                for finding in findings
+            )
+        )
+        self.assertTrue(
+            any(
+                finding.code == "THEOREM_CERTIFICATE_MISSING"
+                for finding in findings
+            )
+        )
+        self.assertFalse(
+            any(
+                finding.code == "MANIFEST_STRUCTURALLY_VALID"
+                for finding in findings
+            )
+        )
+
+    def test_v04_certificate_must_match_authoritative_statement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            raw["claim"]["formal_statement"]["relation"]["right"] = {
+                "op": "const",
+                "value": 0,
+            }
+            findings = audit_claim(raw, root)
+        self.assertTrue(
+            any(
+                finding.code == "THEOREM_CERTIFICATE_STATEMENT_MISMATCH"
+                for finding in findings
+            )
+        )
+
+    def test_v04_declared_result_must_match_exact_replay(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            raw["evidence"][0]["result"] = "fail"
+            raw["admission"]["gate_results"][0]["state"] = "fail"
+            findings = audit_claim(raw, root)
+        mismatch = next(
+            finding
+            for finding in findings
+            if finding.code == "THEOREM_EVIDENCE_RESULT_MISMATCH"
+        )
+        self.assertEqual(
+            mismatch.witness,
+            {
+                "evidence_id": "evidence:binomial-normal-form",
+                "declared": "fail",
+                "computed": "pass",
+                "formal_statement_sha256": "sha256:d13e48cd90e7990a5b176ec6d573c2462aa9022874cf737fb0dfde7d17318586",
+            },
+        )
+
+    def test_v04_theorem_gate_rejects_nonsemantic_evidence_laundering(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            raw["evidence"][0]["verifies_gates"] = []
+            review = b'{"review":"looks good"}\n'
+            (root / "review.json").write_bytes(review)
+            raw["evidence"].append(
+                {
+                    "id": "evidence:informal-review",
+                    "kind": "audit_report",
+                    "status": "verified",
+                    "result": "pass",
+                    "artifact": "review.json",
+                    "sha256": sha256_bytes(review),
+                    "verifies_gates": ["exact_polynomial_identity"],
+                    "verifies_claims": ["bsc:example:binomial-square"],
+                }
+            )
+            raw["admission"]["gate_results"][0]["evidence"] = [
+                "evidence:informal-review"
+            ]
+            findings = audit_claim(raw, root)
+        gate = next(
+            finding
+            for finding in findings
+            if finding.code == "GATE_RESULT_UNVERIFIED"
+        )
+        self.assertEqual(gate.witness["computed_state"], "unrun")
+        self.assertEqual(
+            gate.witness["nonsemantic_theorem_evidence"],
+            ["evidence:informal-review"],
+        )
+
+    def test_v04_duplicate_certificate_aliases_verify_and_replay_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            template = raw["evidence"][0]
+            raw["evidence"] = []
+            for index in range(100):
+                item = deepcopy(template)
+                item["id"] = f"evidence:duplicate-{index:03d}"
+                item["verifies_gates"] = (
+                    ["exact_polynomial_identity"] if index == 0 else []
+                )
+                raw["evidence"].append(item)
+            raw["admission"]["gate_results"][0]["evidence"] = [
+                "evidence:duplicate-000"
+            ]
+            with (
+                patch(
+                    "bsc_audit.manifest.verify_local_artifact",
+                    wraps=manifest_module.verify_local_artifact,
+                ) as verify,
+                patch(
+                    "bsc_audit.manifest.load_and_replay_theorem_certificate",
+                    wraps=manifest_module.load_and_replay_theorem_certificate,
+                ) as replay,
+            ):
+                findings = audit_claim(raw, root)
+        self.assertFalse(
+            any(
+                finding.severity.value in {"ERROR", "BLOCKED", "DEMOTION"}
+                for finding in findings
+            )
+        )
+        self.assertEqual(verify.call_count, 1)
+        self.assertEqual(replay.call_count, 1)
+
+    def test_v04_exact_certificate_hashing_uses_the_replay_size_ceiling(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            payload = b" " * (MAX_CERTIFICATE_BYTES + 1)
+            (root / "theorem_binomial_identity.json").write_bytes(payload)
+            raw["evidence"][0]["sha256"] = sha256_bytes(payload)
+            findings = lint_manifest(raw, root)
+        unverified = next(
+            finding
+            for finding in findings
+            if finding.code == "EVIDENCE_ARTIFACT_UNVERIFIED"
+        )
+        self.assertEqual(unverified.witness["reason"], "artifact_too_large")
+
+    def test_v04_same_digest_across_paths_replays_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            template = raw["evidence"][0]
+            payload = (root / template["artifact"]).read_bytes()
+            raw["evidence"] = []
+            for index in range(MAX_THEOREM_REPLAYS_PER_AUDIT):
+                name = f"theorem-alias-{index:02d}.json"
+                (root / name).write_bytes(payload)
+                item = deepcopy(template)
+                item["id"] = f"evidence:path-alias-{index:02d}"
+                item["artifact"] = name
+                item["verifies_gates"] = (
+                    ["exact_polynomial_identity"] if index == 0 else []
+                )
+                raw["evidence"].append(item)
+            raw["admission"]["gate_results"][0]["evidence"] = [
+                "evidence:path-alias-00"
+            ]
+            with patch(
+                "bsc_audit.manifest.load_and_replay_theorem_certificate",
+                wraps=manifest_module.load_and_replay_theorem_certificate,
+            ) as replay:
+                findings = audit_claim(raw, root)
+        self.assertFalse(
+            any(
+                finding.severity.value in {"ERROR", "BLOCKED", "DEMOTION"}
+                for finding in findings
+            )
+        )
+        self.assertEqual(replay.call_count, 1)
+
+    def test_v04_unique_theorem_artifact_limit_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            template = raw["evidence"][0]
+            payload = (root / template["artifact"]).read_bytes()
+            raw["evidence"] = []
+            for index in range(MAX_THEOREM_ARTIFACTS_PER_AUDIT + 1):
+                name = f"theorem-path-{index:02d}.json"
+                (root / name).write_bytes(payload)
+                item = deepcopy(template)
+                item["id"] = f"evidence:artifact-limit-{index:02d}"
+                item["artifact"] = name
+                item["verifies_gates"] = (
+                    ["exact_polynomial_identity"] if index == 0 else []
+                )
+                raw["evidence"].append(item)
+            raw["admission"]["gate_results"][0]["evidence"] = [
+                "evidence:artifact-limit-00"
+            ]
+            findings = audit_claim(raw, root)
+        limit = next(
+            finding
+            for finding in findings
+            if finding.code == "THEOREM_RESOURCE_LIMIT"
+            and finding.witness.get("reason") == "theorem_artifact_limit"
+        )
+        self.assertEqual(
+            limit.witness["max_unique_artifacts"],
+            MAX_THEOREM_ARTIFACTS_PER_AUDIT,
+        )
+
+    def test_v04_unique_theorem_replay_limit_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            template = raw["evidence"][0]
+            certificate = json.loads(
+                (root / template["artifact"]).read_text(encoding="utf-8")
+            )
+            raw["evidence"] = []
+            for index in range(MAX_THEOREM_REPLAYS_PER_AUDIT + 1):
+                name = f"theorem-variant-{index:02d}.json"
+                payload = json.dumps(certificate).encode("utf-8") + b" " * index
+                (root / name).write_bytes(payload)
+                item = deepcopy(template)
+                item["id"] = f"evidence:replay-limit-{index:02d}"
+                item["artifact"] = name
+                item["sha256"] = sha256_bytes(payload)
+                item["verifies_gates"] = (
+                    ["exact_polynomial_identity"] if index == 0 else []
+                )
+                raw["evidence"].append(item)
+            raw["admission"]["gate_results"][0]["evidence"] = [
+                "evidence:replay-limit-00"
+            ]
+            with patch(
+                "bsc_audit.manifest.load_and_replay_theorem_certificate",
+                wraps=manifest_module.load_and_replay_theorem_certificate,
+            ) as replay:
+                findings = audit_claim(raw, root)
+        limit = next(
+            finding
+            for finding in findings
+            if finding.code == "THEOREM_RESOURCE_LIMIT"
+            and finding.witness.get("max_unique_certificate_digests")
+            == MAX_THEOREM_REPLAYS_PER_AUDIT
+        )
+        self.assertEqual(
+            limit.witness["max_unique_certificate_digests"],
+            MAX_THEOREM_REPLAYS_PER_AUDIT,
+        )
+        self.assertEqual(replay.call_count, MAX_THEOREM_REPLAYS_PER_AUDIT)
+
+    def test_v04_theorem_schema_cannot_relabel_its_exact_gate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            raw["admission"]["hard_gates"] = ["scientific_truth"]
+            raw["admission"]["gate_results"][0]["id"] = "scientific_truth"
+            raw["evidence"][0]["verifies_gates"] = ["scientific_truth"]
+            findings = audit_claim(raw, root)
+        self.assertTrue(
+            any(finding.code == "SCHEMA_VALIDATION" for finding in findings)
         )
 
     def test_missing_demotion_is_malformed(self):

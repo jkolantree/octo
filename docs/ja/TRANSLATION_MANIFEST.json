@@ -9,45 +9,45 @@
   "entries": [
     {
       "source": "README.md",
-      "source_sha256": "f36b9e7e07ddff4b6ac9e31bcd97adcd467bb3deee85bfa3a49a0f0320852274",
+      "source_sha256": "1acc142271d6718678e3e8edf51b8cb01158ae527261955b21493527872ac21f",
       "target": "README.ja.md",
-      "target_sha256": "24dcf75b5c28582fb7f6e68264263dcda05f7808d97f38201aa54056ecbc7324"
+      "target_sha256": "55c7eda227b99936aee703d078569a05c5d00c2921de9fa1c5e26d6849b2bd21"
     },
     {
       "source": "START_HERE.md",
-      "source_sha256": "2bbc77dd4ea6c15342ab3a53054954f461bbed135f2bec699967b1d3f7fd1224",
+      "source_sha256": "95f586ab6860fd573d12c9b3bb01d15e7330555624bce18f2951990e6660eda9",
       "target": "START_HERE.ja.md",
-      "target_sha256": "64bfb27c2865d6109cfcf0ed5798b3382b0ec6f72df025fd5152bce5bafb74fe"
+      "target_sha256": "fc7916fd22102164292205d8afc420fa47b77c4565275833265e840c7d39731c"
     },
     {
       "source": "docs/AUDIT_RETURN_DESK.md",
-      "source_sha256": "b07b90918047b63a7a9ebdf021e5bd22499691f0f657bc56e6a34410b84ba1b7",
+      "source_sha256": "e7c21fa5a297a82ae4efef06333e87b0a1e7898237f85b3854fb0600c4a5942e",
       "target": "docs/ja/AUDIT_RETURN_DESK.md",
-      "target_sha256": "e67132831e042f7b5677c61ee51de9eda8e2329999549d6ce40d74cede0c837b"
+      "target_sha256": "e5d0090be47f224ec08a8fa77d77e6de04fbc2ece6dbe9cad9bb11879aa434ae"
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "6ff5b868a558e4274f1d77f4a086b58c5a30c5eb2fcd8cb21346d1b1353b5256",
+      "source_sha256": "e5864da9599c31768fc7eb5ef7070cacf1c9393f5671366548cff64a66108fd8",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
-      "target_sha256": "01fe4642608563d74d99cc93c8abbb54602ad81b776fb80299b7cc251e5b2c0c"
+      "target_sha256": "d4a82d3e28f28e69b97b205ab51411d524ced5a9cb4e2c4efcc27d67edc5b267"
     },
     {
       "source": "docs/STATUS_MODEL.md",
-      "source_sha256": "bb65e989af57fafa915e2257aa698652d539fa54e1e789d9388b3be48c481602",
+      "source_sha256": "254e8767b83c5592c3add6309000324018560726a5d3e4fb4f695e268c45af35",
       "target": "docs/ja/STATUS_MODEL.md",
-      "target_sha256": "79a198344f65f78fa839202e74d6f99cec939659b0574ebfb3487e75e8c32bb8"
+      "target_sha256": "ff2ec5fcc7b60d7084422a20499500db5cc8fecf5dc28b0723da812a751f95c4"
     },
     {
       "source": "docs/index.md",
-      "source_sha256": "4c513c7043165713e4f56b6b54281341169ef1d2857b32e70253d50af580eb0f",
+      "source_sha256": "90774c5b536b30e10283c02b94f09d7ba3d0ea3ee2a4afdc85c5f0e2ae148977",
       "target": "docs/ja/index.md",
-      "target_sha256": "5e4d6142783e328b4cab3e1e9b2b7edd6d469a0ac2b82b9262c92f50d8313b00"
+      "target_sha256": "9740a9861739a678dec0cad2f31ed7c1ad6dad47ac1182185de4308290d5d1b9"
     },
     {
       "source": "pages/index.html",
-      "source_sha256": "be06414228d6e94381ce512dafbe11a19104ac3c0f8d172cb59d76a4b07261dc",
+      "source_sha256": "e7ad461c1e24cb3a50593f649b4527e8dd15f4c340cdd5997d64d5ad5846c977",
       "target": "pages/ja.html",
-      "target_sha256": "c97d687bf83a051b885e9a083919aa9e13a3df374de35d0d3258a7604c105e6d"
+      "target_sha256": "7d755b0c0a4ee0d13626a2a120a1cf9a90bb1674403d446daf1dce7e8fdbc0b4"
     },
     {
       "source": "pages/locale-en.js",
@@ -59,7 +59,7 @@
   "supplements": [
     {
       "path": "docs/ja/GLOSSARY.md",
-      "sha256": "add9096ee0692da6421453e749d3acef2022f6f42da47078f834cc2c9c5086b0",
+      "sha256": "338f1cf72c121f1a3315779eeb7764035e564951d1c346e67dfd534775304f10",
       "role": "japanese_machine_token_glossary"
     },
     {
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "23503d7245f36832a39aecf25e58da8a76054505f94285c1cf346089b6723abc"
+  "manifest_payload_sha256": "83e95d3e4dcb5ec61286c8e4d22e140d0de72c3aad6a1494f0437fbb1d960de4"
 }

@@ -5,8 +5,8 @@
 数学的・科学的主張を、調査、反証、再現、降格しやすくするための研究プレビュー版ソフトウェアです。
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor)（live research preview）<br>
-**現行 GitHub prerelease:** `v0.3.0-alpha.11`<br>
-**検証境界:** exact live binding と 12-case compact Preview の結果は別に報告します。これは certification ではなく research preview です<br>
+**現行 GitHub prerelease:** `v0.3.0-alpha.12`<br>
+**検証境界:** indexed Knowledge bytes は independently retrievable ではないため、exact live binding は `NON_ADMISSIBLE_UNHASHABLE` です。product observation と engine proof は分離し、これは certification ではなく research preview です<br>
 **プロジェクト状態:** 実験的。研究監査と既知解テストには利用できますが、無人の科学・臨床・法律・安全・政策判断には使用できません。
 
 **関連研究:** *On Boundaries of Evidence / Boundary-State Calculus* は https://github.com/jkolantree/BSC で別に管理されています。この audit engine は experimental companion であり、manuscript を certify せず、theorem status を確立しません。
@@ -20,6 +20,7 @@ BSC は、慎重な想像力のための基盤です。大胆な仮説は許し�
 エンジンは、宣言された限定的な構造上の義務を検査します。現在のルートには次が含まれます。
 
 - manifest と hard gate の lint;
+- `Q` 上の closed polynomial identity の exact symbolic replay;
 - 有理数上の厳密な行列・chain-complex 検査;
 - certificate interchange の defect と有限 witness;
 - square holonomy と path dependence;
@@ -44,7 +45,7 @@ BSC は、慎重な想像力のための基盤です。大胆な仮説は許し�
 2. **ローカル browser Packet Builder と Audit Return Desk:** [deployed English GitHub Pages module](https://jkolantree.github.io/octo/) または [deployed Japanese route](https://jkolantree.github.io/octo/ja.html) で versioned packet を作成したり、返却された `audit_return.json` draft と selected artifact bytes をローカル検査したりできます。どちらの interface も target を upload せず、LLM を呼び出さず、Python を実行しません。
 3. **Repository と Python engine — exact checker route:** versioned schema、fixture、finite exact check、保存された command output については [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) を参照してください。ここで BSC checker を実行するのはこのルートだけです。
 
-repository には、independent inspection、reproducible deployment、compatible fork、verifiable update に使う deterministic Custom GPT package lineage があります。alpha.10 は separately observed live baseline、alpha.11 は unvalidated repository update candidate であり、この release lane では live に install しません。
+repository には、independent inspection、reproducible deployment、compatible fork、verifiable update に使う deterministic Custom GPT package lineage があります。alpha.10 は separately observed live baseline、alpha.12 は unvalidated repository update candidate であり、この release lane では live に install しません。indexed Knowledge bytes は independently retrievable ではないため、`NON_ADMISSIBLE_UNHASHABLE` であり engine gate の evidence にはなりません。
 
 補助的な入口:
 
