@@ -17,10 +17,14 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from build_gpt_package import (  # noqa: E402
     COMPACT_PREVIEW_CASE_IDS,
     EVAL_GOVERNANCE_SOURCES,
+    EXPECTED_CONVERSATION_STARTERS,
+    EXPECTED_STARTER_ROUTE_BINDINGS,
+    EXPECTED_STARTER_ROUTE_TEXT,
     GPT_ROOT,
     MAX_GPT_INSTRUCTION_CHARACTERS,
     NONADMISSIVE_RECEIPT_RESEARCH_PROJECTION_EXACT,
     OFFICIAL_GPT_URL,
+    OPERATING_GPT_INSTRUCTION_CHARACTERS,
     PROFILE_PATH,
     REQUIRED_EVAL_CASE_REQUIREMENTS,
     REQUIRED_EVAL_CASE_IDS,
@@ -38,10 +42,12 @@ from build_gpt_package import (  # noqa: E402
     materialize_eval_cases,
     package_files,
     provenance_paths,
+    render_instructions,
     render_preview_prompt,
     sha256_bytes,
     validate_evaluation_governance,
     validate_exact_eval_oracles,
+    validate_starter_routing,
     verify_archive,
     verify_package,
     write_archive,
@@ -85,7 +91,7 @@ class CustomGptPackageTests(unittest.TestCase):
         binding = {
             "source_commit": "1" * 40,
             "source_tree": "2" * 40,
-            "source_tag": "v0.3.0-alpha.9",
+            "source_tag": "v0.3.0-alpha.10",
         }
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-bound-zip-") as directory:
             path = write_gpt_release_asset(Path(directory), **binding)
@@ -99,8 +105,8 @@ class CustomGptPackageTests(unittest.TestCase):
             )
 
     def test_final_tree_has_the_exact_release_identity(self) -> None:
-        self.assertEqual(RELEASE_ENGINE_VERSION, "0.3.0a9")
-        self.assertEqual(PUBLIC_VERSION, "0.3.0-alpha.9")
+        self.assertEqual(RELEASE_ENGINE_VERSION, "0.3.0a10")
+        self.assertEqual(PUBLIC_VERSION, "0.3.0-alpha.10")
         self.assertIsNone(require_release_version())
 
     def test_final_knowledge_links_target_the_exact_release_tag(self) -> None:
@@ -110,10 +116,10 @@ class CustomGptPackageTests(unittest.TestCase):
             for path, data in payload.items()
             if path.parts and path.parts[0] == "knowledge"
         )
-        self.assertNotIn("/blob/v0.3.0-alpha.9.dev1/", knowledge)
+        self.assertNotIn("/blob/v0.3.0-alpha.10.dev1/", knowledge)
         self.assertNotIn("https://github.com/jkolantree/octo/blob/main/", knowledge)
         self.assertIn(
-            "https://github.com/jkolantree/octo/blob/v0.3.0-alpha.9/",
+            "https://github.com/jkolantree/octo/blob/v0.3.0-alpha.10/",
             knowledge,
         )
 
@@ -305,7 +311,7 @@ class CustomGptPackageTests(unittest.TestCase):
         for text in (setup, readme):
             self.assertIn("12", text)
             self.assertIn("compact", text.lower())
-            self.assertIn("exact immutable tag `v0.3.0-alpha.9`", text)
+            self.assertIn("exact immutable tag `v0.3.0-alpha.10`", text)
             self.assertIn("new version and tag", text)
             self.assertIn("freeze", text.lower())
             self.assertIn("historical", text.lower())
@@ -315,6 +321,10 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertIn("no files", setup)
         self.assertIn("complete restart from Case 1", setup)
         self.assertIn("same frozen candidate", setup)
+        self.assertIn("normal/default model mode", setup)
+        self.assertIn("remove any **Heavy** model-mode selection", setup)
+        self.assertIn("separate from the BSC audit depth", setup)
+        self.assertIn("ordinary default remains Quick", setup)
 
     def test_frozen_evaluation_protocol_mutation_fails_closed(self) -> None:
         cases = load_strict_json(
@@ -446,7 +456,14 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertNotIn("BSC_CODEX_PUBLIC_GPT_WORKFLOW.md", "\n".join(provenance_paths(profile)))
         instructions = payload[Path("GPT_INSTRUCTIONS.md")]
         instruction_text = instructions.decode("utf-8")
-        self.assertLessEqual(len(instruction_text), MAX_GPT_INSTRUCTION_CHARACTERS)
+        self.assertLessEqual(
+            len(instruction_text),
+            OPERATING_GPT_INSTRUCTION_CHARACTERS,
+        )
+        self.assertEqual(
+            OPERATING_GPT_INSTRUCTION_CHARACTERS,
+            MAX_GPT_INSTRUCTION_CHARACTERS * 3 // 4,
+        )
         self.assertNotIn("Profile SHA-256:", instruction_text)
         self.assertIsNone(
             re.search(
@@ -454,25 +471,21 @@ class CustomGptPackageTests(unittest.TestCase):
                 instruction_text,
             )
         )
-        self.assertTrue(instructions.startswith(b"BSC_CUSTOM_GPT_INSTRUCTIONS_BEGIN\n"))
-        self.assertTrue(instructions.endswith(b"BSC_CUSTOM_GPT_INSTRUCTIONS_END"))
+        self.assertTrue(instructions.startswith(b"BSC_BEGIN\n"))
+        self.assertTrue(instructions.endswith(b"BSC_END"))
         for fixed_contract_line in (
-            "K:PROTOCOL|STATUS|CHECKS|EXAMPLES|JA;missing=>unavailable,"
-            "no affected pass/proven/run.",
-            "PUBLIC:human audit only at every depth;visible text;"
-            "exact non-hash tokens+URLs;"
-            "never compute/output/copy/quote hash/digest values.",
-            "STATUS_ONLY>duties1-9:official service/package/candidate/binding/Preview/"
-            "release/Pages states only;no research IDs/verdicts/gates/admission;"
-            "requested language.",
-            f"OFFICIAL:{OFFICIAL_GPT_URL};LIVE=availability only;"
-            "never installed/bound/validated/released/Pages proof.",
-            "F=fatal;R=required;all.",
+            "K missing=>unavailable;blocks affected pass/proven/run.",
+            "PUBLIC:visible human audit;never compute/emit/copy/quote "
+            "hash/digest values.",
+            "FATAL(all depths):",
+            "REQUIRED(all depths):",
         ):
             self.assertIn(fixed_contract_line, instruction_text)
+        instruction_lines = instruction_text.splitlines()
         for rule in rules:
             marker = "F" if rule["severity"] == "fatal" else "R"
-            self.assertEqual(instruction_text.count(f"{marker}:{rule['id']}:{rule['text']}"), 1)
+            self.assertEqual(instruction_lines.count(rule["text"]), 1)
+            self.assertNotIn(f"{marker}:{rule['id']}:", instruction_text)
         self.assertIn(
             "Missing/truncated proof=>THEOREM PBU; never true/no-counterexample/proven; completion=repair.",
             instruction_text,
@@ -532,26 +545,23 @@ class CustomGptPackageTests(unittest.TestCase):
             ],
         )
         self.assertIn(
-            "never compute/output/copy/quote hash/digest values",
+            "never compute/emit/copy/quote hash/digest values",
             instruction_text,
         )
         self.assertIn("Intake<=40 words", instruction_text)
         self.assertIn("Follow-up<=120", instruction_text)
         self.assertIn("Quick<=250 words", instruction_text)
-        self.assertIn(
-            "ask only for a one-sentence claim in user's language;"
-            " no evidence/files yet; stop",
-            instruction_text,
-        )
+        for literal, _marker in EXPECTED_STARTER_ROUTE_BINDINGS:
+            self.assertEqual(instruction_text.count(literal), 1)
+        self.assertIn(EXPECTED_STARTER_ROUTE_TEXT, instruction_text)
+        self.assertIn("I=ask only 1-sentence same-language claim", instruction_text)
+        self.assertIn("E=one brief Quick example", instruction_text)
+        self.assertIn("No claim:example=>E;else I", instruction_text)
         self.assertIn("else Quick", instruction_text)
         self.assertIn("Deep=Standard/Adversarial", instruction_text)
         self.assertIn("Formal=formal-mathematical", instruction_text)
         self.assertIn("Standard<=650", instruction_text)
         self.assertIn("Adversarial/Formal<=1000", instruction_text)
-        self.assertIn(
-            "DEEP/FORMAL:use nine duties;Quick/Intake/Follow-up do not.",
-            instruction_text,
-        )
         self.assertNotIn("\n1:Source coverage\n", instruction_text)
         durable_knowledge = "\n".join(
             data.decode("utf-8")
@@ -655,10 +665,13 @@ class CustomGptPackageTests(unittest.TestCase):
         instruction_length = len(
             generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
         )
-        self.assertLessEqual(instruction_length, 7500)
+        self.assertLessEqual(
+            instruction_length,
+            OPERATING_GPT_INSTRUCTION_CHARACTERS,
+        )
         self.assertGreaterEqual(
             MAX_GPT_INSTRUCTION_CHARACTERS - instruction_length,
-            500,
+            MAX_GPT_INSTRUCTION_CHARACTERS // 4,
         )
 
         spec = load_strict_json(ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json")
@@ -972,10 +985,78 @@ class CustomGptPackageTests(unittest.TestCase):
             )
         )
         instructions = generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
-        self.assertLessEqual(len(instructions), MAX_GPT_INSTRUCTION_CHARACTERS)
+        self.assertLessEqual(
+            len(instructions),
+            OPERATING_GPT_INSTRUCTION_CHARACTERS,
+        )
         self.assertFalse(instructions.endswith("\n"))
         for rule_id, text in expected_rules.items():
-            self.assertEqual(instructions.count(f"F:{rule_id}:{text}"), 1)
+            self.assertEqual(instructions.splitlines().count(text), 1)
+
+    def test_instruction_operating_cap_is_fail_closed(self) -> None:
+        profile = load_strict_json(PROFILE_PATH)
+        mutated = copy.deepcopy(profile)
+        route_rule = next(
+            rule
+            for rule in all_rules(mutated)
+            if rule["id"] == "declare_audit_depth"
+        )
+        route_rule["text"] += " x" * OPERATING_GPT_INSTRUCTION_CHARACTERS
+        with self.assertRaisesRegex(
+            ValueError,
+            "75-percent operating cap",
+        ):
+            render_instructions(mutated)
+
+    def test_exact_starter_routes_precede_generic_intent_routing(self) -> None:
+        profile = load_strict_json(PROFILE_PATH)
+        starters = profile["product"]["conversation_starters"]
+        route_text = next(
+            rule["text"]
+            for rule in all_rules(profile)
+            if rule["id"] == "declare_audit_depth"
+        )
+        self.assertEqual(tuple(starters), EXPECTED_CONVERSATION_STARTERS)
+        self.assertEqual(validate_starter_routing(starters, route_text), [])
+        generated = generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
+        self.assertIn(EXPECTED_STARTER_ROUTE_TEXT, generated)
+        for literal, _marker in EXPECTED_STARTER_ROUTE_BINDINGS:
+            self.assertEqual(generated.count(literal), 1)
+
+    def test_starter_route_validator_rejects_drift_and_remapping(self) -> None:
+        route_text = EXPECTED_STARTER_ROUTE_TEXT
+        self.assertEqual(
+            validate_starter_routing(list(EXPECTED_CONVERSATION_STARTERS), route_text),
+            [],
+        )
+        for mutated_starters in (
+            list(reversed(EXPECTED_CONVERSATION_STARTERS)),
+            list(EXPECTED_CONVERSATION_STARTERS[:-1]),
+            [
+                EXPECTED_CONVERSATION_STARTERS[0],
+                EXPECTED_CONVERSATION_STARTERS[0],
+                *EXPECTED_CONVERSATION_STARTERS[2:],
+            ],
+        ):
+            with self.subTest(starters=mutated_starters):
+                self.assertTrue(
+                    validate_starter_routing(mutated_starters, route_text)
+                )
+        self.assertTrue(
+            validate_starter_routing(
+                list(EXPECTED_CONVERSATION_STARTERS),
+                route_text + ";60秒で主張を点検する=>E",
+            )
+        )
+        self.assertTrue(
+            validate_starter_routing(
+                list(EXPECTED_CONVERSATION_STARTERS),
+                route_text.replace(
+                    "Formal=formal-mathematical;both only if asked/Quick misleading.",
+                    "Formal=formal-mathematical.",
+                ),
+            )
+        )
 
     def test_research_projection_oracle_cannot_reclassify_scientific_cases(self) -> None:
         spec = load_strict_json(ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json")
@@ -1070,15 +1151,18 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertEqual(len(REQUIRED_OUTPUT_IDS), 9)
         self.assertNotIn("machine_readable_record", REQUIRED_OUTPUT_IDS)
         self.assertNotIn(Path("knowledge/BSC_EXECUTION_AND_RECEIPTS.md"), payload)
-        self.assertIn("F:compact_no_machine_records:", instructions)
-        self.assertIn("human audit only at every depth", instructions)
+        self.assertIn(
+            "PUBLIC: no files/downloads/machine records/compiler/stdout/",
+            instructions,
+        )
+        self.assertIn("visible human audit", instructions)
         self.assertIn(
             "no files/downloads/machine records/compiler/stdout/Base64/shards/"
             "transport/Section10",
             instructions,
         )
         self.assertIn(
-            "never compute/output/copy/quote hash/digest values",
+            "never compute/emit/copy/quote hash/digest values",
             instructions,
         )
         self.assertNotIn("last2 need machine record", instructions)

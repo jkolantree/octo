@@ -26,7 +26,31 @@ FROZEN_MANIFEST_SOURCE = "docs/GPT_FROZEN_CANDIDATE.json"
 GENERATOR_VERSION = "bsc-custom-gpt-generator-v1"
 MAX_GPT_INSTRUCTION_CHARACTERS = 8_000
 COMPACT_GPT_INSTRUCTION_CHARACTERS = MAX_GPT_INSTRUCTION_CHARACTERS - 500
+OPERATING_GPT_INSTRUCTION_CHARACTERS = (
+    MAX_GPT_INSTRUCTION_CHARACTERS * 3 // 4
+)
 OFFICIAL_GPT_URL = "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor"
+EXPECTED_CONVERSATION_STARTERS = (
+    "Start a 60-second claim audit",
+    "60秒で主張を点検する",
+    "Show a simple example first",
+    "まず簡単な例を見る",
+)
+EXPECTED_STARTER_ROUTE_BINDINGS = (
+    ("Start a 60-second claim audit", "I"),
+    ("60秒で主張を点検する", "I"),
+    ("Show a simple example first", "E"),
+    ("まず簡単な例を見る", "E"),
+)
+EXPECTED_STARTER_ROUTE_TEXT = (
+    "EXACT FIRST:Start a 60-second claim audit|60秒で主張を点検する=>I;"
+    "Show a simple example first|まず簡単な例を見る=>E."
+    "I=ask only 1-sentence same-language claim;no evidence/files;stop."
+    "E=one brief Quick example;stop."
+    "No claim:example=>E;else I.Follow-up=>delta;else Quick."
+    "Deep=Standard/Adversarial;"
+    "Formal=formal-mathematical;both only if asked/Quick misleading."
+)
 MUTABLE_KNOWLEDGE_STATE_ASSERTIONS = (
     "the official custom gpt is live",
     ") is live. a repository package",
@@ -1050,6 +1074,24 @@ def all_rules(profile: dict[str, Any]) -> list[dict[str, Any]]:
     return rules
 
 
+def validate_starter_routing(
+    starters: list[object] | tuple[object, ...],
+    route_text: object,
+) -> list[str]:
+    failures: list[str] = []
+    observed = tuple(str(item) for item in starters)
+    if observed != EXPECTED_CONVERSATION_STARTERS:
+        failures.append(
+            "GPT profile conversation starters differ from the exact reviewed four-slot order"
+        )
+    text = str(route_text)
+    if text != EXPECTED_STARTER_ROUTE_TEXT:
+        failures.append(
+            "GPT starter routing must equal the exact reviewed literal-first contract"
+        )
+    return failures
+
+
 def output_sections(profile: dict[str, Any]) -> list[dict[str, Any]]:
     sections = profile.get("output_sections") or profile.get("ordered_output_sections") or []
     return sorted(sections, key=lambda item: int(item["order"]))
@@ -1311,35 +1353,28 @@ def knowledge_document(title: str, introduction: str, sources: tuple[str, ...]) 
 
 def render_instructions(profile: dict[str, Any]) -> bytes:
     lines = [
-        "BSC_CUSTOM_GPT_INSTRUCTIONS_BEGIN",
+        "BSC_BEGIN",
         f"BSC Claim Auditor v{public_version()}",
-        "K:PROTOCOL|STATUS|CHECKS|EXAMPLES|JA;missing=>unavailable,"
-        "no affected pass/proven/run.",
-        "PUBLIC:human audit only at every depth;visible text;"
-        "exact non-hash tokens+URLs;"
-        "never compute/output/copy/quote hash/digest values.",
-        "STATUS_ONLY>duties1-9:official service/package/candidate/binding/Preview/"
-        "release/Pages states only;no research IDs/verdicts/gates/admission;"
-        "requested language.",
-        f"OFFICIAL:{OFFICIAL_GPT_URL};LIVE=availability only;"
-        "never installed/bound/validated/released/Pages proof.",
-        "F=fatal;R=required;all.",
+        "K missing=>unavailable;blocks affected pass/proven/run.",
+        "PUBLIC:visible human audit;never compute/emit/copy/quote "
+        "hash/digest values.",
     ]
-    for rule in all_rules(profile):
-        marker = "F" if rule["severity"] == "fatal" else "R"
-        lines.append(f"{marker}:{rule['id']}:{rule['text']}")
-    lines.append(
-        "DEEP/FORMAL:use nine duties;Quick/Intake/Follow-up do not."
-    )
-    lines.append("BSC_CUSTOM_GPT_INSTRUCTIONS_END")
+    rules = all_rules(profile)
+    lines.append("FATAL(all depths):")
+    lines.extend(rule["text"] for rule in rules if rule["severity"] == "fatal")
+    lines.append("REQUIRED(all depths):")
+    lines.extend(rule["text"] for rule in rules if rule["severity"] == "required")
+    lines.append("BSC_END")
     # GPT Builder strips terminal whitespace on save, so the deterministic
     # artifact deliberately matches the server-persisted byte sequence.
     instructions = "\n".join(lines).rstrip()
-    if len(instructions) > COMPACT_GPT_INSTRUCTION_CHARACTERS:
+    if len(instructions) > OPERATING_GPT_INSTRUCTION_CHARACTERS:
         raise ValueError(
-            f"compact GPT instructions exceed the reserved-headroom limit: "
-            f"{len(instructions)} > {COMPACT_GPT_INSTRUCTION_CHARACTERS} "
-            f"characters (Builder maximum {MAX_GPT_INSTRUCTION_CHARACTERS})"
+            f"compact GPT instructions exceed the 75-percent operating cap: "
+            f"{len(instructions)} > {OPERATING_GPT_INSTRUCTION_CHARACTERS} "
+            f"characters (75% of Builder maximum "
+            f"{MAX_GPT_INSTRUCTION_CHARACTERS}; compact ceiling "
+            f"{COMPACT_GPT_INSTRUCTION_CHARACTERS})"
         )
     return instructions.encode("utf-8")
 
@@ -1714,7 +1749,7 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "1. For an independent reproduction or fork, open `https://chatgpt.com/gpts` and select **Create**. For an authorized update of the official GPT, open its existing editor and use **Edit/Configure**. A fork must not imply official status.",
         "2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.",
         "3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains "
-        f"{len(instruction_text)} characters and {len(instructions)} UTF-8 bytes before pasting; the Builder limit is {MAX_GPT_INSTRUCTION_CHARACTERS} characters.",
+        f"{len(instruction_text)} characters and {len(instructions)} UTF-8 bytes before pasting; the operating cap is {OPERATING_GPT_INSTRUCTION_CHARACTERS} characters (75% of the {MAX_GPT_INSTRUCTION_CHARACTERS}-character Builder maximum and {COMPACT_GPT_INSTRUCTION_CHARACTERS - OPERATING_GPT_INSTRUCTION_CHARACTERS} characters below the compact ceiling).",
         "4. Upload these Knowledge files in this exact order:",
         *[f"   {item}" for item in knowledge_lines],
         "5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.",
@@ -1724,6 +1759,8 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.",
         "",
         "## Required Preview gate",
+        "",
+        "Before Case 1, remove any **Heavy** model-mode selection in ChatGPT Preview and verify normal/default model mode is active. Keep that Preview model mode for all 12 cases. This is separate from the BSC audit depth, whose ordinary default remains Quick.",
         "",
         f"Run exactly these {product_record['preview_gate_case_count']} compact-profile cases from the beginning in fresh conversations:",
         "",
@@ -2031,6 +2068,15 @@ def validate_payload(
     if any(product_record.get(key) != value for key, value in expected_japanese_state.items()):
         failures.append("Japanese interface state must remain beta with native-speaker terminology review pending")
     starters = product_record.get("conversation_starters", [])
+    route_rule = next(
+        (
+            rule.get("text")
+            for rule in all_rules(profile)
+            if rule.get("id") == "declare_audit_depth"
+        ),
+        "",
+    )
+    failures.extend(validate_starter_routing(starters, route_rule))
     starter_languages = [
         bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", str(item)))
         for item in starters
@@ -2081,37 +2127,37 @@ def validate_payload(
     if observed_severities != REQUIRED_RULE_SEVERITIES:
         failures.append("instruction rule severity differs from the reviewed fatal/required registry")
     instructions = payload[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
-    if not instructions.startswith("BSC_CUSTOM_GPT_INSTRUCTIONS_BEGIN\n") or not instructions.endswith("BSC_CUSTOM_GPT_INSTRUCTIONS_END"):
+    if not instructions.startswith("BSC_BEGIN\n") or not instructions.endswith("BSC_END"):
         failures.append("instruction boundary sentinels are missing")
     if len(instructions) > MAX_GPT_INSTRUCTION_CHARACTERS:
         failures.append(
             f"instructions exceed the Builder limit: {len(instructions)} > "
             f"{MAX_GPT_INSTRUCTION_CHARACTERS} characters"
         )
-    if len(instructions) > COMPACT_GPT_INSTRUCTION_CHARACTERS:
+    if len(instructions) > OPERATING_GPT_INSTRUCTION_CHARACTERS:
         failures.append(
-            "compact instructions do not preserve the required 500-character "
-            "Builder headroom"
+            "compact instructions exceed the 75-percent operating cap"
         )
+    instruction_lines = instructions.splitlines()
+    for rule in rules:
+        if instruction_lines.count(str(rule["text"])) != 1:
+            failures.append(
+                f"live instruction projection is missing or duplicates: {rule['id']}"
+            )
     for token in (
-        "F:compact_no_machine_records:",
+        "PUBLIC: no files/downloads/machine records/compiler/stdout/Base64/"
+        "shards/transport/Section10;",
         "Intake<=40 words; Follow-up<=120; Quick<=250 words",
-        "PUBLIC:human audit only at every depth;visible text;"
-        "exact non-hash tokens+URLs;"
-        "never compute/output/copy/quote hash/digest values.",
-        "STATUS_ONLY>duties1-9:official service/package/candidate/binding/Preview/"
-        "release/Pages states only;no research IDs/verdicts/gates/admission;",
-        f"OFFICIAL:{OFFICIAL_GPT_URL};LIVE=availability only;",
+        "PUBLIC:visible human audit;never compute/emit/copy/quote "
+        "hash/digest values.",
+        "K missing=>unavailable;blocks affected pass/proven/run.",
+        "FATAL(all depths):",
+        "REQUIRED(all depths):",
     ):
         if token not in instructions:
             failures.append(
                 f"compact instruction contract is missing: {token}"
             )
-    for rule in rules:
-        marker = "F" if rule["severity"] == "fatal" else "R"
-        rendered = f"{marker}:{rule['id']}:{rule['text']}"
-        if instructions.count(rendered) != 1:
-            failures.append(f"instruction rule text is missing or duplicated: {rule['id']}")
     observed_outputs = tuple(item["id"] for item in output_sections(profile))
     if observed_outputs != REQUIRED_OUTPUT_IDS:
         failures.append("output profile differs from the required compact nine-duty order")

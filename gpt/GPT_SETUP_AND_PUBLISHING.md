@@ -4,7 +4,7 @@
 
 **This repository package:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE` with candidate state `PENDING`, live binding `PENDING_VERIFICATION`, and Preview validation `PENDING`.
 
-**Version boundary:** this package is `0.3.0-alpha.9` and may be released only from the exact immutable tag `v0.3.0-alpha.9` recorded in the release manifest. Before that tag exists it is a candidate; after tagging, the manifest binds the exact commit and tree. Never move an existing tag or relabel changed bytes as an older release; any later changed package requires a new version and tag.
+**Version boundary:** this package is `0.3.0-alpha.10` and may be released only from the exact immutable tag `v0.3.0-alpha.10` recorded in the release manifest. Before that tag exists it is a candidate; after tagging, the manifest binds the exact commit and tree. Never move an existing tag or relabel changed bytes as an older release; any later changed package requires a new version and tag.
 
 **Japanese interface:** `BETA` with native-speaker terminology review `PENDING`. Preserve this disclosure in the public Description.
 
@@ -20,13 +20,13 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
 
 1. For an independent reproduction or fork, open `https://chatgpt.com/gpts` and select **Create**. For an authorized update of the official GPT, open its existing editor and use **Edit/Configure**. A fork must not imply official status.
 2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.
-3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 7491 characters and 7491 UTF-8 bytes before pasting; the Builder limit is 8000 characters.
+3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 5970 characters and 6006 UTF-8 bytes before pasting; the operating cap is 6000 characters (75% of the 8000-character Builder maximum and 1500 characters below the compact ceiling).
 4. Upload these Knowledge files in this exact order:
-   1. `BSC_PROTOCOL.md` — 19861 bytes — SHA-256 `9c0e3713ad0949645bffac9eda427d88ffb78a0bf783273c2d6e184e49809bc3` — Deterministic Knowledge wrapper containing the canonical normative protocol
-   2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 7455 bytes — SHA-256 `68509a73cb99857443ac458469de9889f69ffe5cae6b293a349e20e1548e4974` — Research, evidence, gate, execution, deployment, and CLI status boundaries
-   3. `BSC_SUPPORTED_CHECKS.md` — 16011 bytes — SHA-256 `d5a7bedcdc57083d00dc8986c0fc6712a5ba92eb813be8347427ad6a1ef02b6b` — Implemented Python routes, schemas, findings, and limitations
-   4. `BSC_WORKED_EXAMPLES.md` — 5015 bytes — SHA-256 `bf3bc168db21cae8ad33ab20710cd281bdde2255633969c6fcfd540599dbbe9d` — Known-answer and adversarial examples without redefining the protocol
-   5. `BSC_JAPANESE_INTERFACE.md` — 4661 bytes — SHA-256 `4a487b2eae569aa8d1c917e71c91ac54b1bfe465cc0af8030b8a9771c664860a` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
+   1. `BSC_PROTOCOL.md` — 19863 bytes — SHA-256 `f8fb2fcb49cf3c0cfaf6de288f6d6ccd47244782fa6c94b209092b5a6cb3623b` — Deterministic Knowledge wrapper containing the canonical normative protocol
+   2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 7456 bytes — SHA-256 `a5829e6a61c0ba84c3d8c142ebaa9d0931cd211a632101f802a9e2c069dc9984` — Research, evidence, gate, execution, deployment, and CLI status boundaries
+   3. `BSC_SUPPORTED_CHECKS.md` — 16015 bytes — SHA-256 `68fac13987017f61e4be6d86f2b9f7f91e0e77cb9f9609ca3918b1e201d0cc68` — Implemented Python routes, schemas, findings, and limitations
+   4. `BSC_WORKED_EXAMPLES.md` — 5016 bytes — SHA-256 `5b4fe7d1d9a19caa06ded6fe3d7783cf563b99c5b724ccc7498a50df96b22bb7` — Known-answer and adversarial examples without redefining the protocol
+   5. `BSC_JAPANESE_INTERFACE.md` — 4662 bytes — SHA-256 `ef410302717661ea3587cfc1c7aec0d500c76601fdfc18926ee4fbc2d23ed25d` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
 5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.
 6. Copy the 4 prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.
 7. Freeze the exact compact candidate and applicable evaluation bytes, then run all 12 declared fresh-conversation Preview cases. Do not reuse a pass from the retired artifact-export profile. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.
@@ -34,6 +34,8 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
 9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.
 
 ## Required Preview gate
+
+Before Case 1, remove any **Heavy** model-mode selection in ChatGPT Preview and verify normal/default model mode is active. Keep that Preview model mode for all 12 cases. This is separate from the BSC audit depth, whose ordinary default remains Quick.
 
 Run exactly these 12 compact-profile cases from the beginning in fresh conversations:
 

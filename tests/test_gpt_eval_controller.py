@@ -89,7 +89,7 @@ def template() -> dict:
         },
     ]
     return {
-        "protocol": {"version": "0.3.0-alpha.9"},
+        "protocol": {"version": "0.3.0-alpha.10"},
         "primary_claim_id": "claim:fixture",
         "claims": [
             {
@@ -390,7 +390,7 @@ class GptEvalControllerTests(unittest.TestCase):
                 row.update(
                     status="ran",
                     tool="BSC Custom GPT",
-                    version="0.3.0-alpha.9",
+                    version="0.3.0-alpha.10",
                     input_artifact_ids=request_and_source_ids,
                     output_artifact_ids=[
                         "artifact:evidence",
