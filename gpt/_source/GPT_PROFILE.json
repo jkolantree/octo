@@ -2,7 +2,7 @@
   "profile_schema": "bsc-custom-gpt-profile/v1",
   "product": {
     "profile_version": "0.3.0",
-    "canonical_protocol_version": "0.3.0-alpha.10",
+    "canonical_protocol_version": "0.3.0-alpha.11",
     "service_availability": "LIVE",
     "public_url": "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor",
     "package_role": "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
