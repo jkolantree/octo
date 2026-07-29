@@ -9,9 +9,9 @@
   "entries": [
     {
       "source": "README.md",
-      "source_sha256": "11c0fec227a57dd4088fe5a0ec0560e33454ffc896e0bfcf2573b5b002da23d0",
+      "source_sha256": "f36b9e7e07ddff4b6ac9e31bcd97adcd467bb3deee85bfa3a49a0f0320852274",
       "target": "README.ja.md",
-      "target_sha256": "1655f6e2d0324a0088ff8cfadcd07a287008fbc36bf0cb5be455c53b84bb0306"
+      "target_sha256": "24dcf75b5c28582fb7f6e68264263dcda05f7808d97f38201aa54056ecbc7324"
     },
     {
       "source": "START_HERE.md",
@@ -27,27 +27,27 @@
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "580ddf1f03bb384331db8a15936902728420a8342489d6dee28fdec71f777ccb",
+      "source_sha256": "6ff5b868a558e4274f1d77f4a086b58c5a30c5eb2fcd8cb21346d1b1353b5256",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
-      "target_sha256": "bb9b143eeb3adf5325e1859431a0ef90a3cc60beb3fa1e9ebb88ef25993919be"
+      "target_sha256": "01fe4642608563d74d99cc93c8abbb54602ad81b776fb80299b7cc251e5b2c0c"
     },
     {
       "source": "docs/STATUS_MODEL.md",
-      "source_sha256": "9e7c769b05431ab829209055af86e4898bca99de7fdc95ba1371445fcd99e1f6",
+      "source_sha256": "bb65e989af57fafa915e2257aa698652d539fa54e1e789d9388b3be48c481602",
       "target": "docs/ja/STATUS_MODEL.md",
-      "target_sha256": "db0f6ca6e96e45ae85bf01c1179d6905cecb415911ad831af0b0dce0026c9174"
+      "target_sha256": "79a198344f65f78fa839202e74d6f99cec939659b0574ebfb3487e75e8c32bb8"
     },
     {
       "source": "docs/index.md",
-      "source_sha256": "714abe10bc54a1b6a6f28005e7bedadcf7b1325ac542eb2ac34132f3b23715d3",
+      "source_sha256": "4c513c7043165713e4f56b6b54281341169ef1d2857b32e70253d50af580eb0f",
       "target": "docs/ja/index.md",
-      "target_sha256": "4b2d1502b3a4e3bb50a8e770b84d584e805c127b37033471f74a2b4dad06ad18"
+      "target_sha256": "5e4d6142783e328b4cab3e1e9b2b7edd6d469a0ac2b82b9262c92f50d8313b00"
     },
     {
       "source": "pages/index.html",
-      "source_sha256": "3f401195115d05860ab2506df7886c24702043908c254e642bdc6c851fd6071e",
+      "source_sha256": "be06414228d6e94381ce512dafbe11a19104ac3c0f8d172cb59d76a4b07261dc",
       "target": "pages/ja.html",
-      "target_sha256": "dfe7f168cf9d2a529e8a0839f2bacbfb5f10439b0ea3b3c4cf86242530724724"
+      "target_sha256": "c97d687bf83a051b885e9a083919aa9e13a3df374de35d0d3258a7604c105e6d"
     },
     {
       "source": "pages/locale-en.js",
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "7cd0b8d47785356cad7f2bdf8f52110100e22184be0627e890c026a67552a69f"
+  "manifest_payload_sha256": "23503d7245f36832a39aecf25e58da8a76054505f94285c1cf346089b6723abc"
 }

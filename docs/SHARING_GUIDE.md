@@ -1,6 +1,6 @@
 # Sharing and Release Guide
 
-The v0.3.0-alpha.10 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
+The v0.3.0-alpha.11 release is a research preview. Every public description should preserve that status and link to a worked positive and negative example.
 
 ## Public surfaces
 
@@ -9,14 +9,14 @@ The v0.3.0-alpha.10 release is a research preview. Every public description shou
 3. **GitHub is the reproducible workshop.** Source history, issues, pull requests, fixtures, configuration packages, and active releases live there.
 4. **Zenodo is the immutable archive.** Frozen software releases and foundations papers receive separate citable records linked in both directions.
 
-## v0.3.0-alpha.10 release contents
+## v0.3.0-alpha.11 release contents
 
-The immutable `v0.3.0-alpha.10` tag identifies the exact release tree. Its release contains:
+The immutable `v0.3.0-alpha.11` tag identifies the exact release tree. Its release contains:
 
 - `START_HERE.txt`, `BSC_AUDIT_COPY_PASTE.txt`, `BSC_AUDIT_UPLOAD_TO_LLM.txt`, and `BSC_AUDIT_SYSTEM_PROMPT.txt`;
 - the canonical LLM packet, schema, example archive, and `BSC_AUDIT_PUBLICATION.json`;
-- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.10.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
-- `bsc-audit-complete.zip` and `bsc-audit-engine-0.3.0-alpha.10.zip`;
+- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.11.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
+- `bsc-audit-complete.zip` and `bsc-audit-engine-0.3.0-alpha.11.zip`;
 - the wheel and source distribution;
 - the conformance packet;
 - `RELEASE_MANIFEST.json` and `SBOM.spdx.json`;
@@ -36,15 +36,15 @@ Do not manually zip a working directory containing caches or untracked files. Bu
 Permanent release links:
 
 ```text
-https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.10
-https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.10/BSC_AUDIT_LLM_PACKET.md
+https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.11
+https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.11/BSC_AUDIT_LLM_PACKET.md
 https://jkolantree.github.io/octo/
 https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
 ```
 
 The deployed Japanese Pages URL is `https://jkolantree.github.io/octo/ja.html`. English, Japanese, and protocol metadata routes were rechecked against current-main bytes on 2026-07-25.
 
-The repository release publishes a reproducible package, not proof of the authenticated Custom GPT state. The official GPT's availability, exact observed binding, Preview validation, GitHub release, and Pages deployment are recorded separately in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Lead with the existing official service; present the package as its reproducible source and optional fork/update path. Never infer live or validated state from a release ZIP. A changed package remains an **unvalidated candidate** until its own complete Preview gate passes. The package contains no GPT Action, hosted API, account, analytics, or cloud-storage service.
+The repository release publishes a reproducible package, not proof of the authenticated Custom GPT state. The official GPT's availability, exact observed binding, Preview validation, GitHub release, and Pages deployment are recorded separately in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Lead with the existing official service; present the package as its reproducible source and optional fork/update path. Never infer live or validated state from a release ZIP. The alpha.11 package remains an **unvalidated candidate** and is not installed in the live GPT in this release lane. The package contains no GPT Action, hosted API, account, analytics, or cloud-storage service.
 
 ## Reproduce the Custom GPT package
 
@@ -160,4 +160,4 @@ Avoid:
 - “BSC compliant”;
 - claims that an LLM ran the Python checker without actual output.
 
-The Audit Return Desk was introduced in alpha.8 and remains in alpha.10 for non-admissive inspection of returned output and receipts. Its presence in a Pages or GPT interface does not turn a returned draft into admissible evidence.
+The Audit Return Desk was introduced in alpha.8 and remains in alpha.11 for non-admissive inspection of returned output and receipts. Its presence in a Pages or GPT interface does not turn a returned draft into admissible evidence.

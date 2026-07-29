@@ -316,7 +316,7 @@ def main(argv: list[str] | None = None) -> int:
         ("atomic", "audit an off-origin concentration-modulus certificate"),
         ("defect", "audit compositional transport-defect bounds"),
         ("adapter", "audit a non-admissive proof-carrying adapter receipt"),
-        ("holonomy", "audit strict, derived, and observed-derived path holonomy"),
+        ("holonomy", "audit strict, derived, observed-derived, and exact-kernel path holonomy"),
         ("return-desk", "inspect a non-admissive audit-return envelope and its local byte bindings"),
     ):
         child = subparsers.add_parser(name, help=help_text)

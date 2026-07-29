@@ -28,7 +28,7 @@ manifest field `claim.evidence_maturity` は workflow maturity を記録しま�
 - `empirically_passed`
 - `externally_replicated`
 
-後の state ほど強い attached record を必要としますが、存在は authenticity を意味しません。proof、dataset、replication の名前を持つ string は、それだけでは artifact の verification ではありません。
+後の state ほど強い attached record を必要としますが、存在は authenticity を意味しません。proof、dataset、replication の名前を持つ string は、それだけでは artifact の verification ではありません。同様に、local SHA-256 の一致は inspected bytes の identity を示すだけで、その bytes に valid proof が含まれることを示しません。supervised semantic replay contract が存在するまでは、claim-manifest route は theorem gate を `unrun` に保ち、proof-like file が hash-bound でも theorem promotion を block します。
 
 ## 3. Execution status
 

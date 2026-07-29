@@ -5,7 +5,13 @@ from pathlib import Path
 from typing import Any
 
 from .findings import Finding, Severity
-from .manifest import DEPLOYMENT_STATES, EVIDENCE_MATURITY, evidence_index, verified_evidence_ids
+from .manifest import (
+    DEPLOYMENT_STATES,
+    EVIDENCE_MATURITY,
+    PROOF_KINDS,
+    evidence_index,
+    verified_evidence_ids,
+)
 
 
 GATE_STATES = {"unrun", "pass", "fail", "conflict"}
@@ -17,6 +23,7 @@ def _bound_evidence_is_valid(
     references: object,
     records: dict[str, dict[str, Any]],
     verified_ids: set[str],
+    claim_type: object,
 ) -> tuple[bool, str, dict[str, Any]]:
     if not isinstance(references, list) or not all(isinstance(value, str) for value in references):
         return False, "unrun", {"reason": "evidence references must be a list of identifiers"}
@@ -31,9 +38,18 @@ def _bound_evidence_is_valid(
     extraneous_references = sorted(referenced_ids - bound_ids)
     missing_records = sorted(referenced_ids - set(records))
     unverified = sorted(bound_ids - verified_ids)
+    hash_only_proof_ids = (
+        {
+            evidence_id
+            for evidence_id in bound_ids & verified_ids
+            if records[evidence_id].get("kind") in PROOF_KINDS
+        }
+        if claim_type in {"theorem", "theorem_schema"}
+        else set()
+    )
     observed_results = {
         records[evidence_id].get("result")
-        for evidence_id in bound_ids & verified_ids
+        for evidence_id in (bound_ids & verified_ids) - hash_only_proof_ids
         if evidence_id in records
     }
     decisive = observed_results & {"pass", "fail"}
@@ -54,6 +70,7 @@ def _bound_evidence_is_valid(
         "extraneous_references": extraneous_references,
         "missing_records": missing_records,
         "unverified": unverified,
+        "hash_only_proof_evidence": sorted(hash_only_proof_ids),
         "observed_results": sorted(value for value in observed_results if isinstance(value, str)),
         "declared_state": state,
     }
@@ -112,7 +129,14 @@ def audit_gate_product(raw: dict[str, Any], artifact_root: Path | None = None) -
             continue
         if gate_id in declared_hard and record.get("fatal") is not True:
             findings.append(Finding(Severity.ERROR, "HARD_GATE_NOT_FATAL", path, "every declared hard gate must be marked fatal"))
-        valid_binding, computed_state, witness = _bound_evidence_is_valid(gate_id, state, record.get("evidence", []), records, verified_ids)
+        valid_binding, computed_state, witness = _bound_evidence_is_valid(
+            gate_id,
+            state,
+            record.get("evidence", []),
+            records,
+            verified_ids,
+            claim.get("type"),
+        )
         computed_states[gate_id] = computed_state
         if not valid_binding:
             findings.append(

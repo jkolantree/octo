@@ -3,7 +3,7 @@
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) (live research preview)<br>
-**Current GitHub prerelease:** `v0.3.0-alpha.10`<br>
+**Current GitHub prerelease:** `v0.3.0-alpha.11`<br>
 **Validation boundary:** exact live binding and the 12-case compact Preview outcome are reported separately; this remains a research preview, not certification<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
@@ -22,6 +22,7 @@ The engine checks a narrow set of declared structural obligations. Current route
 - certificate-interchange defects and finite witnesses;
 - square holonomy and path-dependence checks;
 - arbitrary-path strict, derived, and observed-derived holonomy over exact rationals;
+- short-exact-sequence certificates binding an observed quotient to its declared null subcomplex;
 - replayable chain-homotopy or dual-obstruction certificates with exact residuals;
 - finite observation/query descent witnesses;
 - product-valued gates with non-averaged conflict states;
@@ -33,7 +34,7 @@ The engine checks a narrow set of declared structural obligations. Current route
 - non-admissive inspection of returned audit envelopes, ledgers, projections, receipts, and local artifact hashes;
 - canonical JSON hashing.
 
-The engine does **not** determine whether an arbitrary theory is true, reconstruct an arbitrary proof, validate an external evidence identifier, certify empirical replication, or grant moral, legal, clinical, or deployment permission. A `no_blocking_findings` result means only that the checks actually run found no blocking condition.
+The engine does **not** determine whether an arbitrary theory is true, reconstruct an arbitrary proof, validate an external evidence identifier, certify empirical replication, or grant moral, legal, clinical, or deployment permission. A matching proof-file hash is provenance, not semantic replay; theorem gates remain unrun and theorem promotion blocked without a supervised checker. A `no_blocking_findings` result means only that the checks actually run found no blocking condition.
 
 ## Choose an entry point
 
@@ -41,7 +42,7 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 2. **Local browser Packet Builder and Audit Return Desk:** [open the accessible English GitHub Pages module](https://jkolantree.github.io/octo/) or the deployed [Japanese route](https://jkolantree.github.io/octo/ja.html) to construct a versioned packet or inspect a returned `audit_return.json` draft and selected artifact bytes locally. Neither function uploads the target, calls an LLM, or runs Python.
 3. **Repository and Python engine - exact checker route:** use [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and preserved command output. This is the only route here that runs the BSC checker.
 
-The repository contains the deterministic alpha.10 package lineage used to configure and evaluate the official GPT. It supports independent inspection, reproducible deployments, compatible forks, and verifiable official updates. The current status page distinguishes observed live identity from source-package bytes; the older timestamped JSON snapshot is preserved as historical evidence.
+The repository contains the deterministic Custom GPT package lineage used for independent inspection, reproducible deployments, compatible forks, and verifiable updates. Alpha.10 is the separately observed live baseline; alpha.11 is an unvalidated repository update candidate and is not installed live in this release lane. The current status page distinguishes observed live identity from source-package bytes; the older timestamped JSON snapshot is preserved as historical evidence.
 
 Supporting routes:
 
