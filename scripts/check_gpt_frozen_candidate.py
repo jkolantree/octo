@@ -162,6 +162,7 @@ TEST_FILENAMES = (
     "test_provenance.py",
     "test_publication_status.py",
     "test_release_directory.py",
+    "test_release_workflow.py",
     "test_research_packet.py",
     "test_return_desk.py",
     "test_run_tests.py",
