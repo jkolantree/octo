@@ -171,10 +171,9 @@ f_n - g_n = dD_(n+1) h_n + h_(n-1) dC_n.
 After deterministic vectorization this becomes `A h = omega`. Exact row reduction is complete over `Q`:
 
 - a solution `h` is a pass certificate;
-- an annihilator `y` with `y^T A = 0` and `y^T omega != 0` is a failure certificate;
-- the normal equations give an exact residual with `A^T r = 0` and `eta_squared = r^T r`.
+- an annihilator `y` with `y^T A = 0` and `y^T omega != 0` is a failure certificate.
 
-This squared residual is coordinate-dependent: the current engine uses the Euclidean norm in the declared bases and does not claim invariance under arbitrary basis rescaling.
+The dual obstruction is decisive because a hypothetical solution would force `y^T omega = y^T A h = 0`. Earlier outputs could also contain a least-squares vector, Euclidean residual, and `eta_squared`. Those coordinate-dependent fields were non-authoritative diagnostics, were not invariant under basis rescaling, and are no longer required or emitted for a failure.
 
 An observation-reduced comparison applies the same theorem after an explicitly supplied surjective chain map. Chain-map legality is checked before either derived class is constructed. Semantic basis hashes bind the finite algebra to declared meanings but do not make those meanings intrinsic or externally true.
 
@@ -224,12 +223,21 @@ element of `Q[x_1,...,x_n]`. This is a complete decision procedure for the
 closed language, not a probabilistic identity test. A nonzero coefficient and
 power vector is an exact countercertificate.
 
-The theorem is deliberately narrow. It does not interpret the human gloss,
-import axioms, divide by a symbolic expression, handle inequalities or
-transcendental functions, validate an external proof assistant, or establish a
-scientific declaration. Manifest `0.4.0` makes the formal AST authoritative and
-requires the certificate claim ID, statement, residual, evidence result, local
-artifact hash, and gate bindings to agree.
+The theorem is deliberately narrow. It does not interpret free prose, import
+axioms, divide by a symbolic expression, handle inequalities or transcendental
+functions, validate an external proof assistant, or establish a scientific
+declaration. Manifest `0.4.0` makes the formal AST authoritative and requires
+`claim.statement` to be the deterministic ASCII projection of that AST. The
+emitted replay witness includes that projection, identifies its authority as
+the internal exact replay over the canonical formal statement only, and states
+that scientific truth and deployment authority are not established. The
+certificate claim ID, formal statement, residual, evidence result, local
+artifact hash, and gate bindings must agree.
+
+This is also a semantic-laundering firewall: a matching hash binds bytes but
+does not turn a declared `pass`, `fail`, empirical result, or replication label
+into a mathematical or scientific result. Only a result recomputed by a
+registered exact replay can change a gate or evidence maturity.
 
 ## 12. Status
 

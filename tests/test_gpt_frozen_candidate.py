@@ -38,9 +38,9 @@ class FrozenCandidateManifestTests(unittest.TestCase):
     def test_registry_contract_is_explicit_complete_and_current(self) -> None:
         document, findings = checker.build_manifest(ROOT)
         self.assertEqual(findings, [])
-        self.assertEqual(len(checker.registry_entries()), 157)
-        self.assertEqual(document["file_count"], 157)
-        self.assertEqual(len(document["files"]), 157)
+        self.assertEqual(len(checker.registry_entries()), 164)
+        self.assertEqual(document["file_count"], 164)
+        self.assertEqual(len(document["files"]), 164)
         self.assertEqual(
             [(entry["category"], entry["path"]) for entry in document["files"]],
             list(checker.registry_entries()),
@@ -71,7 +71,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             },
         )
         self.assertEqual(len(checker.KNOWLEDGE_FILENAMES), 5)
-        self.assertEqual(len(checker.TEST_FILENAMES), 30)
+        self.assertEqual(len(checker.TEST_FILENAMES), 33)
         self.assertEqual(
             {
                 path
@@ -121,6 +121,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "scripts/check_gpt_eval_bundle.py",
             "scripts/check_gpt_eval_suite.py",
             "scripts/check_gpt_frozen_candidate.py",
+            "scripts/verify.py",
             "scripts/gpt_artifact_compiler.py",
             "scripts/gpt_eval_controller.py",
             "schemas/audit-return-v0.1.schema.json",
@@ -131,6 +132,9 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "src/bsc_audit/schema_data/theorem-certificate-v0.1.schema.json",
             "src/bsc_audit/return_desk.py",
             "src/bsc_audit/theorem.py",
+            "src/bsc_audit/component_contract.json",
+            "src/bsc_audit/contracts.py",
+            "src/bsc_audit/mapping_complex.py",
             "pages/return-desk-core.js",
             "tests/return_desk_runtime.test.cjs",
             "tests/test_compact_preview_response.py",
@@ -143,6 +147,9 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "tests/test_pages.py",
             "tests/test_return_desk.py",
             "tests/test_theorem.py",
+            "tests/test_contracts.py",
+            "tests/test_mapping_complex.py",
+            "tests/test_verify.py",
             "toolchain.lock.json",
         }
         self.assertLessEqual(required, paths)

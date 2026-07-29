@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -9,6 +10,7 @@ from pathlib import Path
 
 from scripts.check_release_directory import (
     CHECKSUM_NAME,
+    EXPECTED_COMPONENT_CONTRACT,
     MANIFEST_NAME,
     verify_release_directory,
 )
@@ -16,7 +18,7 @@ from scripts.check_release_directory import (
 
 COMMIT = "1" * 40
 TREE = "2" * 40
-TAG = "v0.3.0-alpha.13"
+TAG = "v0.3.0-alpha.14"
 ARTIFACT_COUNT = 15
 RELEASE_FILE_COUNT = ARTIFACT_COUNT + 2
 
@@ -43,6 +45,7 @@ class ReleaseDirectoryTests(unittest.TestCase):
         manifest = {
             "artifacts": records,
             "commit": COMMIT,
+            "component_contract": copy.deepcopy(EXPECTED_COMPONENT_CONTRACT),
             "git_tag": TAG,
             "git_tree": TREE,
             "release": TAG,
@@ -159,6 +162,30 @@ class ReleaseDirectoryTests(unittest.TestCase):
                 for item in failures
             )
         )
+
+    def test_missing_or_changed_component_contract_is_rejected(self) -> None:
+        for mutation in ("missing", "changed"):
+            with self.subTest(mutation=mutation):
+                with tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory) / "release"
+                    self.write_release(root)
+                    path = root / MANIFEST_NAME
+                    manifest = json.loads(path.read_text(encoding="utf-8"))
+                    if mutation == "missing":
+                        manifest.pop("component_contract")
+                    else:
+                        manifest["component_contract"]["protocol"]["version"] = "forged"
+                    path.write_text(
+                        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+                        encoding="utf-8",
+                        newline="\n",
+                    )
+                    self.rewrite_manifest_checksum(root)
+                    failures = self.verify(root)
+                self.assertIn(
+                    "manifest component_contract differs from the tagged package contract",
+                    failures,
+                )
 
     def test_duplicate_manifest_key_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

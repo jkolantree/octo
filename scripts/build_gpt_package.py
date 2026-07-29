@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import stat
+import sys
 import tempfile
 import time
 import zipfile
@@ -19,6 +20,11 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from bsc_audit.contracts import PROTOCOL_VERSION  # noqa: E402
+
+
 GPT_ROOT = ROOT / "gpt"
 PROFILE_PATH = GPT_ROOT / "_source" / "GPT_PROFILE.json"
 EVAL_SPEC_PATH = GPT_ROOT / "_source" / "GPT_EVAL_SPEC.json"
@@ -1822,7 +1828,7 @@ def render_readme(profile: dict[str, Any]) -> bytes:
     lines = [
         "# BSC Claim Auditor reproducible package",
         "",
-        f"The official [{product_record['name']}]({product_record['public_url']}) is `{product_record['service_availability']}`. This directory preserves the deterministic, repository-backed BSC `{public_version()}` package used to inspect, reproduce, verify, or fork its configuration.",
+        f"The official [{product_record['name']}]({product_record['public_url']}) is `{product_record['service_availability']}`. This directory preserves the deterministic, repository-backed BSC engine `{public_version()}` package used to inspect, reproduce, verify, or fork its configuration. Its byte-identical public protocol component remains independently versioned `{PROTOCOL_VERSION}`.",
         "",
         f"Candidate state is `{product_record['candidate_state']}`; live binding is `{product_record['live_binding_state']}`; Preview validation is `{product_record['preview_validation_state']}`. These states do not change merely because the official service exists or candidate files were generated.",
         "",
@@ -1840,11 +1846,10 @@ def render_readme(profile: dict[str, Any]) -> bytes:
         "",
         "```bash",
         "python scripts/build_gpt_package.py",
-        "python scripts/build_gpt_package.py --check",
-        "python scripts/check_gpt_package.py",
+        "python scripts/verify.py candidate",
         "```",
         "",
-        "Release builds generate a downloadable archive. Verify its files against `SHA256SUMS`, then follow `GPT_SETUP_AND_PUBLISHING.md`; the archive intentionally does not contain executable build scripts.",
+        "The candidate profile is the single release-verification spine; its named stages remain available individually for diagnosis. Release builds generate a downloadable archive. Verify its files against `SHA256SUMS`, then follow `GPT_SETUP_AND_PUBLISHING.md`; the archive intentionally does not contain executable build scripts.",
         "",
         "Generated files must not be edited by hand. Canonical GPT-specific behavior lives in `_source/GPT_PROFILE.json`; evaluation inputs live in `_source/GPT_EVAL_SPEC.json`; the full protocol remains `../BSC_AUDIT_LLM_PACKET.md`.",
         "",
@@ -2056,8 +2061,10 @@ def validate_payload(
     ):
         failures.append("GPT evaluation research projection schema differs from the reviewed contract")
     product_record = product(profile)
-    if product_record.get("canonical_protocol_version") != public_version():
-        failures.append("GPT profile canonical protocol version differs from the engine release")
+    if product_record.get("canonical_protocol_version") != PROTOCOL_VERSION:
+        failures.append(
+            "GPT profile canonical protocol version differs from the component contract"
+        )
     expected_product_state = {
         "service_availability": "LIVE",
         "public_url": OFFICIAL_GPT_URL,

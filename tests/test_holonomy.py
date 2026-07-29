@@ -2,11 +2,12 @@ import copy
 import hashlib
 import json
 import unittest
+from dataclasses import replace
 from fractions import Fraction
 from pathlib import Path
 
 from bsc_audit.exact import Matrix
-from bsc_audit.exact_linear import solve_exact
+from bsc_audit.exact_linear import replay_linear_certificate, solve_exact
 from bsc_audit.holonomy import _homotopy_system, audit_holonomy_document
 from bsc_audit.bicomplex import ChainComplex
 from bsc_audit.schema_validation import validate_route_schema
@@ -33,22 +34,39 @@ class ExactLinearTests(unittest.TestCase):
         self.assertEqual(certificate.solution, (Fraction(1), Fraction(2)))
         self.assertEqual(certificate.eta_squared, 0)
 
-    def test_dual_and_singular_least_squares_replay(self):
+    def test_dual_obstruction_replays_without_coordinate_diagnostics(self):
+        matrix = [[Fraction(1), Fraction(1)], [Fraction(2), Fraction(2)]]
+        rhs = [Fraction(0), Fraction(1)]
         certificate = solve_exact(
-            [[Fraction(1), Fraction(1)], [Fraction(2), Fraction(2)]],
-            [Fraction(0), Fraction(1)],
+            matrix,
+            rhs,
         )
         self.assertFalse(certificate.consistent)
         self.assertNotEqual(certificate.pairing, 0)
-        self.assertGreater(certificate.eta_squared, 0)
-        self.assertEqual(certificate.least_squares_solution, (Fraction(2, 5), Fraction(0)))
+        self.assertIsNone(certificate.least_squares_solution)
+        self.assertIsNone(certificate.residual)
+        self.assertIsNone(certificate.eta_squared)
         self.assertEqual(sum(certificate.dual[i] * Fraction((0, 1)[i]) for i in range(2)), certificate.pairing)
+        replay_linear_certificate(matrix, rhs, certificate)
+
+        with self.assertRaisesRegex(ValueError, "does not annihilate"):
+            replay_linear_certificate(
+                matrix,
+                rhs,
+                replace(certificate, dual=(Fraction(1), Fraction(0))),
+            )
+        with self.assertRaisesRegex(ValueError, "pairing"):
+            replay_linear_certificate(
+                matrix,
+                rhs,
+                replace(certificate, pairing=Fraction(0)),
+            )
 
     def test_zero_variable_obstruction(self):
         certificate = solve_exact([[]], [Fraction(1)])
         self.assertFalse(certificate.consistent)
         self.assertEqual(certificate.dual, (Fraction(1),))
-        self.assertEqual(certificate.eta_squared, 1)
+        self.assertIsNone(certificate.eta_squared)
 
     def test_zero_equation_system_preserves_declared_variable_width(self):
         certificate = solve_exact([], [], ncols=2)
@@ -76,8 +94,9 @@ class HolonomyTests(unittest.TestCase):
         certificate = codes["HOLONOMY_DERIVED_FAIL"].witness
         self.assertEqual(certificate["kind"], "dual_obstruction")
         self.assertNotEqual(certificate["pairing"], 0)
-        self.assertEqual(certificate["least_squares_solution"], [])
-        self.assertEqual(certificate["eta_squared"], 1)
+        self.assertNotIn("least_squares_solution", certificate)
+        self.assertNotIn("residual", certificate)
+        self.assertNotIn("eta_squared", certificate)
 
     def test_observation_quotient_kills_declared_null_direction(self):
         codes = self.codes("holonomy_observed_quotient_pass.json")
@@ -198,6 +217,15 @@ class HolonomyTests(unittest.TestCase):
         self.assertIn("HOLONOMY_DERIVED_NOT_CONSTRUCTED", codes)
         self.assertNotIn("HOLONOMY_DERIVED_PASS", codes)
         self.assertNotIn("HOLONOMY_DERIVED_FAIL", codes)
+
+    def test_mapping_complex_route_rejects_nonfield_generalization(self):
+        raw = self.load("holonomy_contractible_derived_pass.json")
+        raw["field"] = "Z"
+        findings = audit_holonomy_document(raw)
+        self.assertEqual(
+            [(finding.code, finding.severity.value) for finding in findings],
+            [("HOLONOMY_FIELD", "ERROR")],
+        )
 
     def test_non_surjective_projection_is_rejected(self):
         raw = self.load("holonomy_observed_quotient_pass.json")

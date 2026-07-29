@@ -28,7 +28,7 @@ manifest field `claim.evidence_maturity` は workflow maturity を記録しま�
 - `empirically_passed`
 - `externally_replicated`
 
-後の state ほど強い attached record を必要としますが、存在は authenticity を意味しません。proof、dataset、replication の名前を持つ string は、それだけでは artifact の verification ではありません。同様に、local SHA-256 の一致は inspected bytes の identity を示すだけで、その bytes に valid proof が含まれることを示しません。manifest `0.4.0` の唯一の closed exception は `q-polynomial-identity-v0.1` です。authoritative formal AST と residual を exact symbolic replay した claim-bound certificate だけが decisive です。general theorem prose、external-tool receipt、legacy manifest `0.3.0`、その他の proof-like artifact は non-admissive のままです。
+後の state ほど強い attached record を必要としますが、存在は authenticity を意味しません。proof、dataset、replication の名前を持つ string は、それだけでは artifact の verification ではありません。同様に、local SHA-256 の一致は inspected bytes の identity を示すだけで、その bytes に valid result が含まれることを示しません。declared evidence result は、registered exact replay がその result を recompute しない限り evidence maturity に影響しません。manifest `0.4.0` には、意図的に closed な replay が現在 1 つだけあります。claim-bound `q-polynomial-identity-v0.1` certificate は authoritative formal AST と residual の exact symbolic replay 後に限り `structurally_checked` を support できます。empirical または independent-replication replay は登録されていないため、`empirically_passed` と `externally_replicated` は blocked のままです。general theorem prose、external-tool receipt、legacy manifest `0.3.0`、その他すべての artifact result は non-admissive のままです。
 
 ## 3. Execution status
 
@@ -78,9 +78,9 @@ manifest は次も別々に記録します。
 - `fail` — prospective failure condition が発火;
 - `conflict` — incompatible verified conclusion が共存。decisive result と inconclusive bound record の混在も含む。
 
-Admission には適用される全 fatal gate が厳密に `pass` であることが必要です。`conflict` は平均化せず、保存して block します。
+Admission には適用される全 fatal gate が厳密に `pass` であり、その state が registered exact replay によって recompute されていることが必要です。hash-verified だが replay されていない record は、negative record を含めて provenance として保持・表示されますが、gate は `unrun` と compute されます。declared conclusion は registered replay が確立するまで non-admissive なので、declared failure だけで dependency propagation を trigger することもできません。registered replay が incompatible result を生成した場合は `conflict` を保存して block し、平均化しません。
 
-checker は gate に bind された全 evidence record からこの coordinate を derive します。manifest は gate record から identifier を省いて bound failure を隠せません。submitted state が derived state と違えば block されます。
+checker は gate に bind された全 evidence record と registered replay judgment からこの coordinate を derive します。manifest は gate record から identifier を省いて bound record を隠せません。submitted state が derived state と違えば block されます。
 
 ## 6. CLI decision
 
