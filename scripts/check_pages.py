@@ -96,8 +96,10 @@ def verify_pages() -> list[str]:
         failures.append("Pages workflow actions differ from the reviewed immutable pins")
     if workflow.count('node-version: "22.23.1"') != 1 or workflow.count("package-manager-cache: false") != 1:
         failures.append("Pages workflow Return Desk Node configuration differs from the toolchain lock")
-    if workflow.count("node --test tests/return_desk_runtime.test.cjs") != 1:
-        failures.append("Pages workflow must pass the Return Desk runtime suite before upload")
+    if workflow.count("python scripts/verify.py pages") != 1:
+        failures.append(
+            "Pages workflow must pass the complete Pages verification profile before upload"
+        )
     post_deploy_tokens = (
         "protocol_meta_sha256: ${{ steps.pages-metadata.outputs.sha256 }}",
         "protocol_version: ${{ steps.pages-metadata.outputs.version }}",

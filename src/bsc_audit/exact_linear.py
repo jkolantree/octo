@@ -45,11 +45,32 @@ def _validate_system(matrix: Sequence[Sequence[Fraction]], rhs: Sequence[Fractio
 
 
 def _matvec(matrix: Sequence[Sequence[Fraction]], vector: Sequence[Fraction]) -> list[Fraction]:
-    return [sum((value * vector[index] for index, value in enumerate(row)), Fraction(0)) for row in matrix]
+    result: list[Fraction] = []
+    for row in matrix:
+        total = Fraction(0)
+        for index, value in enumerate(row):
+            total = _bounded(total + _bounded(value * vector[index]))
+        result.append(total)
+    return result
 
 
 def _transpose_matvec(matrix: Sequence[Sequence[Fraction]], vector: Sequence[Fraction], columns: int) -> list[Fraction]:
-    return [sum((matrix[row][column] * vector[row] for row in range(len(matrix))), Fraction(0)) for column in range(columns)]
+    result: list[Fraction] = []
+    for column in range(columns):
+        total = Fraction(0)
+        for row in range(len(matrix)):
+            total = _bounded(total + _bounded(matrix[row][column] * vector[row]))
+        result.append(total)
+    return result
+
+
+def _dot(left: Sequence[Fraction], right: Sequence[Fraction]) -> Fraction:
+    if len(left) != len(right):
+        raise ValueError("exact vectors have different lengths")
+    total = Fraction(0)
+    for left_value, right_value in zip(left, right):
+        total = _bounded(total + _bounded(left_value * right_value))
+    return total
 
 
 @dataclass(frozen=True)
@@ -58,17 +79,19 @@ class LinearCertificate:
     solution: tuple[Fraction, ...] | None
     dual: tuple[Fraction, ...] | None
     pairing: Fraction | None
-    least_squares_solution: tuple[Fraction, ...] | None
-    residual: tuple[Fraction, ...]
-    eta_squared: Fraction
+    least_squares_solution: tuple[Fraction, ...] | None = None
+    residual: tuple[Fraction, ...] | None = None
+    eta_squared: Fraction | None = None
 
     def to_json(self) -> dict[str, object]:
         payload: dict[str, object] = {
             "kind": "exact_solution" if self.consistent else "dual_obstruction",
             "field": "Q",
-            "residual": [scalar_json(value) for value in self.residual],
-            "eta_squared": scalar_json(self.eta_squared),
         }
+        if self.residual is not None:
+            payload["residual"] = [scalar_json(value) for value in self.residual]
+        if self.eta_squared is not None:
+            payload["eta_squared"] = scalar_json(self.eta_squared)
         if self.solution is not None:
             payload["solution"] = [scalar_json(value) for value in self.solution]
         if self.dual is not None:
@@ -80,12 +103,53 @@ class LinearCertificate:
         return payload
 
 
+def replay_linear_certificate(
+    matrix: Sequence[Sequence[Fraction]],
+    rhs: Sequence[Fraction],
+    certificate: LinearCertificate,
+    *,
+    ncols: int | None = None,
+) -> None:
+    """Replay a primal or dual exact certificate without solving the system."""
+
+    rows, columns = _validate_system(matrix, rhs, ncols)
+    if certificate.consistent:
+        if (
+            certificate.solution is None
+            or certificate.dual is not None
+            or certificate.pairing is not None
+            or len(certificate.solution) != columns
+        ):
+            raise ValueError("consistent certificate has an invalid witness shape")
+        solution = tuple(_bounded(value) for value in certificate.solution)
+        if _matvec(matrix, solution) != list(rhs):
+            raise ValueError("exact-solution certificate does not replay")
+        return
+
+    if (
+        certificate.solution is not None
+        or certificate.dual is None
+        or certificate.pairing is None
+        or len(certificate.dual) != rows
+    ):
+        raise ValueError("inconsistent certificate has an invalid witness shape")
+    dual = tuple(_bounded(value) for value in certificate.dual)
+    if _transpose_matvec(matrix, dual, columns) != [
+        Fraction(0) for _ in range(columns)
+    ]:
+        raise ValueError("dual certificate does not annihilate the system matrix")
+    pairing = _dot(dual, rhs)
+    if pairing == 0 or pairing != certificate.pairing:
+        raise ValueError("dual certificate has an invalid right-hand-side pairing")
+
+
 def solve_exact(matrix: Sequence[Sequence[Fraction]], rhs: Sequence[Fraction], *, ncols: int | None = None) -> LinearCertificate:
     """Solve ``A x = b`` over Q and return a replayable primal or dual certificate.
 
     Free variables are deterministically set to zero.  For an inconsistent
     system, the returned row-operation vector ``y`` satisfies ``y^T A = 0``
-    and ``y^T b != 0``.  The residual is the exact least-squares residual.
+    and ``y^T b != 0``.  Coordinate-dependent least-squares diagnostics are
+    deliberately not required to establish that decisive obstruction.
     """
 
     rows, columns = _validate_system(matrix, rhs, ncols)
@@ -121,31 +185,25 @@ def solve_exact(matrix: Sequence[Sequence[Fraction]], rhs: Sequence[Fraction], *
         solution = [Fraction(0) for _ in range(columns)]
         for row, column in pivots:
             solution[column] = data[row][columns]
-        replay = _matvec(matrix, solution)
-        if replay != list(rhs):
-            raise ArithmeticError("internal exact-solution replay failed")
-        return LinearCertificate(True, tuple(solution), None, None, None, tuple(Fraction(0) for _ in range(rows)), Fraction(0))
+        certificate = LinearCertificate(
+            True,
+            tuple(solution),
+            None,
+            None,
+            residual=tuple(Fraction(0) for _ in range(rows)),
+            eta_squared=Fraction(0),
+        )
+        try:
+            replay_linear_certificate(matrix, rhs, certificate, ncols=columns)
+        except ValueError as exc:  # pragma: no cover - internal invariant
+            raise ArithmeticError("internal exact-solution replay failed") from exc
+        return certificate
 
     dual = operations[inconsistent_row]
-    if _transpose_matvec(matrix, dual, columns) != [Fraction(0) for _ in range(columns)]:
-        raise ArithmeticError("internal dual-certificate annihilation replay failed")
-    pairing = sum((dual[row] * rhs[row] for row in range(rows)), Fraction(0))
-    if pairing == 0:
-        raise ArithmeticError("internal dual-certificate pairing replay failed")
-
-    normal = [
-        [sum((matrix[row][i] * matrix[row][j] for row in range(rows)), Fraction(0)) for j in range(columns)]
-        for i in range(columns)
-    ]
-    normal_rhs = _transpose_matvec(matrix, rhs, columns)
-    least_squares = solve_exact(normal, normal_rhs) if columns else LinearCertificate(True, tuple(), None, None, None, tuple(), Fraction(0))
-    if not least_squares.consistent or least_squares.solution is None:
-        raise ArithmeticError("normal equations unexpectedly inconsistent over Q")
-    approximation = _matvec(matrix, least_squares.solution)
-    residual = tuple(_bounded(rhs[row] - approximation[row]) for row in range(rows))
-    if _transpose_matvec(matrix, residual, columns) != [Fraction(0) for _ in range(columns)]:
-        raise ArithmeticError("internal least-squares orthogonality replay failed")
-    eta_squared = _bounded(sum((value * value for value in residual), Fraction(0)))
-    if eta_squared == 0:
-        raise ArithmeticError("inconsistent system has zero residual")
-    return LinearCertificate(False, None, tuple(dual), pairing, least_squares.solution, residual, eta_squared)
+    pairing = _dot(dual, rhs)
+    certificate = LinearCertificate(False, None, tuple(dual), pairing)
+    try:
+        replay_linear_certificate(matrix, rhs, certificate, ncols=columns)
+    except ValueError as exc:  # pragma: no cover - internal invariant
+        raise ArithmeticError("internal dual-certificate replay failed") from exc
+    return certificate

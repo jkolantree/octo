@@ -8,8 +8,15 @@ import hashlib
 import json
 import re
 import stat
+import sys
 from pathlib import Path
 from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from bsc_audit.contracts import COMPONENT_CONTRACT  # noqa: E402
 
 
 HEX40 = re.compile(r"[0-9a-f]{40}")
@@ -18,6 +25,7 @@ PORTABLE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]*")
 MANIFEST_NAME = "RELEASE_MANIFEST.json"
 CHECKSUM_NAME = "SHA256SUMS"
 CONTROL_BYTES = {chr(value) for value in range(32)} - {"\t", "\n", "\r"}
+EXPECTED_COMPONENT_CONTRACT = COMPONENT_CONTRACT.release_record()
 
 
 def sha256(path: Path) -> str:
@@ -146,6 +154,11 @@ def verify_release_directory(
         finding = _identity_error(label, manifest.get(label), expected)
         if finding is not None:
             failures.append(finding)
+
+    if manifest.get("component_contract") != EXPECTED_COMPONENT_CONTRACT:
+        failures.append(
+            "manifest component_contract differs from the tagged package contract"
+        )
 
     verification = manifest.get("verification")
     if not isinstance(verification, dict):

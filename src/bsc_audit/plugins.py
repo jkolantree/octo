@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from .findings import Finding, Severity
@@ -9,7 +10,13 @@ TRACE_DIMENSIONS = {"finite", "infinite"}
 TRACE_TARGETS = {"exact_prime_power_comb", "finite_truncation", "distributional_prime_increment"}
 
 
-def arithmetic_trace_findings(raw: dict[str, Any]) -> list[Finding]:
+def arithmetic_trace_findings(
+    raw: dict[str, Any],
+    registered_replay_results: Mapping[str, str] | None = None,
+) -> list[Finding]:
+    replay_results = (
+        {} if registered_replay_results is None else registered_replay_results
+    )
     if raw.get("claim", {}).get("family") != "arithmetic_trace":
         return []
     domain_checks = raw.get("domain_checks")
@@ -61,11 +68,16 @@ def arithmetic_trace_findings(raw: dict[str, Any]) -> list[Finding]:
             for obligation in sorted(required):
                 ids = bindings.get(obligation, [])
                 if not isinstance(ids, list) or not ids:
-                    findings.append(Finding(Severity.BLOCKED, "TRACE_OBLIGATION_EVIDENCE_MISSING", f"domain_checks.arithmetic_trace.obligation_evidence.{obligation}", "a declared obligation is not bound to verified evidence"))
+                    findings.append(Finding(Severity.BLOCKED, "TRACE_OBLIGATION_EVIDENCE_MISSING", f"domain_checks.arithmetic_trace.obligation_evidence.{obligation}", "a declared obligation is not bound to evidence with a registered exact replay"))
                     continue
-                invalid = [identifier for identifier in ids if identifier not in evidence or evidence[identifier].get("status") != "verified" or evidence[identifier].get("result") != "pass"]
+                invalid = [
+                    identifier
+                    for identifier in ids
+                    if identifier not in evidence
+                    or replay_results.get(identifier) != "pass"
+                ]
                 if invalid:
-                    findings.append(Finding(Severity.BLOCKED, "TRACE_OBLIGATION_EVIDENCE_UNVERIFIED", f"domain_checks.arithmetic_trace.obligation_evidence.{obligation}", "an obligation evidence binding is absent or not verified as passing", witness=invalid))
+                    findings.append(Finding(Severity.BLOCKED, "TRACE_OBLIGATION_EVIDENCE_UNVERIFIED", f"domain_checks.arithmetic_trace.obligation_evidence.{obligation}", "an obligation evidence binding is absent or lacks a registered passing exact replay; matching hashes and declared results are provenance only", witness=invalid))
     return findings
 
 
@@ -83,5 +95,11 @@ def recovery_findings(raw: dict[str, Any]) -> list[Finding]:
     return findings
 
 
-def run_plugins(raw: dict[str, Any]) -> list[Finding]:
-    return arithmetic_trace_findings(raw) + recovery_findings(raw)
+def run_plugins(
+    raw: dict[str, Any],
+    registered_replay_results: Mapping[str, str] | None = None,
+) -> list[Finding]:
+    return arithmetic_trace_findings(
+        raw,
+        registered_replay_results,
+    ) + recovery_findings(raw)

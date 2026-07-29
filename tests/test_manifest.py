@@ -7,13 +7,19 @@ from unittest.mock import patch
 
 import bsc_audit.manifest as manifest_module
 from bsc_audit.cli import audit_claim
+from bsc_audit.findings import decision
 from bsc_audit.manifest import (
     MAX_THEOREM_ARTIFACTS_PER_AUDIT,
     MAX_THEOREM_REPLAYS_PER_AUDIT,
     lint_manifest,
 )
 from bsc_audit.provenance import sha256_bytes
-from bsc_audit.theorem import MAX_CERTIFICATE_BYTES
+from bsc_audit.theorem import (
+    FORMAL_ONLY_SCOPE,
+    MAX_CERTIFICATE_BYTES,
+    canonical_formal_title,
+    canonical_formal_statement,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +37,13 @@ class ManifestTests(unittest.TestCase):
         ).read_bytes()
         (root / "theorem_binomial_identity.json").write_bytes(certificate)
         raw["evidence"][0]["sha256"] = sha256_bytes(certificate)
+        raw["claim"]["title"] = canonical_formal_title(
+            raw["claim"]["formal_statement"]
+        )
+        raw["claim"]["statement"] = canonical_formal_statement(
+            raw["claim"]["formal_statement"]
+        )
+        raw["claim"]["scope"] = FORMAL_ONLY_SCOPE
         return raw
 
     def make_manifest(self, root: Path) -> dict:
@@ -95,12 +108,106 @@ class ManifestTests(unittest.TestCase):
             },
         }
 
-    def test_valid_manifest_and_gate_bindings(self):
+    def test_hash_verified_generic_result_is_provenance_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             findings = audit_claim(self.make_manifest(root), root)
-        self.assertFalse(any(f.severity.value in {"ERROR", "BLOCKED", "DEMOTION"} for f in findings))
-        self.assertTrue(any(f.code == "MANIFEST_STRUCTURALLY_VALID" for f in findings))
+        maturity = next(
+            finding
+            for finding in findings
+            if finding.code == "EVIDENCE_MATURITY_UNSUPPORTED"
+        )
+        self.assertEqual(
+            maturity.witness,
+            {
+                "verified_artifact_evidence": ["evidence:proof"],
+                "registered_semantic_passes": [],
+            },
+        )
+        gate = next(
+            finding
+            for finding in findings
+            if finding.code == "GATE_RESULT_UNVERIFIED"
+        )
+        self.assertEqual(gate.witness["computed_state"], "unrun")
+        self.assertEqual(
+            gate.witness["nonsemantic_evidence"],
+            ["evidence:proof"],
+        )
+        self.assertFalse(
+            any(
+                finding.code == "MANIFEST_STRUCTURALLY_VALID"
+                for finding in findings
+            )
+        )
+
+    def test_v04_scientific_title_laundering_is_blocked(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            raw["claim"]["title"] = (
+                "Every cancer treatment is safe and effective for every patient"
+            )
+            findings = audit_claim(raw, root)
+
+        title = next(
+            finding
+            for finding in findings
+            if finding.code == "THEOREM_TITLE_NOT_CANONICAL"
+        )
+        self.assertEqual(title.path, "claim.title")
+        self.assertEqual(
+            title.witness["canonical_formal_title"],
+            "Exact polynomial identity in Q[x,y]",
+        )
+        self.assertEqual(title.witness["scientific_truth"], "not_established")
+        self.assertFalse(
+            any(
+                finding.code == "MANIFEST_STRUCTURALLY_VALID"
+                for finding in findings
+            )
+        )
+
+    def test_hash_matched_empirical_pass_cannot_admit_a_claim(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_manifest(root)
+            raw["claim"]["type"] = "empirical_claim"
+            raw["claim"]["evidence_maturity"] = "empirically_passed"
+            raw["claim"]["deployment_status"] = "admitted"
+            raw["evidence"][0]["kind"] = "experimental_record"
+            findings = audit_claim(raw, root)
+
+        codes = {finding.code for finding in findings}
+        self.assertTrue(
+            {
+                "EVIDENCE_MATURITY_UNSUPPORTED",
+                "EMPIRICAL_EVIDENCE_MISSING",
+                "GATE_RESULT_UNVERIFIED",
+                "ADMISSION_WITHOUT_FATAL_PASSES",
+            }.issubset(codes)
+        )
+        gate = next(
+            finding
+            for finding in findings
+            if finding.code == "GATE_RESULT_UNVERIFIED"
+        )
+        self.assertEqual(gate.witness["computed_state"], "unrun")
+        self.assertEqual(
+            gate.witness["nonsemantic_evidence"],
+            ["evidence:proof"],
+        )
+        self.assertEqual(
+            gate.witness["nonsemantic_declared_results"],
+            {"evidence:proof": "pass"},
+        )
+        self.assertEqual(raw["evidence"][0]["result"], "pass")
+        self.assertFalse(
+            any(
+                finding.code == "MANIFEST_STRUCTURALLY_VALID"
+                for finding in findings
+            )
+        )
 
     def test_hash_bound_proof_cannot_admit_a_false_theorem(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -164,6 +271,63 @@ class ManifestTests(unittest.TestCase):
             any(
                 finding.code
                 in {"THEOREM_CERTIFICATE_MISSING", "GATE_RESULT_UNVERIFIED"}
+                for finding in findings
+            )
+        )
+
+    def test_v04_medical_gloss_status_and_replication_laundering_is_blocked(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            raw["claim"]["statement"] = (
+                "Every cancer treatment described by this project is safe "
+                "and effective for every patient."
+            )
+            raw["claim"]["scope"] = "all patients and all future deployment"
+            raw["claim"]["evidence_maturity"] = "externally_replicated"
+            raw["claim"]["deployment_status"] = "admitted"
+            theorem_evidence = raw["evidence"][0]
+            raw["evidence"].append(
+                {
+                    "id": "evidence:medical-replication",
+                    "kind": "independent_replication",
+                    "status": "verified",
+                    "result": "pass",
+                    "artifact": theorem_evidence["artifact"],
+                    "sha256": theorem_evidence["sha256"],
+                    "verifies_gates": [],
+                    "verifies_claims": [raw["claim"]["id"]],
+                }
+            )
+            findings = audit_claim(raw, root)
+
+        codes = {finding.code for finding in findings}
+        self.assertTrue(
+            {
+                "THEOREM_STATEMENT_NOT_CANONICAL",
+                "THEOREM_SCOPE_NOT_FORMAL_ONLY",
+                "THEOREM_MATURITY_OUT_OF_SCOPE",
+                "THEOREM_DEPLOYMENT_OUT_OF_SCOPE",
+                "EMPIRICAL_EVIDENCE_MISSING",
+                "REPLICATION_EVIDENCE_MISSING",
+            }.issubset(codes)
+        )
+        replay = next(
+            finding
+            for finding in findings
+            if finding.code == "THEOREM_IDENTITY_REPLAYED"
+        )
+        self.assertEqual(
+            replay.witness["replay_witness"]["scientific_truth"],
+            "not_established",
+        )
+        self.assertEqual(
+            replay.witness["replay_witness"]["authority_scope"],
+            "canonical_formal_statement_only",
+        )
+        self.assertFalse(
+            any(
+                finding.code == "MANIFEST_STRUCTURALLY_VALID"
                 for finding in findings
             )
         )
@@ -532,7 +696,7 @@ class ManifestTests(unittest.TestCase):
             findings = audit_claim(raw, root)
         self.assertTrue(any(f.code == "ADMISSION_WITHOUT_FATAL_PASSES" for f in findings))
 
-    def test_verified_fatal_failure_propagates(self):
+    def test_hash_verified_fatal_failure_is_preserved_but_not_propagated(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             raw = self.make_manifest(root)
@@ -557,7 +721,28 @@ class ManifestTests(unittest.TestCase):
                 "evidence": ["evidence:failure"],
             }
             findings = audit_claim(raw, root)
-        self.assertTrue(any(f.code == "FATAL_DEPENDENCY_PROPAGATION" for f in findings))
+        self.assertFalse(
+            any(
+                finding.code
+                in {"FATAL_GATE_FAILED", "FATAL_DEPENDENCY_PROPAGATION"}
+                for finding in findings
+            )
+        )
+        gate = next(
+            finding
+            for finding in findings
+            if finding.code == "GATE_RESULT_UNVERIFIED"
+        )
+        self.assertEqual(gate.witness["computed_state"], "unrun")
+        self.assertEqual(
+            gate.witness["nonsemantic_evidence"],
+            ["evidence:failure"],
+        )
+        self.assertEqual(
+            gate.witness["nonsemantic_declared_results"],
+            {"evidence:failure": "fail"},
+        )
+        self.assertEqual(raw["evidence"][1]["result"], "fail")
 
     def test_finite_prime_comb_plugin_still_demotes_typed_claim(self):
         raw = json.loads((ROOT / "examples" / "claim_arithmetic_no_go.json").read_text(encoding="utf-8"))
@@ -574,6 +759,51 @@ class ManifestTests(unittest.TestCase):
         }
         findings = audit_claim(raw)
         self.assertTrue(any(f.code == "FINITE_PRIME_COMB_NO_GO" and f.severity.value == "DEMOTION" for f in findings))
+
+    def test_arithmetic_obligations_reject_hash_only_pass_laundering(self):
+        raw = json.loads(
+            (ROOT / "examples" / "claim_arithmetic_no_go.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        raw["claim"]["evidence_maturity"] = "declared"
+        raw["claim"]["deployment_status"] = "research_only"
+        raw["admission"]["gate_results"][0]["state"] = "unrun"
+        raw["admission"]["gate_results"][0]["evidence"] = []
+        evidence_id = raw["evidence"][0]["id"]
+        raw["evidence"][0]["result"] = "pass"
+        raw["evidence"][0]["verifies_gates"] = []
+        config = raw["domain_checks"]["arithmetic_trace"]
+        config["model_dimension"] = "infinite"
+        config["target"] = "distributional_prime_increment"
+        obligations = [
+            "self_adjointness",
+            "trace_class_resolvent",
+            "exact_prime_increment",
+            "joint_trace_norm_cauchy",
+            "atomic_rigidity",
+        ]
+        config["certified_obligations"] = obligations
+        config["obligation_evidence"] = {
+            obligation: [evidence_id] for obligation in obligations
+        }
+
+        findings = audit_claim(raw, ROOT / "examples")
+
+        rejected = [
+            finding
+            for finding in findings
+            if finding.code == "TRACE_OBLIGATION_EVIDENCE_UNVERIFIED"
+        ]
+        self.assertEqual(len(rejected), len(obligations))
+        self.assertEqual(
+            {finding.path.rsplit(".", 1)[-1] for finding in rejected},
+            set(obligations),
+        )
+        self.assertTrue(
+            all(finding.witness == [evidence_id] for finding in rejected)
+        )
+        self.assertEqual(decision(findings), "blocked")
 
     def test_wrong_top_level_type_is_a_finding(self):
         raw = {field: {} for field in ("claim", "system", "observation", "representation", "target", "experiment", "admission", "demotion", "preservation")}

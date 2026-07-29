@@ -5,6 +5,7 @@ from typing import Any
 
 from .exact import MAX_MATRIX_AXIS, Matrix, scalar_json
 from .findings import Finding, Severity
+from .mapping_complex import mapping_differential
 
 
 @dataclass(frozen=True)
@@ -63,12 +64,7 @@ class Transport:
         return self.maps.get(degree, Matrix.zero(self.target.groups.get(degree, 0), self.source.groups.get(degree, 0)))
 
     def theta(self) -> dict[int, Matrix]:
-        defects: dict[int, Matrix] = {}
-        for degree in sorted(self.source.groups):
-            d_target = self.target.differentials.get(degree, Matrix.zero(self.target.groups.get(degree - 1, 0), self.target.groups.get(degree, 0)))
-            d_source = self.source.differentials.get(degree, Matrix.zero(self.source.groups.get(degree - 1, 0), self.source.groups.get(degree, 0)))
-            defects[degree] = d_target @ self.map_at(degree) - self.map_at(degree - 1) @ d_source
-        return defects
+        return mapping_differential(self.source, self.target, self.maps, 0)
 
     def audit_naturality(self) -> list[Finding]:
         findings = self.validate_shapes()
