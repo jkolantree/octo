@@ -2,6 +2,16 @@
 
 BSC keeps truth assessment, evidence maturity, execution status, deployment authority, gate results, and checker decisions separate. Combining them into one badge would erase important failure modes.
 
+## Typed conclusion boundary
+
+Every registered replay conclusion records its exact subject and subject hash,
+predicate, scope, method, evidence identity and evidence hash, authority, and
+result. A consumer must match every coordinate. Shared labels such as `pass`,
+`verified`, and `proven` do not transfer product correctness, artifact
+identity, actual execution, harness validity, transport behavior, external
+truth, or deployment authority. Unknown domain-check keys fail closed rather
+than being silently treated as checked.
+
 ## 1. Research verdict
 
 A research verdict is assigned by accountable human review of the claim and its evidence.

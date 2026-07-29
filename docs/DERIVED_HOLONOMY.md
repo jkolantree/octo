@@ -51,7 +51,7 @@ A pass finding includes:
 
 A failure includes a rational vector `y` with `y^T A = 0` and `y^T omega != 0`. This dual obstruction is decisive: if `A h = omega` held, then `y^T omega = y^T A h = 0`, a contradiction.
 
-Earlier findings could additionally include a least-squares vector, coordinate residual, and `eta_squared`. Those fields were non-authoritative diagnostics in the declared bases: they never determined pass or failure, were not basis-invariant, and are no longer required or emitted for a dual obstruction. Consumers must use `dual` and `pairing` as the replayable failure certificate.
+The certificate variants are disjoint. A primal certificate contains only the exact solution, its recomputed zero residual, and the recomputed `eta_squared = 0`. A dual certificate contains only the annihilator and its recomputed nonzero pairing. Wrong-variant fields are rejected at construction and replay. Earlier findings could additionally include a least-squares vector, coordinate residual, and `eta_squared`; those non-authoritative, basis-dependent diagnostics are no longer accepted on a dual obstruction. Consumers must use `dual` and `pairing` as the replayable failure certificate.
 
 The solver uses rational row operations only and bounds equations, variables, coefficient cells, input rational sizes, and intermediate bit growth. Certificate replay is separate from witness generation. Path composition has a separate document-wide budget of 1,000,000 scalar products, checks every intermediate numerator and denominator against the 8,192-bit ceiling, and memoizes repeated path tuples.
 

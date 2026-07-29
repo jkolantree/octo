@@ -17,6 +17,20 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from bsc_audit.contracts import COMPONENT_CONTRACT  # noqa: E402
+try:  # direct script execution
+    from release_contract import (  # type: ignore[import-not-found]  # noqa: E402
+        REQUIRED_ARTIFACT_ROLES,
+        expected_artifact_names,
+        release_subject,
+        validate_verification_receipt,
+    )
+except ModuleNotFoundError:  # imported as scripts.check_release_directory
+    from scripts.release_contract import (  # noqa: E402
+        REQUIRED_ARTIFACT_ROLES,
+        expected_artifact_names,
+        release_subject,
+        validate_verification_receipt,
+    )
 
 
 HEX40 = re.compile(r"[0-9a-f]{40}")
@@ -26,6 +40,25 @@ MANIFEST_NAME = "RELEASE_MANIFEST.json"
 CHECKSUM_NAME = "SHA256SUMS"
 CONTROL_BYTES = {chr(value) for value in range(32)} - {"\t", "\n", "\r"}
 EXPECTED_COMPONENT_CONTRACT = COMPONENT_CONTRACT.release_record()
+EXPECTED_SOURCE_EXCLUSIONS = [
+    "research/Audit_Descent_Calculus.docx",
+    "research/Audit_Descent_Calculus.pdf",
+]
+MANIFEST_FIELDS = {
+    "release",
+    "engine_version",
+    "component_contract",
+    "manifest_version",
+    "commit",
+    "git_tree",
+    "git_tag",
+    "source_exclusions",
+    "source_date_epoch",
+    "toolchain",
+    "verification_receipt",
+    "publication_policy",
+    "artifacts",
+}
 
 
 def sha256(path: Path) -> str:
@@ -77,7 +110,6 @@ def verify_release_directory(
     commit: str,
     tree: str,
     tag: str,
-    expected_count: int | None = None,
 ) -> list[str]:
     """Return fail-closed release-directory findings."""
 
@@ -90,8 +122,6 @@ def verify_release_directory(
         failures.append("expected tree must be 40 lowercase hexadecimal characters")
     if not portable_basename(tag):
         failures.append("expected tag is not a portable Git tag literal")
-    if expected_count is not None and expected_count < 1:
-        failures.append("expected file count must be positive")
     if failures:
         return failures
 
@@ -122,11 +152,6 @@ def verify_release_directory(
         folded_names[folded] = entry.name
         actual[entry.name] = entry
 
-    if expected_count is not None and len(actual) != expected_count:
-        failures.append(
-            f"release file count differs: expected {expected_count}, found {len(actual)}"
-        )
-
     manifest_path = actual.get(MANIFEST_NAME)
     checksum_path = actual.get(CHECKSUM_NAME)
     if manifest_path is None:
@@ -144,6 +169,11 @@ def verify_release_directory(
     if not isinstance(manifest, dict):
         failures.append(f"{MANIFEST_NAME} must contain one JSON object")
         return failures
+    if set(manifest) != MANIFEST_FIELDS:
+        failures.append(
+            "manifest has unknown or missing top-level fields: "
+            f"expected={sorted(MANIFEST_FIELDS)!r}, found={sorted(manifest)!r}"
+        )
 
     for label, expected in (
         ("commit", commit),
@@ -160,16 +190,80 @@ def verify_release_directory(
             "manifest component_contract differs from the tagged package contract"
         )
 
-    verification = manifest.get("verification")
-    if not isinstance(verification, dict):
-        failures.append("manifest verification must be an object")
+    public_version = tag.removeprefix("v")
+    engine_version = public_version.replace("-alpha.", "a", 1)
+    if manifest.get("manifest_version") != "0.4.0":
+        failures.append("manifest version must be '0.4.0'")
+    if manifest.get("engine_version") != engine_version:
+        failures.append(
+            "manifest engine_version differs from the exact release tag"
+        )
+    if manifest.get("source_exclusions") != EXPECTED_SOURCE_EXCLUSIONS:
+        failures.append("manifest source_exclusions differ from release policy")
+
+    try:
+        toolchain_lock = load_strict_json(ROOT / "toolchain.lock.json")
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        failures.append(f"toolchain.lock.json cannot be replayed: {exc}")
+        toolchain_lock = None
+    if isinstance(toolchain_lock, dict):
+        expected_toolchain = {
+            "python": toolchain_lock.get("release_python"),
+            "node": toolchain_lock.get("return_desk_node"),
+            "setuptools": toolchain_lock.get("setuptools"),
+            "lock_sha256": sha256(ROOT / "toolchain.lock.json"),
+            "container_digest": toolchain_lock.get("container_digest"),
+        }
+        if manifest.get("toolchain") != expected_toolchain:
+            failures.append("manifest toolchain differs from toolchain.lock.json")
+        if manifest.get("source_date_epoch") != toolchain_lock.get(
+            "source_date_epoch"
+        ):
+            failures.append(
+                "manifest source_date_epoch differs from toolchain.lock.json"
+            )
+        expected_toolchain_evidence = {
+            "python": toolchain_lock.get("release_python"),
+            "node": toolchain_lock.get("return_desk_node"),
+            "setuptools": toolchain_lock.get("setuptools"),
+            "source_date_epoch": toolchain_lock.get("source_date_epoch"),
+            "toolchain_lock_sha256": sha256(ROOT / "toolchain.lock.json"),
+        }
     else:
-        if verification.get("embedded_artifact_signatures") != "not_performed":
+        expected_toolchain_evidence = {}
+
+    receipt_failures = validate_verification_receipt(
+        manifest.get("verification_receipt"),
+        expected_subject=release_subject(commit, tree, tag),
+        expected_toolchain_evidence=expected_toolchain_evidence,
+        expected_artifacts=(
+            manifest.get("artifacts")
+            if isinstance(manifest.get("artifacts"), list)
+            else None
+        ),
+    )
+    failures.extend(receipt_failures)
+
+    publication_policy = manifest.get("publication_policy")
+    if not isinstance(publication_policy, dict):
+        failures.append("manifest publication_policy must be an object")
+    else:
+        if set(publication_policy) != {
+            "embedded_artifact_signatures",
+            "keyless_release_attestations",
+        }:
+            failures.append(
+                "manifest publication_policy has unknown or missing fields"
+            )
+        if (
+            publication_policy.get("embedded_artifact_signatures")
+            != "not_performed"
+        ):
             failures.append(
                 "manifest must state that artifact signatures are not embedded"
             )
         if (
-            verification.get("keyless_release_attestations")
+            publication_policy.get("keyless_release_attestations")
             != "required_before_publication"
         ):
             failures.append(
@@ -182,14 +276,25 @@ def verify_release_directory(
         return failures
 
     manifest_names: set[str] = set()
+    manifest_roles: set[str] = set()
     folded_manifest_names: dict[str, str] = {}
+    expected_names_by_role = expected_artifact_names(
+        engine_version=engine_version,
+        public_version=public_version,
+    )
     for index, record in enumerate(records):
         label = f"manifest artifact {index}"
-        if not isinstance(record, dict) or set(record) != {"name", "bytes", "sha256"}:
+        if not isinstance(record, dict) or set(record) != {
+            "role",
+            "name",
+            "bytes",
+            "sha256",
+        }:
             failures.append(
-                f"{label} must contain exactly name, bytes, and sha256"
+                f"{label} must contain exactly role, name, bytes, and sha256"
             )
             continue
+        role = record.get("role")
         name = record.get("name")
         size = record.get("bytes")
         digest = record.get("sha256")
@@ -197,6 +302,16 @@ def verify_release_directory(
             failures.append(f"{label} name is not a portable basename: {name!r}")
             continue
         assert isinstance(name, str)
+        if role not in REQUIRED_ARTIFACT_ROLES:
+            failures.append(f"{label} role is unknown: {role!r}")
+        elif role in manifest_roles:
+            failures.append(f"manifest contains a duplicate artifact role: {role!r}")
+        else:
+            manifest_roles.add(role)
+            if expected_names_by_role.get(role) != name:
+                failures.append(
+                    f"{label} name does not match semantic role {role!r}: {name!r}"
+                )
         folded = name.casefold()
         if name in manifest_names or folded in folded_manifest_names:
             failures.append(f"manifest contains a duplicate artifact name: {name!r}")
@@ -238,10 +353,11 @@ def verify_release_directory(
         failures.append(
             f"release roster differs: missing={missing!r}, extra={extra!r}"
         )
-    if expected_count is not None and len(expected_names) != expected_count:
+    if manifest_roles != REQUIRED_ARTIFACT_ROLES:
         failures.append(
-            "manifest-derived file count differs: "
-            f"expected {expected_count}, found {len(expected_names)}"
+            "manifest semantic role roster differs: "
+            f"missing={sorted(REQUIRED_ARTIFACT_ROLES - manifest_roles)!r}, "
+            f"extra={sorted(manifest_roles - REQUIRED_ARTIFACT_ROLES)!r}"
         )
 
     try:
@@ -305,7 +421,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--commit", required=True)
     parser.add_argument("--tree", required=True)
     parser.add_argument("--tag", required=True)
-    parser.add_argument("--expected-count", type=int)
     args = parser.parse_args(argv)
 
     failures = verify_release_directory(
@@ -313,7 +428,6 @@ def main(argv: list[str] | None = None) -> int:
         commit=args.commit,
         tree=args.tree,
         tag=args.tag,
-        expected_count=args.expected_count,
     )
     if failures:
         for failure in failures:

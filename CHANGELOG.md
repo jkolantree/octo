@@ -2,6 +2,31 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.15 - 2026-07-29
+
+### Corrected
+
+- made exact linear certificates strict variants: primal residual and squared norm are recomputed, dual certificates reject coordinate diagnostics, and wrong-variant fields cannot survive construction or replay;
+- replaced reusable string results with checked judgments bound to subject, predicate, scope, method, evidence identity, authority, and result;
+- made unknown domain-check keys explicit errors instead of silently accepting an unevaluated extension;
+- replaced release-time reconstructed pass declarations with one deterministic pre-manifest receipt of the exact local stages it names, while keeping the final closed-directory privacy scan separate;
+- replaced magic release-file counts with exact semantic artifact roles and removed the byte-identical unversioned source-ZIP alias.
+
+### Verification and efficiency
+
+- added forged-certificate, wrong-authority, wrong-evidence, stale-receipt, and same-count/wrong-role regressions;
+- reused the primary CI distribution build as reproducibility side A, retaining one independent side B and all installation, source-distribution, browser-runtime, privacy, Pages, and clean-tag release checks;
+- kept publication policy and keyless attestation requirements separate from local execution observations.
+
+### Preserved boundary
+
+The public protocol component remains byte-identical to `0.3.0-alpha.13`.
+The separately observed alpha.10 live Custom GPT, its Instructions, Knowledge,
+starters, capabilities, Apps, and Actions are unchanged. Alpha.14 and every
+earlier tag, release, asset, failure record, and the separate BSC research
+repository remain unchanged. Degree-two proof-relevant coherence is deferred
+until this typed substrate has a released, independently replayed baseline.
+
 ## 0.3.0-alpha.14 - 2026-07-29
 
 ### Corrected

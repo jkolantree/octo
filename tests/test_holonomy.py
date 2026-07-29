@@ -7,7 +7,11 @@ from fractions import Fraction
 from pathlib import Path
 
 from bsc_audit.exact import Matrix
-from bsc_audit.exact_linear import replay_linear_certificate, solve_exact
+from bsc_audit.exact_linear import (
+    LinearCertificate,
+    replay_linear_certificate,
+    solve_exact,
+)
 from bsc_audit.holonomy import _homotopy_system, audit_holonomy_document
 from bsc_audit.bicomplex import ChainComplex
 from bsc_audit.schema_validation import validate_route_schema
@@ -26,13 +30,62 @@ def basis(label: str, meaning: str) -> dict[str, str]:
 
 class ExactLinearTests(unittest.TestCase):
     def test_primal_solution_replays(self):
-        certificate = solve_exact(
-            [[Fraction(1), Fraction(2)], [Fraction(3), Fraction(4)]],
-            [Fraction(5), Fraction(11)],
-        )
+        matrix = [[Fraction(1), Fraction(2)], [Fraction(3), Fraction(4)]]
+        rhs = [Fraction(5), Fraction(11)]
+        certificate = solve_exact(matrix, rhs)
         self.assertTrue(certificate.consistent)
         self.assertEqual(certificate.solution, (Fraction(1), Fraction(2)))
         self.assertEqual(certificate.eta_squared, 0)
+        replay_linear_certificate(matrix, rhs, certificate)
+
+        for forged in (
+            replace(certificate, residual=(Fraction(9), Fraction(0))),
+            replace(certificate, eta_squared=Fraction(81)),
+        ):
+            with self.subTest(forged=forged):
+                with self.assertRaises(ValueError):
+                    replay_linear_certificate(matrix, rhs, forged)
+        with self.assertRaisesRegex(ValueError, "variant"):
+            replace(
+                certificate,
+                dual=(Fraction(0), Fraction(0)),
+                pairing=Fraction(1),
+            )
+        with self.assertRaises(TypeError):
+            LinearCertificate(
+                True,
+                certificate.solution,
+                None,
+                None,
+                residual=certificate.residual,
+                eta_squared=certificate.eta_squared,
+                least_squares_solution=(Fraction(10), Fraction(10)),
+            )
+        self.assertEqual(
+            set(certificate.to_json(matrix, rhs)),
+            {"kind", "field", "solution", "residual", "eta_squared"},
+        )
+        forged = LinearCertificate(
+            True,
+            (Fraction(999), Fraction(999)),
+            None,
+            None,
+            residual=(Fraction(0), Fraction(0)),
+            eta_squared=Fraction(0),
+        )
+        with self.assertRaises(ValueError):
+            forged.to_json(matrix, rhs)
+        for tag in (None, 0, 1, "", "true"):
+            with self.subTest(tag=tag):
+                with self.assertRaises(TypeError):
+                    LinearCertificate(
+                        tag,  # type: ignore[arg-type]
+                        certificate.solution,
+                        None,
+                        None,
+                        residual=certificate.residual,
+                        eta_squared=certificate.eta_squared,
+                    )
 
     def test_dual_obstruction_replays_without_coordinate_diagnostics(self):
         matrix = [[Fraction(1), Fraction(1)], [Fraction(2), Fraction(2)]]
@@ -43,7 +96,6 @@ class ExactLinearTests(unittest.TestCase):
         )
         self.assertFalse(certificate.consistent)
         self.assertNotEqual(certificate.pairing, 0)
-        self.assertIsNone(certificate.least_squares_solution)
         self.assertIsNone(certificate.residual)
         self.assertIsNone(certificate.eta_squared)
         self.assertEqual(sum(certificate.dual[i] * Fraction((0, 1)[i]) for i in range(2)), certificate.pairing)
@@ -61,17 +113,48 @@ class ExactLinearTests(unittest.TestCase):
                 rhs,
                 replace(certificate, pairing=Fraction(0)),
             )
+        for changes in (
+            {"solution": (Fraction(0), Fraction(0))},
+            {"residual": (Fraction(0), Fraction(0))},
+            {"eta_squared": Fraction(0)},
+        ):
+            with self.subTest(changes=changes):
+                with self.assertRaisesRegex(ValueError, "variant"):
+                    replace(certificate, **changes)
+        self.assertEqual(
+            set(certificate.to_json(matrix, rhs)),
+            {"kind", "field", "dual", "pairing"},
+        )
+        for forged in (
+            LinearCertificate(
+                False,
+                None,
+                (Fraction(1), Fraction(0)),
+                Fraction(0),
+            ),
+            LinearCertificate(
+                False,
+                None,
+                certificate.dual,
+                Fraction(999),
+            ),
+        ):
+            with self.subTest(forged=forged):
+                with self.assertRaises(ValueError):
+                    forged.to_json(matrix, rhs)
 
     def test_zero_variable_obstruction(self):
         certificate = solve_exact([[]], [Fraction(1)])
         self.assertFalse(certificate.consistent)
         self.assertEqual(certificate.dual, (Fraction(1),))
         self.assertIsNone(certificate.eta_squared)
+        certificate.to_json([[]], [Fraction(1)], ncols=0)
 
     def test_zero_equation_system_preserves_declared_variable_width(self):
         certificate = solve_exact([], [], ncols=2)
         self.assertTrue(certificate.consistent)
         self.assertEqual(certificate.solution, (Fraction(0), Fraction(0)))
+        certificate.to_json([], [], ncols=2)
 
 
 class HolonomyTests(unittest.TestCase):

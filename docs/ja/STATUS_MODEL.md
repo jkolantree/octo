@@ -4,6 +4,16 @@
 
 BSC は、truth assessment、evidence maturity、execution status、deployment authority、gate result、checker decision を分離します。1 つの badge にまとめると重要な failure mode が消えてしまいます。
 
+## Typed conclusion boundary
+
+registered replay conclusion は、exact subject と subject hash、predicate、
+scope、method、evidence identity と evidence hash、authority、result を
+記録します。consumer は全座標を一致させなければなりません。`pass`、
+`verified`、`proven` のような共有 label は、product correctness、
+artifact identity、actual execution、harness validity、transport behavior、
+external truth、deployment authority を transfer しません。unknown
+domain-check key は checked とみなされず、fail closed します。
+
 ## 1. Research verdict
 
 research verdict は、claim と evidence に対する責任ある人間の review によって付与されます。

@@ -91,7 +91,7 @@ class CustomGptPackageTests(unittest.TestCase):
         binding = {
             "source_commit": "1" * 40,
             "source_tree": "2" * 40,
-            "source_tag": "v0.3.0-alpha.14",
+            "source_tag": "v0.3.0-alpha.15",
         }
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-bound-zip-") as directory:
             path = write_gpt_release_asset(Path(directory), **binding)
@@ -105,8 +105,8 @@ class CustomGptPackageTests(unittest.TestCase):
             )
 
     def test_final_tree_has_the_exact_release_identity(self) -> None:
-        self.assertEqual(RELEASE_ENGINE_VERSION, "0.3.0a14")
-        self.assertEqual(PUBLIC_VERSION, "0.3.0-alpha.14")
+        self.assertEqual(RELEASE_ENGINE_VERSION, "0.3.0a15")
+        self.assertEqual(PUBLIC_VERSION, "0.3.0-alpha.15")
         self.assertIsNone(require_release_version())
 
     def test_final_knowledge_links_target_the_exact_release_tag(self) -> None:
@@ -116,10 +116,10 @@ class CustomGptPackageTests(unittest.TestCase):
             for path, data in payload.items()
             if path.parts and path.parts[0] == "knowledge"
         )
-        self.assertNotIn("/blob/v0.3.0-alpha.14.dev1/", knowledge)
+        self.assertNotIn("/blob/v0.3.0-alpha.15.dev1/", knowledge)
         self.assertNotIn("https://github.com/jkolantree/octo/blob/main/", knowledge)
         self.assertIn(
-            "https://github.com/jkolantree/octo/blob/v0.3.0-alpha.14/",
+            "https://github.com/jkolantree/octo/blob/v0.3.0-alpha.15/",
             knowledge,
         )
 
@@ -311,7 +311,7 @@ class CustomGptPackageTests(unittest.TestCase):
         for text in (setup, readme):
             self.assertIn("12", text)
             self.assertIn("compact", text.lower())
-            self.assertIn("exact immutable tag `v0.3.0-alpha.14`", text)
+            self.assertIn("exact immutable tag `v0.3.0-alpha.15`", text)
             self.assertIn("new version and tag", text)
             self.assertIn("freeze", text.lower())
             self.assertIn("historical", text.lower())
