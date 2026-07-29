@@ -18,10 +18,18 @@ class NullDiscriminationTests(unittest.TestCase):
             status = main([command, str(path)])
         return status, json.loads(output.getvalue())
 
-    def test_valid_control_remains_clear(self):
+    def test_legacy_hash_only_control_fails_closed(self):
         status, payload = self.invoke("audit", ROOT / "examples" / "claim_valid.json")
-        self.assertEqual(status, 0)
-        self.assertEqual(payload["decision"], "no_blocking_findings")
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["decision"], "blocked")
+        self.assertTrue(
+            {
+                "EVIDENCE_MATURITY_UNSUPPORTED",
+                "GATE_RESULT_UNVERIFIED",
+            }.issubset(
+                {finding["code"] for finding in payload["findings"]}
+            )
+        )
 
     def test_registered_fatal_mutations_are_distinguished(self):
         cases = (

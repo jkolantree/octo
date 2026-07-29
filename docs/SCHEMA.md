@@ -6,7 +6,7 @@ The current research-preview manifest uses:
 "manifest_version": "0.4.0"
 ```
 
-The machine-readable contract is [schemas/claim-manifest-v0.4.schema.json](../schemas/claim-manifest-v0.4.schema.json). Manifest `0.3.0` remains accepted with its immutable hash-only theorem boundary. The schemas and linter are structural tools, not scientific truth certificates.
+The machine-readable contract is [schemas/claim-manifest-v0.4.schema.json](../schemas/claim-manifest-v0.4.schema.json). Manifest `0.3.0` remains accepted for structural inspection under its immutable schema, but every attached result is nonsemantic until a registered replay recomputes it; legacy gate passes and maturity therefore fail closed. The schemas and linter are structural tools, not scientific truth certificates.
 
 ## Required sections
 
@@ -36,10 +36,10 @@ Templates are starting material. Placeholder strings such as `replace-me`, `unas
 
 Research verdict, evidence maturity, execution status, deployment status, fatal-gate state, and any CLI decision are independent; see [STATUS_MODEL.md](STATUS_MODEL.md). The claim manifest records only the coordinates in its released contract. A separate execution ledger must not be fabricated as manifest evidence. In particular:
 
-- `externally_replicated` requires a declared independent-replication record;
+- `externally_replicated` requires a passing result recomputed by a registered independent-replication replay; no such replay is currently registered;
 - manifest `0.4.0` admits theorem claims only through the closed `theorem_schema` / `q-polynomial-identity-v0.1` family, whose sole hard gate is `exact_polynomial_identity`, with an authoritative formal AST and a claim-bound exact certificate whose hash and replay share one bounded byte buffer and whose canonical residual is recomputed over `Q`;
-- general theorem claims, manifest `0.3.0` theorem evidence, and every proof-like file outside that closed replay remain hash provenance only and cannot make a theorem gate decisive;
-- an evidence record and matching artifact hash establish byte identity, not automatic validation of the artifact's mathematical content;
+- every evidence record outside a registered exact replay—including legacy manifest `0.3.0`, general theorem claims, audit reports, datasets, replications, and counterexamples—is provenance only; its declared `result` cannot decide a gate, raise maturity, trigger dependency propagation, or support promotion;
+- an evidence record and matching artifact hash establish byte identity, never automatic validation of the artifact's mathematical, empirical, or scientific content;
 - `admitted` is structurally representable only after all applicable fatal gates pass.
 
 ## Exact and approximate representation
@@ -62,9 +62,15 @@ one audit accepts at most 32 unique theorem artifact bindings and starts at
 most 16 unique content-addressed theorem normalizations. Exceeding any ceiling
 fails closed with `THEOREM_RESOURCE_LIMIT`.
 
-The manifest's `claim.formal_statement` is authoritative; `claim.statement` is
-a human-readable gloss. Certificate claim ID, formal statement, artifact hash,
-declared residual, and evidence result must all agree with the recomputation.
+The manifest's `claim.formal_statement` is authoritative. For this closed
+profile, `claim.title` and `claim.statement` must equal the checker's
+deterministic formal projections of that AST exactly, and `claim.scope` must
+use the fixed formal-only boundary. Free-form theorem prose is non-admissible.
+Maturity is limited to `structurally_checked`, deployment is limited to
+`research_only` or `sandboxed`, and the replay explicitly reports that
+scientific truth and deployment authority are not established. Certificate
+claim ID, formal statement, artifact hash, declared residual, and evidence
+result must all agree with the recomputation.
 An empty residual is a pass. A valid nonempty residual is a countercertificate
 and demotes the bound fatal gate. The language contains no division,
 inequality, transcendental function, quantifier alternation, imported axiom, or
@@ -93,6 +99,7 @@ Pre-1.0 schema versions may change incompatibly. A release must state the schema
 | `0.3.0a11` | prior formats plus version-dispatched derived holonomy `0.2.0` with exact observation-kernel certificates |
 | `0.3.0a12` | prior formats plus claim manifest `0.4.0` and theorem certificate `0.1.0` for closed exact-Q polynomial identities |
 | `0.3.0a13` | same machine schemas and exact-Q theorem semantics as `0.3.0a12`; annotated-tag release-guard correction only |
+| `0.3.0a14` | same released schemas; only registered exact replay may determine gates or maturity, and the closed theorem profile is bound to its canonical AST projection and formal-only authority |
 
 The independent derived-holonomy route dispatches `holonomy_version: 0.1.0`
 records to the immutable
@@ -107,4 +114,4 @@ Consumers must reject an unknown major or minor schema unless an explicit migrat
 
 The `v0.3.0-alpha.7` Custom GPT package did not enlarge the claim-manifest schema or the Python checker's authority. Its exact controller and Knowledge package completed the authenticated 27-case Preview gate recorded in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Uploads go through ChatGPT, and no GPT Action or hosted BSC API is included.
 
-Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.13 preserves it unchanged. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).
+Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.14 preserves it unchanged under the independently versioned alpha.13 protocol component. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).
