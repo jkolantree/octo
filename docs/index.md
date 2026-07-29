@@ -6,7 +6,7 @@ This index separates first use, reference material, governance, and release work
 
 ## Getting started
 
-1. **Official Custom GPT - direct ChatGPT audit:** the [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is built and link-shared. The alpha.9 source reconciles the bounded Quick contract and four bilingual starters; exact saved-editor, public, and Preview states are observed separately. Uploads are handled through ChatGPT, and the GPT includes no Action or hosted API. See the exact [live/candidate status](CUSTOM_GPT_STATUS.md).
+1. **Official Custom GPT - direct ChatGPT audit:** the [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is built and link-shared. The alpha.10 source explicitly routes all four bilingual starter literals while preserving the bounded Quick contract; exact saved-editor, public, and Preview states are observed separately. Uploads are handled through ChatGPT, and the GPT includes no Action or hosted API. See the exact [live/candidate status](CUSTOM_GPT_STATUS.md).
 2. **Local browser Packet Builder and Audit Return Desk:** paste or attach material locally in the deployed [English](https://jkolantree.github.io/octo/) or [Japanese](https://jkolantree.github.io/octo/ja.html) interface, then copy or download the versioned packet and separately choose an LLM. The Return Desk locally inspects returned envelopes and selected artifact hashes.
 3. **Repository and Python engine - exact checker route:** follow the [Programmer Tutorial](PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and command output.
 
@@ -46,7 +46,7 @@ Additional starting points:
 
 The [LLM Audit Packet](../BSC_AUDIT_LLM_PACKET.md) is a drafting protocol, not an executable verifier. Read its privacy, prompt-injection, and source-coverage rules before attaching material.
 
-The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. Alpha.9 retains the Audit Return Desk introduced in alpha.8. Its committed protocol, return schema, and checksum metadata are mechanically generated and checked for drift.
+The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. Alpha.10 retains the Audit Return Desk introduced in alpha.8. Its committed protocol, return schema, and checksum metadata are mechanically generated and checked for drift.
 
 The repository also contains the deterministic package behind the official [Custom GPT](../gpt/README.md). It supports configuration review, reproducible deployments, compatible forks, and verifiable official updates. Direct uploads are processed through ChatGPT and do not inherit the Pages module's local-only boundary. The package includes no GPT Action, hosted checker API, account system, or cloud-storage service. Live availability, exact configuration binding, Preview validation, GitHub release, and Pages deployment are reported as separate states.
 

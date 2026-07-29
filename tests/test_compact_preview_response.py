@@ -76,7 +76,25 @@ class CompactPreviewResponseTests(unittest.TestCase):
         )
         self.assertEqual(MAX_DEFAULT_QUICK_WORDS, 250)
         self.assertEqual(MAX_DEFAULT_QUICK_BLOCKS, 4)
-        self.assertEqual(CHECKER_VERSION, "1.3")
+        self.assertEqual(CHECKER_VERSION, "1.4")
+
+    def test_no_depth_control_accepts_short_heading_qualifiers(self) -> None:
+        response = "\n\n".join(
+            (
+                "Bottom line — Configured default: Quick audit\n\nRefuted.",
+                (
+                    "Why\n\nTake f(x)=|x|. The rendered limits may span lines:\n"
+                    "lim\nh→0+\n|h|/h = 1,\n\n"
+                    "lim\nh→0-\n|h|/h = -1."
+                ),
+                "Weakest point\n\nContinuity does not imply differentiability.",
+                "Best next check\n\nTest the universal claim at a nonsmooth point.",
+            )
+        )
+        self.assertEqual(
+            validate_compact_preview_response(DEFAULT_QUICK_CASE_ID, response),
+            [],
+        )
 
     def test_no_depth_control_rejects_quick_contract_violations(self) -> None:
         cases = {

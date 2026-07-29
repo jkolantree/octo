@@ -9,15 +9,15 @@
   "entries": [
     {
       "source": "README.md",
-      "source_sha256": "416cf6809a68facdfbba2cb39894d311761e6512b729957b67ea9c8079027181",
+      "source_sha256": "11c0fec227a57dd4088fe5a0ec0560e33454ffc896e0bfcf2573b5b002da23d0",
       "target": "README.ja.md",
-      "target_sha256": "15a03b5b79b138d3a5b625c0cf13374cfccb4d4b19cc90a2471183209e7b8df6"
+      "target_sha256": "1655f6e2d0324a0088ff8cfadcd07a287008fbc36bf0cb5be455c53b84bb0306"
     },
     {
       "source": "START_HERE.md",
-      "source_sha256": "c5f4ad243d7eda6611ac9a66fef75ed3f2a6b4e9393e47a2e53fe2e6f1f90dff",
+      "source_sha256": "2bbc77dd4ea6c15342ab3a53054954f461bbed135f2bec699967b1d3f7fd1224",
       "target": "START_HERE.ja.md",
-      "target_sha256": "c7f0063604973b7d263e205d150ffaa9b142c35c7926ea141612bcc9464c6b2c"
+      "target_sha256": "64bfb27c2865d6109cfcf0ed5798b3382b0ec6f72df025fd5152bce5bafb74fe"
     },
     {
       "source": "docs/AUDIT_RETURN_DESK.md",
@@ -27,9 +27,9 @@
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "a7849352a621668470b7ca1c3356115d1cba2335574a96dfaca1695be3b66c08",
+      "source_sha256": "580ddf1f03bb384331db8a15936902728420a8342489d6dee28fdec71f777ccb",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
-      "target_sha256": "9db6521882032127846e60243b9cee5778c707c84d537e3edb1f957f1b5762f9"
+      "target_sha256": "bb9b143eeb3adf5325e1859431a0ef90a3cc60beb3fa1e9ebb88ef25993919be"
     },
     {
       "source": "docs/STATUS_MODEL.md",
@@ -39,15 +39,15 @@
     },
     {
       "source": "docs/index.md",
-      "source_sha256": "5c37d91fd7927fe55ca9d08fa8edca4604013e52df2233e128c19bc454178592",
+      "source_sha256": "714abe10bc54a1b6a6f28005e7bedadcf7b1325ac542eb2ac34132f3b23715d3",
       "target": "docs/ja/index.md",
-      "target_sha256": "45dcf2f508a775d89f18c293478016433628256666ee660db8d805e650983f4e"
+      "target_sha256": "4b2d1502b3a4e3bb50a8e770b84d584e805c127b37033471f74a2b4dad06ad18"
     },
     {
       "source": "pages/index.html",
-      "source_sha256": "87d502a45bfac19e677213138495472bf322c3573baffe9d4035cb5d856fca13",
+      "source_sha256": "3f401195115d05860ab2506df7886c24702043908c254e642bdc6c851fd6071e",
       "target": "pages/ja.html",
-      "target_sha256": "28221a52571e6f68679d0e8455c6e8a2280beced8b79ed2ad472c06e4fcf793d"
+      "target_sha256": "dfe7f168cf9d2a529e8a0839f2bacbfb5f10439b0ea3b3c4cf86242530724724"
     },
     {
       "source": "pages/locale-en.js",
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "7fb312ab360fc4ed35cfa71b4790c768d4caea36828e155557385aeee4c19121"
+  "manifest_payload_sha256": "7cd0b8d47785356cad7f2bdf8f52110100e22184be0627e890c026a67552a69f"
 }

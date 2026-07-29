@@ -25,7 +25,7 @@ VERSIONED_OUTPUT_NAME = "versioned-bsc-output.txt"
 VERSIONED_REPORT_BYTES = (
     b"Execution details: see the bound versioned-bsc-output.txt artifact.\n"
 )
-VERSIONED_OUTPUT_BYTES = b"tool=bsc-audit\nversion=0.3.0a9\n"
+VERSIONED_OUTPUT_BYTES = b"tool=bsc-audit\nversion=0.3.0a10\n"
 SESSION_RUNTIME = "3.12.13 (session-reported test runtime)"
 DA_REPORT_BYTES = b"Execution details: see chatgpt_data_analysis_output.txt.\n"
 DA_OUTPUT_BYTES = (
@@ -119,7 +119,7 @@ class AuditReturnDeskTests(unittest.TestCase):
         run.update(
             status="ran",
             tool="bsc-audit",
-            version="0.3.0a9",
+            version="0.3.0a10",
             input_artifact_ids=["artifact:request", "artifact:source"],
             output_artifact_ids=["artifact:bsc-output"],
             receipt_ids=["receipt:bsc"],
@@ -139,7 +139,7 @@ class AuditReturnDeskTests(unittest.TestCase):
     def test_return_fixtures_bind_the_exact_current_protocol(self):
         protocol = (ROOT / "BSC_AUDIT_LLM_PACKET.md").read_bytes()
         self.assertEqual(EXPECTED_PROTOCOL_SHA256, f"sha256:{hashlib.sha256(protocol).hexdigest()}")
-        self.assertEqual(EXPECTED_PROTOCOL_VERSION, "0.3.0-alpha.9")
+        self.assertEqual(EXPECTED_PROTOCOL_VERSION, "0.3.0-alpha.10")
         for path in sorted((ROOT / "examples").glob("audit_return_*.json")):
             with self.subTest(path=path.name):
                 record = json.loads(path.read_text(encoding="utf-8"))
@@ -471,13 +471,13 @@ class AuditReturnDeskTests(unittest.TestCase):
             {item["code"] for item in payload["findings"]},
         )
         self.assertNotIn(
-            "0.3.0a9",
+            "0.3.0a10",
             VERSIONED_REPORT_BYTES.decode("utf-8"),
         )
 
         absent = copy.deepcopy(positive)
         run = next(item for item in absent["execution"] if item["activity"] == "bsc_python_checker")
-        run["version"] = "0.3.0a9-not-in-output"
+        run["version"] = "0.3.0a10-not-in-output"
         with tempfile.TemporaryDirectory() as directory:
             status, payload = self.invoke(self.write_with_artifacts(directory, absent))
         self.assertEqual(status, 1)

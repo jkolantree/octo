@@ -8,24 +8,26 @@ official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed
 
 ## Current state
 
-2026-07-28 の alpha.9 update 前に read-only 確認:
+2026-07-28 に alpha.9 promotion/post-save verification を observe し、その後 alpha.10 corrective candidate を freeze:
 
 | Surface | State | Exact binding または boundary |
 |---|---|---|
-| Official Custom GPT | **live; alpha.9 update 前に inspected** | owner editor は `Live`、link access、Quick-UX Instructions、5 Knowledge filenames、Web Search on、Data Analysis on、Image Generation off、Action なしを示した |
-| Conversation-starter boundary | **editor 6; public 4; alpha.9 source 4** | owner editor は 6 starters を保持し、public page は先頭 4 個のみを render した。alpha.9 はその 4 個を exact public order の complete canonical list とする |
-| Exact live/source binding | **post-save verification まで unresolved** | update 前の editor/source starter count は異なる。ChatGPT は indexed Knowledge bytes を independent hash 用に expose しない |
-| Complete 12-case Preview evaluation | **この Knowledge-changing candidate に required** | historical evidence から `pass_12_of_12` を infer しない。exact alpha.9 freeze が fresh 12 cases 全件に pass する必要がある |
-| Repository release line | **v0.3.0-alpha.9** | exact commit、tree、tag、assets は immutable tag と `RELEASE_MANIFEST.json` に bind される。changed alpha.9 bytes を alpha.8 と label しない |
-| Prior GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.8`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.8) は commit `c6120093e49c658318553900028761a171dbf47b`、tree `a4f7d89ac2e09f2887797c0c16b6f603a29d27ea` のまま。tag を move しない |
+| Official Custom GPT | **live; alpha.10 deployment 前の alpha.9 saved state を observed** | saved owner editor と public page は下記 exact 4 starters を示した。Web Search/Data Analysis on、Image Generation off、App/Action なし |
+| Alpha.9 compact Preview gate | **release/live Update 前に pass_12_of_12** | exact alpha.9 candidate は predetermined 12 fresh-conversation cases に pass。historical 39-case campaign は restart/count していない |
+| Alpha.9 post-save starter smoke | **3 pass; Japanese intake fail** | English intake、両 example starter、English Quick follow-up は pass。`60秒で主張を点検する` は一文を request する前に example を返したため、alpha.9 が complete four-starter contract を満たすとは claim しない |
+| Alpha.10 corrective candidate | **exact release/live validation pending** | literal match を generic intent inference より先に処理する。2 intake starters は mapped language で一文のみ request して stop、2 example starters は concise Quick example を1つ返す |
+| Exact live/source binding | **partially observed; indexed Knowledge bytes unresolved** | saved-editor fields、public starter order、capabilities、filenames、behavior は observe 可能。ChatGPT は indexed Knowledge bytes を independent hash 用に expose しない |
+| Repository release line | **v0.3.0-alpha.10** | exact commit、tree、tag、assets は new tag と `RELEASE_MANIFEST.json` に bind される。alpha.9 を modify/relabel しない |
+| Prior GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.9`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.9) は commit `b87d9e28a98518933347a867dced11d83267e1b2`、tree `65073413a5d7f66a3c53e6c9a59bd9f5edd06072` のまま。post-save Japanese-starter failure も release boundary として保持する |
+| Earlier GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.8`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.8) は commit `c6120093e49c658318553900028761a171dbf47b`、tree `a4f7d89ac2e09f2887797c0c16b6f603a29d27ea` のまま。tag を move しない |
 | GitHub release object | **mutable service record** | GitHub は `immutable=false` と報告した。release assets と release-page metadata を intrinsically immutable と表現しない |
-| Public Pages | **deployment は separately verified** | [English](https://jkolantree.github.io/octo/) と [Japanese](https://jkolantree.github.io/octo/ja.html) route は Pages deployment 後に merged alpha.9 protocol metadata と一致する必要がある |
+| Public Pages | **deployment は separately verified** | [English](https://jkolantree.github.io/octo/) と [Japanese](https://jkolantree.github.io/octo/ja.html) route は Pages deployment 後に merged alpha.10 protocol metadata と一致する必要がある |
 
 availability、targeted regression、source CI は complete Preview validation の代用ではありません。preserved 39-case artifact-profile campaign、D01/D02 preflight、compiler/transport requirements、negative results は historical evidence として残し、compact 12-case gate に restart/splice しません。
 
 ## Current compact contract and maintenance boundary
 
-live Instructions は ordinary no-depth claim を Quick に route します。verdict first、250 words 以下、4 short blocks 以下で、materially necessary でない table は使いません。alpha.9 は generated Knowledge projection を同じ contract に reconcile します。
+Instructions は ordinary no-depth claim を Quick に route します。verdict first、250 words 以下、4 short blocks 以下で、materially necessary でない table は使いません。alpha.10 はこの contract を保持し、exact starter-literal dispatch を generic no-claim/example inference より優先します。
 
 canonical starter list は exactly:
 
@@ -47,11 +49,13 @@ GPT は authenticated owner-controlled research-preview interface です。proof
 - Lean/SMT/interval/empirical claim には separately identified supervised execution と admissible evidence が必要。
 - fluent report、hash-shaped string、submitted receipt、internally consistent `audit_return.json` は truth、source authenticity、independent replay、deployment permission を確立しない。
 
-## Alpha.8 and alpha.9 boundary
+## Alpha.8, alpha.9, and alpha.10 boundary
 
 Alpha.8 は `c6120093…` の exact tagged package です。later live/main UX hotfix と alpha.9 maintenance bytes は含みません。tagged release notes の当時の 300-word Quick 記述は historical release evidence として残します。
 
-Alpha.9 は new version、binding record、deterministic release gates、immutable tag を使用します。later changed exact package には another new version/tag が必要です。existing tags と release history を rewrite しません。
+Alpha.9 は `b87d9e28…` の exact tagged package です。bounded maintenance release を含み、predetermined 12-case candidate gate に pass しましたが、fresh post-save smoke は real Japanese intake-starter failure を1件 preserve しました。tag、release、assets、failure record は変更しません。
+
+Alpha.10 は corrected bytes に another new version、binding record、deterministic release gates、tag を使用します。later changed exact package には another new version/tag が必要です。existing tags と release history を rewrite しません。
 
 ## Preserved alpha.7 baseline
 
