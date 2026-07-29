@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use the checker, cite this software release. Cite the research note separately when relying on its mathematics."
 title: "BSC Audit Engine"
 type: software
-version: 0.3.0-alpha.14
+version: 0.3.0-alpha.15
 date-released: 2026-07-29
 authors:
   - family-names: "Tree"
@@ -10,7 +10,8 @@ authors:
 license: Apache-2.0
 abstract: >-
   A fail-closed structural checker for typed scientific claims,
-  certificate-interchange defects, observation descent, product-valued
+  authority-typed replay judgments, certificate-interchange defects,
+  observation descent, product-valued
   hard gates, atomic-rigidity records, compositional defect bounds, and a
   deterministic repository-backed Custom GPT audit package.
 keywords:

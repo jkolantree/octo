@@ -38,9 +38,9 @@ class FrozenCandidateManifestTests(unittest.TestCase):
     def test_registry_contract_is_explicit_complete_and_current(self) -> None:
         document, findings = checker.build_manifest(ROOT)
         self.assertEqual(findings, [])
-        self.assertEqual(len(checker.registry_entries()), 164)
-        self.assertEqual(document["file_count"], 164)
-        self.assertEqual(len(document["files"]), 164)
+        self.assertEqual(len(checker.registry_entries()), 170)
+        self.assertEqual(document["file_count"], 170)
+        self.assertEqual(len(document["files"]), 170)
         self.assertEqual(
             [(entry["category"], entry["path"]) for entry in document["files"]],
             list(checker.registry_entries()),
@@ -71,7 +71,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             },
         )
         self.assertEqual(len(checker.KNOWLEDGE_FILENAMES), 5)
-        self.assertEqual(len(checker.TEST_FILENAMES), 33)
+        self.assertEqual(len(checker.TEST_FILENAMES), 35)
         self.assertEqual(
             {
                 path
@@ -116,8 +116,11 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "gpt/_source/GPT_FROZEN_EVALUATION_PROTOCOL.json",
             "BSC_AUDIT_LLM_PACKET.md",
             "scripts/build_gpt_package.py",
+            "scripts/build_release.py",
             "scripts/check_compact_preview_response.py",
             "scripts/check_gpt_package.py",
+            "scripts/check_release.py",
+            "scripts/release_contract.py",
             "scripts/check_gpt_eval_bundle.py",
             "scripts/check_gpt_eval_suite.py",
             "scripts/check_gpt_frozen_candidate.py",
@@ -135,6 +138,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "src/bsc_audit/component_contract.json",
             "src/bsc_audit/contracts.py",
             "src/bsc_audit/mapping_complex.py",
+            "src/bsc_audit/judgment.py",
             "pages/return-desk-core.js",
             "tests/return_desk_runtime.test.cjs",
             "tests/test_compact_preview_response.py",
@@ -144,8 +148,10 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "tests/test_gpt_eval_suite.py",
             "tests/test_gpt_frozen_candidate.py",
             "tests/test_gpt_package.py",
+            "tests/test_judgment.py",
             "tests/test_pages.py",
             "tests/test_return_desk.py",
+            "tests/test_release_contract.py",
             "tests/test_theorem.py",
             "tests/test_contracts.py",
             "tests/test_mapping_complex.py",

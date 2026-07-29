@@ -187,12 +187,14 @@ def _homotopy_system(source: ChainComplex, target: ChainComplex, omega: dict[int
 
 def _certificate_json(
     certificate: LinearCertificate,
+    matrix: list[list[Fraction]],
+    rhs: list[Fraction],
     source: ChainComplex,
     target: ChainComplex,
     equations: list[tuple[int, int, int]],
     variables: list[tuple[int, int, int]],
 ) -> dict[str, object]:
-    result = certificate.to_json()
+    result = certificate.to_json(matrix, rhs, ncols=len(variables))
     result["equation_coordinates"] = [
         {"degree": degree, "target_basis": row, "source_basis": column}
         for degree, row, column in equations
@@ -221,7 +223,15 @@ def _derived_certificate(first: Transport, second: Transport) -> tuple[LinearCer
     omega = {degree: first.map_at(degree) - second.map_at(degree) for degree in degrees}
     coefficients, rhs, equations, variables = _homotopy_system(first.source, first.target, omega)
     certificate = solve_exact(coefficients, rhs, ncols=len(variables))
-    return certificate, _certificate_json(certificate, first.source, first.target, equations, variables)
+    return certificate, _certificate_json(
+        certificate,
+        coefficients,
+        rhs,
+        first.source,
+        first.target,
+        equations,
+        variables,
+    )
 
 
 def _strict_defects(first: Transport, second: Transport) -> list[tuple[int, Matrix]]:

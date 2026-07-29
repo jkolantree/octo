@@ -173,7 +173,7 @@ After deterministic vectorization this becomes `A h = omega`. Exact row reductio
 - a solution `h` is a pass certificate;
 - an annihilator `y` with `y^T A = 0` and `y^T omega != 0` is a failure certificate.
 
-The dual obstruction is decisive because a hypothetical solution would force `y^T omega = y^T A h = 0`. Earlier outputs could also contain a least-squares vector, Euclidean residual, and `eta_squared`. Those coordinate-dependent fields were non-authoritative diagnostics, were not invariant under basis rescaling, and are no longer required or emitted for a failure.
+The dual obstruction is decisive because a hypothetical solution would force `y^T omega = y^T A h = 0`. The certificate variants are disjoint. A primal result contains an exact solution, the deterministically recomputed zero residual, and its recomputed squared norm. A dual result contains only an annihilator and the deterministically recomputed nonzero pairing. Wrong-variant fields are rejected at construction and replay. Earlier outputs could also contain a least-squares vector, Euclidean residual, and `eta_squared`; those coordinate-dependent fields were non-authoritative, were not invariant under basis rescaling, and are no longer accepted on a failure certificate.
 
 An observation-reduced comparison applies the same theorem after an explicitly supplied surjective chain map. Chain-map legality is checked before either derived class is constructed. Semantic basis hashes bind the finite algebra to declared meanings but do not make those meanings intrinsic or externally true.
 
@@ -239,6 +239,26 @@ does not turn a declared `pass`, `fail`, empirical result, or replication label
 into a mathematical or scientific result. Only a result recomputed by a
 registered exact replay can change a gate or evidence maturity.
 
-## 12. Status
+## 12. Authority-typed checked judgments
+
+A replay conclusion is a tuple, not a transferable word:
+
+\[
+J=(S,P,\Sigma,M,E,A,R),
+\]
+
+where `S` is the subject identity and digest, `P` the predicate, `Sigma` the
+scope, `M` the method, `E` the evidence identity and digest, `A` the authority
+domain, and `R` the result. A gate may consume `J` only when every coordinate
+matches its declared obligation. In particular, the string `pass` from a
+polynomial replay cannot satisfy an arithmetic-trace obligation, and a
+matching artifact hash cannot supply a missing method or authority.
+
+This envelope makes the authority boundary machine-checkable. It does not
+claim that a syntactically well-typed judgment is externally true; it only
+prevents one registered result from being reused outside its exact declared
+coordinates.
+
+## 13. Status
 
 The algebraic identities above are proved. Their use as a universal scientific ontology is not claimed. The proposed originality lies in the audit assembly, certificate semantics, and executable witness formats; historical priority requires independent review.
