@@ -6,7 +6,7 @@ import sys
 import tempfile
 import unittest
 import zipfile
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,9 +14,11 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from build_release import (  # noqa: E402
     git_source_entries,
+    ordered_artifact_paths,
     require_tracked_tree_clean,
     zip_git_source,
 )
+from release_contract import expected_artifact_names  # noqa: E402
 
 
 TAG = "v0.3.0-alpha.test"
@@ -33,6 +35,28 @@ def git(cwd: Path, *args: str) -> str:
 
 
 class ReleaseWorkflowTests(unittest.TestCase):
+    def test_release_artifact_order_is_utf8_bytewise_on_windows_paths(self) -> None:
+        names = list(
+            expected_artifact_names(
+                engine_version="0.3.0a16",
+                public_version="0.3.0-alpha.16",
+            ).values()
+        )
+        names.append("RELEASE_MANIFEST.json")
+        expected = sorted(names, key=lambda name: name.encode("utf-8"))
+        for creation_order in (names, list(reversed(names))):
+            with self.subTest(first_created=creation_order[0]):
+                paths = [PureWindowsPath(name) for name in creation_order]
+                observed = [
+                    path.name
+                    for path in ordered_artifact_paths(paths)
+                ]
+                self.assertEqual(observed, expected)
+        self.assertLess(
+            expected.index("RELEASE_MANIFEST.json"),
+            expected.index("SBOM.spdx.json"),
+        )
+
     def test_release_roster_is_semantic_and_has_no_duplicate_source_alias(self) -> None:
         builder = (ROOT / "scripts" / "build_release.py").read_text(
             encoding="utf-8"

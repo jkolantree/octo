@@ -1,19 +1,8 @@
-# BSC Audit Engine v0.3.0-alpha.15 prepublication failure record
+# BSC Audit Engine v0.3.0-alpha.16
 
-## Promotion status
-
-The local annotated tag object
-`8f9b0e1a046f4d578a203d17162155faa9166578` remains fixed at commit
-`e1beb91d48e4db64f0a1c51a8753f97a56bd504d`, tree
-`2be8cad2047bd678d85fb23888c24ea6cc709ea7`. The exact clean-tag build failed
-closed because Windows path comparison produced a case-folded artifact order
-where the release contract requires UTF-8 filename-byte order. The tag was
-never pushed, and no GitHub asset, attestation, draft, or release was created.
-Corrected bytes are carried forward under alpha.16; this tag is not moved or
-relabeled.
-
-Alpha.15 establishes the typed substrate needed before exposing higher
-coherence mathematics.
+Alpha.16 carries the alpha.15 typed-coherence candidate forward under a new
+immutable identity and repairs the cross-platform release-order defect that
+blocked alpha.15 before publication.
 
 ## What changed
 
@@ -32,6 +21,10 @@ coherence mathematics.
 - Release completeness is defined by semantic artifact roles, not a magic file
   count. The byte-identical `bsc-audit-complete.zip` alias is removed; the
   versioned tracked-source archive remains.
+- Every release-artifact sequence and checksum ledger uses explicit UTF-8
+  filename-byte order, independent of host filesystem case-order semantics.
+- A Windows-path positive regression and a correctly rehashed case-fold-order
+  negative make the cross-platform ordering boundary permanent.
 - CI reuses its primary distribution build as reproducibility side A and keeps
   one independent build B. Wheel installation, source-distribution replay,
   browser runtime, privacy, Pages, package, and exact-tag release checks remain.
@@ -50,14 +43,14 @@ checker derives completeness from the exact role-to-filename contract.
 
 ## Authority boundary
 
-Each receipt judgment identifies its exact candidate commit, tree, and
-tag; predicate; stage-specific scope; method; evidence-record digest;
-authority; and result. Those judgments establish only the declared local
-execution or artifact property. Publication policy, keyless GitHub
-attestations, transport redownload comparison, external scientific truth, and
-deployment authority remain separate. After manifest and checksum creation,
-the builder scans the complete closed directory separately; that later scan is
-not retroactively represented inside the receipt it inspects.
+Each receipt judgment identifies its exact candidate commit, tree, and tag;
+predicate; stage-specific scope; method; evidence-record digest; authority;
+and result. Those judgments establish only the declared local execution or
+artifact property. Publication policy, keyless GitHub attestations, transport
+redownload comparison, external scientific truth, and deployment authority
+remain separate. After manifest and checksum creation, the builder scans the
+complete closed directory separately; that later scan is not retroactively
+represented inside the receipt it inspects.
 
 The exact finite algebra verifies the supplied maps and certificates, not the
 scientific truth or completeness of their declarations. The closed polynomial
@@ -68,19 +61,21 @@ exists.
 
 ## Preserved state
 
+- The failed local `v0.3.0-alpha.15` annotated tag remains fixed; it was never
+  pushed and has no GitHub release or assets.
 - The public protocol component remains byte-identical to
   `0.3.0-alpha.13`.
 - The official Custom GPT remains the separately observed alpha.10 live state.
   No live Instructions, live Knowledge, starter, capability, App, Action,
   owner-editor, or live Preview change is part of this release.
 - Indexed live Knowledge bytes remain `NON_ADMISSIBLE_UNHASHABLE`.
-- Alpha.14 and every earlier tag, release, asset, and preserved negative result
-  remain unchanged.
+- Alpha.14 and every earlier public tag, release, asset, and preserved negative
+  result remain unchanged.
 - `jkolantree/BSC` remains a separate research repository and was not mutated.
 
 ## Deferred
 
 The next mathematical increment is a closed degree-two route that either
 produces `Q` with `delta_2 Q = H - K` for two explicitly bound homotopies, or
-produces a dual obstruction. It is intentionally not exposed in alpha.15 and
-is now scheduled no earlier than alpha.17.
+produces a dual obstruction. It is intentionally not exposed in alpha.16 and
+is scheduled no earlier than alpha.17.
