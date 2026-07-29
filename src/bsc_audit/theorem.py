@@ -21,6 +21,13 @@ CERTIFICATE_VERSION = "0.1.0"
 LANGUAGE = "q-polynomial-identity-v0.1"
 FIELD = "Q"
 THEOREM_GATE_ID = "exact_polynomial_identity"
+THEOREM_AUTHORITY = "bsc_internal_exact_replay"
+THEOREM_AUTHORITY_SCOPE = "canonical_formal_statement_only"
+SCIENTIFIC_TRUTH_STATE = "not_established"
+FORMAL_ONLY_SCOPE = (
+    "Exact equality in the declared polynomial ring only; no external "
+    "interpretation or scientific truth is established."
+)
 
 MAX_VARIABLES = 8
 MAX_AST_DEPTH = 32
@@ -428,6 +435,79 @@ def _normalize_statement(raw: object) -> tuple[dict[str, Any], Polynomial]:
     return statement, residual
 
 
+def _render_term(raw: dict[str, Any]) -> str:
+    """Render one already-validated term with an unambiguous ASCII grammar."""
+
+    op = raw["op"]
+    if op == "const":
+        value = rational(raw["value"])
+        if value.denominator == 1:
+            integer = str(value.numerator)
+            return integer if value.numerator >= 0 else f"({integer})"
+        return f"({value.numerator}/{value.denominator})"
+    if op == "var":
+        return raw["name"]
+    if op == "neg":
+        return f"(-{_render_term(raw['arg'])})"
+    if op in {"add", "mul"}:
+        separator = " + " if op == "add" else " * "
+        return f"({separator.join(_render_term(arg) for arg in raw['args'])})"
+    if op == "pow":
+        return f"({_render_term(raw['base'])}^{raw['exponent']})"
+    raise AssertionError(f"unreachable validated theorem operator: {op!r}")
+
+
+def _ring_name(statement: dict[str, Any]) -> str:
+    variables = statement["variables"]
+    return "Q" if not variables else f"Q[{','.join(variables)}]"
+
+
+def _render_title(statement: dict[str, Any]) -> str:
+    return f"Exact polynomial identity in {_ring_name(statement)}"
+
+
+def _render_statement(statement: dict[str, Any]) -> str:
+    relation = statement["relation"]
+    return (
+        f"{_ring_name(statement)} polynomial identity: "
+        f"{_render_term(relation['left'])} = {_render_term(relation['right'])}"
+    )
+
+
+def canonical_formal_title(raw: object) -> str:
+    """Return the deterministic, formal-only title admitted by the kernel."""
+
+    statement, _ = _normalize_statement(raw)
+    return _render_title(statement)
+
+
+def canonical_formal_statement(raw: object) -> str:
+    """Return the sole human-readable projection admitted by the exact kernel.
+
+    The same closed grammar and resource ceilings used for replay are applied
+    before rendering. The result is a deterministic projection of the AST, not
+    an interpretation of its possible external meaning.
+    """
+
+    statement, _ = _normalize_statement(raw)
+    return _render_statement(statement)
+
+
+def _authority_witness(
+    canonical_title: str,
+    canonical_statement: str,
+) -> dict[str, object]:
+    return {
+        "canonical_formal_title": canonical_title,
+        "canonical_formal_statement": canonical_statement,
+        "authority": THEOREM_AUTHORITY,
+        "authority_scope": THEOREM_AUTHORITY_SCOPE,
+        "human_gloss": "non_admissible",
+        "scientific_truth": SCIENTIFIC_TRUTH_STATE,
+        "deployment_authority": "not_granted",
+    }
+
+
 def _residual_json(polynomial: Polynomial) -> list[dict[str, object]]:
     return [
         {"powers": list(monomial), "coefficient": scalar_json(coefficient)}
@@ -538,6 +618,8 @@ def replay_theorem_certificate(
             )
         formal_statement, computed_residual = _normalize_statement(certificate["formal_statement"])
         statement_hash = sha256_json(formal_statement)
+        canonical_title = _render_title(formal_statement)
+        canonical_statement = _render_statement(formal_statement)
         declared_residual = _parse_declared_residual(
             certificate["residual"],
             len(formal_statement["variables"]),
@@ -587,6 +669,7 @@ def replay_theorem_certificate(
                 "kernel": LANGUAGE,
                 "formal_statement_sha256": statement_hash,
                 "residual_terms": 0,
+                **_authority_witness(canonical_title, canonical_statement),
             },
         )
     else:
@@ -601,6 +684,7 @@ def replay_theorem_certificate(
                 "formal_statement_sha256": statement_hash,
                 "residual_terms": len(residual_json),
                 "first_residual_term": residual_json[0],
+                **_authority_witness(canonical_title, canonical_statement),
             },
         )
     return TheoremReplay(

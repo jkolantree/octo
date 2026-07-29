@@ -106,6 +106,7 @@ BSC_MODULE_FILENAMES = (
     "atomic.py",
     "bicomplex.py",
     "cli.py",
+    "contracts.py",
     "defect.py",
     "exact.py",
     "exact_linear.py",
@@ -113,6 +114,7 @@ BSC_MODULE_FILENAMES = (
     "gates.py",
     "holonomy.py",
     "manifest.py",
+    "mapping_complex.py",
     "observation.py",
     "plugins.py",
     "provenance.py",
@@ -143,6 +145,7 @@ TEST_FILENAMES = (
     "test_bicomplex.py",
     "test_cli.py",
     "test_compact_preview_response.py",
+    "test_contracts.py",
     "test_defect.py",
     "test_exact.py",
     "test_gpt_artifact_compiler.py",
@@ -154,6 +157,7 @@ TEST_FILENAMES = (
     "test_holonomy.py",
     "test_localization.py",
     "test_manifest.py",
+    "test_mapping_complex.py",
     "test_null_discrimination.py",
     "test_observation.py",
     "test_pages.py",
@@ -167,6 +171,7 @@ TEST_FILENAMES = (
     "test_return_desk.py",
     "test_run_tests.py",
     "test_theorem.py",
+    "test_verify.py",
 )
 
 REGISTRY: dict[str, tuple[str, ...]] = {
@@ -217,6 +222,7 @@ REGISTRY: dict[str, tuple[str, ...]] = {
     "python_return_desk": tuple(
         sorted(
             [f"schemas/{filename}" for filename in SCHEMA_FILENAMES]
+            + ["src/bsc_audit/component_contract.json"]
             + [
                 f"src/bsc_audit/{filename}"
                 for filename in BSC_MODULE_FILENAMES
@@ -241,6 +247,7 @@ REGISTRY: dict[str, tuple[str, ...]] = {
         "scripts/gpt_eval_controller.py",
         "scripts/run_null_discrimination.py",
         "scripts/run_tests.py",
+        "scripts/verify.py",
         "toolchain.lock.json",
     ),
 }
@@ -259,14 +266,14 @@ CLOSED_DIRECTORIES: dict[str, tuple[str, ...]] = {
     "gpt/evals/fixtures": EVAL_FIXTURE_FILENAMES,
     "gpt/knowledge": KNOWLEDGE_FILENAMES,
     "schemas": SCHEMA_FILENAMES,
-    "src/bsc_audit": BSC_MODULE_FILENAMES,
+    "src/bsc_audit": tuple(sorted((*BSC_MODULE_FILENAMES, "component_contract.json"))),
     "src/bsc_audit/schema_data": SCHEMA_FILENAMES,
     "tests": TEST_FILENAMES,
 }
 
 CLOSED_DIRECTORY_SUFFIXES: dict[str, tuple[str, ...]] = {
     "schemas": (".json",),
-    "src/bsc_audit": (".py",),
+    "src/bsc_audit": (".json", ".py"),
     "src/bsc_audit/schema_data": (".json",),
     "tests": (".cjs", ".py"),
 }

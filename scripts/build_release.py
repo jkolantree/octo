@@ -20,13 +20,14 @@ import time
 import zipfile
 from datetime import datetime, timezone
 from importlib.metadata import version as distribution_version
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from bsc_audit import __version__  # noqa: E402
+from bsc_audit.contracts import COMPONENT_CONTRACT  # noqa: E402
 from build_publication_assets import write_release_assets  # noqa: E402
 from build_gpt_package import write_release_asset as write_gpt_release_asset  # noqa: E402
 
@@ -47,6 +48,17 @@ def run(command: list[str], *, expected: int = 0, cwd: Path = ROOT) -> subproces
         sys.stderr.write(result.stderr)
         raise SystemExit(f"command returned {result.returncode}, expected {expected}: {' '.join(command)}")
     return result
+
+
+def run_bytes(command: list[str], *, cwd: Path = ROOT) -> bytes:
+    result = subprocess.run(command, cwd=cwd, capture_output=True, check=False)
+    if result.returncode != 0:
+        sys.stderr.write(result.stdout.decode("utf-8", errors="replace"))
+        sys.stderr.write(result.stderr.decode("utf-8", errors="replace"))
+        raise SystemExit(
+            f"command returned {result.returncode}, expected 0: {' '.join(command)}"
+        )
+    return result.stdout
 
 
 def sha256(path: Path) -> str:
@@ -85,18 +97,158 @@ def repository_identity() -> tuple[str, str, str]:
     return commit, tree, expected_tag
 
 
+def require_tracked_tree_clean(
+    commit: str,
+    tree: str,
+    *,
+    root: Path = ROOT,
+    allowed_untracked_root: Path | None = None,
+    expected_source_entries: list[tuple[str, bytes]] | None = None,
+) -> None:
+    """Reassert that generators did not change tagged or add source bytes."""
+
+    observed_commit = run(["git", "rev-parse", "HEAD"], cwd=root).stdout.strip()
+    observed_tree = run(["git", "rev-parse", "HEAD^{tree}"], cwd=root).stdout.strip()
+    raw_status = run_bytes(
+        [
+            "git",
+            "status",
+            "--porcelain=v1",
+            "-z",
+            "--untracked-files=all",
+        ],
+        cwd=root,
+    )
+    allowed_relative: str | None = None
+    if allowed_untracked_root is not None:
+        try:
+            allowed_relative = (
+                allowed_untracked_root.resolve()
+                .relative_to(root.resolve())
+                .as_posix()
+            )
+        except (OSError, RuntimeError, ValueError):
+            allowed_relative = None
+    unexpected_status = False
+    for raw_record in raw_status.split(b"\0"):
+        if not raw_record:
+            continue
+        if not raw_record.startswith(b"?? "):
+            unexpected_status = True
+            break
+        try:
+            relative = raw_record[3:].decode("utf-8")
+        except UnicodeDecodeError:
+            unexpected_status = True
+            break
+        if (
+            allowed_relative is None
+            or (
+                relative != allowed_relative
+                and not relative.startswith(f"{allowed_relative}/")
+            )
+        ):
+            unexpected_status = True
+            break
+    source_bytes_differ = False
+    entries = (
+        expected_source_entries
+        if expected_source_entries is not None
+        else git_source_entries(commit, root=root)
+    )
+    for relative, expected in entries:
+        path = root.joinpath(*PurePosixPath(relative).parts)
+        try:
+            if path.is_symlink() or not path.is_file() or path.read_bytes() != expected:
+                source_bytes_differ = True
+                break
+        except OSError:
+            source_bytes_differ = True
+            break
+    if (
+        observed_commit != commit
+        or observed_tree != tree
+        or unexpected_status
+        or source_bytes_differ
+    ):
+        raise SystemExit(
+            "release generation changed tracked source bytes, added untracked "
+            "source, or changed the index, commit, or tree"
+        )
+
+
 def require_release_version() -> None:
     if ".dev" in __version__:
         raise SystemExit(f"release builds refuse development version {__version__}")
 
 
-def source_files() -> list[Path]:
-    tracked = run(["git", "ls-files", "-z"]).stdout.split("\0")
-    paths = [ROOT / relative for relative in tracked if relative and relative not in EXCLUDED_TRACKED_FILES]
-    missing = [path for path in paths if not path.is_file()]
-    if missing:
-        raise SystemExit(f"tracked release source is missing: {missing[0].relative_to(ROOT)}")
-    return paths
+def git_source_entries(
+    commit: str,
+    *,
+    root: Path = ROOT,
+) -> list[tuple[str, bytes]]:
+    """Read release-source bytes from an immutable Git tree, never the checkout."""
+
+    raw_tree = run_bytes(
+        ["git", "ls-tree", "-r", "-z", "--full-tree", commit],
+        cwd=root,
+    )
+    entries: list[tuple[str, bytes]] = []
+    folded_paths: set[str] = set()
+    for raw_record in raw_tree.split(b"\0"):
+        if not raw_record:
+            continue
+        try:
+            metadata, raw_path = raw_record.split(b"\t", 1)
+            mode, object_type, object_id = metadata.decode("ascii").split()
+            relative = raw_path.decode("utf-8")
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise SystemExit("Git tree contains an undecodable source entry") from exc
+        if relative in EXCLUDED_TRACKED_FILES:
+            continue
+        pure = PurePosixPath(relative)
+        if (
+            pure.is_absolute()
+            or pure.as_posix() != relative
+            or "\\" in relative
+            or any(
+                ord(character) < 32 or ord(character) == 127
+                for character in relative
+            )
+            or any(part in {"", ".", ".."} or ":" in part for part in pure.parts)
+        ):
+            raise SystemExit(f"Git tree contains an unsafe source path: {relative!r}")
+        folded = relative.casefold()
+        if folded in folded_paths:
+            raise SystemExit(
+                f"Git tree contains a case-folding source collision: {relative!r}"
+            )
+        folded_paths.add(folded)
+        if object_type != "blob" or mode not in {"100644", "100755"}:
+            raise SystemExit(
+                "release source rejects symlinks, submodules, and non-regular "
+                f"Git entries: {relative!r} ({mode} {object_type})"
+            )
+        data = run_bytes(["git", "cat-file", "blob", object_id], cwd=root)
+        entries.append((relative, data))
+    return sorted(entries)
+
+
+def zip_git_source(
+    destination: Path,
+    entries: list[tuple[str, bytes]],
+) -> None:
+    with zipfile.ZipFile(
+        destination,
+        "w",
+        compression=zipfile.ZIP_DEFLATED,
+        compresslevel=9,
+    ) as archive:
+        for relative, data in entries:
+            info = zipfile.ZipInfo(relative, ZIP_TIME)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = (0o100644 & 0xFFFF) << 16
+            archive.writestr(info, data)
 
 
 def toolchain_lock() -> dict[str, object]:
@@ -126,7 +278,13 @@ def require_node(lock: dict[str, object]) -> str:
 
 def conformance_bundle(destination: Path) -> None:
     cases = [
-        ("claim-clear", "audit", "examples/claim_valid.json", 0),
+        ("legacy-hash-only-blocked", "audit", "examples/claim_valid.json", 1),
+        (
+            "closed-polynomial-claim",
+            "audit",
+            "examples/claim_polynomial_identity.json",
+            0,
+        ),
         ("finite-prime-comb-no-go", "audit", "examples/claim_arithmetic_no_go.json", 1),
         ("observation-descent-failure", "observe", "examples/observation_failure.json", 1),
         ("natural-transport", "complex", "examples/complex_valid_transport.json", 0),
@@ -208,26 +366,14 @@ def main() -> int:
     args = parser.parse_args()
     output = args.output.resolve()
     commit, tree, tag = repository_identity()
+    source_entries = git_source_entries(commit)
     lock = toolchain_lock()
-    node = require_node(lock)
+    require_node(lock)
     if output.exists() and any(output.iterdir()):
         raise SystemExit(f"release output directory must be empty: {output}")
     output.mkdir(parents=True, exist_ok=True)
 
-    run([sys.executable, "scripts/check_privacy.py", "--protected-history", "HEAD"])
-    run([sys.executable, "scripts/run_tests.py"])
-    run([sys.executable, "scripts/run_null_discrimination.py"])
-    run([node, "--test", "tests/return_desk_runtime.test.cjs"])
-    run(
-        [
-            sys.executable,
-            "scripts/check_gpt_frozen_candidate.py",
-            "--check",
-            "docs/GPT_FROZEN_CANDIDATE.json",
-        ]
-    )
-    run([sys.executable, "scripts/check_localization.py"])
-    run([sys.executable, "scripts/check_release.py"])
+    run([sys.executable, "scripts/verify.py", "candidate"])
     env = dict(os.environ, SOURCE_DATE_EPOCH=str(SOURCE_DATE_EPOCH))
     build = subprocess.run([sys.executable, "scripts/build_dist.py", "--outdir", str(output)], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
     if build.returncode != 0:
@@ -248,7 +394,7 @@ def main() -> int:
                 raise SystemExit(f"distribution is not reproducible: {first.name}")
 
     source_zip = output / f"bsc-audit-engine-{PUBLIC_VERSION}.zip"
-    zip_tree(source_zip, source_files(), ROOT)
+    zip_git_source(source_zip, source_entries)
     shutil.copyfile(source_zip, output / "bsc-audit-complete.zip")
     conformance = output / f"bsc-audit-conformance-{PUBLIC_VERSION}.zip"
     conformance_bundle(conformance)
@@ -264,9 +410,16 @@ def main() -> int:
     wheel = next(path for path in artifacts if path.suffix == ".whl")
     sbom(sbom_path, wheel)
     artifacts.append(sbom_path)
+    require_tracked_tree_clean(
+        commit,
+        tree,
+        allowed_untracked_root=output,
+        expected_source_entries=source_entries,
+    )
     manifest = {
         "release": f"v{PUBLIC_VERSION}",
         "engine_version": __version__,
+        "component_contract": COMPONENT_CONTRACT.release_record(),
         "manifest_version": "0.3.0",
         "commit": commit,
         "git_tree": tree,

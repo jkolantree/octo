@@ -11,7 +11,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = (
-    ("control", "audit", "examples/claim_valid.json", 0),
+    (
+        "legacy-hash-only-control-fails-closed",
+        "audit",
+        "examples/claim_valid.json",
+        1,
+    ),
     ("referenced-conflict", "audit", "examples/null_conflicting_referenced.json", 1),
     ("omitted-bound-failure", "audit", "examples/null_omitted_bound_failure.json", 1),
     ("failed-proof", "audit", "examples/null_failed_proof.json", 1),

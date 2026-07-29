@@ -229,7 +229,12 @@ def _audit_stages(raw: dict[str, Any], artifact_root: Path | None) -> AuditResul
     domain = raw.get("domain_checks", {})
     if isinstance(claim, dict) and claim.get("family") == "arithmetic_trace":
         executed.append("domain_plugin:arithmetic_trace")
-        findings.extend(arithmetic_trace_findings(raw))
+        findings.extend(
+            arithmetic_trace_findings(
+                raw,
+                audit_cache.registered_replay_results,
+            )
+        )
     if isinstance(domain, dict) and "global_recovery" in domain:
         executed.append("domain_plugin:global_recovery")
         findings.extend(recovery_findings(raw))

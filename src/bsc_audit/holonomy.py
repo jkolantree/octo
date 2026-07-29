@@ -8,14 +8,15 @@ from typing import Any
 from .bicomplex import ChainComplex, Transport, load_complex, load_transport, matrix_witness
 from .exact import Matrix, scalar_json
 from .exact_linear import (
-    MAX_LINEAR_CELLS,
-    MAX_LINEAR_EQUATIONS,
     MAX_INTERMEDIATE_BITS,
-    MAX_LINEAR_VARIABLES,
     LinearCertificate,
     solve_exact,
 )
 from .findings import Finding, Severity
+from .mapping_complex import (
+    flatten_homogeneous_map,
+    mapping_differential_system,
+)
 
 
 MAX_COMPOSITION_SCALAR_PRODUCTS = 1_000_000
@@ -168,48 +169,20 @@ def _compose_path(
 
 
 def _homotopy_system(source: ChainComplex, target: ChainComplex, omega: dict[int, Matrix]) -> tuple[list[list[Fraction]], list[Fraction], list[tuple[int, int, int]], list[tuple[int, int, int]]]:
-    degrees = sorted(set(source.groups) | set(target.groups))
-    equation_count = sum(target.groups.get(degree, 0) * source.groups.get(degree, 0) for degree in degrees)
-    variable_count = sum(target.groups.get(degree + 1, 0) * source.groups.get(degree, 0) for degree in degrees)
-    if equation_count > MAX_LINEAR_EQUATIONS:
-        raise ValueError(f"homotopy system exceeds {MAX_LINEAR_EQUATIONS} equations")
-    if variable_count > MAX_LINEAR_VARIABLES:
-        raise ValueError(f"homotopy system exceeds {MAX_LINEAR_VARIABLES} variables")
-    if equation_count * variable_count > MAX_LINEAR_CELLS:
-        raise ValueError(f"homotopy system exceeds {MAX_LINEAR_CELLS} coefficient cells")
-    equations = [
-        (degree, row, column)
-        for degree in degrees
-        for row in range(target.groups.get(degree, 0))
-        for column in range(source.groups.get(degree, 0))
-    ]
-    variables = [
-        (degree, row, column)
-        for degree in degrees
-        for row in range(target.groups.get(degree + 1, 0))
-        for column in range(source.groups.get(degree, 0))
-    ]
-    equation_index = {coordinate: index for index, coordinate in enumerate(equations)}
-    coefficients = [[Fraction(0) for _ in variables] for _ in equations]
-    for variable_index, (degree, row, column) in enumerate(variables):
-        d_target = target.differentials.get(
-            degree + 1,
-            Matrix.zero(target.groups.get(degree, 0), target.groups.get(degree + 1, 0)),
-        )
-        for output_row in range(target.groups.get(degree, 0)):
-            value = d_target.rows[output_row][row]
-            if value:
-                coefficients[equation_index[(degree, output_row, column)]][variable_index] += value
-        d_source = source.differentials.get(
-            degree + 1,
-            Matrix.zero(source.groups.get(degree, 0), source.groups.get(degree + 1, 0)),
-        )
-        for input_column in range(source.groups.get(degree + 1, 0)):
-            value = d_source.rows[column][input_column]
-            if value:
-                coefficients[equation_index[(degree + 1, row, input_column)]][variable_index] += value
-    rhs = [omega[degree].rows[row][column] for degree, row, column in equations]
-    return coefficients, rhs, equations, variables
+    system = mapping_differential_system(source, target, 1)
+    rhs = flatten_homogeneous_map(
+        source,
+        target,
+        omega,
+        0,
+        system.equation_coordinates,
+    )
+    return (
+        [list(row) for row in system.matrix],
+        list(rhs),
+        list(system.equation_coordinates),
+        list(system.variable_coordinates),
+    )
 
 
 def _certificate_json(

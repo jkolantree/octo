@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from bsc_audit import __version__  # noqa: E402
+from bsc_audit.contracts import verify_repository_component_contract  # noqa: E402
 from build_gpt_package import verify_package  # noqa: E402
 from check_pages import verify_pages  # noqa: E402
 from check_research_packet import verify_packet  # noqa: E402
@@ -56,6 +57,10 @@ def main() -> int:
     if len((ROOT / "LICENSE").read_text(encoding="utf-8").splitlines()) < 150:
         fail("LICENSE is not the complete Apache-2.0 text")
 
+    component_failures = verify_repository_component_contract(ROOT)
+    if component_failures:
+        fail(f"component contract failed verification: {component_failures[0]}")
+
     packet_failures = verify_packet()
     if packet_failures:
         fail(f"derived witnessed-descent packet failed verification: {packet_failures[0]}")
@@ -76,6 +81,7 @@ def main() -> int:
     for required_line in (
         "include README.ja.md",
         "include START_HERE.ja.md",
+        "include .github/workflows/ci.yml",
         "include .github/workflows/release.yml",
         "recursive-include docs *.md *.css *.json",
     ):
@@ -143,7 +149,7 @@ def main() -> int:
     if not isinstance(paper_zenodo, dict) or paper_zenodo.get("license") != "CC-BY-4.0":
         fail("paper Zenodo metadata must declare CC-BY-4.0")
     if software_zenodo.get("publication_date") != "2026-07-29":
-        fail("software archive metadata must use the alpha.13 release date")
+        fail("software archive metadata must use the alpha.14 release date")
 
     toolchain = load_strict_json(ROOT / "toolchain.lock.json")
     if not isinstance(toolchain, dict):
@@ -162,19 +168,36 @@ def main() -> int:
         fail("CI must use the reviewed immutable setup-node v7.0.0 pin")
     if ci.count('node-version: "22.23.1"') != 1 or "package-manager-cache: false" not in ci:
         fail("CI Return Desk Node configuration differs from the toolchain lock")
-    if ci.count("node --test tests/return_desk_runtime.test.cjs") != 2:
-        fail("CI must run the Return Desk runtime suite from source and the source distribution")
+    if ci.count("python scripts/verify.py core") != 1:
+        fail("the three-version CI matrix must use the Python-only core profile")
+    if ci.count("python scripts/verify.py candidate") != 1:
+        fail("pinned integration CI must use the complete candidate profile")
+    if ci.count("node --test tests/return_desk_runtime.test.cjs") != 1:
+        fail("CI must rerun the Return Desk runtime suite from the source distribution")
+    for token in (
+        "SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py",
+        "Reproducible distributions",
+        "python -m pip install --force-reinstall dist/*.whl",
+        "Test the source distribution payload",
+    ):
+        if token not in ci:
+            fail(f"CI package, reproducibility, or install checks lost required token: {token}")
     pages_workflow = (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
     if "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0" not in pages_workflow:
         fail("Pages must use the reviewed immutable setup-node v7.0.0 pin")
     if pages_workflow.count('node-version: "22.23.1"') != 1 or pages_workflow.count("package-manager-cache: false") != 1:
         fail("Pages Return Desk Node configuration differs from the toolchain lock")
-    if pages_workflow.count("node --test tests/return_desk_runtime.test.cjs") != 1:
-        fail("Pages must run the Return Desk runtime suite before deployment")
+    if pages_workflow.count("python scripts/verify.py pages") != 1:
+        fail("Pages must run the complete Pages verification profile before deployment")
     release_builder = (ROOT / "scripts" / "build_release.py").read_text(encoding="utf-8")
     for token in (
         'require_node(lock)',
-        '[node, "--test", "tests/return_desk_runtime.test.cjs"]',
+        '"scripts/verify.py", "candidate"',
+        "git_source_entries(commit)",
+        "require_tracked_tree_clean(",
+        "allowed_untracked_root=output",
+        "expected_source_entries=source_entries",
+        "release source rejects symlinks",
         '"return_desk_runtime": "pass"',
         '"embedded_artifact_signatures": "not_performed"',
         '"keyless_release_attestations": "required_before_publication"',
@@ -244,7 +267,7 @@ def main() -> int:
 
     citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
     if "date-released: 2026-07-29" not in citation:
-        fail("CITATION.cff must use the alpha.13 release date")
+        fail("CITATION.cff must use the alpha.14 release date")
     public_version = __version__.replace("a", "-alpha.", 1)
     if ".dev" in __version__:
         release_match = re.search(

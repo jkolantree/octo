@@ -4,8 +4,8 @@ Examples are known-answer fixtures for the checker. They are not evidence that t
 
 | File | Command | Expected decision | Exit | Lesson |
 |---|---|---:|---:|---|
-| `claim_valid.json` | `audit` | `no_blocking_findings` | 0 | A structurally valid manifest can clear the checks it activates without receiving a universal truth verdict. |
-| `claim_arithmetic_no_go.json` | `audit` | `demoted` | 1 | A finite-dimensional exact prime-comb claim triggers both its prospective fatal gate and the scoped no-go rule. |
+| `claim_valid.json` | `audit` | `blocked` | 1 | A legacy hash-matched artifact remains provenance only; its declared result cannot clear a semantic gate. |
+| `claim_arithmetic_no_go.json` | `audit` | `demoted` | 1 | A hash-only failed proof leaves its gate unrun; the independently recomputed finite-comb no-go still demotes the claim. |
 | `theorem_binomial_identity.json` | `theorem` | `no_blocking_findings` | 0 | Exact symbolic normalization proves the closed binomial identity in `Q[x,y]`. |
 | `claim_polynomial_identity.json` | `audit` | `no_blocking_findings` | 0 | Manifest `0.4.0` admits the claim-bound, statement-bound, recomputed theorem certificate as decisive gate evidence. |
 | `complex_valid_transport.json` | `complex` | `no_blocking_findings` | 0 | The supplied finite differentials and transport commute exactly. |
@@ -21,8 +21,8 @@ Examples are known-answer fixtures for the checker. They are not evidence that t
 | `atomic_modulus_evasion.json` | `atomic` | `demoted` | 1 | A sample exceeds the declared concentration bound. |
 | `defect_composition_valid.json` | `defect` | `no_blocking_findings` | 0 | The declared composite encloses the exactly propagated affine upper bound. |
 | `defect_composition_understated.json` | `defect` | `demoted` | 1 | The declared composite understates at least one propagated upper-bound coordinate. |
-| `null_conflicting_referenced.json` | `audit` | `blocked` | 1 | A declared pass cannot conceal referenced passing and failing evidence. |
-| `null_omitted_bound_failure.json` | `audit` | `blocked` | 1 | A gate record cannot omit a failure that is bound to that gate. |
+| `null_conflicting_referenced.json` | `audit` | `blocked` | 1 | Hash-matched pass/fail labels are provenance only, so the declared pass fails closed to `unrun`. |
+| `null_omitted_bound_failure.json` | `audit` | `blocked` | 1 | Omitting a hash-only failure cannot create a pass; every unreplayed gate remains `unrun`. |
 | `null_failed_proof.json` | `audit` | `blocked` | 1 | A failed formal-proof artifact cannot satisfy theorem support. |
 | `null_missing_arithmetic_config.json` | `audit` | `prohibited` | 2 | An arithmetic-trace claim cannot activate an empty domain plugin. |
 | `schema_atomic_missing_name.json` | `atomic` | `prohibited` | 2 | Runtime acceptance follows the released atomic schema. |

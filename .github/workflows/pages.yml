@@ -6,8 +6,14 @@ on:
     paths:
       - "pages/**"
       - "BSC_AUDIT_LLM_PACKET.md"
+      - "gpt/_source/GPT_PROFILE.json"
+      - "schemas/audit-return-v0.1.schema.json"
+      - "src/bsc_audit/component_contract.json"
+      - "src/bsc_audit/contracts.py"
       - "scripts/build_publication_assets.py"
       - "scripts/check_pages.py"
+      - "scripts/check_localization.py"
+      - "scripts/verify.py"
       - "tests/return_desk_runtime.test.cjs"
       - "toolchain.lock.json"
       - ".github/workflows/pages.yml"
@@ -37,13 +43,8 @@ jobs:
         with:
           node-version: "22.23.1"
           package-manager-cache: false
-      - name: Verify Return Desk runtime semantics
-        run: node --test tests/return_desk_runtime.test.cjs
-      - name: Verify generated protocol, localization, and accessibility contract
-        run: |
-          python scripts/build_publication_assets.py --check
-          python scripts/check_pages.py
-          python scripts/check_localization.py
+      - name: Verify the complete Pages candidate
+        run: python scripts/verify.py pages
       - name: Bind expected deployed Pages metadata
         id: pages-metadata
         shell: bash

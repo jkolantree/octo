@@ -4,7 +4,7 @@
 
 **This repository package:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE` with candidate state `PENDING`, live binding `NON_ADMISSIBLE_UNHASHABLE`, and Preview validation `PENDING`.
 
-**Version boundary:** this package is `0.3.0-alpha.13` and may be released only from the exact immutable tag `v0.3.0-alpha.13` recorded in the release manifest. Before that tag exists it is a candidate; after tagging, the manifest binds the exact commit and tree. Never move an existing tag or relabel changed bytes as an older release; any later changed package requires a new version and tag.
+**Version boundary:** this package is `0.3.0-alpha.14` and may be released only from the exact immutable tag `v0.3.0-alpha.14` recorded in the release manifest. Before that tag exists it is a candidate; after tagging, the manifest binds the exact commit and tree. Never move an existing tag or relabel changed bytes as an older release; any later changed package requires a new version and tag.
 
 **Japanese interface:** `BETA` with native-speaker terminology review `PENDING`. Preserve this disclosure in the public Description.
 
@@ -22,11 +22,11 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
 2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.
 3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 5970 characters and 6006 UTF-8 bytes before pasting; the operating cap is 6000 characters (75% of the 8000-character Builder maximum and 1500 characters below the compact ceiling).
 4. Upload these Knowledge files in this exact order:
-   1. `BSC_PROTOCOL.md` — 19863 bytes — SHA-256 `45333c8576c1a89637c4cc852e6a9cff91354729230b6621823454d5518f624f` — Deterministic Knowledge wrapper containing the canonical normative protocol
-   2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 8610 bytes — SHA-256 `43de11b4a47bc4419f067842f985623647fa08446a556f219c17c78cbc095ea7` — Research, evidence, gate, execution, deployment, and CLI status boundaries
-   3. `BSC_SUPPORTED_CHECKS.md` — 20323 bytes — SHA-256 `72ab2aed50f52ee5f7830fbd116ec5fc83588322709cb9dd7bebdf60e78a1515` — Implemented Python routes, schemas, findings, and limitations
-   4. `BSC_WORKED_EXAMPLES.md` — 5768 bytes — SHA-256 `619d70bf14871939a309f255ae0334393ca95084a0b0880f7d3dcfcd42673d1e` — Known-answer and adversarial examples without redefining the protocol
-   5. `BSC_JAPANESE_INTERFACE.md` — 4699 bytes — SHA-256 `8286a1de10461678ecf002ffcda124aa24dc5df48f342699343778139c874d77` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
+   1. `BSC_PROTOCOL.md` — 19863 bytes — SHA-256 `bc4601608393b0d0cc501f99d0b88a2ce251163fa1836b4521fa26a7c6ed182f` — Deterministic Knowledge wrapper containing the canonical normative protocol
+   2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 9295 bytes — SHA-256 `d21b18e6c56c648c94d7858b3e825ab9a8d5d28b59c5a9096bbb8b4a1e581e65` — Research, evidence, gate, execution, deployment, and CLI status boundaries
+   3. `BSC_SUPPORTED_CHECKS.md` — 21762 bytes — SHA-256 `97f599ed29ee342c9ad621f7f52388134c22bc17193b3f4a5942a962fa7ddc88` — Implemented Python routes, schemas, findings, and limitations
+   4. `BSC_WORKED_EXAMPLES.md` — 5811 bytes — SHA-256 `0fe3a231c12290ae0ec38a8aeb130e0fec17024e7e7b6b8825de1b817230f1df` — Known-answer and adversarial examples without redefining the protocol
+   5. `BSC_JAPANESE_INTERFACE.md` — 4699 bytes — SHA-256 `37c44d03729223a4545a3bf49e2f4eebfc72bc2226448dedd9cc45e811b17ad5` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
 5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.
 6. Copy the 4 prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.
 7. Freeze the exact compact candidate and applicable evaluation bytes, then run all 12 declared fresh-conversation Preview cases. Do not reuse a pass from the retired artifact-export profile. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.

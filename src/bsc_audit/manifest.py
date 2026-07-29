@@ -14,9 +14,15 @@ from .provenance import (
     verify_local_artifact,
 )
 from .theorem import (
+    FORMAL_ONLY_SCOPE,
     LANGUAGE,
     MAX_CERTIFICATE_BYTES,
+    SCIENTIFIC_TRUTH_STATE,
+    THEOREM_AUTHORITY,
+    THEOREM_AUTHORITY_SCOPE,
     TheoremReplay,
+    canonical_formal_title,
+    canonical_formal_statement,
     load_and_replay_theorem_certificate,
 )
 
@@ -81,6 +87,7 @@ TheoremReplayKey = tuple[str, str, str]
 
 MAX_THEOREM_ARTIFACTS_PER_AUDIT = 32
 MAX_THEOREM_REPLAYS_PER_AUDIT = 16
+THEOREM_PROFILE_DEPLOYMENT_STATES = {"research_only", "sandboxed"}
 
 
 @dataclass
@@ -95,6 +102,7 @@ class ManifestAuditCache:
         default_factory=dict
     )
     theorem_replays_started: int = 0
+    registered_replay_results: dict[str, str] = field(default_factory=dict)
 
 
 def _root_cache_key(root: Path | None) -> str | None:
@@ -193,6 +201,113 @@ def _closed_theorem_contract(raw: dict[str, Any]) -> bool:
         and claim.get("type") == "theorem_schema"
         and claim.get("family") == LANGUAGE
     )
+
+
+def _semantic_hash_or_none(value: object) -> str | None:
+    try:
+        return sha256_json(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _closed_theorem_profile_findings(claim: dict[str, Any]) -> list[Finding]:
+    """Bind a closed theorem manifest to its formal, non-scientific meaning."""
+
+    findings: list[Finding] = []
+    formal_statement = claim.get("formal_statement")
+    try:
+        canonical_title = canonical_formal_title(formal_statement)
+        canonical_statement = canonical_formal_statement(formal_statement)
+    except (TypeError, ValueError):
+        canonical_title = None
+        canonical_statement = None
+
+    if canonical_title is not None and claim.get("title") != canonical_title:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "THEOREM_TITLE_NOT_CANONICAL",
+                "claim.title",
+                "closed theorem titles must use the deterministic formal profile; free-form scientific titles are non-admissible",
+                witness={
+                    "canonical_formal_title": canonical_title,
+                    "provided_title_sha256": _semantic_hash_or_none(
+                        claim.get("title")
+                    ),
+                    "authority": THEOREM_AUTHORITY,
+                    "authority_scope": THEOREM_AUTHORITY_SCOPE,
+                    "scientific_truth": SCIENTIFIC_TRUTH_STATE,
+                },
+                repair="replace claim.title with canonical_formal_title exactly",
+            )
+        )
+    if (
+        canonical_statement is not None
+        and claim.get("statement") != canonical_statement
+    ):
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "THEOREM_STATEMENT_NOT_CANONICAL",
+                "claim.statement",
+                "closed theorem claims must use the deterministic AST projection; free-form theorem gloss is non-admissible",
+                witness={
+                    "canonical_formal_statement": canonical_statement,
+                    "provided_statement_sha256": _semantic_hash_or_none(
+                        claim.get("statement")
+                    ),
+                    "authority": THEOREM_AUTHORITY,
+                    "authority_scope": THEOREM_AUTHORITY_SCOPE,
+                    "scientific_truth": SCIENTIFIC_TRUTH_STATE,
+                },
+                repair="replace claim.statement with canonical_formal_statement exactly",
+            )
+        )
+    if claim.get("scope") != FORMAL_ONLY_SCOPE:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "THEOREM_SCOPE_NOT_FORMAL_ONLY",
+                "claim.scope",
+                "closed theorem scope cannot extend beyond the exact formal identity",
+                witness={
+                    "required_scope": FORMAL_ONLY_SCOPE,
+                    "provided_scope_sha256": _semantic_hash_or_none(
+                        claim.get("scope")
+                    ),
+                    "scientific_truth": SCIENTIFIC_TRUTH_STATE,
+                },
+                repair="use the fixed formal-only scope exactly",
+            )
+        )
+    if claim.get("evidence_maturity") != "structurally_checked":
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "THEOREM_MATURITY_OUT_OF_SCOPE",
+                "claim.evidence_maturity",
+                "the exact polynomial replay supports structural checking only, not empirical or replication maturity",
+                witness={
+                    "required": "structurally_checked",
+                    "declared": claim.get("evidence_maturity"),
+                },
+            )
+        )
+    if claim.get("deployment_status") not in THEOREM_PROFILE_DEPLOYMENT_STATES:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "THEOREM_DEPLOYMENT_OUT_OF_SCOPE",
+                "claim.deployment_status",
+                "the exact polynomial replay grants no candidate, admitted, or operational deployment authority",
+                witness={
+                    "allowed": sorted(THEOREM_PROFILE_DEPLOYMENT_STATES),
+                    "declared": claim.get("deployment_status"),
+                    "deployment_authority": "not_granted",
+                },
+            )
+        )
+    return findings
 
 
 def verified_evidence_ids(
@@ -346,6 +461,7 @@ def replayed_theorem_evidence(
             )
             continue
         results[evidence_id] = replay.result
+        audit_cache.registered_replay_results[evidence_id] = replay.result
         for finding in replay.findings:
             suffix = "" if finding.path == "$" else finding.path.removeprefix("$")
             findings.append(
@@ -426,6 +542,8 @@ def lint_manifest(
     maturity = claim.get("evidence_maturity")
     if maturity not in EVIDENCE_MATURITY:
         findings.append(Finding(Severity.ERROR, "EVIDENCE_MATURITY", "claim.evidence_maturity", f"maturity must be one of {sorted(EVIDENCE_MATURITY)}"))
+    if theorem_contract:
+        findings.extend(_closed_theorem_profile_findings(claim))
 
     system = raw["system"]
     _required_string(findings, system, "domain", "system")
@@ -505,10 +623,7 @@ def lint_manifest(
         evidence = []
     seen_ids: set[str] = set()
     verified_ids: set[str] = set()
-    independently_replicated_ids: set[str] = set()
     hash_bound_proof_ids: set[str] = set()
-    verified_pass_ids: set[str] = set()
-    empirical_pass_ids: set[str] = set()
     empirical_kinds = {"dataset", "statistical_certificate", "experimental_record", "independent_replication"}
     for index, item in enumerate(evidence):
         path = f"evidence.{index}"
@@ -582,14 +697,8 @@ def lint_manifest(
                 )
             if ok:
                 verified_ids.add(evidence_id)
-                if result == "pass":
-                    verified_pass_ids.add(evidence_id)
                 if kind in PROOF_KINDS and result == "pass" and claim.get("id") in claim_bindings:
                     hash_bound_proof_ids.add(evidence_id)
-                if kind in empirical_kinds and result == "pass":
-                    empirical_pass_ids.add(evidence_id)
-                if kind == "independent_replication" and result == "pass":
-                    independently_replicated_ids.add(evidence_id)
             else:
                 theorem_resource_limit = reason == "theorem_artifact_limit"
                 severity = (
@@ -638,12 +747,71 @@ def lint_manifest(
     if checks_run is not None and "semantic_theorem_replay" not in checks_run:
         checks_run.append("semantic_theorem_replay")
 
-    if maturity in {"structurally_checked", "empirically_passed", "externally_replicated"} and not verified_pass_ids:
-        findings.append(Finding(Severity.BLOCKED, "EVIDENCE_MATURITY_UNSUPPORTED", "claim.evidence_maturity", "artifact-backed maturity requires at least one locally verified passing artifact"))
-    if maturity in {"empirically_passed", "externally_replicated"} and not empirical_pass_ids:
-        findings.append(Finding(Severity.BLOCKED, "EMPIRICAL_EVIDENCE_MISSING", "claim.evidence_maturity", "empirical maturity requires verified passing data, statistical, experimental, or replication evidence"))
-    if maturity == "externally_replicated" and not independently_replicated_ids:
-        findings.append(Finding(Severity.BLOCKED, "REPLICATION_EVIDENCE_MISSING", "evidence", "independent maturity requires a verified independent-replication artifact"))
+    semantic_pass_ids = {
+        evidence_id
+        for evidence_id, result in replay_results.items()
+        if result == "pass"
+    }
+    evidence_by_id = evidence_index(raw)
+    semantic_empirical_pass_ids = {
+        evidence_id
+        for evidence_id in semantic_pass_ids
+        if evidence_by_id.get(evidence_id, {}).get("kind") in empirical_kinds
+    }
+    semantic_replication_pass_ids = {
+        evidence_id
+        for evidence_id in semantic_pass_ids
+        if evidence_by_id.get(evidence_id, {}).get("kind")
+        == "independent_replication"
+    }
+    if (
+        maturity
+        in {"structurally_checked", "empirically_passed", "externally_replicated"}
+        and not semantic_pass_ids
+    ):
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "EVIDENCE_MATURITY_UNSUPPORTED",
+                "claim.evidence_maturity",
+                "maturity beyond declared requires a passing result recomputed by a registered exact replay; artifact hashes establish provenance only",
+                witness={
+                    "verified_artifact_evidence": sorted(verified_ids),
+                    "registered_semantic_passes": sorted(semantic_pass_ids),
+                },
+            )
+        )
+    if (
+        maturity in {"empirically_passed", "externally_replicated"}
+        and not semantic_empirical_pass_ids
+    ):
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "EMPIRICAL_EVIDENCE_MISSING",
+                "claim.evidence_maturity",
+                "empirical maturity requires a passing result from a registered empirical replay; declared results and matching hashes are nonsemantic",
+                witness={
+                    "registered_empirical_passes": sorted(
+                        semantic_empirical_pass_ids
+                    )
+                },
+            )
+        )
+    if maturity == "externally_replicated" and not semantic_replication_pass_ids:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "REPLICATION_EVIDENCE_MISSING",
+                "evidence",
+                "external replication maturity requires a passing result from a registered independent-replication replay",
+                witness={
+                    "registered_replication_passes": sorted(
+                        semantic_replication_pass_ids
+                    )
+                },
+            )
+        )
     if claim.get("type") in {"theorem", "theorem_schema"} and not replay_results:
         findings.append(
             Finding(

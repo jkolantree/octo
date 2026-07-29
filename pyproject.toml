@@ -39,4 +39,4 @@ where = ["src"]
 version = {attr = "bsc_audit.__version__"}
 
 [tool.setuptools.package-data]
-bsc_audit = ["schema_data/*.json"]
+bsc_audit = ["component_contract.json", "schema_data/*.json"]
