@@ -149,7 +149,7 @@ def main() -> int:
     if not isinstance(paper_zenodo, dict) or paper_zenodo.get("license") != "CC-BY-4.0":
         fail("paper Zenodo metadata must declare CC-BY-4.0")
     if software_zenodo.get("publication_date") != "2026-07-29":
-        fail("software archive metadata must use the alpha.14 release date")
+        fail("software archive metadata must use the alpha.15 release date")
 
     toolchain = load_strict_json(ROOT / "toolchain.lock.json")
     if not isinstance(toolchain, dict):
@@ -182,6 +182,8 @@ def main() -> int:
     ):
         if token not in ci:
             fail(f"CI package, reproducibility, or install checks lost required token: {token}")
+    if ci.count("python scripts/build_dist.py") != 2:
+        fail("CI must perform exactly one primary and one independent distribution build")
     pages_workflow = (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
     if "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0" not in pages_workflow:
         fail("Pages must use the reviewed immutable setup-node v7.0.0 pin")
@@ -192,18 +194,27 @@ def main() -> int:
     release_builder = (ROOT / "scripts" / "build_release.py").read_text(encoding="utf-8")
     for token in (
         'require_node(lock)',
-        '"scripts/verify.py", "candidate"',
+        "candidate_command = [",
+        '"scripts/verify.py"',
+        '"candidate"',
         "git_source_entries(commit)",
         "require_tracked_tree_clean(",
         "allowed_untracked_root=output",
         "expected_source_entries=source_entries",
         "release source rejects symlinks",
-        '"return_desk_runtime": "pass"',
+        'stage_judgment(',
+        '"verification_receipt": receipt',
+        "role_for_artifact_name(",
+        "REQUIRED_ARTIFACT_ROLES",
         '"embedded_artifact_signatures": "not_performed"',
         '"keyless_release_attestations": "required_before_publication"',
     ):
         if token not in release_builder:
             fail(f"release builder is missing the exact Return Desk runtime gate: {token}")
+    if '"return_desk_runtime": "pass"' in release_builder:
+        fail("release builder must not manufacture fine-grained pass labels")
+    if "bsc-audit-complete.zip" in release_builder:
+        fail("release builder must not emit the duplicate unversioned source archive")
     release_workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
         encoding="utf-8"
     )
@@ -218,7 +229,6 @@ def main() -> int:
         "actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0",
         'subject-path: "${{ github.workspace }}/release/*"',
         "python scripts/check_release_directory.py",
-        "--expected-count 17",
         "gh attestation verify",
         "--source-digest \"$GITHUB_SHA\"",
         "--signer-workflow \"$GITHUB_REPOSITORY/.github/workflows/release.yml\"",
@@ -240,8 +250,8 @@ def main() -> int:
         fail("exact-release workflow must restore the remote annotated tag before testing its type")
     if release_workflow.count("python scripts/check_release_directory.py") != 3:
         fail("exact-release workflow must verify build, draft download, and published download")
-    if release_workflow.count("--expected-count 17") != 3:
-        fail("exact-release workflow must bind all three release checks to 17 files")
+    if "--expected-count" in release_workflow or ".assets | length" in release_workflow:
+        fail("exact-release workflow must derive completeness from semantic artifact roles")
     attestation = release_workflow.index(
         "actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6"
     )
@@ -267,7 +277,7 @@ def main() -> int:
 
     citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
     if "date-released: 2026-07-29" not in citation:
-        fail("CITATION.cff must use the alpha.14 release date")
+        fail("CITATION.cff must use the alpha.15 release date")
     public_version = __version__.replace("a", "-alpha.", 1)
     if ".dev" in __version__:
         release_match = re.search(

@@ -1828,7 +1828,7 @@ def render_readme(profile: dict[str, Any]) -> bytes:
     lines = [
         "# BSC Claim Auditor reproducible package",
         "",
-        f"The official [{product_record['name']}]({product_record['public_url']}) is `{product_record['service_availability']}`. This directory preserves the deterministic, repository-backed BSC engine `{public_version()}` package used to inspect, reproduce, verify, or fork its configuration. Its byte-identical public protocol component remains independently versioned `{PROTOCOL_VERSION}`.",
+        f"The official [{product_record['name']}]({product_record['public_url']}) is `{product_record['service_availability']}`. This directory preserves the deterministic, repository-backed BSC engine `{public_version()}` package used to inspect and reproduce the configuration lineage, verify candidate updates, or create a compatible fork. It does not establish byte-identical binding to the live indexed state. Its byte-identical public protocol component remains independently versioned `{PROTOCOL_VERSION}`.",
         "",
         f"Candidate state is `{product_record['candidate_state']}`; live binding is `{product_record['live_binding_state']}`; Preview validation is `{product_record['preview_validation_state']}`. These states do not change merely because the official service exists or candidate files were generated.",
         "",

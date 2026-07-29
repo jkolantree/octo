@@ -33,6 +33,29 @@ def git(cwd: Path, *args: str) -> str:
 
 
 class ReleaseWorkflowTests(unittest.TestCase):
+    def test_release_roster_is_semantic_and_has_no_duplicate_source_alias(self) -> None:
+        builder = (ROOT / "scripts" / "build_release.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("bsc-audit-complete.zip", builder)
+        self.assertIn("role_for_artifact_name(", builder)
+        self.assertIn("REQUIRED_ARTIFACT_ROLES", builder)
+
+        workflow = (
+            ROOT / ".github" / "workflows" / "release.yml"
+        ).read_text(encoding="utf-8")
+        self.assertEqual(
+            workflow.count("python scripts/check_release_directory.py"),
+            3,
+        )
+        self.assertNotIn("--expected-count", workflow)
+        self.assertNotIn(".assets | length", workflow)
+
+        ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertEqual(ci.count("python scripts/build_dist.py"), 2)
+
     def test_source_archive_reads_immutable_git_objects_and_detects_later_drift(self) -> None:
         if shutil.which("git") is None:
             self.skipTest("git is unavailable")
