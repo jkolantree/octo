@@ -26,7 +26,7 @@ The manifest field `claim.evidence_maturity` records workflow maturity:
 - `empirically_passed`
 - `externally_replicated`
 
-These states require progressively stronger attached records, but presence is not authenticity. A string naming a proof, dataset, or replication is not itself verification of that artifact. Likewise, a matching local SHA-256 proves which bytes were inspected, not that those bytes contain a valid proof. Until a supervised semantic replay contract exists, the claim-manifest route keeps theorem gates unrun and theorem promotion blocked even when a proof-like file is hash-bound.
+These states require progressively stronger attached records, but presence is not authenticity. A string naming a proof, dataset, or replication is not itself verification of that artifact. Likewise, a matching local SHA-256 proves which bytes were inspected, not that those bytes contain a valid proof. Manifest `0.4.0` has one deliberately closed exception: a claim-bound `q-polynomial-identity-v0.1` certificate becomes decisive only after exact symbolic replay of the authoritative formal AST and residual. General theorem prose, external-tool receipts, legacy manifest `0.3.0`, and every other proof-like artifact remain non-admissive.
 
 ## 3. Execution status
 
@@ -128,9 +128,23 @@ This outcome is non-admissive. It does not assign or validate the research verdi
 
 Automation should inspect both the exit code and structured JSON. It should never translate exit code `0` into “scientifically true” or “BSC compliant.”
 
+## 10. External and live binding
+
+A successful finite holonomy audit emits
+`HOLONOMY_EXTERNAL_INTERPRETATION_NON_ADMISSIBLE`. Its witness records that the
+algebra covers the submitted finite maps while source authenticity and
+scientific truth remain `not_established`.
+
+The live Custom GPT's indexed Knowledge state is
+`NON_ADMISSIBLE_UNHASHABLE`. Saved-editor fields, filenames, public rendering,
+and behavior can be observed, but ChatGPT does not expose independently
+retrievable indexed Knowledge bytes. Those observations therefore cannot
+satisfy an engine gate, theorem replay, or scientific admission. Repository
+package hashes remain valid for the repository bytes separately.
+
 ## Separation rule
 
-Research verdict, evidence maturity, execution status, deployment status, gate state, CLI decision, source coverage, and Return Desk outcome answer different questions. None may be inferred from another. In particular:
+Research verdict, evidence maturity, execution status, deployment status, gate state, CLI decision, source coverage, Return Desk outcome, and live binding answer different questions. None may be inferred from another. In particular:
 
 - a coherent or proven claim does not imply that a proposed execution ran;
 - a finite check that ran does not prove a broader theory;

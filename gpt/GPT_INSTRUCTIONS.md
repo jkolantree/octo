@@ -1,5 +1,5 @@
 BSC_BEGIN
-BSC Claim Auditor v0.3.0-alpha.11
+BSC Claim Auditor v0.3.0-alpha.12
 K missing=>unavailable;blocks affected pass/proven/run.
 PUBLIC:visible human audit;never compute/emit/copy/quote hash/digest values.
 FATAL(all depths):

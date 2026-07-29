@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL = ROOT / "BSC_AUDIT_LLM_PACKET.md"
-SCHEMA = ROOT / "schemas" / "claim-manifest-v0.3.schema.json"
+SCHEMA = ROOT / "schemas" / "claim-manifest-v0.4.schema.json"
 RETURN_SCHEMA = ROOT / "schemas" / "audit-return-v0.1.schema.json"
 GPT_PROFILE = ROOT / "gpt" / "_source" / "GPT_PROFILE.json"
 SOURCE_DATE_EPOCH = int(os.environ.get("SOURCE_DATE_EPOCH", "1784505600"))

@@ -6,6 +6,8 @@ Examples are known-answer fixtures for the checker. They are not evidence that t
 |---|---|---:|---:|---|
 | `claim_valid.json` | `audit` | `no_blocking_findings` | 0 | A structurally valid manifest can clear the checks it activates without receiving a universal truth verdict. |
 | `claim_arithmetic_no_go.json` | `audit` | `demoted` | 1 | A finite-dimensional exact prime-comb claim triggers both its prospective fatal gate and the scoped no-go rule. |
+| `theorem_binomial_identity.json` | `theorem` | `no_blocking_findings` | 0 | Exact symbolic normalization proves the closed binomial identity in `Q[x,y]`. |
+| `claim_polynomial_identity.json` | `audit` | `no_blocking_findings` | 0 | Manifest `0.4.0` admits the claim-bound, statement-bound, recomputed theorem certificate as decisive gate evidence. |
 | `complex_valid_transport.json` | `complex` | `no_blocking_findings` | 0 | The supplied finite differentials and transport commute exactly. |
 | `complex_broken_transport.json` | `complex` | `blocked` | 1 | A nonzero certificate-interchange column gives a finite witness. |
 | `holonomy_contractible_derived_pass.json` | `holonomy` | `no_blocking_findings_with_warnings` | 0 | Strict identity-versus-zero fails on a contractible complex, while an exact homotopy certifies derived equality. |
