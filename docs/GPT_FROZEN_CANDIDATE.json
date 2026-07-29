@@ -3,7 +3,7 @@
     "gpt/GPT_RELEASE_MANIFEST.json",
     "gpt/SHA256SUMS"
   ],
-  "file_count": 156,
+  "file_count": 157,
   "files": [
     {
       "bytes": 35372,
@@ -15,13 +15,13 @@
       "bytes": 17242,
       "category": "browser_return_desk",
       "path": "pages/index.html",
-      "sha256": "e7ad461c1e24cb3a50593f649b4527e8dd15f4c340cdd5997d64d5ad5846c977"
+      "sha256": "1aa44d99ac8bfe8dbb17c1596ccb060381da53df48218cf7afe9331e1c8edc8e"
     },
     {
       "bytes": 20354,
       "category": "browser_return_desk",
       "path": "pages/ja.html",
-      "sha256": "7d755b0c0a4ee0d13626a2a120a1cf9a90bb1674403d446daf1dce7e8fdbc0b4"
+      "sha256": "592667d7779b7ab362fb8692fa77f1bea41761654f629dc52b708ea2d84be5b2"
     },
     {
       "bytes": 6529,
@@ -39,19 +39,19 @@
       "bytes": 13643,
       "category": "browser_return_desk",
       "path": "pages/profile.js",
-      "sha256": "679f42b75af389f35e0ac766a09855410c8c820a2a85eb8443969c001b742781"
+      "sha256": "a4737cdc82ac18c0dad49ec1f1c21a6f84dc82f470d712ec10ca943907f632fb"
     },
     {
       "bytes": 30377,
       "category": "browser_return_desk",
       "path": "pages/protocol/BSC_AUDIT_LLM_PACKET.md",
-      "sha256": "5c24b75e3fe133ee61f52e8e56a59be7c3d2edae95673f7516bc59a42c1fd187"
+      "sha256": "3615c6d81e2c297e68a6ee798fe1a34aa4014a75e0670580ec002c28a933fd1a"
     },
     {
       "bytes": 185,
       "category": "browser_return_desk",
       "path": "pages/protocol/meta.js",
-      "sha256": "eb1ac53f381e6bb6c26c0663524e80514f220029ece406eaa60f436951468a92"
+      "sha256": "348f5e4813abf4d2fb7d9651a7e7e817217746c0d2f881935942c5061d4753a7"
     },
     {
       "bytes": 75464,
@@ -75,43 +75,43 @@
       "bytes": 6006,
       "category": "candidate",
       "path": "gpt/GPT_INSTRUCTIONS.md",
-      "sha256": "ee8711f642c93666b0931aa3b8a5ec5e761b385a3187b54e17efb34b1fcd9ee4"
+      "sha256": "3335b3eb08a9d6f22b2ccb093c64a54a7a81fb01772c20eafb9edaf8e7a2da73"
     },
     {
       "bytes": 26324,
       "category": "candidate",
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "b5d0d730d98c8639edac875a5bf7a987cd17dba7d748df2dc135d48b8b2c503b"
+      "sha256": "f0dacd30f82325177e67687e8d4085b216ceddc67a804fe629568bf64d6befe9"
     },
     {
       "bytes": 4699,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_JAPANESE_INTERFACE.md",
-      "sha256": "a1b9255a3429e641ca0e3350bdae1265611ade9867e782625788456776974f00"
+      "sha256": "8286a1de10461678ecf002ffcda124aa24dc5df48f342699343778139c874d77"
     },
     {
       "bytes": 19863,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_PROTOCOL.md",
-      "sha256": "06f72c67e870d4f37a836330f474bdb7c17bb245960fa7246d47e0d50de1854b"
+      "sha256": "45333c8576c1a89637c4cc852e6a9cff91354729230b6621823454d5518f624f"
     },
     {
       "bytes": 8610,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md",
-      "sha256": "a19c8299485234ed72d2d06621695790e016d0628e9460ff8234928fef526fbd"
+      "sha256": "43de11b4a47bc4419f067842f985623647fa08446a556f219c17c78cbc095ea7"
     },
     {
       "bytes": 20323,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_SUPPORTED_CHECKS.md",
-      "sha256": "bc5122a7ee3e320e082e29047ba9cdc8a4ee17c163d7ed246842db10371a2ce1"
+      "sha256": "72ab2aed50f52ee5f7830fbd116ec5fc83588322709cb9dd7bebdf60e78a1515"
     },
     {
       "bytes": 5768,
       "category": "candidate",
       "path": "gpt/knowledge/BSC_WORKED_EXAMPLES.md",
-      "sha256": "74bea7fa40199a7c091771a3152d81b0c51d09f23f0aea4e19f86f773ff37fe7"
+      "sha256": "619d70bf14871939a309f255ae0334393ca95084a0b0880f7d3dcfcd42673d1e"
     },
     {
       "bytes": 69135,
@@ -399,7 +399,7 @@
       "bytes": 30377,
       "category": "protocol_and_provenance",
       "path": "BSC_AUDIT_LLM_PACKET.md",
-      "sha256": "5c24b75e3fe133ee61f52e8e56a59be7c3d2edae95673f7516bc59a42c1fd187"
+      "sha256": "3615c6d81e2c297e68a6ee798fe1a34aa4014a75e0670580ec002c28a933fd1a"
     },
     {
       "bytes": 28628,
@@ -417,7 +417,7 @@
       "bytes": 109621,
       "category": "protocol_and_provenance",
       "path": "docs/standalone/BSC_EXECUTION_AND_RECEIPTS.md",
-      "sha256": "97e0fc118fe1f78d3ec7540989cc7c653a570c168039a53e9193d1c47ca16a43"
+      "sha256": "ef3499a71578e7058a4ba44c8f62439674f4dd3f9200580833f46bb1ef2f43ed"
     },
     {
       "bytes": 30489,
@@ -513,7 +513,7 @@
       "bytes": 141,
       "category": "python_return_desk",
       "path": "src/bsc_audit/__init__.py",
-      "sha256": "861b168fe495122a42f082df977cbb8a24c436020fec5d92dfb51faba0dcb296"
+      "sha256": "9384df992296442665136074b612ffe27e53ca1354c4f31a129efbf557b988c0"
     },
     {
       "bytes": 7202,
@@ -603,7 +603,7 @@
       "bytes": 82023,
       "category": "python_return_desk",
       "path": "src/bsc_audit/return_desk.py",
-      "sha256": "ec5e3e80a586bd4839f14c0f894aab51ba371ed732fc427ed663e98c683acd15"
+      "sha256": "03287c60f3f11eb6f7961dc149b83a1eaee73f5df2bdec579a60dcd667ff59f2"
     },
     {
       "bytes": 4096,
@@ -693,7 +693,7 @@
       "bytes": 51068,
       "category": "tests",
       "path": "tests/return_desk_runtime.test.cjs",
-      "sha256": "a6ead62f7e3a5fb8ad2b5508a1b56aa57954236abcaca035c50ffabd9e2360ba"
+      "sha256": "99c46cb94714d6ac703c462ada8ef814b0ba6a32dd0b0428e91576cd210eb6cd"
     },
     {
       "bytes": 7866,
@@ -753,7 +753,7 @@
       "bytes": 86727,
       "category": "tests",
       "path": "tests/test_gpt_eval_controller.py",
-      "sha256": "c0ff7b5433ce66bb496f0d8ef7f314cd672663e0539008ebfefc551b971c7c66"
+      "sha256": "c5f6cdc6ae1adfddf3b628a29463ed30bc04202229bdcdfbc805388ae0788bc3"
     },
     {
       "bytes": 41919,
@@ -765,13 +765,13 @@
       "bytes": 20714,
       "category": "tests",
       "path": "tests/test_gpt_frozen_candidate.py",
-      "sha256": "8ba39e703fc9930de87af50bda9f1fe746d307343cb4a1c68fc14ab2ac1cedcd"
+      "sha256": "98920228858750ff40b4e0446fbd572001e2895477269e6593ce5d2dc2836450"
     },
     {
       "bytes": 60511,
       "category": "tests",
       "path": "tests/test_gpt_package.py",
-      "sha256": "fe46cac9cae43b7f2d16b66b0952fb8ec4bd6dd39f76dc15c865190ddf9e2a8b"
+      "sha256": "3e259e9fd7cc90643618e7cee571d3b468981fa225d0d95df865a7fa7f97b019"
     },
     {
       "bytes": 17057,
@@ -831,13 +831,19 @@
       "bytes": 8817,
       "category": "tests",
       "path": "tests/test_publication_status.py",
-      "sha256": "e89ce3e1fc300d93cd009516d60a399b77a971384bfbc5702f07d519ffc660a8"
+      "sha256": "4d8554747ba4dc956a27bf195f0866d10615aa77434cfbf9b32337386d42d62f"
     },
     {
       "bytes": 8920,
       "category": "tests",
       "path": "tests/test_release_directory.py",
-      "sha256": "c8c0712f362d70696943491db03b82637d87680d2c05e982a658ab56f746b830"
+      "sha256": "a7234bf62c2d97bc711d740207615f579bd380984b5afaafcf615d9be4dd2735"
+    },
+    {
+      "bytes": 2622,
+      "category": "tests",
+      "path": "tests/test_release_workflow.py",
+      "sha256": "a084beef8f8f1f3cbe7603e40ef6f1f45aa11be333371a5eceb59fffd5a6daf5"
     },
     {
       "bytes": 4665,
@@ -849,7 +855,7 @@
       "bytes": 56658,
       "category": "tests",
       "path": "tests/test_return_desk.py",
-      "sha256": "c0cfbbf69484dd40ea0599a1b17a58b36b41fc7c62b4512e44e10142a66a88c9"
+      "sha256": "5939ee6ffcef27976192bf14dcef2404532fdf0d1878f1dd7de4d0158c58657c"
     },
     {
       "bytes": 1003,
@@ -864,10 +870,10 @@
       "sha256": "ceaca16ff3efd3bad4783db2614bb95a06943438f427aa8166b4e95d1a5c568a"
     },
     {
-      "bytes": 6617,
+      "bytes": 6945,
       "category": "tooling",
       "path": ".github/workflows/release.yml",
-      "sha256": "cf5747857518c59889e25e7f152d6fb34927c1717b87e2ca1d5ab5a161dc1a15"
+      "sha256": "ac69cc80135071fe3f843cd8bac071d04287ddf1fd5016a24bc1b3a75413bdff"
     },
     {
       "bytes": 128882,
@@ -894,10 +900,10 @@
       "sha256": "cfe1d850884348af9e4d0aca746081c246574ec6532c556b7a7512a7430e1f69"
     },
     {
-      "bytes": 43480,
+      "bytes": 43512,
       "category": "tooling",
       "path": "scripts/check_gpt_frozen_candidate.py",
-      "sha256": "7573066aa46eaa0018af174acb6983842bae2952a352fb041663eb56e91bbfac"
+      "sha256": "254bcac3e9e6bf42457195e5116970ad6f5f309b50903c6874c57d8f18dab996"
     },
     {
       "bytes": 1485,
@@ -939,7 +945,7 @@
       "bytes": 407,
       "category": "tooling",
       "path": "toolchain.lock.json",
-      "sha256": "0c15f96879063c91b1f97d4433c43e1b75abed64b2d8843ff5c045782af865e5"
+      "sha256": "e6063bcb96fdb0666ee548179dc767786976f296296e881959cdc29fdbcb055f"
     }
   ],
   "manifest_schema": "bsc-gpt-frozen-candidate-manifest/v1",
