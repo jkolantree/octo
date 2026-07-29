@@ -252,7 +252,10 @@ class MappingComplexTests(unittest.TestCase):
         rhs = [Fraction(1)]
         certificate = solve_exact(matrix, rhs)
         replay_linear_certificate(matrix, rhs, certificate)
-        with self.assertRaisesRegex(ValueError, "does not replay"):
+        with self.assertRaisesRegex(
+            ValueError,
+            "does not replay|invalid residual",
+        ):
             replay_linear_certificate(
                 matrix,
                 rhs,

@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from .findings import Finding, Severity
+from .judgment import CheckedJudgment
+from .plugins import DOMAIN_CHECK_FIELDS, TRACE_REQUIRED_OBLIGATIONS
 from .provenance import (
     MAX_ARTIFACT_BYTES,
     is_placeholder_sha256,
@@ -20,6 +22,7 @@ from .theorem import (
     SCIENTIFIC_TRUTH_STATE,
     THEOREM_AUTHORITY,
     THEOREM_AUTHORITY_SCOPE,
+    THEOREM_GATE_ID,
     TheoremReplay,
     canonical_formal_title,
     canonical_formal_statement,
@@ -68,6 +71,7 @@ EVIDENCE_KINDS = {
     "audit_report",
 }
 PROOF_KINDS = {"proof", "formal_proof", "exact_certificate"}
+SUPPORTED_DOMAIN_CHECKS = {"arithmetic_trace", "global_recovery"}
 ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{2,191}$")
 PLACEHOLDERS = {
     "draft",
@@ -91,7 +95,7 @@ THEOREM_PROFILE_DEPLOYMENT_STATES = {"research_only", "sandboxed"}
 
 
 @dataclass
-class ManifestAuditCache:
+class _ManifestAuditContext:
     """Per-audit cache for immutable artifact verification and theorem replay."""
 
     artifact_verifications: dict[ArtifactVerificationKey, ArtifactVerification] = field(
@@ -102,7 +106,6 @@ class ManifestAuditCache:
         default_factory=dict
     )
     theorem_replays_started: int = 0
-    registered_replay_results: dict[str, str] = field(default_factory=dict)
 
 
 def _root_cache_key(root: Path | None) -> str | None:
@@ -115,7 +118,7 @@ def _root_cache_key(root: Path | None) -> str | None:
 
 
 def _verify_local_artifact_cached(
-    cache: ManifestAuditCache,
+    cache: _ManifestAuditContext,
     root: Path | None,
     relative_path: object,
     expected_hash: object,
@@ -310,12 +313,11 @@ def _closed_theorem_profile_findings(claim: dict[str, Any]) -> list[Finding]:
     return findings
 
 
-def verified_evidence_ids(
+def _verified_evidence_ids(
     raw: dict[str, Any],
     artifact_root: Path | None,
-    audit_cache: ManifestAuditCache | None = None,
+    audit_context: _ManifestAuditContext,
 ) -> set[str]:
-    audit_cache = audit_cache or ManifestAuditCache()
     theorem_contract = _closed_theorem_contract(raw)
     verified: set[str] = set()
     for item in _evidence_records(raw):
@@ -329,7 +331,7 @@ def verified_evidence_ids(
         )
         max_bytes = MAX_CERTIFICATE_BYTES if theorem_artifact else MAX_ARTIFACT_BYTES
         ok, _, _ = _verify_local_artifact_cached(
-            audit_cache,
+            audit_context,
             artifact_root,
             item.get("artifact"),
             item.get("sha256"),
@@ -341,6 +343,15 @@ def verified_evidence_ids(
     return verified
 
 
+def verified_evidence_ids(
+    raw: dict[str, Any],
+    artifact_root: Path | None,
+) -> set[str]:
+    """Return artifact-verified identifiers using a fresh, non-injectable audit context."""
+
+    return _verified_evidence_ids(raw, artifact_root, _ManifestAuditContext())
+
+
 def evidence_index(raw: dict[str, Any]) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
     for item in _evidence_records(raw):
@@ -350,15 +361,14 @@ def evidence_index(raw: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return result
 
 
-def replayed_theorem_evidence(
+def _replayed_theorem_evidence(
     raw: dict[str, Any],
     artifact_root: Path | None,
-    verified_ids: set[str] | None = None,
-    audit_cache: ManifestAuditCache | None = None,
-) -> tuple[dict[str, str], list[Finding]]:
+    verified_ids: set[str],
+    audit_context: _ManifestAuditContext,
+) -> tuple[dict[str, CheckedJudgment], list[Finding]]:
     """Replay only the closed v0.4 exact-Q theorem evidence contract."""
 
-    audit_cache = audit_cache or ManifestAuditCache()
     claim = raw.get("claim")
     if not _closed_theorem_contract(raw):
         return {}, []
@@ -367,14 +377,12 @@ def replayed_theorem_evidence(
     formal_statement = claim.get("formal_statement")
     if not isinstance(claim_id, str) or not isinstance(formal_statement, dict):
         return {}, []
-    if verified_ids is None:
-        verified_ids = verified_evidence_ids(raw, artifact_root, audit_cache)
     try:
         formal_statement_sha256 = sha256_json(formal_statement)
     except (TypeError, ValueError):
         formal_statement_sha256 = None
 
-    results: dict[str, str] = {}
+    results: dict[str, CheckedJudgment] = {}
     findings: list[Finding] = []
     for index, item in enumerate(_evidence_records(raw)):
         evidence_id = item.get("id")
@@ -399,10 +407,10 @@ def replayed_theorem_evidence(
             )
             else None
         )
-        if replay_key is not None and replay_key in audit_cache.theorem_replays:
-            replay = audit_cache.theorem_replays[replay_key]
+        if replay_key is not None and replay_key in audit_context.theorem_replays:
+            replay = audit_context.theorem_replays[replay_key]
         else:
-            if audit_cache.theorem_replays_started >= MAX_THEOREM_REPLAYS_PER_AUDIT:
+            if audit_context.theorem_replays_started >= MAX_THEOREM_REPLAYS_PER_AUDIT:
                 findings.append(
                     Finding(
                         Severity.ERROR,
@@ -416,7 +424,7 @@ def replayed_theorem_evidence(
                     )
                 )
                 continue
-            audit_cache.theorem_replays_started += 1
+            audit_context.theorem_replays_started += 1
             replay = load_and_replay_theorem_certificate(
                 artifact_root,
                 artifact,
@@ -425,7 +433,7 @@ def replayed_theorem_evidence(
                 expected_formal_statement=formal_statement,
             )
             if replay_key is not None:
-                audit_cache.theorem_replays[replay_key] = replay
+                audit_context.theorem_replays[replay_key] = replay
         if not replay.valid or replay.result is None:
             for finding in replay.findings:
                 suffix = "" if finding.path == "$" else finding.path.removeprefix("$")
@@ -460,8 +468,20 @@ def replayed_theorem_evidence(
                 )
             )
             continue
-        results[evidence_id] = replay.result
-        audit_cache.registered_replay_results[evidence_id] = replay.result
+        assert isinstance(digest, str)
+        assert isinstance(replay.formal_statement_sha256, str)
+        judgment = CheckedJudgment(
+            subject_id=claim_id,
+            subject_sha256=replay.formal_statement_sha256,
+            predicate=THEOREM_GATE_ID,
+            scope=THEOREM_AUTHORITY_SCOPE,
+            method_id=LANGUAGE,
+            evidence_id=evidence_id,
+            evidence_sha256=digest,
+            authority=THEOREM_AUTHORITY,
+            result=replay.result,
+        )
+        results[evidence_id] = judgment
         for finding in replay.findings:
             suffix = "" if finding.path == "$" else finding.path.removeprefix("$")
             findings.append(
@@ -472,6 +492,7 @@ def replayed_theorem_evidence(
                     finding.message,
                     witness={
                         "evidence_id": evidence_id,
+                        "judgment": judgment.to_dict(),
                         "replay_witness": finding.witness,
                     },
                     repair=finding.repair,
@@ -480,14 +501,46 @@ def replayed_theorem_evidence(
     return results, findings
 
 
+def replayed_theorem_evidence(
+    raw: dict[str, Any],
+    artifact_root: Path | None,
+) -> tuple[dict[str, CheckedJudgment], list[Finding]]:
+    """Replay theorem evidence in a fresh context that callers cannot pre-populate."""
+
+    audit_context = _ManifestAuditContext()
+    verified_ids = _verified_evidence_ids(raw, artifact_root, audit_context)
+    return _replayed_theorem_evidence(
+        raw,
+        artifact_root,
+        verified_ids,
+        audit_context,
+    )
+
+
 def lint_manifest(
     raw: dict[str, Any],
     artifact_root: Path | None = None,
     *,
     checks_run: list[str] | None = None,
-    audit_cache: ManifestAuditCache | None = None,
 ) -> list[Finding]:
-    audit_cache = audit_cache or ManifestAuditCache()
+    """Lint one manifest in a fresh, non-injectable audit context."""
+
+    return _lint_manifest(
+        raw,
+        artifact_root,
+        checks_run=checks_run,
+        audit_context=_ManifestAuditContext(),
+    )
+
+
+def _lint_manifest(
+    raw: dict[str, Any],
+    artifact_root: Path | None = None,
+    *,
+    checks_run: list[str] | None = None,
+    audit_context: _ManifestAuditContext,
+) -> list[Finding]:
+    audit_cache = audit_context
     findings: list[Finding] = []
     if checks_run is not None and "claim_manifest_lint" not in checks_run:
         checks_run.append("claim_manifest_lint")
@@ -519,6 +572,101 @@ def lint_manifest(
         return findings
 
     claim = raw["claim"]
+    domain_checks = raw.get("domain_checks", {})
+    if not isinstance(domain_checks, dict):
+        findings.append(
+            Finding(
+                Severity.ERROR,
+                "DOMAIN_CHECKS_TYPE",
+                "domain_checks",
+                "domain_checks must be an object when present",
+            )
+        )
+    else:
+        for name in sorted(set(domain_checks) - SUPPORTED_DOMAIN_CHECKS):
+            findings.append(
+                Finding(
+                    Severity.ERROR,
+                    "DOMAIN_CHECK_UNREGISTERED",
+                    f"domain_checks.{name}",
+                    "domain check has no registered checker and cannot be silently ignored",
+                )
+            )
+        for name in sorted(set(domain_checks) & SUPPORTED_DOMAIN_CHECKS):
+            config = domain_checks[name]
+            if not isinstance(config, dict):
+                findings.append(
+                    Finding(
+                        Severity.ERROR,
+                        "DOMAIN_CHECK_CONFIG_TYPE",
+                        f"domain_checks.{name}",
+                        "registered domain check configuration must be an object",
+                    )
+                )
+                continue
+            for field_name in sorted(set(config) - DOMAIN_CHECK_FIELDS[name]):
+                findings.append(
+                    Finding(
+                        Severity.ERROR,
+                        "DOMAIN_CHECK_FIELD_UNREGISTERED",
+                        f"domain_checks.{name}.{field_name}",
+                        "domain check field has no registered meaning and cannot be silently ignored",
+                    )
+                )
+            if name == "arithmetic_trace":
+                obligations = config.get("certified_obligations")
+                if isinstance(obligations, list) and all(
+                    isinstance(obligation, str) for obligation in obligations
+                ):
+                    for index, obligation in enumerate(obligations):
+                        if obligation not in TRACE_REQUIRED_OBLIGATIONS:
+                            findings.append(
+                                Finding(
+                                    Severity.ERROR,
+                                    "DOMAIN_CHECK_VALUE_UNREGISTERED",
+                                    f"domain_checks.arithmetic_trace.certified_obligations.{index}",
+                                    "certified obligation has no registered replay predicate",
+                                    witness=obligation,
+                                )
+                            )
+                bindings = config.get("obligation_evidence")
+                if isinstance(bindings, dict):
+                    for obligation in sorted(
+                        set(bindings) - TRACE_REQUIRED_OBLIGATIONS
+                    ):
+                        findings.append(
+                            Finding(
+                                Severity.ERROR,
+                                "DOMAIN_CHECK_FIELD_UNREGISTERED",
+                                f"domain_checks.arithmetic_trace.obligation_evidence.{obligation}",
+                                "arithmetic-trace obligation has no registered replay predicate",
+                            )
+                        )
+                    for obligation, identifiers in sorted(bindings.items()):
+                        if not isinstance(identifiers, list) or not all(
+                            isinstance(identifier, str)
+                            for identifier in identifiers
+                        ):
+                            findings.append(
+                                Finding(
+                                    Severity.ERROR,
+                                    "DOMAIN_CHECK_FIELD_TYPE",
+                                    f"domain_checks.arithmetic_trace.obligation_evidence.{obligation}",
+                                    "obligation evidence must be a list of evidence identifiers",
+                                )
+                            )
+        if (
+            "arithmetic_trace" in domain_checks
+            and claim.get("family") != "arithmetic_trace"
+        ):
+            findings.append(
+                Finding(
+                    Severity.ERROR,
+                    "DOMAIN_CHECK_NOT_APPLICABLE",
+                    "domain_checks.arithmetic_trace",
+                    "arithmetic_trace is configured for a claim outside the arithmetic_trace family",
+                )
+            )
     theorem_contract = _closed_theorem_contract(raw)
     if "epistemic_status" in claim:
         findings.append(
@@ -737,22 +885,37 @@ def lint_manifest(
                     )
                 )
 
-    replay_results, replay_findings = replayed_theorem_evidence(
+    replay_results, replay_findings = _replayed_theorem_evidence(
         raw,
         artifact_root,
         verified_ids,
-        audit_cache,
+        audit_context,
     )
     findings.extend(replay_findings)
     if checks_run is not None and "semantic_theorem_replay" not in checks_run:
         checks_run.append("semantic_theorem_replay")
 
+    claim_subject_sha256 = _semantic_hash_or_none(claim.get("formal_statement"))
+    evidence_by_id = evidence_index(raw)
     semantic_pass_ids = {
         evidence_id
-        for evidence_id, result in replay_results.items()
-        if result == "pass"
+        for evidence_id, judgment in replay_results.items()
+        if (
+            isinstance(claim.get("id"), str)
+            and isinstance(claim_subject_sha256, str)
+            and judgment.supports(
+                subject_id=claim["id"],
+                subject_sha256=claim_subject_sha256,
+                predicate=THEOREM_GATE_ID,
+                scope=THEOREM_AUTHORITY_SCOPE,
+                method_id=LANGUAGE,
+                evidence_id=evidence_id,
+                evidence_sha256=evidence_by_id[evidence_id]["sha256"],
+                authority=THEOREM_AUTHORITY,
+                result="pass",
+            )
+        )
     }
-    evidence_by_id = evidence_index(raw)
     semantic_empirical_pass_ids = {
         evidence_id
         for evidence_id in semantic_pass_ids

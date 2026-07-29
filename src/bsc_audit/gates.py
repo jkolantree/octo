@@ -5,16 +5,23 @@ from pathlib import Path
 from typing import Any
 
 from .findings import Finding, Severity
+from .judgment import CheckedJudgment
 from .manifest import (
     DEPLOYMENT_STATES,
     EVIDENCE_MATURITY,
-    ManifestAuditCache,
     PROOF_KINDS,
+    _ManifestAuditContext,
+    _replayed_theorem_evidence,
+    _verified_evidence_ids,
     evidence_index,
-    replayed_theorem_evidence,
-    verified_evidence_ids,
 )
-from .theorem import THEOREM_GATE_ID
+from .provenance import sha256_json
+from .theorem import (
+    LANGUAGE,
+    THEOREM_AUTHORITY,
+    THEOREM_AUTHORITY_SCOPE,
+    THEOREM_GATE_ID,
+)
 
 
 GATE_STATES = {"unrun", "pass", "fail", "conflict"}
@@ -26,17 +33,25 @@ def _bound_evidence_is_valid(
     references: object,
     records: dict[str, dict[str, Any]],
     verified_ids: set[str],
-    semantic_replays: dict[str, str],
+    semantic_replays: dict[str, CheckedJudgment],
     claim_type: object,
+    claim_id: object,
+    claim_subject_sha256: str | None,
 ) -> tuple[bool, str, dict[str, Any]]:
     if not isinstance(references, list) or not all(isinstance(value, str) for value in references):
         return False, "unrun", {"reason": "evidence references must be a list of identifiers"}
     duplicate_references = len(references) != len(set(references))
-    bound_ids = {
-        evidence_id
-        for evidence_id, record in records.items()
-        if gate_id in record.get("verifies_gates", [])
-    }
+    bound_ids: set[str] = set()
+    malformed_binding_ids: list[str] = []
+    for evidence_id, record in records.items():
+        bindings = record.get("verifies_gates", [])
+        if not isinstance(bindings, list) or not all(
+            isinstance(binding, str) for binding in bindings
+        ):
+            malformed_binding_ids.append(evidence_id)
+            continue
+        if gate_id in bindings:
+            bound_ids.add(evidence_id)
     referenced_ids = set(references)
     missing_references = sorted(bound_ids - referenced_ids)
     extraneous_references = sorted(referenced_ids - bound_ids)
@@ -52,11 +67,34 @@ def _bound_evidence_is_valid(
         if claim_type == "theorem"
         else set()
     )
-    admissible_semantic_replays = (
-        semantic_replays
-        if claim_type == "theorem_schema" and gate_id == THEOREM_GATE_ID
-        else {}
-    )
+    admissible_semantic_replays: dict[str, CheckedJudgment] = {}
+    if (
+        claim_type == "theorem_schema"
+        and gate_id == THEOREM_GATE_ID
+        and isinstance(claim_id, str)
+        and isinstance(claim_subject_sha256, str)
+    ):
+        for evidence_id, judgment in semantic_replays.items():
+            record = records.get(evidence_id)
+            evidence_sha256 = (
+                record.get("sha256") if isinstance(record, dict) else None
+            )
+            if (
+                isinstance(evidence_sha256, str)
+                and judgment.result in {"pass", "fail"}
+                and judgment.supports(
+                    subject_id=claim_id,
+                    subject_sha256=claim_subject_sha256,
+                    predicate=THEOREM_GATE_ID,
+                    scope=THEOREM_AUTHORITY_SCOPE,
+                    method_id=LANGUAGE,
+                    evidence_id=evidence_id,
+                    evidence_sha256=evidence_sha256,
+                    authority=THEOREM_AUTHORITY,
+                    result=judgment.result,
+                )
+            ):
+                admissible_semantic_replays[evidence_id] = judgment
     nonsemantic_theorem_ids = (
         (bound_ids & verified_ids) - set(admissible_semantic_replays)
         if claim_type == "theorem_schema"
@@ -66,7 +104,7 @@ def _bound_evidence_is_valid(
         admissible_semantic_replays
     )
     observed_results = {
-        admissible_semantic_replays[evidence_id]
+        admissible_semantic_replays[evidence_id].result
         for evidence_id in bound_ids & set(admissible_semantic_replays)
     }
     decisive = observed_results & {"pass", "fail"}
@@ -86,6 +124,7 @@ def _bound_evidence_is_valid(
         "missing_references": missing_references,
         "extraneous_references": extraneous_references,
         "missing_records": missing_records,
+        "malformed_gate_bindings": sorted(malformed_binding_ids),
         "unverified": unverified,
         "hash_only_proof_evidence": sorted(hash_only_proof_ids),
         "nonsemantic_theorem_evidence": sorted(nonsemantic_theorem_ids),
@@ -95,7 +134,7 @@ def _bound_evidence_is_valid(
             for evidence_id in sorted(nonsemantic_ids)
         },
         "semantic_theorem_replay": {
-            evidence_id: admissible_semantic_replays[evidence_id]
+            evidence_id: admissible_semantic_replays[evidence_id].to_dict()
             for evidence_id in sorted(
                 bound_ids & set(admissible_semantic_replays)
             )
@@ -105,6 +144,7 @@ def _bound_evidence_is_valid(
     }
     valid = not (
         duplicate_references
+        or malformed_binding_ids
         or missing_references
         or extraneous_references
         or missing_records
@@ -117,11 +157,24 @@ def _bound_evidence_is_valid(
 def audit_gate_product(
     raw: dict[str, Any],
     artifact_root: Path | None = None,
-    audit_cache: ManifestAuditCache | None = None,
+) -> list[Finding]:
+    """Audit gate coordinates in a fresh, non-injectable audit context."""
+
+    return _audit_gate_product(
+        raw,
+        artifact_root,
+        audit_context=_ManifestAuditContext(),
+    )
+
+
+def _audit_gate_product(
+    raw: dict[str, Any],
+    artifact_root: Path | None = None,
+    *,
+    audit_context: _ManifestAuditContext,
 ) -> list[Finding]:
     """Audit independent gate coordinates and verified failure propagation."""
 
-    audit_cache = audit_cache or ManifestAuditCache()
     findings: list[Finding] = []
     claim = raw.get("claim")
     admission = raw.get("admission")
@@ -142,13 +195,21 @@ def audit_gate_product(
         return findings + [Finding(Severity.ERROR, "GATE_RESULTS_TYPE", "admission.gate_results", "gate results must be a list")]
     declared_hard = set(hard_values)
     records = evidence_index(raw)
-    verified_ids = verified_evidence_ids(raw, artifact_root, audit_cache)
-    theorem_replays, _ = replayed_theorem_evidence(
+    verified_ids = _verified_evidence_ids(
+        raw,
+        artifact_root,
+        audit_context,
+    )
+    theorem_replays, _ = _replayed_theorem_evidence(
         raw,
         artifact_root,
         verified_ids,
-        audit_cache,
+        audit_context,
     )
+    try:
+        claim_subject_sha256 = sha256_json(claim.get("formal_statement"))
+    except (TypeError, ValueError):
+        claim_subject_sha256 = None
     by_id: dict[str, dict[str, Any]] = {}
     verified_results: set[str] = set()
     verified_failures: set[str] = set()
@@ -177,6 +238,8 @@ def audit_gate_product(
             verified_ids,
             theorem_replays,
             claim.get("type"),
+            claim.get("id"),
+            claim_subject_sha256,
         )
         computed_states[gate_id] = computed_state
         if not valid_binding:

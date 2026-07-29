@@ -30,6 +30,14 @@ from bsc_audit import __version__  # noqa: E402
 from bsc_audit.contracts import COMPONENT_CONTRACT  # noqa: E402
 from build_publication_assets import write_release_assets  # noqa: E402
 from build_gpt_package import write_release_asset as write_gpt_release_asset  # noqa: E402
+from release_contract import (  # noqa: E402
+    REQUIRED_ARTIFACT_ROLES,
+    release_subject,
+    role_for_artifact_name,
+    stage_judgment,
+    validate_verification_receipt,
+    verification_receipt,
+)
 
 
 PUBLIC_VERSION = __version__.replace("a", "-alpha.", 1)
@@ -366,49 +374,201 @@ def main() -> int:
     args = parser.parse_args()
     output = args.output.resolve()
     commit, tree, tag = repository_identity()
+    subject = release_subject(commit, tree, tag)
+    judgments = [
+        stage_judgment(
+            "exact-release-identity",
+            subject=subject,
+            evidence={
+                "commit": commit,
+                "tree": tree,
+                "tag": tag,
+                "worktree_status": "clean",
+            },
+        )
+    ]
     source_entries = git_source_entries(commit)
     lock = toolchain_lock()
-    require_node(lock)
+    node = require_node(lock)
+    toolchain_evidence = {
+        "python": lock["release_python"],
+        "node": lock["return_desk_node"],
+        "setuptools": lock["setuptools"],
+        "source_date_epoch": lock["source_date_epoch"],
+        "toolchain_lock_sha256": sha256(ROOT / "toolchain.lock.json"),
+    }
+    judgments.append(
+        stage_judgment(
+            "toolchain-binding",
+            subject=subject,
+            evidence=toolchain_evidence,
+        )
+    )
     if output.exists() and any(output.iterdir()):
         raise SystemExit(f"release output directory must be empty: {output}")
     output.mkdir(parents=True, exist_ok=True)
 
-    run([sys.executable, "scripts/verify.py", "candidate"])
+    candidate_command = [
+        sys.executable,
+        "scripts/verify.py",
+        "candidate",
+        "--node-executable",
+        node,
+    ]
+    candidate = run(candidate_command)
+    judgments.append(
+        stage_judgment(
+            "candidate-profile",
+            subject=subject,
+            evidence={
+                "profile": "candidate",
+                "exit_code": candidate.returncode,
+            },
+        )
+    )
     env = dict(os.environ, SOURCE_DATE_EPOCH=str(SOURCE_DATE_EPOCH))
-    build = subprocess.run([sys.executable, "scripts/build_dist.py", "--outdir", str(output)], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
+    build_command = [
+        sys.executable,
+        "scripts/build_dist.py",
+        "--outdir",
+        str(output),
+    ]
+    build = subprocess.run(build_command, cwd=ROOT, env=env, text=True, capture_output=True, check=False)
     if build.returncode != 0:
         sys.stderr.write(build.stdout)
         sys.stderr.write(build.stderr)
         raise SystemExit("distribution build failed")
+    first_distributions = sorted(
+        path for path in output.iterdir() if path.suffix in {".whl", ".gz"}
+    )
+    judgments.append(
+        stage_judgment(
+            "distribution-build",
+            subject=subject,
+            evidence={
+                "exit_code": build.returncode,
+                "artifacts": [
+                    {"name": path.name, "sha256": sha256(path)}
+                    for path in first_distributions
+                ],
+            },
+        )
+    )
     with tempfile.TemporaryDirectory(prefix="bsc-repro-build-") as temporary:
         second_output = Path(temporary)
-        second = subprocess.run([sys.executable, "scripts/build_dist.py", "--outdir", str(second_output)], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
+        second_command = [
+            sys.executable,
+            "scripts/build_dist.py",
+            "--outdir",
+            str(second_output),
+        ]
+        second = subprocess.run(second_command, cwd=ROOT, env=env, text=True, capture_output=True, check=False)
         if second.returncode != 0:
             sys.stderr.write(second.stdout)
             sys.stderr.write(second.stderr)
             raise SystemExit("reproducibility build failed")
-        first_distributions = sorted(path for path in output.iterdir() if path.suffix in {".whl", ".gz"})
-        for first in first_distributions:
-            candidate = second_output / first.name
-            if not candidate.is_file() or sha256(first) != sha256(candidate):
-                raise SystemExit(f"distribution is not reproducible: {first.name}")
+        first_map = {
+            path.name: sha256(path) for path in first_distributions
+        }
+        second_map = {
+            path.name: sha256(path)
+            for path in sorted(
+                candidate
+                for candidate in second_output.iterdir()
+                if candidate.is_file()
+            )
+        }
+        if first_map != second_map:
+            raise SystemExit(
+                "distribution artifact maps are not reproducible: "
+                f"first={sorted(first_map)!r}, second={sorted(second_map)!r}"
+            )
+        judgments.append(
+            stage_judgment(
+                "reproducible-distributions",
+                subject=subject,
+                evidence={
+                    "comparison": "exact_filename_sha256_map",
+                    "artifacts": [
+                        {"name": name, "sha256": first_map[name]}
+                        for name in sorted(first_map, key=lambda item: item.encode("utf-8"))
+                    ],
+                },
+            )
+        )
 
     source_zip = output / f"bsc-audit-engine-{PUBLIC_VERSION}.zip"
     zip_git_source(source_zip, source_entries)
-    shutil.copyfile(source_zip, output / "bsc-audit-complete.zip")
+    judgments.append(
+        stage_judgment(
+            "tracked-source-archive",
+            subject=subject,
+            evidence={
+                "name": source_zip.name,
+                "sha256": sha256(source_zip),
+                "tracked_entries": len(source_entries),
+            },
+        )
+    )
     conformance = output / f"bsc-audit-conformance-{PUBLIC_VERSION}.zip"
     conformance_bundle(conformance)
-    write_release_assets(output)
-    write_gpt_release_asset(
+    judgments.append(
+        stage_judgment(
+            "conformance-bundle",
+            subject=subject,
+            evidence={"name": conformance.name, "sha256": sha256(conformance)},
+        )
+    )
+    publication_paths = write_release_assets(output)
+    judgments.append(
+        stage_judgment(
+            "publication-assets",
+            subject=subject,
+            evidence={
+                "artifacts": [
+                    {"name": path.name, "sha256": sha256(path)}
+                    for path in sorted(publication_paths)
+                ]
+            },
+        )
+    )
+    gpt_path = write_gpt_release_asset(
         output,
         source_commit=commit,
         source_tree=tree,
         source_tag=tag,
     )
-    artifacts = sorted(path for path in output.iterdir() if path.is_file() and path.name not in {"SHA256SUMS", "RELEASE_MANIFEST.json", "SBOM.spdx.json"})
+    judgments.append(
+        stage_judgment(
+            "custom-gpt-package",
+            subject=subject,
+            evidence={"name": gpt_path.name, "sha256": sha256(gpt_path)},
+        )
+    )
+    artifacts = sorted(
+        path
+        for path in output.iterdir()
+        if path.is_file()
+        and path.name not in {
+            "SHA256SUMS",
+            "RELEASE_MANIFEST.json",
+            "SBOM.spdx.json",
+        }
+    )
     sbom_path = output / "SBOM.spdx.json"
     wheel = next(path for path in artifacts if path.suffix == ".whl")
     sbom(sbom_path, wheel)
+    judgments.append(
+        stage_judgment(
+            "software-bill-of-materials",
+            subject=subject,
+            evidence={
+                "name": sbom_path.name,
+                "sha256": sha256(sbom_path),
+                "wheel_sha256": sha256(wheel),
+            },
+        )
+    )
     artifacts.append(sbom_path)
     require_tracked_tree_clean(
         commit,
@@ -416,11 +576,85 @@ def main() -> int:
         allowed_untracked_root=output,
         expected_source_entries=source_entries,
     )
+    judgments.append(
+        stage_judgment(
+            "tracked-tree-recheck",
+            subject=subject,
+            evidence={
+                "commit": commit,
+                "tree": tree,
+                "expected_source_entries": len(source_entries),
+                "tracked_source_state": "unchanged",
+            },
+        )
+    )
+    privacy_command = [
+        sys.executable,
+        "scripts/check_privacy.py",
+        "--protected-history",
+        "HEAD",
+        "--artifacts",
+        str(output),
+    ]
+    privacy = run(privacy_command)
+    judgments.append(
+        stage_judgment(
+            "artifact-payload-privacy",
+            subject=subject,
+            evidence={
+                "exit_code": privacy.returncode,
+                "scan_scope": "role_artifact_payloads_before_manifest",
+                "artifacts": [
+                    {"name": path.name, "sha256": sha256(path)}
+                    for path in sorted(artifacts)
+                ],
+            },
+        )
+    )
+    artifact_records = []
+    observed_roles: set[str] = set()
+    for path in sorted(artifacts):
+        role = role_for_artifact_name(
+            path.name,
+            engine_version=__version__,
+            public_version=PUBLIC_VERSION,
+        )
+        if role is None or role in observed_roles:
+            raise SystemExit(
+                f"release artifact has no unique semantic role: {path.name}"
+            )
+        observed_roles.add(role)
+        artifact_records.append(
+            {
+                "role": role,
+                "name": path.name,
+                "bytes": path.stat().st_size,
+                "sha256": sha256(path),
+            }
+        )
+    if observed_roles != REQUIRED_ARTIFACT_ROLES:
+        raise SystemExit(
+            "release semantic artifact roster differs: "
+            f"missing={sorted(REQUIRED_ARTIFACT_ROLES - observed_roles)!r}, "
+            f"extra={sorted(observed_roles - REQUIRED_ARTIFACT_ROLES)!r}"
+        )
+    receipt = verification_receipt(subject, judgments)
+    receipt_failures = validate_verification_receipt(
+        receipt,
+        expected_subject=subject,
+        expected_toolchain_evidence=toolchain_evidence,
+        expected_artifacts=artifact_records,
+    )
+    if receipt_failures:
+        raise SystemExit(
+            "internal release verification receipt failed: "
+            + "; ".join(receipt_failures)
+        )
     manifest = {
         "release": f"v{PUBLIC_VERSION}",
         "engine_version": __version__,
         "component_contract": COMPONENT_CONTRACT.release_record(),
-        "manifest_version": "0.3.0",
+        "manifest_version": "0.4.0",
         "commit": commit,
         "git_tree": tree,
         "git_tag": tag,
@@ -433,32 +667,18 @@ def main() -> int:
             "lock_sha256": sha256(ROOT / "toolchain.lock.json"),
             "container_digest": lock.get("container_digest"),
         },
-        "verification": {
-            "source_tests": "pass",
-            "null_discrimination": "pass",
-            "return_desk_runtime": "pass",
-            "frozen_custom_gpt_candidate": "pass",
-            "release_integrity_checks": "pass",
-            "pages_integrity": "pass",
-            "publication_assets": "pass",
-            "custom_gpt_package": "pass",
-            "localization_freshness": "pass",
-            "privacy_scan": "pass",
-            "reproducible_distributions": "pass",
-            "clean_git_tree": "pass",
-            "exact_release_tag": "pass",
-            "tracked_source_archive": "pass",
+        "verification_receipt": receipt,
+        "publication_policy": {
             "embedded_artifact_signatures": "not_performed",
             "keyless_release_attestations": "required_before_publication",
         },
-        "artifacts": [{"name": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)} for path in sorted(artifacts)],
+        "artifacts": artifact_records,
     }
     manifest_path = output / "RELEASE_MANIFEST.json"
     write_json(manifest_path, manifest)
     checksum_paths = sorted(artifacts + [manifest_path])
     (output / "SHA256SUMS").write_text("".join(f"{sha256(path)}  {path.name}\n" for path in checksum_paths), encoding="utf-8")
-    # The last successful gate covers the complete release directory,
-    # including its manifest and checksum ledger.
+    # Re-scan the closed directory, including its receipt, manifest, and ledger.
     run([sys.executable, "scripts/check_privacy.py", "--protected-history", "HEAD", "--artifacts", str(output)])
     print(f"release assets written to {output}")
     return 0

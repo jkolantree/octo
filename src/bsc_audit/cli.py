@@ -13,9 +13,9 @@ from .atomic import audit_atomic_modulus
 from .bicomplex import audit_complex_document
 from .defect import audit_defect_composition
 from .findings import Finding, Severity, decision, exit_code
-from .gates import audit_gate_product
+from .gates import _audit_gate_product
 from .holonomy import audit_holonomy_document
-from .manifest import ManifestAuditCache, lint_manifest
+from .manifest import _ManifestAuditContext, _lint_manifest, lint_manifest
 from .observation import audit_observation_document
 from .plugins import arithmetic_trace_findings, recovery_findings
 from .provenance import sha256_bytes, sha256_json
@@ -196,12 +196,10 @@ def _semantic_check_name(command_name: str) -> str:
 
 def _lint_stages(raw: dict[str, Any], artifact_root: Path | None) -> AuditResult:
     executed: list[str] = []
-    audit_cache = ManifestAuditCache()
     findings = lint_manifest(
         raw,
         artifact_root,
         checks_run=executed,
-        audit_cache=audit_cache,
     )
     order = _manifest_check_order("lint")
     return AuditResult(findings, executed, [name for name in order if name not in executed])
@@ -209,32 +207,39 @@ def _lint_stages(raw: dict[str, Any], artifact_root: Path | None) -> AuditResult
 
 def _audit_stages(raw: dict[str, Any], artifact_root: Path | None) -> AuditResult:
     executed: list[str] = []
-    audit_cache = ManifestAuditCache()
-    findings = lint_manifest(
+    audit_context = _ManifestAuditContext()
+    findings = _lint_manifest(
         raw,
         artifact_root,
         checks_run=executed,
-        audit_cache=audit_cache,
+        audit_context=audit_context,
     )
     order = _manifest_check_order("audit")
     if any(finding.severity == Severity.ERROR for finding in findings):
         return AuditResult(findings, executed, [name for name in order if name not in executed])
 
     executed.append("gate_product")
-    findings.extend(audit_gate_product(raw, artifact_root, audit_cache))
+    findings.extend(
+        _audit_gate_product(
+            raw,
+            artifact_root,
+            audit_context=audit_context,
+        )
+    )
     if raw.get("dependency_graph"):
         executed.append("dependency_graph")
 
     claim = raw.get("claim", {})
     domain = raw.get("domain_checks", {})
-    if isinstance(claim, dict) and claim.get("family") == "arithmetic_trace":
+    if (
+        isinstance(claim, dict)
+        and claim.get("family") == "arithmetic_trace"
+    ) or (
+        isinstance(domain, dict)
+        and "arithmetic_trace" in domain
+    ):
         executed.append("domain_plugin:arithmetic_trace")
-        findings.extend(
-            arithmetic_trace_findings(
-                raw,
-                audit_cache.registered_replay_results,
-            )
-        )
+        findings.extend(arithmetic_trace_findings(raw))
     if isinstance(domain, dict) and "global_recovery" in domain:
         executed.append("domain_plugin:global_recovery")
         findings.extend(recovery_findings(raw))
