@@ -10,7 +10,7 @@
 
 ## はじめる
 
-1. **Official Custom GPT — ChatGPT で直接監査:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) は build/link-share 済みです。alpha.9 source は bounded Quick contract と 4 個の bilingual starters を reconcile します。exact saved-editor、public、Preview states は別に observe します。upload は ChatGPT 経由で処理され、GPT に Action/hosted API はありません。[exact live/candidate status](CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
+1. **Official Custom GPT — ChatGPT で直接監査:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) は build/link-share 済みです。alpha.10 source は bounded Quick contract を保持しながら 4 個の bilingual starter literal を explicit route します。exact saved-editor、public、Preview states は別に observe します。upload は ChatGPT 経由で処理され、GPT に Action/hosted API はありません。[exact live/candidate status](CUSTOM_GPT_STATUS.md) を参照してください（規範英語: `docs/CUSTOM_GPT_STATUS.md`）。
 2. **Local browser Packet Builder と Audit Return Desk:** deployed [English](https://jkolantree.github.io/octo/) または [Japanese](https://jkolantree.github.io/octo/ja.html) interface で material をローカルに paste/attach し、versioned packet を copy/download してから LLM を別途選択します。Return Desk は returned envelope と selected artifact hash をローカル検査します。
 3. **Repository と Python engine — exact checker route:** versioned schema、fixture、finite exact check、command output は [Programmer Tutorial](../PROGRAMMER_TUTORIAL.md) に従ってください。
 
@@ -52,7 +52,7 @@
 
 [LLM Audit Packet](../../BSC_AUDIT_LLM_PACKET.md) は drafting protocol であり executable verifier ではありません。material を attach する前に privacy、prompt-injection、source-coverage rules を読んでください。
 
-static [Pages module](../../pages/README.md) は同じ canonical packet への accessible front door です。alpha.9 は alpha.8 で導入した Audit Return Desk を保持し、committed protocol、return schema、checksum metadata は mechanically generated and checked for drift です。
+static [Pages module](../../pages/README.md) は同じ canonical packet への accessible front door です。alpha.10 は alpha.8 で導入した Audit Return Desk を保持し、committed protocol、return schema、checksum metadata は mechanically generated and checked for drift です。
 
 repository には official [Custom GPT](../../gpt/README.md) の deterministic package もあります。これは configuration review、reproducible deployment、compatible fork、verifiable official update を支える source です。direct upload は ChatGPT で処理され、Pages module の local-only boundary を継承しません。package に GPT Action、hosted checker API、account system、cloud-storage service はありません。live availability、exact configuration binding、Preview validation、GitHub release、Pages deployment は別々の state として report されます。
 

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CHECKER_VERSION = "1.3"
+CHECKER_VERSION = "1.4"
 MAX_RESPONSE_CHARACTERS = 12_000
 MAX_RESPONSE_UTF8_BYTES = MAX_RESPONSE_CHARACTERS * 4
 DEFAULT_QUICK_CASE_ID = "known-false-continuity"
@@ -222,7 +222,7 @@ def _quick_block_marker(line: str) -> tuple[str, str] | None:
     for label in QUICK_BLOCK_LABELS:
         if candidate == label:
             return label, ""
-        for separator in (":", "："):
+        for separator in (" — ", " – ", " - ", ":", "：", "—", "–"):
             prefix = label + separator
             if candidate.startswith(prefix):
                 return label, candidate[len(prefix) :].strip()

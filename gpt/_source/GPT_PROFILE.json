@@ -2,7 +2,7 @@
   "profile_schema": "bsc-custom-gpt-profile/v1",
   "product": {
     "profile_version": "0.3.0",
-    "canonical_protocol_version": "0.3.0-alpha.9",
+    "canonical_protocol_version": "0.3.0-alpha.10",
     "service_availability": "LIVE",
     "public_url": "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor",
     "package_role": "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
@@ -156,7 +156,7 @@
         {
           "id": "declare_audit_depth",
           "severity": "required",
-          "text": "ROUTE: no claim+example=>one simple Quick example; no claim=>ask only for a one-sentence claim in user's language; no evidence/files yet; stop. Follow-up=>delta only, no repeat; else Quick. Deep=Standard/Adversarial; Formal=formal-mathematical; use only if asked or Quick would mislead.",
+          "text": "EXACT FIRST:Start a 60-second claim audit|60秒で主張を点検する=>I;Show a simple example first|まず簡単な例を見る=>E.I=ask only 1-sentence same-language claim;no evidence/files;stop.E=one brief Quick example;stop.No claim:example=>E;else I.Follow-up=>delta;else Quick.Deep=Standard/Adversarial;Formal=formal-mathematical;both only if asked/Quick misleading.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#audit-depth"
           ]

@@ -123,7 +123,7 @@ class PublicationStatusTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("superseded 2026-07-22 snapshot", current_status)
-        self.assertIn("Alpha.8 and alpha.9 boundary", current_status)
+        self.assertIn("Alpha.8, alpha.9, and alpha.10 boundary", current_status)
 
     def test_japanese_pages_state_is_internally_consistent(self) -> None:
         route = self.status["github_pages"]["japanese_route"]
@@ -146,7 +146,7 @@ class PublicationStatusTests(unittest.TestCase):
     def test_public_docs_lead_with_official_gpt_and_link_status(self) -> None:
         public_url = self.status["official_custom_gpt"]["url"]
         reproduction_markers = {
-            "README.md": "The repository contains the deterministic alpha.9 package lineage",
+            "README.md": "The repository contains the deterministic alpha.10 package lineage",
             "START_HERE.md": "The repository's [Custom GPT package]",
             "docs/index.md": "The repository also contains the deterministic package",
             "docs/CUSTOM_GPT_STATUS.md": "This repository is the reproducible source",
@@ -159,7 +159,7 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertIn("PUBLICATION_STATUS.json", (ROOT / "docs" / "CUSTOM_GPT_STATUS.md").read_text(encoding="utf-8"))
 
         required_positioning = {
-            "README.md": "The repository contains the deterministic alpha.9 package lineage used to configure and evaluate the official GPT",
+            "README.md": "The repository contains the deterministic alpha.10 package lineage used to configure and evaluate the official GPT",
             "START_HERE.md": "It is already built and link-shared as a research preview",
             "docs/index.md": "is built and link-shared",
             "docs/CUSTOM_GPT_STATUS.md": "is built and link-shared as a research preview",

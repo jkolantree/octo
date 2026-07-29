@@ -6,24 +6,26 @@ This page separates service availability, configuration identity, Preview valida
 
 ## Current state
 
-Pre-update read-only verification on 2026-07-28:
+Observed alpha.9 promotion and post-save verification on 2026-07-28, followed by the alpha.10 corrective-candidate freeze:
 
 | Surface | State | Exact binding or boundary |
 |---|---|---|
-| Official Custom GPT | **live; inspected before alpha.9 update** | Public URL above; owner editor showed `Live`, link access, the Quick-UX Instructions, five Knowledge filenames, Web Search on, Data Analysis on, Image Generation off, and no Action |
-| Conversation-starter boundary | **editor six; public four; alpha.9 source four** | The owner editor contained six starters while the public page rendered only the first four. Alpha.9 intentionally makes those four visible starters the complete canonical list, in exact public order |
-| Exact live/source binding | **unresolved until post-save verification** | The pre-update editor/source starter counts differ. ChatGPT also does not independently expose indexed Knowledge bytes for hashing |
-| Complete 12-case Preview evaluation | **required for this Knowledge-changing candidate** | No `pass_12_of_12` is inferred from historical evidence; the exact alpha.9 freeze must pass all 12 fresh cases |
-| Repository release line | **v0.3.0-alpha.9** | The exact commit, tree, tag, and assets are bound by the immutable tag and `RELEASE_MANIFEST.json`; changed alpha.9 bytes must never be labeled alpha.8 |
-| Prior GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.8`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.8) remains at commit `c6120093e49c658318553900028761a171dbf47b`, tree `a4f7d89ac2e09f2887797c0c16b6f603a29d27ea`; the tag must not move |
+| Official Custom GPT | **live; alpha.9 saved state observed before alpha.10 deployment** | The saved owner editor and public page both showed the exact four starters below. Web Search and Data Analysis were on, Image Generation was off, and no App or Action was configured |
+| Alpha.9 compact Preview gate | **pass_12_of_12 before release and live Update** | The exact alpha.9 candidate passed the predetermined 12 fresh-conversation cases; the historical 39-case campaign was not restarted or counted |
+| Alpha.9 post-save starter smoke | **3 pass; Japanese intake fail** | English intake, both example starters, and one English Quick follow-up passed. `60秒で主張を点検する` incorrectly returned an example before requesting one sentence, so alpha.9 is not claimed to satisfy the complete four-starter contract |
+| Alpha.10 corrective candidate | **pending exact release and live validation** | Literal matching now precedes generic intent inference: the two intake starters request only one sentence in the mapped language and stop; the two example starters return one concise Quick example |
+| Exact live/source binding | **partially observed; indexed Knowledge bytes unresolved** | Saved-editor fields, public starter order, capabilities, filenames, and behavior are observable. ChatGPT does not independently expose indexed Knowledge bytes for hashing |
+| Repository release line | **v0.3.0-alpha.10** | The exact commit, tree, tag, and assets are bound by the new tag and `RELEASE_MANIFEST.json`; alpha.9 is not modified or relabeled |
+| Prior GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.9`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.9) remains at commit `b87d9e28a98518933347a867dced11d83267e1b2`, tree `65073413a5d7f66a3c53e6c9a59bd9f5edd06072`; its post-save Japanese-starter failure remains part of the release boundary |
+| Earlier GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.8`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.8) remains at commit `c6120093e49c658318553900028761a171dbf47b`, tree `a4f7d89ac2e09f2887797c0c16b6f603a29d27ea`; the tag must not move |
 | GitHub release object | **mutable service record** | GitHub reported `immutable=false`; release assets and release-page metadata must not be described as intrinsically immutable |
-| Public Pages | **deployment verified separately** | [English](https://jkolantree.github.io/octo/) and [Japanese](https://jkolantree.github.io/octo/ja.html) routes must match the merged alpha.9 protocol metadata after Pages deployment |
+| Public Pages | **deployment verified separately** | [English](https://jkolantree.github.io/octo/) and [Japanese](https://jkolantree.github.io/octo/ja.html) routes must match the merged alpha.10 protocol metadata after Pages deployment |
 
 Availability, targeted regressions, and source CI do not substitute for complete Preview validation. The preserved 39-case artifact-profile campaign, D01/D02 preflights, compiler/transport requirements, and negative results remain historical evidence and must not be restarted or spliced into the compact 12-case gate.
 
 ## Current compact contract and maintenance boundary
 
-The live Instructions route an ordinary no-depth claim to Quick: verdict first, at most 250 words and four short blocks, with no table unless materially necessary. Alpha.9 reconciles the generated Knowledge projection to that same contract.
+The Instructions route an ordinary no-depth claim to Quick: verdict first, at most 250 words and four short blocks, with no table unless materially necessary. Alpha.10 preserves that contract and makes exact starter-literal dispatch take precedence over generic no-claim/example inference.
 
 The canonical starter list is exactly:
 
@@ -46,11 +48,13 @@ The GPT is an authenticated, owner-controlled research-preview interface. It is 
 - Lean, SMT, interval, or empirical claims require separately identified supervised execution and admissible evidence.
 - A fluent report, hash-shaped string, submitted receipt, or internally consistent `audit_return.json` does not establish truth, source authenticity, independent replay, or deployment permission.
 
-## Alpha.8 and alpha.9 boundary
+## Alpha.8, alpha.9, and alpha.10 boundary
 
 Alpha.8 is the exact tagged package at `c6120093…`; it does not contain the later live/main UX hotfix or alpha.9 maintenance bytes. Its tagged release notes retain the then-current 300-word Quick description as historical release evidence.
 
-Alpha.9 uses a new version, binding record, deterministic release gates, and immutable tag. Any later changed exact package requires another new version and tag. Existing tags and release history must not be rewritten.
+Alpha.9 is the exact tagged package at `b87d9e28…`. It contains the bounded maintenance release and passed its predetermined 12-case candidate gate, but its fresh post-save smoke preserved one real Japanese intake-starter failure. The tag, release, assets, and failure record remain unchanged.
+
+Alpha.10 uses another new version, binding record, deterministic release gates, and tag for the corrected bytes. Any later changed exact package requires another new version and tag. Existing tags and release history must not be rewritten.
 
 ## Preserved alpha.7 baseline
 
