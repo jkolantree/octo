@@ -37,8 +37,8 @@ Templates are starting material. Placeholder strings such as `replace-me`, `unas
 Research verdict, evidence maturity, execution status, deployment status, fatal-gate state, and any CLI decision are independent; see [STATUS_MODEL.md](STATUS_MODEL.md). The claim manifest records only the coordinates in its released contract. A separate execution ledger must not be fabricated as manifest evidence. In particular:
 
 - `externally_replicated` requires a declared independent-replication record;
-- theorem claims require a proof, formal-proof, or exact-certificate record;
-- an evidence record is a reference, not automatic validation of its content;
+- theorem claims require supervised semantic replay of a claim-bound proof or exact certificate; the v0.3 manifest has no admissive replay path, so hash-bound proof files remain blocked;
+- an evidence record and matching artifact hash establish byte identity, not automatic validation of the artifact's mathematical content;
 - `admitted` is structurally representable only after all applicable fatal gates pass.
 
 ## Exact and approximate representation
@@ -67,13 +67,19 @@ Pre-1.0 schema versions may change incompatibly. A release must state the schema
 | `0.3.0a8` | prior formats plus non-admissive audit return `0.1.0` |
 | `0.3.0a9` | same machine schemas as `0.3.0a8`; maintenance and compact-profile reconciliation only |
 | `0.3.0a10` | same machine schemas as `0.3.0a9`; exact four-starter dispatch correction only |
+| `0.3.0a11` | prior formats plus version-dispatched derived holonomy `0.2.0` with exact observation-kernel certificates |
 
-The independent derived-holonomy route is governed by
-[`derived-holonomy-v0.1.schema.json`](../schemas/derived-holonomy-v0.1.schema.json).
-It does not alter the strict square semantics of `complex-v0.3`.
+The independent derived-holonomy route dispatches `holonomy_version: 0.1.0`
+records to the immutable
+[`derived-holonomy-v0.1.schema.json`](../schemas/derived-holonomy-v0.1.schema.json)
+and `0.2.0` records to
+[`derived-holonomy-v0.2.schema.json`](../schemas/derived-holonomy-v0.2.schema.json).
+The latter adds an exact-kernel observed-derived route. Keeping the schemas
+closed prevents fields from one version being silently accepted by the other.
+Neither route alters the strict square semantics of `complex-v0.3`.
 
 Consumers must reject an unknown major or minor schema unless an explicit migration is applied.
 
 The `v0.3.0-alpha.7` Custom GPT package did not enlarge the claim-manifest schema or the Python checker's authority. Its exact controller and Knowledge package completed the authenticated 27-case Preview gate recorded in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Uploads go through ChatGPT, and no GPT Action or hosted BSC API is included.
 
-Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.10 preserves it unchanged. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).
+Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.11 preserves it unchanged. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).

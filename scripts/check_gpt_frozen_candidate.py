@@ -128,6 +128,7 @@ SCHEMA_FILENAMES = (
     "complex-v0.3.schema.json",
     "defect-v0.3.schema.json",
     "derived-holonomy-v0.1.schema.json",
+    "derived-holonomy-v0.2.schema.json",
     "observation-v0.3.schema.json",
     "output-0.3.0.schema.json",
 )
