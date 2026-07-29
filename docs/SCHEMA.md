@@ -92,6 +92,7 @@ Pre-1.0 schema versions may change incompatibly. A release must state the schema
 | `0.3.0a10` | same machine schemas as `0.3.0a9`; exact four-starter dispatch correction only |
 | `0.3.0a11` | prior formats plus version-dispatched derived holonomy `0.2.0` with exact observation-kernel certificates |
 | `0.3.0a12` | prior formats plus claim manifest `0.4.0` and theorem certificate `0.1.0` for closed exact-Q polynomial identities |
+| `0.3.0a13` | same machine schemas and exact-Q theorem semantics as `0.3.0a12`; annotated-tag release-guard correction only |
 
 The independent derived-holonomy route dispatches `holonomy_version: 0.1.0`
 records to the immutable
@@ -106,4 +107,4 @@ Consumers must reject an unknown major or minor schema unless an explicit migrat
 
 The `v0.3.0-alpha.7` Custom GPT package did not enlarge the claim-manifest schema or the Python checker's authority. Its exact controller and Knowledge package completed the authenticated 27-case Preview gate recorded in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Uploads go through ChatGPT, and no GPT Action or hosted BSC API is included.
 
-Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.12 preserves it unchanged. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).
+Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.13 preserves it unchanged. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).

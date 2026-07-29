@@ -143,7 +143,7 @@ def main() -> int:
     if not isinstance(paper_zenodo, dict) or paper_zenodo.get("license") != "CC-BY-4.0":
         fail("paper Zenodo metadata must declare CC-BY-4.0")
     if software_zenodo.get("publication_date") != "2026-07-29":
-        fail("software archive metadata must use the alpha.12 release date")
+        fail("software archive metadata must use the alpha.13 release date")
 
     toolchain = load_strict_json(ROOT / "toolchain.lock.json")
     if not isinstance(toolchain, dict):
@@ -191,6 +191,7 @@ def main() -> int:
         "attestations: write",
         "artifact-metadata: write",
         "persist-credentials: false",
+        '"refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"',
         "actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0",
         'subject-path: "${{ github.workspace }}/release/*"',
         "python scripts/check_release_directory.py",
@@ -206,6 +207,14 @@ def main() -> int:
     for token in required_release_tokens:
         if token not in release_workflow:
             fail(f"exact-release workflow is missing required token: {token}")
+    restored_tag = release_workflow.index(
+        '"refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"'
+    )
+    asserted_tag_type = release_workflow.index(
+        'test "$(git cat-file -t "$GITHUB_REF_NAME")" = "tag"'
+    )
+    if restored_tag >= asserted_tag_type:
+        fail("exact-release workflow must restore the remote annotated tag before testing its type")
     if release_workflow.count("python scripts/check_release_directory.py") != 3:
         fail("exact-release workflow must verify build, draft download, and published download")
     if release_workflow.count("--expected-count 17") != 3:
@@ -235,7 +244,7 @@ def main() -> int:
 
     citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
     if "date-released: 2026-07-29" not in citation:
-        fail("CITATION.cff must use the alpha.12 release date")
+        fail("CITATION.cff must use the alpha.13 release date")
     public_version = __version__.replace("a", "-alpha.", 1)
     if ".dev" in __version__:
         release_match = re.search(

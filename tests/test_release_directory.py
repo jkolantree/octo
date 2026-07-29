@@ -16,7 +16,7 @@ from scripts.check_release_directory import (
 
 COMMIT = "1" * 40
 TREE = "2" * 40
-TAG = "v0.3.0-alpha.12"
+TAG = "v0.3.0-alpha.13"
 ARTIFACT_COUNT = 15
 RELEASE_FILE_COUNT = ARTIFACT_COUNT + 2
 

@@ -43,7 +43,12 @@ jobs:
         run: |
           set -euo pipefail
           test "$GITHUB_REF_TYPE" = "tag"
-          git fetch --force --no-tags origin main:refs/remotes/origin/main
+          # actions/checkout resolves the event SHA back into the local tag ref,
+          # which turns an annotated remote tag into a lightweight local ref.
+          # Restore the authoritative remote tag object before testing its type.
+          git fetch --force --no-tags origin \
+            "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}" \
+            main:refs/remotes/origin/main
           test "$(git cat-file -t "$GITHUB_REF_NAME")" = "tag"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"

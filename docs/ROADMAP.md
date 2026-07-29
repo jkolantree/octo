@@ -161,6 +161,18 @@ Exit criterion: permanent positive and negative fixtures, full engine and browse
 
 Exit criterion: theorem positives and adversarial countercertificates, full source/browser/package/privacy/localization/Pages checks, exact clean-tag build, all 17 files keylessly attested, and release redownload comparison pass. The release workflow owns prerelease creation; no live GPT update or Preview-validation claim is part of this engine-mathematics release.
 
+## v0.3.0-alpha.13 - annotated-tag checkout recovery
+
+- preserve the failed `v0.3.0-alpha.12` annotated tag without moving or relabeling it;
+- refetch the authoritative remote annotated tag object after `actions/checkout` replaces the local tag ref with the event commit;
+- permanently reproduce that checkout behavior and the restoring refetch in an isolated Git regression test;
+- carry the alpha.12 mathematical scope forward unchanged under a new release identity.
+
+Exit criterion: the complete source and browser suites, clean-tag reproducible
+build, 17-file closed-directory checks, keyless attestations, and draft and
+published redownload comparisons all pass from the exact alpha.13 tag. No
+alpha.12 release is backfilled and no live GPT update is part of this repair.
+
 ## v0.3 - rational dictionary and support certificates
 
 - rational spline enumeration;

@@ -2,6 +2,22 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.13 - 2026-07-29
+
+### Corrected
+
+- restored the authoritative remote annotated tag object before the exact-release workflow tests tag type, reversing `actions/checkout`'s local event-SHA dereference;
+- added a permanent Git regression that reproduces the lightweight-local-tag failure and proves the remote refetch restores the annotated object;
+- regenerated the unchanged exact-Q theorem, finite-interpretation, non-admissive Knowledge, package, Pages, localization, manifest, and checksum contracts under the alpha.13 identity.
+
+### Preserved boundary
+
+The `v0.3.0-alpha.12` annotated tag remains fixed at its original merge commit.
+Its first exact-release run failed closed before building, attesting, drafting,
+or publishing any release asset, so no alpha.12 release was created. Alpha.13
+does not broaden the engine's mathematical or scientific authority and does
+not update the separately observed alpha.10 live Custom GPT.
+
 ## 0.3.0-alpha.12 - 2026-07-29
 
 ### Added
