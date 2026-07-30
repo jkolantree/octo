@@ -250,13 +250,43 @@ engine, browser, documentation, privacy, localization, Pages, package,
 reproducibility, attestation, and redownload gates pass from the exact clean
 tag. This release adds no degree-two route or new mathematical authority.
 
-## v0.3.0-alpha.18 - proof-relevant degree-two coherence
+Promotion result: alpha.17 was tagged and released, but later direct inspection
+of the tagged GitHub page found 12 renderer error banners. The local harness
+had validated delimiters and counted renderer elements without checking their
+error state. The tag and release remain unchanged as historical negative
+evidence; alpha.18 carries the correction under a new identity.
+
+## v0.3.0-alpha.18 - GitHub math-renderer compatibility recovery
+
+- replace the rejected active math macro with notation drawn from the exact
+  rendered-and-reviewed command set;
+- make the observation-descent maps, composition order, and empty-family
+  convention explicit;
+- state exact-quotient injectivity and surjectivity directly and avoid custom
+  image/rank operators in the proof;
+- extract commands from active inline and fenced math while ignoring inline
+  code, non-math fences, and exact-hash preserved research inputs;
+- reject unreviewed commands until an exact hosted rendering observation
+  supports adding them;
+- preserve alpha.17, every earlier identity, the alpha.16 engine, the alpha.13
+  protocol component, the alpha.10 live GPT, and frozen imported research
+  bytes.
+
+Exit criterion: focused positive and negative command fixtures pass; exact
+commit- and tag-pinned canonical and generated pages contain no GitHub render
+error signature or raw fallback command; expected inline/display counts match
+the committed source; the full engine, browser, documentation, privacy,
+localization, Pages, package, reproducibility, attestation, and redownload
+gates pass from the exact clean tag. This release adds no degree-two route or
+new mathematical authority.
+
+## v0.3.0-alpha.19 - proof-relevant degree-two coherence
 
 - accept two explicitly identified degree-one homotopies `H` and `K` with the same boundary;
 - solve `delta_2 Q = H - K` over exact rationals and emit `Q` as the coherence certificate;
 - when no `Q` exists, emit an exact dual annihilator with nonzero pairing against `H - K`;
 - bind every result to the two homotopy identities, mapping-complex coordinates, basis meanings, method, evidence bytes, and formal-only authority;
-- expose this route only after the alpha.17 documentation and typed-substrate
+- expose this route only after the alpha.18 documentation and typed-substrate
   release is independently replayed and stable.
 
 Exit criterion: positive and dual-obstruction fixtures, basis-change
