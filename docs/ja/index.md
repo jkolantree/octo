@@ -56,7 +56,7 @@
 
 [LLM Audit Packet](../../BSC_AUDIT_LLM_PACKET.md) は drafting protocol であり executable verifier ではありません。material を attach する前に privacy、prompt-injection、source-coverage rules を読んでください。
 
-static [Pages module](../../pages/README.md) は同じ canonical packet への accessible front door です。alpha.17 は alpha.16 engine と Audit Return Desk を保持し、mathematical rendering/documentation status を訂正し、normative Markdown を validate し、protocol が link する exact return schema を serve します。independently versioned protocol component は alpha.13 と byte-identical のままです。committed protocol、return schema、checksum metadata は mechanically checked for drift です。
+static [Pages module](../../pages/README.md) は同じ canonical packet への accessible front door です。alpha.18 は alpha.16 engine と Audit Return Desk を保持し、alpha.17 で GitHub が reject した math macro を renderer-safe notation に置き換え、Markdown structure と active math macro を validate し、protocol が link する exact return schema を serve します。independently versioned protocol component は alpha.13 と byte-identical のままです。committed protocol、return schema、checksum metadata は mechanically checked for drift です。
 
 repository には official [Custom GPT](../../gpt/README.md) の deterministic package もあります。これは configuration review、reproducible deployment、compatible fork、verifiable official update を支える source です。direct upload は ChatGPT で処理され、Pages module の local-only boundary を継承しません。package に GPT Action、hosted checker API、account system、cloud-storage service はありません。live availability、exact configuration binding、Preview validation、GitHub release、Pages deployment は別々の state として report されます。
 

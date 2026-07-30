@@ -28,9 +28,9 @@ from scripts.release_contract import (
 ROOT = Path(__file__).resolve().parents[1]
 COMMIT = "1" * 40
 TREE = "2" * 40
-TAG = "v0.3.0-alpha.17"
-ENGINE_VERSION = "0.3.0a17"
-PUBLIC_VERSION = "0.3.0-alpha.17"
+TAG = "v0.3.0-alpha.18"
+ENGINE_VERSION = "0.3.0a18"
+PUBLIC_VERSION = "0.3.0-alpha.18"
 
 
 def digest(path: Path) -> str:

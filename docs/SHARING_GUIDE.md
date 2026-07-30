@@ -1,6 +1,6 @@
 # Sharing and Release Guide
 
-The v0.3.0-alpha.17 source line is a research preview. Its publication state
+The v0.3.0-alpha.18 source line is a research preview. Its publication state
 is established by the exact tag and GitHub release, not by this guide. Every
 public description should preserve that status and link to a worked positive
 and negative example.
@@ -12,16 +12,16 @@ and negative example.
 3. **GitHub is the reproducible workshop.** Source history, issues, pull requests, fixtures, configuration packages, and active releases live there.
 4. **Zenodo is the immutable archive.** Frozen software releases and foundations papers receive separate citable records linked in both directions.
 
-## v0.3.0-alpha.17 release contents
+## v0.3.0-alpha.18 release contents
 
-When present, the annotated `v0.3.0-alpha.17` tag under the project's
+When present, the annotated `v0.3.0-alpha.18` tag under the project's
 immutability policy identifies the exact release tree. The corresponding
 release contains:
 
 - `START_HERE.txt`, `BSC_AUDIT_COPY_PASTE.txt`, `BSC_AUDIT_UPLOAD_TO_LLM.txt`, and `BSC_AUDIT_SYSTEM_PROMPT.txt`;
 - the canonical LLM packet, schema, example archive, and `BSC_AUDIT_PUBLICATION.json`;
-- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.17.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
-- `bsc-audit-engine-0.3.0-alpha.17.zip`, the versioned tracked-source archive;
+- `BSC_CUSTOM_GPT_PACKAGE_0.3.0-alpha.18.zip`, the deterministic Custom GPT editor, Knowledge, evaluation, manifest, and checksum package;
+- `bsc-audit-engine-0.3.0-alpha.18.zip`, the versioned tracked-source archive;
 - the wheel and source distribution;
 - the conformance packet;
 - `RELEASE_MANIFEST.json` and `SBOM.spdx.json`;
@@ -47,8 +47,8 @@ Do not manually zip a working directory containing caches or untracked files. Bu
 Permanent release links:
 
 ```text
-https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.17
-https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.17/BSC_AUDIT_LLM_PACKET.md
+https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.18
+https://raw.githubusercontent.com/jkolantree/octo/v0.3.0-alpha.18/BSC_AUDIT_LLM_PACKET.md
 https://jkolantree.github.io/octo/
 https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor
 ```
@@ -65,7 +65,7 @@ deployment are recorded separately in
 [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Lead with the existing official
 service; present the package as its reproducible source and optional
 fork/update path. Never infer repository publication, live installation, or
-validation from source wording or a ZIP alone. The alpha.17 generated package
+validation from source wording or a ZIP alone. The alpha.18 generated package
 is an **unvalidated future live-GPT update candidate** and is not installed in
 the live GPT. Its indexed Knowledge state is `NON_ADMISSIBLE_UNHASHABLE`, so
 it cannot support engine gates. The package contains no GPT Action, hosted API,
@@ -90,7 +90,7 @@ Verify a downloaded asset against the repository's signed attestation:
 gh attestation verify PATH/TO/ASSET \
   --repo jkolantree/octo \
   --signer-workflow jkolantree/octo/.github/workflows/release.yml \
-  --source-ref refs/tags/v0.3.0-alpha.17
+  --source-ref refs/tags/v0.3.0-alpha.18
 ```
 
 This authenticates the asset digest and GitHub workflow provenance; it does not establish scientific truth. See GitHub's [artifact-attestation documentation](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations).
@@ -196,4 +196,4 @@ Avoid:
 - “BSC compliant”;
 - claims that an LLM ran the Python checker without actual output.
 
-The Audit Return Desk was introduced in alpha.8 and remains in alpha.17, under the independently versioned alpha.13 protocol component, for non-admissive inspection of returned output and receipts. Its presence in a Pages or GPT interface does not turn a returned draft into admissible evidence.
+The Audit Return Desk was introduced in alpha.8 and remains in alpha.18, under the independently versioned alpha.13 protocol component, for non-admissive inspection of returned output and receipts. Its presence in a Pages or GPT interface does not turn a returned draft into admissible evidence.

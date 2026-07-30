@@ -23,8 +23,11 @@ f(\theta)&=\theta^2.
 ```
 
 Do not use the unsupported display delimiters `\[` and `\]` or inline
-delimiters `\(` and `\)` outside code. A fenced `math` block renders on GitHub
-and remains a readable code block in CommonMark viewers without MathJax.
+delimiters `\(` and `\)` outside code. A fenced `math` block asks GitHub to
+render its contents and remains a readable code block in CommonMark viewers
+without MathJax. Syntax alone is insufficient: active commands must belong to
+the reviewed set in `scripts/check_documentation.py`. An unreviewed command
+fails closed until an exact hosted rendering observation supports adding it.
 Introduce every important formula in prose so the surrounding argument does
 not depend on visual rendering alone.
 
@@ -104,6 +107,11 @@ python scripts/verify.py candidate
 ```
 
 The focused checker establishes repository documentation structure, safe
-source syntax, and local-link integrity. It does not establish the truth of a
-mathematical proposition, the validity of an external source, public
-deployment, or live Custom GPT binding.
+source syntax, reviewed command membership, and local-link integrity. Before
+promotion, inspect the exact commit-pinned canonical and generated GitHub
+pages; after promotion, repeat against the immutable tag. Both observations
+must show zero renderer error signatures. Hosted observation establishes only
+that transport behavior for those exact pages at that time. It does not
+establish the truth of a mathematical proposition, the validity of an
+external source, future renderer behavior, public deployment generally, or
+live Custom GPT binding.
