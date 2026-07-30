@@ -127,6 +127,7 @@ EVAL_GOVERNANCE_SOURCES: dict[str, str] = {
 }
 
 EXECUTABLE_TRUST_BOUNDARY_SOURCES = {
+    "src/bsc_audit/census.py",
     "src/bsc_audit/cli.py",
     "src/bsc_audit/gates.py",
     "src/bsc_audit/manifest.py",
@@ -136,6 +137,8 @@ EXECUTABLE_TRUST_BOUNDARY_SOURCES = {
     "src/bsc_audit/theorem.py",
     "schemas/audit-return-v0.1.schema.json",
     "schemas/claim-manifest-v0.4.schema.json",
+    "schemas/claim-manifest-v0.5.schema.json",
+    "schemas/finite-census-certificate-v0.1.schema.json",
     "schemas/theorem-certificate-v0.1.schema.json",
     "pages/return-desk-core.js",
     "scripts/build_publication_assets.py",
@@ -151,8 +154,11 @@ EXECUTABLE_TRUST_BOUNDARY_SOURCES = {
     "tests/test_gpt_eval_suite.py",
     "tests/test_gpt_frozen_candidate.py",
     "tests/test_gpt_eval_controller.py",
+    "tests/test_census.py",
+    "tests/test_census_manifest.py",
     "tests/test_manifest.py",
     "tests/test_return_desk.py",
+    "tests/test_schema_v05.py",
     "tests/test_theorem.py",
     "tests/return_desk_runtime.test.cjs",
     "toolchain.lock.json",

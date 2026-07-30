@@ -5,6 +5,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .census import (
+    CENSUS_AUTHORITY,
+    CENSUS_AUTHORITY_SCOPE,
+    CENSUS_GATE_ID,
+    CENSUS_PROFILE_SCOPE,
+    LANGUAGE as CENSUS_LANGUAGE,
+    MAX_CERTIFICATE_BYTES as MAX_CENSUS_CERTIFICATE_BYTES,
+    CensusReplay,
+    canonical_formal_statement as canonical_census_statement,
+    canonical_formal_title as canonical_census_title,
+    load_and_replay_census_certificate,
+)
 from .findings import Finding, Severity
 from .judgment import CheckedJudgment
 from .plugins import DOMAIN_CHECK_FIELDS, TRACE_REQUIRED_OBLIGATIONS
@@ -30,7 +42,7 @@ from .theorem import (
 )
 
 
-SUPPORTED_MANIFEST_VERSIONS = {"0.3.0", "0.4.0"}
+SUPPORTED_MANIFEST_VERSIONS = {"0.3.0", "0.4.0", "0.5.0"}
 REQUIRED_TOP = (
     "manifest_version",
     "draft",
@@ -66,6 +78,7 @@ EVIDENCE_KINDS = {
     "dataset",
     "statistical_certificate",
     "experimental_record",
+    "empirical_certificate",
     "independent_replication",
     "counterexample",
     "audit_report",
@@ -88,10 +101,15 @@ ArtifactVerification = tuple[bool, str, str | None]
 ArtifactVerificationKey = tuple[str | None, str, str, int]
 TheoremArtifactKey = tuple[str | None, str, str]
 TheoremReplayKey = tuple[str, str, str]
+CensusArtifactKey = tuple[str | None, str, str]
+CensusReplayKey = tuple[str, str, str]
 
 MAX_THEOREM_ARTIFACTS_PER_AUDIT = 32
 MAX_THEOREM_REPLAYS_PER_AUDIT = 16
 THEOREM_PROFILE_DEPLOYMENT_STATES = {"research_only", "sandboxed"}
+MAX_CENSUS_ARTIFACTS_PER_AUDIT = 32
+MAX_CENSUS_REPLAYS_PER_AUDIT = 16
+CENSUS_PROFILE_DEPLOYMENT_STATES = {"research_only", "sandboxed"}
 
 
 @dataclass
@@ -106,6 +124,11 @@ class _ManifestAuditContext:
         default_factory=dict
     )
     theorem_replays_started: int = 0
+    census_artifacts: set[CensusArtifactKey] = field(default_factory=set)
+    census_replays: dict[CensusReplayKey, CensusReplay] = field(
+        default_factory=dict
+    )
+    census_replays_started: int = 0
 
 
 def _root_cache_key(root: Path | None) -> str | None:
@@ -125,6 +148,7 @@ def _verify_local_artifact_cached(
     *,
     max_bytes: int = MAX_ARTIFACT_BYTES,
     theorem_artifact: bool = False,
+    census_artifact: bool = False,
 ) -> ArtifactVerification:
     if not isinstance(relative_path, str) or not isinstance(expected_hash, str):
         return verify_local_artifact(
@@ -150,6 +174,21 @@ def _verify_local_artifact_cached(
                 )
                 return cache.artifact_verifications[key]
             cache.theorem_artifacts.add(theorem_key)
+        census_key = key[:3]
+        if (
+            census_artifact
+            and is_sha256(expected_hash)
+            and not is_placeholder_sha256(expected_hash)
+            and census_key not in cache.census_artifacts
+        ):
+            if len(cache.census_artifacts) >= MAX_CENSUS_ARTIFACTS_PER_AUDIT:
+                cache.artifact_verifications[key] = (
+                    False,
+                    "census_artifact_limit",
+                    None,
+                )
+                return cache.artifact_verifications[key]
+            cache.census_artifacts.add(census_key)
         cache.artifact_verifications[key] = verify_local_artifact(
             root,
             relative_path,
@@ -199,10 +238,20 @@ def _evidence_records(raw: dict[str, Any]) -> list[dict[str, Any]]:
 def _closed_theorem_contract(raw: dict[str, Any]) -> bool:
     claim = raw.get("claim")
     return (
-        raw.get("manifest_version") == "0.4.0"
+        raw.get("manifest_version") in {"0.4.0", "0.5.0"}
         and isinstance(claim, dict)
         and claim.get("type") == "theorem_schema"
         and claim.get("family") == LANGUAGE
+    )
+
+
+def _closed_census_contract(raw: dict[str, Any]) -> bool:
+    claim = raw.get("claim")
+    return (
+        raw.get("manifest_version") == "0.5.0"
+        and isinstance(claim, dict)
+        and claim.get("type") == "empirical_claim"
+        and claim.get("family") == CENSUS_LANGUAGE
     )
 
 
@@ -313,12 +362,110 @@ def _closed_theorem_profile_findings(claim: dict[str, Any]) -> list[Finding]:
     return findings
 
 
+def _closed_census_profile_findings(claim: dict[str, Any]) -> list[Finding]:
+    """Bind a census manifest to one conditional observational proposition."""
+
+    findings: list[Finding] = []
+    formal_statement = claim.get("formal_statement")
+    try:
+        canonical_title = canonical_census_title(formal_statement)
+        canonical_statement = canonical_census_statement(formal_statement)
+    except (TypeError, ValueError):
+        canonical_title = None
+        canonical_statement = None
+
+    if canonical_title is not None and claim.get("title") != canonical_title:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "CENSUS_TITLE_NOT_CANONICAL",
+                "claim.title",
+                "closed census titles must be the deterministic formal projection",
+                witness={
+                    "canonical_formal_title": canonical_title,
+                    "provided_title_sha256": _semantic_hash_or_none(
+                        claim.get("title")
+                    ),
+                    "authority": CENSUS_AUTHORITY,
+                    "authority_scope": CENSUS_AUTHORITY_SCOPE,
+                },
+                repair="replace claim.title with canonical_formal_title exactly",
+            )
+        )
+    if (
+        canonical_statement is not None
+        and claim.get("statement") != canonical_statement
+    ):
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "CENSUS_STATEMENT_NOT_CANONICAL",
+                "claim.statement",
+                "closed census claims must use the deterministic affine-bound projection",
+                witness={
+                    "canonical_formal_statement": canonical_statement,
+                    "provided_statement_sha256": _semantic_hash_or_none(
+                        claim.get("statement")
+                    ),
+                    "authority": CENSUS_AUTHORITY,
+                    "authority_scope": CENSUS_AUTHORITY_SCOPE,
+                },
+                repair="replace claim.statement with canonical_formal_statement exactly",
+            )
+        )
+    if claim.get("scope") != CENSUS_PROFILE_SCOPE:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "CENSUS_SCOPE_NOT_CANONICAL",
+                "claim.scope",
+                "closed census scope cannot omit its identified external premises or extend to causation, generalization, or deployment",
+                witness={
+                    "required_scope": CENSUS_PROFILE_SCOPE,
+                    "provided_scope_sha256": _semantic_hash_or_none(
+                        claim.get("scope")
+                    ),
+                },
+                repair="use the fixed census profile scope exactly",
+            )
+        )
+    if claim.get("evidence_maturity") != "empirically_passed":
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "CENSUS_MATURITY_OUT_OF_SCOPE",
+                "claim.evidence_maturity",
+                "a robust registered census replay supports empirically_passed only",
+                witness={
+                    "required": "empirically_passed",
+                    "declared": claim.get("evidence_maturity"),
+                },
+            )
+        )
+    if claim.get("deployment_status") not in CENSUS_PROFILE_DEPLOYMENT_STATES:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "CENSUS_DEPLOYMENT_OUT_OF_SCOPE",
+                "claim.deployment_status",
+                "the census replay grants no candidate, admitted, or operational deployment authority",
+                witness={
+                    "allowed": sorted(CENSUS_PROFILE_DEPLOYMENT_STATES),
+                    "declared": claim.get("deployment_status"),
+                    "deployment_authority": "not_granted",
+                },
+            )
+        )
+    return findings
+
+
 def _verified_evidence_ids(
     raw: dict[str, Any],
     artifact_root: Path | None,
     audit_context: _ManifestAuditContext,
 ) -> set[str]:
     theorem_contract = _closed_theorem_contract(raw)
+    census_contract = _closed_census_contract(raw)
     verified: set[str] = set()
     for item in _evidence_records(raw):
         evidence_id = item.get("id")
@@ -329,7 +476,15 @@ def _verified_evidence_ids(
         theorem_artifact = (
             theorem_contract and item.get("kind") == "exact_certificate"
         )
-        max_bytes = MAX_CERTIFICATE_BYTES if theorem_artifact else MAX_ARTIFACT_BYTES
+        census_artifact = (
+            census_contract and item.get("kind") == "empirical_certificate"
+        )
+        if theorem_artifact:
+            max_bytes = MAX_CERTIFICATE_BYTES
+        elif census_artifact:
+            max_bytes = MAX_CENSUS_CERTIFICATE_BYTES
+        else:
+            max_bytes = MAX_ARTIFACT_BYTES
         ok, _, _ = _verify_local_artifact_cached(
             audit_context,
             artifact_root,
@@ -337,6 +492,7 @@ def _verified_evidence_ids(
             item.get("sha256"),
             max_bytes=max_bytes,
             theorem_artifact=theorem_artifact,
+            census_artifact=census_artifact,
         )
         if ok:
             verified.add(evidence_id)
@@ -367,7 +523,7 @@ def _replayed_theorem_evidence(
     verified_ids: set[str],
     audit_context: _ManifestAuditContext,
 ) -> tuple[dict[str, CheckedJudgment], list[Finding]]:
-    """Replay only the closed v0.4 exact-Q theorem evidence contract."""
+    """Replay only the closed v0.4/v0.5 exact-Q theorem evidence contract."""
 
     claim = raw.get("claim")
     if not _closed_theorem_contract(raw):
@@ -384,9 +540,12 @@ def _replayed_theorem_evidence(
 
     results: dict[str, CheckedJudgment] = {}
     findings: list[Finding] = []
+    unbound_gate_evidence: list[str] = []
     for index, item in enumerate(_evidence_records(raw)):
+        path = f"evidence.{index}"
         evidence_id = item.get("id")
         claim_bindings = item.get("verifies_claims", [])
+        gate_bindings = item.get("verifies_gates", [])
         if (
             not isinstance(evidence_id, str)
             or evidence_id not in verified_ids
@@ -395,7 +554,6 @@ def _replayed_theorem_evidence(
             or claim_id not in claim_bindings
         ):
             continue
-        path = f"evidence.{index}"
         artifact = item.get("artifact")
         digest = item.get("sha256")
         replay_key = (
@@ -468,6 +626,12 @@ def _replayed_theorem_evidence(
                 )
             )
             continue
+        if (
+            not isinstance(gate_bindings, list)
+            or THEOREM_GATE_ID not in gate_bindings
+        ):
+            unbound_gate_evidence.append(evidence_id)
+            continue
         assert isinstance(digest, str)
         assert isinstance(replay.formal_statement_sha256, str)
         judgment = CheckedJudgment(
@@ -498,6 +662,20 @@ def _replayed_theorem_evidence(
                     repair=finding.repair,
                 )
             )
+    if not results and unbound_gate_evidence:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "THEOREM_EVIDENCE_GATE_BINDING_MISSING",
+                "evidence",
+                "an exact theorem replay can support maturity only when the "
+                "same evidence record binds the closed theorem gate",
+                witness={
+                    "evidence_ids": sorted(unbound_gate_evidence),
+                    "required_gate": THEOREM_GATE_ID,
+                },
+            )
+        )
     return results, findings
 
 
@@ -510,6 +688,183 @@ def replayed_theorem_evidence(
     audit_context = _ManifestAuditContext()
     verified_ids = _verified_evidence_ids(raw, artifact_root, audit_context)
     return _replayed_theorem_evidence(
+        raw,
+        artifact_root,
+        verified_ids,
+        audit_context,
+    )
+
+
+def _replayed_census_evidence(
+    raw: dict[str, Any],
+    artifact_root: Path | None,
+    verified_ids: set[str],
+    audit_context: _ManifestAuditContext,
+) -> tuple[dict[str, CheckedJudgment], list[Finding]]:
+    """Replay only the closed v0.5 finite-census empirical contract."""
+
+    claim = raw.get("claim")
+    if not _closed_census_contract(raw):
+        return {}, []
+    assert isinstance(claim, dict)
+    claim_id = claim.get("id")
+    formal_statement = claim.get("formal_statement")
+    if not isinstance(claim_id, str) or not isinstance(formal_statement, dict):
+        return {}, []
+    try:
+        formal_statement_sha256 = sha256_json(formal_statement)
+    except (TypeError, ValueError):
+        formal_statement_sha256 = None
+
+    results: dict[str, CheckedJudgment] = {}
+    findings: list[Finding] = []
+    unbound_gate_evidence: list[str] = []
+    for index, item in enumerate(_evidence_records(raw)):
+        path = f"evidence.{index}"
+        evidence_id = item.get("id")
+        claim_bindings = item.get("verifies_claims", [])
+        gate_bindings = item.get("verifies_gates", [])
+        if (
+            not isinstance(evidence_id, str)
+            or evidence_id not in verified_ids
+            or item.get("kind") != "empirical_certificate"
+            or not isinstance(claim_bindings, list)
+            or claim_id not in claim_bindings
+        ):
+            continue
+        artifact = item.get("artifact")
+        digest = item.get("sha256")
+        replay_key = (
+            (digest, claim_id, formal_statement_sha256)
+            if (
+                isinstance(artifact, str)
+                and isinstance(digest, str)
+                and isinstance(formal_statement_sha256, str)
+            )
+            else None
+        )
+        if replay_key is not None and replay_key in audit_context.census_replays:
+            replay = audit_context.census_replays[replay_key]
+        else:
+            if audit_context.census_replays_started >= MAX_CENSUS_REPLAYS_PER_AUDIT:
+                findings.append(
+                    Finding(
+                        Severity.ERROR,
+                        "CENSUS_RESOURCE_LIMIT",
+                        f"{path}.artifact",
+                        "finite-census replay exceeds the per-audit unique-certificate limit",
+                        witness={
+                            "evidence_id": evidence_id,
+                            "max_unique_certificate_digests": MAX_CENSUS_REPLAYS_PER_AUDIT,
+                        },
+                    )
+                )
+                continue
+            audit_context.census_replays_started += 1
+            replay = load_and_replay_census_certificate(
+                artifact_root,
+                artifact,
+                expected_sha256=digest,
+                expected_claim_id=claim_id,
+                expected_formal_statement=formal_statement,
+            )
+            if replay_key is not None:
+                audit_context.census_replays[replay_key] = replay
+        if not replay.valid or replay.result is None:
+            for finding in replay.findings:
+                suffix = "" if finding.path == "$" else finding.path.removeprefix("$")
+                findings.append(
+                    Finding(
+                        finding.severity,
+                        finding.code,
+                        f"{path}.artifact{suffix}",
+                        finding.message,
+                        witness={
+                            "evidence_id": evidence_id,
+                            "replay_witness": finding.witness,
+                        },
+                        repair=finding.repair,
+                    )
+                )
+            continue
+        if item.get("result") != replay.result:
+            findings.append(
+                Finding(
+                    Severity.ERROR,
+                    "CENSUS_EVIDENCE_RESULT_MISMATCH",
+                    f"{path}.result",
+                    "declared evidence result differs from exact finite-census replay",
+                    witness={
+                        "evidence_id": evidence_id,
+                        "declared": item.get("result"),
+                        "computed": replay.result,
+                        "formal_statement_sha256": replay.formal_statement_sha256,
+                    },
+                )
+            )
+            continue
+        if (
+            not isinstance(gate_bindings, list)
+            or CENSUS_GATE_ID not in gate_bindings
+        ):
+            unbound_gate_evidence.append(evidence_id)
+            continue
+        assert isinstance(digest, str)
+        assert isinstance(replay.formal_statement_sha256, str)
+        judgment = CheckedJudgment(
+            subject_id=claim_id,
+            subject_sha256=replay.formal_statement_sha256,
+            predicate=CENSUS_GATE_ID,
+            scope=CENSUS_AUTHORITY_SCOPE,
+            method_id=CENSUS_LANGUAGE,
+            evidence_id=evidence_id,
+            evidence_sha256=digest,
+            authority=CENSUS_AUTHORITY,
+            result=replay.result,
+        )
+        results[evidence_id] = judgment
+        for finding in replay.findings:
+            suffix = "" if finding.path == "$" else finding.path.removeprefix("$")
+            findings.append(
+                Finding(
+                    finding.severity,
+                    finding.code,
+                    f"{path}.artifact{suffix}",
+                    finding.message,
+                    witness={
+                        "evidence_id": evidence_id,
+                        "judgment": judgment.to_dict(),
+                        "replay_witness": finding.witness,
+                    },
+                    repair=finding.repair,
+                )
+            )
+    if not results and unbound_gate_evidence:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "CENSUS_EVIDENCE_GATE_BINDING_MISSING",
+                "evidence",
+                "a finite-census replay can support empirical maturity only "
+                "when the same evidence record binds the census gate",
+                witness={
+                    "evidence_ids": sorted(unbound_gate_evidence),
+                    "required_gate": CENSUS_GATE_ID,
+                },
+            )
+        )
+    return results, findings
+
+
+def replayed_census_evidence(
+    raw: dict[str, Any],
+    artifact_root: Path | None,
+) -> tuple[dict[str, CheckedJudgment], list[Finding]]:
+    """Replay census evidence in a fresh context callers cannot pre-populate."""
+
+    audit_context = _ManifestAuditContext()
+    verified_ids = _verified_evidence_ids(raw, artifact_root, audit_context)
+    return _replayed_census_evidence(
         raw,
         artifact_root,
         verified_ids,
@@ -668,6 +1023,7 @@ def _lint_manifest(
                 )
             )
     theorem_contract = _closed_theorem_contract(raw)
+    census_contract = _closed_census_contract(raw)
     if "epistemic_status" in claim:
         findings.append(
             Finding(
@@ -692,6 +1048,8 @@ def _lint_manifest(
         findings.append(Finding(Severity.ERROR, "EVIDENCE_MATURITY", "claim.evidence_maturity", f"maturity must be one of {sorted(EVIDENCE_MATURITY)}"))
     if theorem_contract:
         findings.extend(_closed_theorem_profile_findings(claim))
+    if census_contract:
+        findings.extend(_closed_census_profile_findings(claim))
 
     system = raw["system"]
     _required_string(findings, system, "domain", "system")
@@ -772,7 +1130,13 @@ def _lint_manifest(
     seen_ids: set[str] = set()
     verified_ids: set[str] = set()
     hash_bound_proof_ids: set[str] = set()
-    empirical_kinds = {"dataset", "statistical_certificate", "experimental_record", "independent_replication"}
+    empirical_kinds = {
+        "dataset",
+        "statistical_certificate",
+        "experimental_record",
+        "empirical_certificate",
+        "independent_replication",
+    }
     for index, item in enumerate(evidence):
         path = f"evidence.{index}"
         if not isinstance(item, dict):
@@ -830,11 +1194,15 @@ def _lint_manifest(
                 ok, reason, actual = False, "artifact_hash_pair_invalid", None
             else:
                 theorem_artifact = theorem_contract and kind == "exact_certificate"
-                max_bytes = (
-                    MAX_CERTIFICATE_BYTES
-                    if theorem_artifact
-                    else MAX_ARTIFACT_BYTES
+                census_artifact = (
+                    census_contract and kind == "empirical_certificate"
                 )
+                if theorem_artifact:
+                    max_bytes = MAX_CERTIFICATE_BYTES
+                elif census_artifact:
+                    max_bytes = MAX_CENSUS_CERTIFICATE_BYTES
+                else:
+                    max_bytes = MAX_ARTIFACT_BYTES
                 ok, reason, actual = _verify_local_artifact_cached(
                     audit_cache,
                     artifact_root,
@@ -842,6 +1210,7 @@ def _lint_manifest(
                     item.get("sha256"),
                     max_bytes=max_bytes,
                     theorem_artifact=theorem_artifact,
+                    census_artifact=census_artifact,
                 )
             if ok:
                 verified_ids.add(evidence_id)
@@ -849,9 +1218,11 @@ def _lint_manifest(
                     hash_bound_proof_ids.add(evidence_id)
             else:
                 theorem_resource_limit = reason == "theorem_artifact_limit"
+                census_resource_limit = reason == "census_artifact_limit"
                 severity = (
                     Severity.ERROR
                     if theorem_resource_limit
+                    or census_resource_limit
                     or reason in {"invalid_hash", "placeholder_hash", "unsafe_path"}
                     else Severity.BLOCKED
                 )
@@ -861,21 +1232,33 @@ def _lint_manifest(
                         (
                             "THEOREM_RESOURCE_LIMIT"
                             if theorem_resource_limit
-                            else "EVIDENCE_ARTIFACT_UNVERIFIED"
+                            else (
+                                "CENSUS_RESOURCE_LIMIT"
+                                if census_resource_limit
+                                else "EVIDENCE_ARTIFACT_UNVERIFIED"
+                            )
                         ),
                         path,
                         (
                             "closed theorem evidence exceeds the per-audit unique-artifact limit"
                             if theorem_resource_limit
-                            else "verified evidence requires a matching local artifact hash"
+                            else (
+                                "closed census evidence exceeds the per-audit unique-artifact limit"
+                                if census_resource_limit
+                                else "verified evidence requires a matching local artifact hash"
+                            )
                         ),
                         witness=(
                             {
                                 "id": evidence_id,
                                 "reason": reason,
-                                "max_unique_artifacts": MAX_THEOREM_ARTIFACTS_PER_AUDIT,
+                                "max_unique_artifacts": (
+                                    MAX_THEOREM_ARTIFACTS_PER_AUDIT
+                                    if theorem_resource_limit
+                                    else MAX_CENSUS_ARTIFACTS_PER_AUDIT
+                                ),
                             }
-                            if theorem_resource_limit
+                            if theorem_resource_limit or census_resource_limit
                             else (
                                 {"id": evidence_id, "reason": reason, "actual_hash": actual}
                                 if actual
@@ -885,21 +1268,30 @@ def _lint_manifest(
                     )
                 )
 
-    replay_results, replay_findings = _replayed_theorem_evidence(
+    theorem_results, theorem_findings = _replayed_theorem_evidence(
         raw,
         artifact_root,
         verified_ids,
         audit_context,
     )
-    findings.extend(replay_findings)
+    findings.extend(theorem_findings)
     if checks_run is not None and "semantic_theorem_replay" not in checks_run:
         checks_run.append("semantic_theorem_replay")
+    census_results, census_findings = _replayed_census_evidence(
+        raw,
+        artifact_root,
+        verified_ids,
+        audit_context,
+    )
+    findings.extend(census_findings)
+    if checks_run is not None and "semantic_census_replay" not in checks_run:
+        checks_run.append("semantic_census_replay")
 
     claim_subject_sha256 = _semantic_hash_or_none(claim.get("formal_statement"))
     evidence_by_id = evidence_index(raw)
-    semantic_pass_ids = {
+    theorem_pass_ids = {
         evidence_id
-        for evidence_id, judgment in replay_results.items()
+        for evidence_id, judgment in theorem_results.items()
         if (
             isinstance(claim.get("id"), str)
             and isinstance(claim_subject_sha256, str)
@@ -916,11 +1308,27 @@ def _lint_manifest(
             )
         )
     }
-    semantic_empirical_pass_ids = {
+    census_pass_ids = {
         evidence_id
-        for evidence_id in semantic_pass_ids
-        if evidence_by_id.get(evidence_id, {}).get("kind") in empirical_kinds
+        for evidence_id, judgment in census_results.items()
+        if (
+            isinstance(claim.get("id"), str)
+            and isinstance(claim_subject_sha256, str)
+            and judgment.supports(
+                subject_id=claim["id"],
+                subject_sha256=claim_subject_sha256,
+                predicate=CENSUS_GATE_ID,
+                scope=CENSUS_AUTHORITY_SCOPE,
+                method_id=CENSUS_LANGUAGE,
+                evidence_id=evidence_id,
+                evidence_sha256=evidence_by_id[evidence_id]["sha256"],
+                authority=CENSUS_AUTHORITY,
+                result="pass",
+            )
+        )
     }
+    semantic_pass_ids = theorem_pass_ids | census_pass_ids
+    semantic_empirical_pass_ids = census_pass_ids
     semantic_replication_pass_ids = {
         evidence_id
         for evidence_id in semantic_pass_ids
@@ -975,7 +1383,7 @@ def _lint_manifest(
                 },
             )
         )
-    if claim.get("type") in {"theorem", "theorem_schema"} and not replay_results:
+    if claim.get("type") in {"theorem", "theorem_schema"} and not theorem_results:
         findings.append(
             Finding(
                 Severity.BLOCKED,
@@ -983,10 +1391,30 @@ def _lint_manifest(
                 "evidence",
                 "no admissible semantic theorem replay is bound to this claim; matching local proof bytes alone do not establish proof validity",
                 witness={"hash_bound_proof_evidence": sorted(hash_bound_proof_ids)},
-                repair=f"use manifest 0.4.0 with a claim-bound {LANGUAGE} exact certificate, or leave the theorem blocked",
+                repair=f"use manifest 0.4.0 or 0.5.0 with a claim- and gate-bound {LANGUAGE} exact certificate, or leave the theorem blocked",
+            )
+        )
+    if census_contract and not census_results:
+        findings.append(
+            Finding(
+                Severity.BLOCKED,
+                "CENSUS_CERTIFICATE_MISSING",
+                "evidence",
+                "no admissible finite-census replay is bound to this claim; declared observations and matching hashes alone are nonsemantic",
+                repair=(
+                    "use manifest 0.5.0 with one claim- and gate-bound "
+                    f"{CENSUS_LANGUAGE} empirical certificate, or leave the claim blocked"
+                ),
             )
         )
 
     if not any(f.severity in {Severity.ERROR, Severity.BLOCKED, Severity.DEMOTION} for f in findings):
-        findings.append(Finding(Severity.INFO, "MANIFEST_STRUCTURALLY_VALID", "$", "manifest structure and declared local artifact bindings are valid; scientific truth has not been inferred"))
+        findings.append(
+            Finding(
+                Severity.INFO,
+                "MANIFEST_STRUCTURALLY_VALID",
+                "$",
+                "manifest structure and local bindings are valid; semantic authority is limited to the emitted typed replay judgments",
+            )
+        )
     return findings

@@ -9,9 +9,9 @@
   "entries": [
     {
       "source": "README.md",
-      "source_sha256": "6c891e5699e3235bad708f1e52a6d5df0b4f2651c75898d6472bde6b347aa537",
+      "source_sha256": "6ef702dceeea2986e9fcdae1f69bb4c509598eb3dc0cac299e591e24c44625e9",
       "target": "README.ja.md",
-      "target_sha256": "7db0412bfe54e90e6a7c7675e17a32897f310975103c4e7f82de3d733e8ccd83"
+      "target_sha256": "b73743469ea517351e94b06c74fccb0bc94d34f6f6ef50960da6475f4536963c"
     },
     {
       "source": "START_HERE.md",
@@ -27,21 +27,21 @@
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "38d63407d2c070e784da54cd23abbb3d36200c8e12655fdda2d29f3be7916340",
+      "source_sha256": "baa49b818b604f615b0dd6dcab92257e67e765f507021ecd80a1cfacd7235296",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
-      "target_sha256": "2adf37a40dcb7add8024ed5dad7725a66e605d97efabd3c018c9603825d07a5c"
+      "target_sha256": "af17b1ef383e5cf6cd538fb3866e76bb24e820ddee6335e47941029f3b4ce473"
     },
     {
       "source": "docs/STATUS_MODEL.md",
-      "source_sha256": "6fbce621b3a436b3870193bfe215127d3e4ebb645a6b5851ae35a9f519b99c97",
+      "source_sha256": "f0e6e6ed518e8f12b79d73ba446b197948b8c63150d879cd316364954d1ee375",
       "target": "docs/ja/STATUS_MODEL.md",
-      "target_sha256": "336a39169ab5a0765b4c598ce0c0c6748a82c91b07b299da30c507d04d18e624"
+      "target_sha256": "462ac6f030bc3be11bfbb6c143a2d268885dc034aad3e6755c16e728360b5566"
     },
     {
       "source": "docs/index.md",
       "source_sha256": "e4b7bbc5e92c9af52e820b862f1ddb24eeb3af7e018d574905413eb1e5d1edf0",
       "target": "docs/ja/index.md",
-      "target_sha256": "701fcb49fbf916f998b93ad613c1225d8581417ccd84bebb09ffc5e36e8ac404"
+      "target_sha256": "e30c47e5654a68ace3b32879461af04efff58c78961244ecacbed2965752e7b8"
     },
     {
       "source": "pages/index.html",
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "eab366eb066c09198c9c68ee4ed9c5cf922c49f65a0616fffed97cdf640fbb0e"
+  "manifest_payload_sha256": "b30be303c8e16fb2170f54e6b7cfea7100ed6dc23230a32914515bf15b6a7811"
 }

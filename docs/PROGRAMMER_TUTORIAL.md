@@ -1,6 +1,6 @@
 # Programmer Tutorial
 
-The current public prerelease is `v0.3.0-alpha.18`. The `holonomy` route first appeared in alpha.3; the closed `theorem` route first appeared in alpha.12. Preserve the exact engine version with every output.
+The current public prerelease is `v0.3.0-alpha.19`. The `holonomy` route first appeared in alpha.3, the closed `theorem` route in alpha.12, and the closed `census` route in alpha.19. Preserve the exact engine version with every output.
 
 This is the repository and Python exact-checker route. It is distinct from the official live [Custom GPT](CUSTOM_GPT_STATUS.md) and the [local browser Pages module](https://jkolantree.github.io/octo/). The repository GPT package is reproducible source and an update candidate; its existence does not prove that its exact bytes are installed or Preview-validated in the live service. ChatGPT uploads are not local-only, ChatGPT tools are not automatically BSC Python, and neither surface provides a GPT Action or hosted checker API.
 
@@ -26,7 +26,7 @@ python run_audit.py --version
 The output must identify the source you intended to audit. The current development checkout reports:
 
 ```text
-bsc-audit 0.3.0a18
+bsc-audit 0.3.0a19
 ```
 
 The published alpha.3 release reports:
@@ -45,6 +45,7 @@ Run a fixture directly:
 python run_audit.py audit examples/claim_valid.json
 python run_audit.py theorem examples/theorem_binomial_identity.json
 python run_audit.py audit examples/claim_polynomial_identity.json
+python run_audit.py census examples/census_affine_bound.json
 python run_audit.py observe examples/observation_failure.json
 python run_audit.py return-desk examples/audit_return_valid.json
 python run_audit.py return-desk examples/audit_return_missing_artifact.json
@@ -53,7 +54,9 @@ python run_audit.py return-desk examples/audit_return_poisoned_summary.json
 
 The legacy `claim_valid.json` command is expected to block with exit code `1`
 because hash verification alone cannot replay its declared result. The two
-closed polynomial commands pass their exact formal checks. The observation
+closed polynomial commands pass their exact formal checks. The synthetic
+census command passes its conditional finite-frame inequality with a positive
+guard band while reporting four unresolved external premises. The observation
 failure and poisoned Return Desk examples also block with exit code `1`.
 
 ### Run tests on macOS, Linux, or Windows
@@ -100,6 +103,7 @@ bsc-audit --version
 | `adapter` | hash-bound external-tool receipt | non-admissive receipt structure and consistency only |
 | `holonomy` | finite rational complexes and path relations | strict, chain-homotopy, and observed-derived equivalence certificates |
 | `theorem` | closed exact-Q polynomial certificate | symbolic canonical-normal-form proof or countercertificate |
+| `census` | closed finite frame, rational interval boxes, affine bound, and guard band | exact conditional observational pass, counterexample, or inconclusive boundary result |
 | `return-desk` | draft `audit_return.json` plus sibling artifacts | non-admissive protocol, projection, reference, execution, receipt, and local-byte consistency |
 
 Each command checks only the supplied finite representation. For example, `observe` does not prove that the declared relation exhausts a real instrument’s observational equivalence.
@@ -114,7 +118,7 @@ Example shape:
 
 ```json
 {
-  "engine_version": "0.3.0a18",
+  "engine_version": "0.3.0a19",
   "checks": {
     "run": ["strict_json_parse", "finite_observation_descent"],
     "not_run": ["claim_manifest_lint", "gate_product", "domain_plugins"]
@@ -167,7 +171,7 @@ python run_audit.py lint work/my_claim.json
 python run_audit.py audit work/my_claim.json
 ```
 
-The current claim-manifest contract is [schemas/claim-manifest-v0.4.schema.json](../schemas/claim-manifest-v0.4.schema.json); immutable manifest `0.3.0` remains accepted. The closed theorem certificate is [schemas/theorem-certificate-v0.1.schema.json](../schemas/theorem-certificate-v0.1.schema.json). The separate returned-audit contract is [schemas/audit-return-v0.1.schema.json](../schemas/audit-return-v0.1.schema.json). Their schema versions are independent of the release candidate's PEP 440 version `0.3.0a18`; the public protocol component separately remains `0.3.0-alpha.13`.
+The current claim-manifest contract is [schemas/claim-manifest-v0.5.schema.json](../schemas/claim-manifest-v0.5.schema.json); immutable manifests `0.3.0` and `0.4.0` remain accepted. The closed theorem certificate is [schemas/theorem-certificate-v0.1.schema.json](../schemas/theorem-certificate-v0.1.schema.json), and the closed empirical certificate is [schemas/finite-census-certificate-v0.1.schema.json](../schemas/finite-census-certificate-v0.1.schema.json). The separate returned-audit contract is [schemas/audit-return-v0.1.schema.json](../schemas/audit-return-v0.1.schema.json). Their schema versions are independent of the engine release; the public protocol component separately remains `0.3.0-alpha.13`.
 
 ## 7. Evidence and hashes
 

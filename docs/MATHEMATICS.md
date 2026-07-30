@@ -25,6 +25,7 @@ transport, external scientific truth, release state, or deployment.
 | Derived and observed path comparison (§§9–10) | Bounded finite-dimensional rational complexes within resource limits | Exact row reduction and rank replay through `holonomy` | No execution evidence asserted; contract/example: [`derived-holonomy-v0.2` schema](../schemas/derived-holonomy-v0.2.schema.json), [derived fixture](../examples/holonomy_contractible_derived_pass.json), and [exact-kernel fixture](../examples/holonomy_observed_exact_kernel_pass.json) | Supplied rational complexes, maps, and meaning-string bytes only |
 | Polynomial identity kernel (§11) | Syntactically admitted terms in the closed rational-polynomial language and resource envelope | Canonical sparse-polynomial normalization through `theorem` | No execution evidence asserted; contract/example: [`theorem-certificate-v0.1` schema](../schemas/theorem-certificate-v0.1.schema.json) and [binomial fixture](../examples/theorem_binomial_identity.json) | Formal identity of the authoritative AST only |
 | Checked judgments (§12) | Registered replay results consumed by matching obligations | Exact tuple validation inside the engine | No execution evidence asserted; contract/test source: [`test_judgment.py`](../tests/test_judgment.py) | Authority-typing firewall; not external truth or deployment authority |
+| Finite-census empirical bridge (§13) | One exact declared finite frame, rational measurement enclosures, affine upper bound, and positive guard band | Exact interval extremization through `census` | No execution evidence asserted; contract/example: [`finite-census-certificate-v0.1` schema](../schemas/finite-census-certificate-v0.1.schema.json) and [synthetic fixture](../examples/census_affine_bound.json) | Conditional observational proposition only; four external premise identities remain unresolved |
 
 The links identify versioned contracts and example inputs; this table does not
 assert that a command ran. Actual execution requires a separately identified
@@ -422,13 +423,13 @@ vector is an exact countercertificate.
 The theorem is deliberately narrow. It does not interpret free prose, import
 axioms, divide by a symbolic expression, handle inequalities or
 transcendental functions, validate an external proof assistant, or establish a
-scientific declaration. Manifest `0.4.0` makes the formal AST authoritative
-and requires `claim.statement` to be its deterministic ASCII projection. The
-emitted replay witness includes that projection, identifies its authority as
-internal exact replay over the canonical formal statement only, and states
-that scientific truth and deployment authority are not established. The
-certificate claim ID, formal statement, residual, evidence result, local
-artifact hash, and gate bindings must agree.
+scientific declaration. Manifests `0.4.0` and `0.5.0` make the formal AST
+authoritative and require `claim.statement` to be its deterministic ASCII
+projection. The emitted replay witness includes that projection, identifies
+its authority as internal exact replay over the canonical formal statement
+only, and states that scientific truth and deployment authority are not
+established. The certificate claim ID, formal statement, residual, evidence
+result, local artifact hash, claim binding, and gate binding must agree.
 
 This is also a semantic-laundering firewall: a matching hash binds bytes but
 does not turn a declared `pass`, `fail`, empirical result, or replication
@@ -458,7 +459,102 @@ Actual execution, harness validity, artifact transport, external truth,
 release state, and deployment authority remain separate records; see the
 [Status Model](STATUS_MODEL.md).
 
-## 13. Status
+## 13. Finite-census empirical bridge
+
+### Why unrestricted scientific truth is not finitely decidable
+
+Let $X$ be an infinite domain and let $S$ be any finite proper subset of
+$X$. Choose $x_0\in X\setminus S$ and define total predicates
+
+```math
+p:X\to\{0,1\},\qquad p(x)=1\quad(x\in X),
+```
+
+and
+
+```math
+q:X\to\{0,1\},\qquad q(x_0)=0,\qquad q(x)=1\quad(x\ne x_0).
+```
+
+They agree on every observation in $S$ and differ at $x_0$. A verifier whose
+evidence authority is restricted to values observed on $S$ cannot distinguish
+them. Therefore no such finite checker can soundly infer an unrestricted
+universal scientific claim without either a closed finite target domain or
+explicit assumptions or proofs that constrain unseen cases. Additional finite
+algebra cannot remove this information boundary.
+
+The `census` route takes the smallest sound alternative. It closes the target
+to a sorted finite population $U$, requires exactly one observation row for
+every declared unit, and rejects missing, duplicate, or extra rows. For
+observable interval boxes
+
+```math
+B_u=[l_{u,1},r_{u,1}]\times\cdots\times[l_{u,d},r_{u,d}]
+```
+
+and exact rational coefficients $a_j$, it computes
+
+```math
+L_u=
+\sum_{j:a_j\ge0}a_jl_{u,j}
++\sum_{j:a_j<0}a_jr_{u,j},
+```
+
+and
+
+```math
+U_u=
+\sum_{j:a_j\ge0}a_jr_{u,j}
++\sum_{j:a_j<0}a_jl_{u,j}.
+```
+
+Each coefficient therefore selects the endpoint that minimizes or maximizes
+its contribution; zero coefficients contribute zero to both extrema.
+
+For bound $b$ and frozen guard band $g>0$, replay returns:
+
+- `pass` exactly when $U_u+g\le b$ for every unit;
+- `fail` when $L_u>b$ for at least one unit, with that exact unit and lower
+  bound as a counterexample;
+- `inconclusive` otherwise, including a boundary-only inequality that lacks
+  the declared safety surplus.
+
+### Conditional soundness
+
+Assume the hash-identified frame denotes the target population, each declared
+unit identity is authentic, every actual measurement lies in its supplied
+interval box, and the guard band is scientifically adequate for the intended
+use. Then a replay `pass` implies
+
+```math
+\sum_j a_j m_j(u)\le b-g
+```
+
+for every target unit $u$. This follows because affine extrema on a box occur
+at the coefficient-selected endpoints used to compute $U_u$.
+
+The displayed implication is mathematical. When the `census` route actually
+runs to completion, the registered kernel recomputes and binds its finite
+arithmetic witness to the exact subject, frame, canonical certificate digest,
+normalized-observation digest, evidence bytes where bytes are available,
+predicate, method, scope, and authority. A manifest judgment is created only
+when the same verified evidence record binds both the claim and the sole
+census gate. Neither the implication nor the replay proves the four premises
+by reading their hashes. No causal effect, mechanism, population
+generalization, independent replication, or deployment permission follows.
+This is a real conditional empirical-authority gain over supplied algebra
+alone, but it is deliberately not an untyped `scientific_truth=true` bit.
+
+Runtime hard ceilings are 4,096 units, 32 observables, 131,072 interval cells,
+420,000 decoded JSON container entries, and a 4 MiB certificate. The public
+`census` CLI enforces the 4 MiB byte ceiling before parsing and its specialized
+container ceiling before schema validation. The public schema caps ordinary
+inputs at 3,072 units and 24 observables. Its simultaneous axis maximum
+contains 233,543 decoded entries—about 55.6% of the route ceiling—while each
+axis remains at 75% of its kernel cap. Neither safety boundary is treated as
+an optimization target.
+
+## 14. Status
 
 - **Mathematical propositions:** Theorems 1–4 and the finite-dimensional
   splitting, quotient, and polynomial statements are supported here by manual
@@ -468,9 +564,10 @@ release state, and deployment authority remain separate records; see the
   replay only admitted finite objects and fail closed outside their registered
   language or resource envelope. Schemas and fixtures identify contracts and
   examples; they do not execute themselves.
-- **External semantics and truth:** Basis meanings, scientific declarations,
-  proof identifiers, probability models, and the completeness of supplied
-  evidence remain external obligations.
+- **External semantics and truth:** The registered census kernel can establish
+  its exact conditional finite-frame proposition. Basis meanings, premise
+  truth, proof identifiers, causal models, unsampled populations, and evidence
+  authenticity remain external obligations.
 - **Operational authority:** Test success, hashes, release identity,
   transport, live-GPT state, and deployment permission are separate
   conclusions recorded outside this mathematical reference.

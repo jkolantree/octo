@@ -3,7 +3,7 @@
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) (live research preview)<br>
-**Repository version line:** `v0.3.0-alpha.18` ([verify GitHub release state](https://github.com/jkolantree/octo/releases))<br>
+**Repository version line:** `v0.3.0-alpha.19` ([verify GitHub release state](https://github.com/jkolantree/octo/releases))<br>
 **Validation boundary:** the live indexed-Knowledge state is `NON_ADMISSIBLE_UNHASHABLE`; product observations and engine proofs remain separate, and this is a research preview rather than certification<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
@@ -19,6 +19,8 @@ The engine checks a narrow set of declared structural obligations. Current route
 
 - manifest and hard-gate linting;
 - exact symbolic replay of closed polynomial identities over `Q`;
+- exact finite-census affine bounds over rational measurement enclosures, with
+  a required positive guard band;
 - exact rational matrix and chain-complex checks;
 - certificate-interchange defects and finite witnesses;
 - square holonomy and path-dependence checks;
@@ -36,7 +38,7 @@ The engine checks a narrow set of declared structural obligations. Current route
 - non-admissive inspection of returned audit envelopes, ledgers, projections, receipts, and local artifact hashes;
 - canonical JSON hashing.
 
-The engine does **not** determine whether an arbitrary theory is true, reconstruct an arbitrary proof, validate an external evidence identifier, certify empirical replication, or grant moral, legal, clinical, or deployment permission. Claim manifest `0.4.0` admits one closed theorem family: exact polynomial identities over `Q` whose authoritative AST, title, statement, and residual are deterministically recomputed by the bundled kernel. A replay result is decisive only for the exact subject, evidence bytes, predicate, scope, method, and authority recorded in its checked judgment; a shared label such as `pass` transfers none of those coordinates. Every other declared result—including hash-matched proofs, datasets, replications, and arithmetic-obligation evidence—remains provenance unless a registered exact replay recomputes it. A `no_blocking_findings` result means only that the checks actually run found no blocking condition.
+The engine does **not** determine whether an arbitrary theory is true, reconstruct an arbitrary proof, validate an external evidence identifier, certify empirical replication, or grant moral, legal, clinical, or deployment permission. Claim manifest `0.5.0` preserves the closed exact-polynomial theorem family and adds one empirical family: `finite-census-affine-bound-v0.1`. The new kernel checks a complete declared finite frame, exact rational measurement-enclosure boxes, one affine upper-bound predicate, and a frozen positive guard band. Its witness separately binds the canonical certificate, normalized observations, frame, and premise hashes; a manifest judgment exists only when the same verified evidence binds both the claim and the census gate. A robust pass establishes that conditional observational proposition only if the four hash-identified external premises hold; the engine does not establish that the frame, unit identities, measurement enclosures, or scientific-adequacy premise are true. Causation, generalization beyond the frame, replication, and deployment remain outside its authority. A replay result is decisive only for the exact subject, evidence bytes, predicate, scope, method, and authority recorded in its checked judgment; a shared label such as `pass` transfers none of those coordinates. Every other declared result—including hash-matched proofs, datasets, replications, and arithmetic-obligation evidence—remains provenance unless a registered exact replay recomputes it. A `no_blocking_findings` result means only that the checks actually run found no blocking condition.
 
 ## Choose an entry point
 
@@ -44,7 +46,7 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 2. **Local browser Packet Builder and Audit Return Desk:** [open the accessible English GitHub Pages module](https://jkolantree.github.io/octo/) or the deployed [Japanese route](https://jkolantree.github.io/octo/ja.html) to construct a versioned packet or inspect a returned `audit_return.json` draft and selected artifact bytes locally. Neither function uploads the target, calls an LLM, or runs Python.
 3. **Repository and Python engine - exact checker route:** use [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and preserved command output. This is the only route here that runs the BSC checker.
 
-The repository contains the deterministic Custom GPT package lineage used for independent inspection, reproducible deployments, compatible forks, and verifiable updates. Alpha.10 is the separately observed live baseline; alpha.18 is the current repository version line. Its tag target and GitHub release state must be verified externally rather than inferred from this file. Its regenerated package is unvalidated as a future live-GPT update candidate and is not installed live. The byte-identical protocol component remains versioned `0.3.0-alpha.13`, independently of the engine release. Indexed Knowledge bytes are not independently retrievable, so they cannot support engine gates. The older timestamped JSON snapshot is preserved as historical evidence.
+The repository contains the deterministic Custom GPT package lineage used for independent inspection, reproducible deployments, compatible forks, and verifiable updates. Alpha.10 is the separately observed live baseline; alpha.19 is the current repository version line. Its tag target and GitHub release state must be verified externally rather than inferred from this file. Its regenerated package is unvalidated as a future live-GPT update candidate and is not installed live. The byte-identical protocol component remains versioned `0.3.0-alpha.13`, independently of the engine release. Indexed Knowledge bytes are not independently retrievable, so they cannot support engine gates. The older timestamped JSON snapshot is preserved as historical evidence.
 
 Supporting routes:
 
@@ -84,6 +86,17 @@ Run a passing structural example:
 ```bash
 python run_audit.py complex examples/complex_valid_transport.json
 ```
+
+Replay the synthetic finite-census example:
+
+```bash
+python run_audit.py census examples/census_affine_bound.json
+```
+
+Its pass means every supplied rational enclosure satisfies the affine bound
+with the declared guard band. The output names the exact frame, method,
+evidence identities, authority, and four unresolved external premises. It
+does not turn those premise hashes into worldly truth.
 
 Run a strict mismatch that is harmless on homology:
 

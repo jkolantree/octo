@@ -5,7 +5,7 @@
 数学的・科学的主張を、調査、反証、再現、降格しやすくするための研究プレビュー版ソフトウェアです。
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor)（live research preview）<br>
-**Repository version line:** `v0.3.0-alpha.18`（[GitHub release state を確認](https://github.com/jkolantree/octo/releases)）<br>
+**Repository version line:** `v0.3.0-alpha.19`（[GitHub release state を確認](https://github.com/jkolantree/octo/releases)）<br>
 **検証境界:** indexed Knowledge bytes は independently retrievable ではないため、exact live binding は `NON_ADMISSIBLE_UNHASHABLE` です。product observation と engine proof は分離し、これは certification ではなく research preview です<br>
 **プロジェクト状態:** 実験的。研究監査と既知解テストには利用できますが、無人の科学・臨床・法律・安全・政策判断には使用できません。
 
@@ -31,6 +31,7 @@ BSC は、慎重な想像力のための基盤です。大胆な仮説は許し�
 - conflict を平均しない product-valued gate;
 - 非巡回 claim graph における fatal dependency propagation;
 - finite atomic-modulus record 検査;
+- exact finite-census affine bound replay（complete finite frame、rational measurement enclosure、positive guard band）;
 - 宣言された affine upper bound の厳密な伝播;
 - 限定された arithmetic-trace と local/global recovery gate;
 - subject、evidence、method、scope、authority に bind された replay judgment;
@@ -38,7 +39,7 @@ BSC は、慎重な想像力のための基盤です。大胆な仮説は許し�
 - 返却された audit envelope、ledger、projection、receipt、local artifact hash の非 admissive 検査;
 - canonical JSON hashing。
 
-エンジンは、任意の理論の真偽を決定したり、任意の証明を再構成したり、外部 evidence identifier を認証したり、経験的追試を保証したり、道徳・法律・臨床・配備の許可を与えたりはしません。claim manifest `0.4.0` が admit する closed theorem family では、authoritative AST、title、statement、residual を bundled kernel が deterministically recompute します。replay result が decisive なのは、checked judgment に記録された exact subject、evidence bytes、predicate、scope、method、authority がすべて一致する場合だけです。`pass` のような共有 label はこれらの座標を transfer しません。それ以外の declared result は、hash-matched proof、dataset、replication、arithmetic-obligation evidence を含め、registered exact replay が recompute しない限り provenance のままです。`no_blocking_findings` は、実際に走った検査が blocking condition を見つけなかった、という意味に限られます。
+エンジンは、任意の理論の真偽を決定したり、任意の証明を再構成したり、外部 evidence identifier を認証したり、経験的追試を保証したり、道徳・法律・臨床・配備の許可を与えたりはしません。claim manifest `0.5.0` は closed theorem family を保持し、closed `finite-census-affine-bound-v0.1` family を追加します。前者は authoritative AST、title、statement、residual を exact replay し、後者は完全に宣言された finite frame、rational measurement enclosure、frozen positive guard band を exact replay します。census の `pass` が確立するのは、4 個の hash-identified external premise が真である場合の conditional observational proposition だけです。frame、unit identity、measurement enclosure、guard band の scientific adequacy、causation、frame 外への generalization、independent replication、deployment authority は確立しません。replay result が decisive なのは、checked judgment に記録された exact subject、evidence bytes、predicate、scope、method、authority がすべて一致する場合だけです。`pass` のような共有 label はこれらの座標を transfer しません。それ以外の declared result は、hash-matched proof、dataset、replication、arithmetic-obligation evidence を含め、registered exact replay が recompute しない限り provenance のままです。`no_blocking_findings` は、実際に走った検査が blocking condition を見つけなかった、という意味に限られます。
 
 ## 入口を選ぶ
 
@@ -46,7 +47,7 @@ BSC は、慎重な想像力のための基盤です。大胆な仮説は許し�
 2. **ローカル browser Packet Builder と Audit Return Desk:** [deployed English GitHub Pages module](https://jkolantree.github.io/octo/) または [deployed Japanese route](https://jkolantree.github.io/octo/ja.html) で versioned packet を作成したり、返却された `audit_return.json` draft と selected artifact bytes をローカル検査したりできます。どちらの interface も target を upload せず、LLM を呼び出さず、Python を実行しません。
 3. **Repository と Python engine — exact checker route:** versioned schema、fixture、finite exact check、保存された command output については [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) を参照してください。ここで BSC checker を実行するのはこのルートだけです。
 
-repository には、independent inspection、reproducible deployment、compatible fork、verifiable update に使う deterministic Custom GPT package lineage があります。alpha.10 は separately observed live baseline、alpha.18 は current repository version line です。tag target と GitHub release state はこの文書から推論せず、external state で確認します。regenerated package は future live-GPT update candidate として unvalidated で、live には install していません。byte-identical protocol component は engine release とは独立して `0.3.0-alpha.13` のままです。indexed Knowledge bytes は independently retrievable ではないため、`NON_ADMISSIBLE_UNHASHABLE` であり engine gate の evidence にはなりません。
+repository には、independent inspection、reproducible deployment、compatible fork、verifiable update に使う deterministic Custom GPT package lineage があります。alpha.10 は separately observed live baseline、alpha.19 は current repository version line です。tag target と GitHub release state はこの文書から推論せず、external state で確認します。regenerated package は future live-GPT update candidate として unvalidated で、live には install していません。byte-identical protocol component は engine release とは独立して `0.3.0-alpha.13` のままです。indexed Knowledge bytes は independently retrievable ではないため、`NON_ADMISSIBLE_UNHASHABLE` であり engine gate の evidence にはなりません。
 
 補助的な入口:
 
