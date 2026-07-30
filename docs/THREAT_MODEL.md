@@ -32,6 +32,10 @@ The project aims to preserve:
 14. **Semantic padding:** an ungrounded direct-sum basis changes homology while retaining the appearance of the original certificate model.
 15. **Unlawful quotient:** a non-chain-map or nonsurjective projection is used to erase a path defect.
 16. **Report promotion:** a preserved numerical or exact finite report is presented as independently regenerated or as a universal theorem.
+17. **Census laundering:** a sampled, incomplete, duplicated, or
+    post-exclusion dataset is labeled a complete frame; a threshold-only result
+    is promoted despite missing guard-band surplus; or premise hashes are
+    presented as proof that the frame and measurements are authentic.
 
 ## LLM-specific threats
 
@@ -55,6 +59,15 @@ The three entry points do not share one privacy or execution boundary:
 1. The official-service URL and its timestamped availability record are maintained in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). A repository package is reproducible source and an update candidate, not evidence that its exact bytes are installed, bound to the saved editor, or Preview-validated. Uploads are processed through ChatGPT under the user's applicable settings and terms. The official configuration contains no Action, hosted API, account, analytics, or cloud storage.
 2. The browser Packet Builder's page code constructs a versioned packet without a target-data network request or intentional persistence. The Return Desk likewise parses returned JSON and hashes user-selected artifacts without such a request. Browser and operating-system history, crash recovery, swap, extensions, accessibility services, clipboard, and downloaded files remain outside the page's control. Sending a packet to a model is a separate action governed by that service.
 3. The repository and Python engine run versioned finite checks locally or in the operator's selected environment. A GPT response or ChatGPT tool result is not BSC Python output unless the correct checker actually ran and its result is bound to the inputs.
+
+The `census` route accepts identifiers and measurement intervals. Those values
+may be sensitive even when names are replaced, and hashes are not
+anonymization. Real study records should remain in an authorized local evidence
+store and must not be committed, added to GPT Knowledge, or included in release
+assets. Public fixtures are deterministic synthetic data only. The checker
+binds four external-premise identities but does not validate consent, data
+rights, frame completeness in the world, unit identity, instrument
+calibration, or scientific adequacy.
 
 For mechanical activity, `ran` requires inspectable output or a bound receipt. A source-only success claim is `reported_but_unverified`; dependent gates remain `unrun` unless verified conflicting evidence requires `conflict`. Missing execution blocks or demotes the dependent conclusion without automatically refuting the research claim.
 
@@ -137,7 +150,8 @@ The engine does not provide:
 
 - automated theorem proving;
 - verification of arbitrary external proofs or evidence;
-- empirical truth adjudication;
+- unrestricted empirical, causal, or population-generalized truth
+  adjudication beyond the closed finite-census profile;
 - legal, moral, clinical, or safety authorization;
 - certified interval arithmetic;
 - a complete scientific ontology;

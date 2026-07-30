@@ -277,6 +277,49 @@ class ManifestTests(unittest.TestCase):
             )
         )
 
+    def test_v05_preserves_exact_polynomial_theorem_replay(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            raw["manifest_version"] = "0.5.0"
+            findings = audit_claim(raw, root)
+
+        self.assertFalse(
+            any(
+                finding.severity.value in {"ERROR", "BLOCKED", "DEMOTION"}
+                for finding in findings
+            ),
+            [finding.to_dict() for finding in findings],
+        )
+        self.assertTrue(
+            any(
+                finding.code == "THEOREM_IDENTITY_REPLAYED"
+                for finding in findings
+            )
+        )
+
+    def test_theorem_replay_cannot_raise_maturity_without_gate_binding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = self.make_polynomial_manifest(root)
+            raw["manifest_version"] = "0.5.0"
+            raw["evidence"][0]["verifies_gates"] = []
+            raw["admission"]["gate_results"][0].update(
+                {"state": "unrun", "evidence": []}
+            )
+            findings = audit_claim(raw, root)
+
+        codes = {finding.code for finding in findings}
+        self.assertTrue(
+            {
+                "THEOREM_EVIDENCE_GATE_BINDING_MISSING",
+                "THEOREM_CERTIFICATE_MISSING",
+                "EVIDENCE_MATURITY_UNSUPPORTED",
+            }.issubset(codes)
+        )
+        self.assertNotIn("THEOREM_IDENTITY_REPLAYED", codes)
+        self.assertNotIn("MANIFEST_STRUCTURALLY_VALID", codes)
+
     def test_v04_medical_gloss_status_and_replication_laundering_is_blocked(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

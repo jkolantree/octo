@@ -7,7 +7,7 @@ exact chain equations, hash verification, and evidence-to-gate bindings.
 
 | Command | Schema |
 | --- | --- |
-| `audit`, `lint` | version-dispatched: `claim-manifest-v0.3.schema.json` or `claim-manifest-v0.4.schema.json` |
+| `audit`, `lint` | version-dispatched: `claim-manifest-v0.3.schema.json`, `claim-manifest-v0.4.schema.json`, or `claim-manifest-v0.5.schema.json` |
 | `complex` | `complex-v0.3.schema.json` |
 | `observe` | `observation-v0.3.schema.json` |
 | `atomic` | `atomic-modulus-v0.3.schema.json` |
@@ -15,6 +15,7 @@ exact chain equations, hash verification, and evidence-to-gate bindings.
 | `adapter` | `adapter-receipt-v0.1.schema.json` |
 | `holonomy` | version-dispatched: `derived-holonomy-v0.1.schema.json` or `derived-holonomy-v0.2.schema.json` |
 | `theorem` | `theorem-certificate-v0.1.schema.json` |
+| `census` | `finite-census-certificate-v0.1.schema.json` |
 | `return-desk` | `audit-return-v0.1.schema.json` |
 
 No external JSON Schema package is required at runtime. Producers can use any
@@ -32,6 +33,13 @@ hard gate. The engine hashes, parses, and replays one bounded byte buffer and
 symbolically recomputes the canonical residual; it does not rely on
 evaluations, free-form proof prose, or an asserted result. Manifest `0.3.0`
 keeps its historical non-admissive theorem semantics.
+
+The finite-census certificate is admissible only through manifest `0.5.0` and
+its fixed `finite_census_affine_bound` gate. The engine requires complete
+declared-frame coverage, recomputes exact rational interval extrema, and grants
+a pass only with the frozen positive guard band. The result is conditional on
+four hash-identified external premises; causation, population generalization,
+replication, and deployment authority are not granted.
 
 The audit-return format is also explicitly non-admissive. Its closed schema
 defines a draft returned-audit envelope; the Python and browser semantic layers

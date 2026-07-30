@@ -162,6 +162,50 @@ x&=y.
                 any("unclosed math environment: aligned" in item for item in failures)
             )
 
+    def test_malformed_approved_math_syntax_fails_closed(self) -> None:
+        cases = {
+            "brace": (r"Inline $\frac{1}{2$.", "unclosed math brace"),
+            "bare-begin": (r"Inline $\begin x$.", r"\begin requires"),
+            "left": (r"Inline $\left(x$.", r"unclosed \left"),
+            "right": (r"Inline $x\right)$.", r"unmatched \right"),
+            "frac": (r"Inline $\frac{1}$.", r"\frac requires 2"),
+            "style": (r"Inline $\mathbb$.", r"\mathbb requires 1"),
+            "alignment": (
+                r"Inline $x&=y$.",
+                "allowed only inside an aligned environment",
+            ),
+        }
+        with tempfile.TemporaryDirectory(prefix="bsc-docs-structure-") as directory:
+            root = Path(directory)
+            for name, (formula, expected) in cases.items():
+                path = self.write_document(
+                    root,
+                    f"# Broken {name}\n\n{formula}\n",
+                    f"{name}.md",
+                )
+                failures = check_markdown(path, root=root)
+                self.assertTrue(
+                    any(expected in item for item in failures),
+                    (name, failures),
+                )
+
+    def test_math_fence_info_string_must_be_exact(self) -> None:
+        text = r"""# Broken fence
+
+```math extra
+\frac{1}{2}
+```
+"""
+        with tempfile.TemporaryDirectory(prefix="bsc-docs-fence-info-") as directory:
+            root = Path(directory)
+            path = self.write_document(root, text)
+            self.assertTrue(
+                any(
+                    "math fence language must be exactly 'math'" in item
+                    for item in check_markdown(path, root=root)
+                )
+            )
+
     def test_controls_paths_active_html_and_magic_counts_fail(self) -> None:
         text = (
             "# Unsafe guide\n\n"

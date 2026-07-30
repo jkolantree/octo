@@ -1,0 +1,427 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bsc-audit:schema:claim-manifest:v0.5",
+  "title": "BSC claim manifest 0.5.0",
+  "type": "object",
+  "required": [
+    "manifest_version",
+    "draft",
+    "claim",
+    "system",
+    "observation",
+    "representation",
+    "target",
+    "experiment",
+    "admission",
+    "demotion",
+    "preservation"
+  ],
+  "properties": {
+    "manifest_version": {"const": "0.5.0"},
+    "draft": {"type": "boolean"},
+    "claim": {
+      "type": "object",
+      "required": ["id", "title", "type", "evidence_maturity", "deployment_status", "statement", "scope"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "title": {"type": "string", "minLength": 3},
+        "type": {
+          "enum": ["definition", "theorem", "theorem_schema", "conjecture", "diagnostic", "empirical_claim", "analogy", "open_problem"]
+        },
+        "evidence_maturity": {
+          "enum": ["declared", "structurally_checked", "empirically_passed", "externally_replicated"]
+        },
+        "deployment_status": {"enum": ["research_only", "sandboxed", "candidate", "admitted", "retired"]},
+        "statement": {"type": "string", "minLength": 12},
+        "scope": {"type": "string", "minLength": 3},
+        "family": {"type": "string"},
+        "formal_statement": {"$ref": "#/$defs/formalStatement"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"type": {"const": "theorem_schema"}},
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["family", "formal_statement"],
+            "properties": {
+              "family": {"const": "q-polynomial-identity-v0.1"},
+              "formal_statement": {"$ref": "#/$defs/theoremFormalStatement"}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"type": {"const": "empirical_claim"}},
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["family", "formal_statement"],
+            "properties": {
+              "family": {"const": "finite-census-affine-bound-v0.1"},
+              "formal_statement": {"$ref": "#/$defs/censusFormalStatement"},
+              "evidence_maturity": {"const": "empirically_passed"},
+              "deployment_status": {"enum": ["research_only", "sandboxed"]}
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "system": {"type": "object", "required": ["domain", "state_type"], "additionalProperties": true},
+    "observation": {"type": "object", "required": ["kernel_or_instrument", "legal_filtration"], "additionalProperties": true},
+    "representation": {"type": "object", "required": ["kind"], "additionalProperties": true},
+    "target": {"type": "object", "required": ["outcome", "horizon", "loss_or_score"], "additionalProperties": true},
+    "experiment": {"type": "object", "required": ["baseline_model", "search_budget"], "additionalProperties": true},
+    "admission": {
+      "type": "object",
+      "required": ["hard_gates", "gate_results"],
+      "properties": {
+        "hard_gates": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "gate_results": {"type": "array", "items": {"$ref": "#/$defs/gateResult"}}
+      },
+      "additionalProperties": true
+    },
+    "demotion": {
+      "type": "object",
+      "required": ["owner", "rules", "negative_result_destination"],
+      "properties": {
+        "owner": {"type": "string", "minLength": 1},
+        "rules": {"type": "array", "minItems": 1},
+        "negative_result_destination": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "preservation": {
+      "type": "object",
+      "properties": {
+        "source_artifact": {"$ref": "#/$defs/relativePath"},
+        "source_hash": {"$ref": "#/$defs/sha256"},
+        "code_artifact": {"$ref": "#/$defs/relativePath"},
+        "code_hash": {"$ref": "#/$defs/sha256"},
+        "known_failures": {"type": "array", "items": {"type": "string"}}
+      },
+      "dependentRequired": {
+        "source_artifact": ["source_hash"],
+        "source_hash": ["source_artifact"],
+        "code_artifact": ["code_hash"],
+        "code_hash": ["code_artifact"]
+      },
+      "additionalProperties": true
+    },
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "dependency_graph": {"$ref": "#/$defs/dependencyGraph"},
+    "domain_checks": {"type": "object"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "claim": {
+            "properties": {"type": {"const": "theorem_schema"}},
+            "required": ["type"]
+          }
+        },
+        "required": ["claim"]
+      },
+      "then": {
+        "properties": {
+          "admission": {
+            "properties": {
+              "hard_gates": {"const": ["exact_polynomial_identity"]}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "claim": {
+            "properties": {"type": {"const": "empirical_claim"}},
+            "required": ["type"]
+          }
+        },
+        "required": ["claim"]
+      },
+      "then": {
+        "properties": {
+          "admission": {
+            "properties": {
+              "hard_gates": {"const": ["finite_census_affine_bound"]}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,191}$"},
+    "variable": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]{0,31}$"},
+    "observable": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"},
+    "rational": {
+      "oneOf": [
+        {"type": "integer"},
+        {
+          "type": "string",
+          "maxLength": 514,
+          "pattern": "^-?(?:0|[1-9][0-9]*)/[1-9][0-9]*$"
+        }
+      ]
+    },
+    "relativePath": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "sha256": {"type": "string", "pattern": "^sha256:(?!0{64}$)[0-9a-f]{64}$"},
+    "term": {
+      "type": "object",
+      "required": ["op"],
+      "properties": {
+        "op": {"enum": ["const", "var", "neg", "add", "mul", "pow"]}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"op": {"const": "const"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "value"],
+            "properties": {
+              "op": {"const": "const"},
+              "value": {"$ref": "#/$defs/rational"}
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {"op": {"const": "var"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "name"],
+            "properties": {
+              "op": {"const": "var"},
+              "name": {"$ref": "#/$defs/variable"}
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {"op": {"const": "neg"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "arg"],
+            "properties": {
+              "op": {"const": "neg"},
+              "arg": {"$ref": "#/$defs/term"}
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {"op": {"const": "add"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "args"],
+            "properties": {
+              "op": {"const": "add"},
+              "args": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 16,
+                "items": {"$ref": "#/$defs/term"}
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {"op": {"const": "mul"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "args"],
+            "properties": {
+              "op": {"const": "mul"},
+              "args": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 16,
+                "items": {"$ref": "#/$defs/term"}
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {"op": {"const": "pow"}},
+            "required": ["op"]
+          },
+          "then": {
+            "required": ["op", "base", "exponent"],
+            "properties": {
+              "op": {"const": "pow"},
+              "base": {"$ref": "#/$defs/term"},
+              "exponent": {"type": "integer", "minimum": 0, "maximum": 16}
+            },
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "theoremFormalStatement": {
+      "type": "object",
+      "required": ["language", "field", "variables", "relation"],
+      "properties": {
+        "language": {"const": "q-polynomial-identity-v0.1"},
+        "field": {"const": "Q"},
+        "variables": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/variable"}
+        },
+        "relation": {
+          "type": "object",
+          "required": ["op", "left", "right"],
+          "properties": {
+            "op": {"const": "eq"},
+            "left": {"$ref": "#/$defs/term"},
+            "right": {"$ref": "#/$defs/term"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "censusFormalStatement": {
+      "type": "object",
+      "required": [
+        "language",
+        "field",
+        "frame_sha256",
+        "observables",
+        "coefficients",
+        "relation",
+        "required_guard_band",
+        "external_premises"
+      ],
+      "properties": {
+        "language": {"const": "finite-census-affine-bound-v0.1"},
+        "field": {"const": "Q"},
+        "frame_sha256": {"$ref": "#/$defs/sha256"},
+        "observables": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/observable"}
+        },
+        "coefficients": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 24,
+          "propertyNames": {"$ref": "#/$defs/observable"},
+          "additionalProperties": {"$ref": "#/$defs/rational"}
+        },
+        "relation": {
+          "type": "object",
+          "required": ["op", "bound"],
+          "properties": {
+            "op": {"const": "le"},
+            "bound": {"$ref": "#/$defs/rational"}
+          },
+          "additionalProperties": false
+        },
+        "required_guard_band": {"$ref": "#/$defs/rational"},
+        "external_premises": {
+          "type": "object",
+          "required": [
+            "frame_denotes_target_population",
+            "unit_identity_authentic",
+            "measurement_enclosures_sound",
+            "guard_band_scientifically_adequate"
+          ],
+          "properties": {
+            "frame_denotes_target_population": {"$ref": "#/$defs/sha256"},
+            "unit_identity_authentic": {"$ref": "#/$defs/sha256"},
+            "measurement_enclosures_sound": {"$ref": "#/$defs/sha256"},
+            "guard_band_scientifically_adequate": {"$ref": "#/$defs/sha256"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "formalStatement": {
+      "oneOf": [
+        {"$ref": "#/$defs/theoremFormalStatement"},
+        {"$ref": "#/$defs/censusFormalStatement"}
+      ]
+    },
+    "gateResult": {
+      "type": "object",
+      "required": ["id", "state", "fatal", "evidence"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "state": {"enum": ["unrun", "pass", "fail", "conflict"]},
+        "fatal": {"type": "boolean"},
+        "evidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["id", "kind", "status", "result", "verifies_gates"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {
+          "enum": ["proof", "formal_proof", "exact_certificate", "dataset", "statistical_certificate", "experimental_record", "empirical_certificate", "independent_replication", "counterexample", "audit_report"]
+        },
+        "status": {"enum": ["declared", "verified"]},
+        "result": {"enum": ["pass", "fail", "inconclusive"]},
+        "artifact": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "verifies_gates": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "verifies_claims": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "verified"}}, "required": ["status"]},
+          "then": {"required": ["artifact", "sha256"]}
+        }
+      ],
+      "dependentRequired": {
+        "artifact": ["sha256"],
+        "sha256": ["artifact"]
+      },
+      "additionalProperties": false
+    },
+    "dependencyGraph": {
+      "type": "object",
+      "required": ["root", "nodes", "edges"],
+      "properties": {
+        "root": {"$ref": "#/$defs/id"},
+        "nodes": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source", "target"],
+            "properties": {"source": {"$ref": "#/$defs/id"}, "target": {"$ref": "#/$defs/id"}},
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

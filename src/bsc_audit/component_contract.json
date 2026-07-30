@@ -1,5 +1,14 @@
 {
-  "contract_schema": "bsc-component-contract/v1",
+  "census_kernel": {
+    "authority": "bsc_conditional_finite_census_exact_replay",
+    "authority_scope": "hash_bound_finite_population_observational_bound_only",
+    "certificate_version": "0.1.0",
+    "gate_id": "finite_census_affine_bound",
+    "language": "finite-census-affine-bound-v0.1",
+    "schema": "finite-census-certificate-v0.1.schema.json",
+    "schema_sha256": "af2518a516ddba9a1675e5b94f604413372cf3f7591777d973861a0bece009dc"
+  },
+  "contract_schema": "bsc-component-contract/v2",
   "protocol": {
     "sha256": "3615c6d81e2c297e68a6ee798fe1a34aa4014a75e0670580ec002c28a933fd1a",
     "source_path": "BSC_AUDIT_LLM_PACKET.md",
@@ -12,6 +21,8 @@
     "version": "0.1.0"
   },
   "theorem_kernel": {
+    "authority": "bsc_internal_exact_replay",
+    "authority_scope": "canonical_formal_statement_only",
     "certificate_version": "0.1.0",
     "gate_id": "exact_polynomial_identity",
     "language": "q-polynomial-identity-v0.1",
