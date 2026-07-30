@@ -74,6 +74,72 @@ RAW_MATH_DELIMITERS = (
     (r"\(", "unsupported inline-math opener"),
     (r"\)", "unsupported inline-math closer"),
 )
+GITHUB_APPROVED_MATH_MACROS = frozenset(
+    {
+        "Lambda",
+        "Longleftrightarrow",
+        "Omega",
+        "Sigma",
+        "Theta",
+        "alpha",
+        "begin",
+        "beta",
+        "bigcap",
+        "boldsymbol",
+        "cdots",
+        "circ",
+        "delta",
+        "dim",
+        "downarrow",
+        "end",
+        "eta",
+        "forall",
+        "frac",
+        "ge",
+        "in",
+        "int",
+        "kappa",
+        "ker",
+        "lambda",
+        "ldots",
+        "le",
+        "left",
+        "liminf",
+        "log",
+        "longrightarrow",
+        "mathbb",
+        "mathbf",
+        "mathcal",
+        "mathrm",
+        "mathsf",
+        "mid",
+        "min",
+        "mu",
+        "ne",
+        "nsubseteq",
+        "omega",
+        "partial",
+        "pi",
+        "qquad",
+        "quad",
+        "rho",
+        "right",
+        "setminus",
+        "simeq",
+        "star",
+        "subset",
+        "subseteq",
+        "sum",
+        "sup",
+        "theta",
+        "times",
+        "to",
+        "varepsilon",
+        "xrightarrow",
+    }
+)
+GITHUB_APPROVED_MATH_CONTROL_SYMBOLS = frozenset({",", "{", "}"})
+GITHUB_APPROVED_MATH_ENVIRONMENTS = frozenset({"aligned"})
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -126,6 +192,116 @@ def mask_inline_math(line: str) -> str:
         lambda match: " " * len(match.group(0)),
         line,
     )
+
+
+def math_contexts(text: str) -> list[tuple[int, str]]:
+    """Return each active inline span or fenced math block with its first line."""
+
+    contexts: list[tuple[int, str]] = []
+    fence_marker: str | None = None
+    fence_length = 0
+    fence_info = ""
+    fence_first_content_line = 0
+    fence_content: list[str] = []
+    for number, line in enumerate(text.splitlines(), start=1):
+        match = FENCE.match(line)
+        if fence_marker is None:
+            if match:
+                marker = match.group(2)
+                fence_marker = marker[0]
+                fence_length = len(marker)
+                fence_info = match.group(3).strip()
+                fence_first_content_line = number + 1
+                fence_content = []
+                continue
+            visible = mask_inline_code(line)
+            contexts.extend(
+                (number, inline.group(1))
+                for inline in re.finditer(
+                    r"(?<!\\)\$(.+?)(?<!\\)\$",
+                    visible,
+                )
+            )
+            continue
+
+        close_pattern = (
+            rf"^ {{0,3}}{re.escape(fence_marker)}"
+            rf"{{{fence_length},}}[ \t]*$"
+        )
+        if re.match(close_pattern, line):
+            if fence_info == "math":
+                contexts.append(
+                    (fence_first_content_line, "\n".join(fence_content))
+                )
+            fence_marker = None
+            fence_length = 0
+            fence_info = ""
+            fence_first_content_line = 0
+            fence_content = []
+        elif fence_info == "math":
+            fence_content.append(line)
+    return contexts
+
+
+def github_math_macro_failures(text: str, *, relative: str) -> list[str]:
+    """Reject active macros outside the repository's rendered-and-reviewed set."""
+
+    failures: list[str] = []
+    for first_line, context in math_contexts(text):
+        for match in re.finditer(r"\\([A-Za-z]+|[^A-Za-z\r\n])", context):
+            command = match.group(1)
+            number = first_line + context[: match.start()].count("\n")
+            if command[0].isalpha() and command not in GITHUB_APPROVED_MATH_MACROS:
+                guidance = (
+                    "observed GitHub renderer rejection"
+                    if command == "operatorname"
+                    else "not in the reviewed renderer-safe command set"
+                )
+                failures.append(
+                    f"{relative}:{number}: unapproved GitHub math macro "
+                    f"\\{command}: {guidance}"
+                )
+            elif (
+                not command[0].isalpha()
+                and command not in GITHUB_APPROVED_MATH_CONTROL_SYMBOLS
+            ):
+                failures.append(
+                    f"{relative}:{number}: unapproved GitHub math control symbol "
+                    f"\\{command}: not in the reviewed renderer-safe symbol set"
+                )
+
+        environment_stack: list[tuple[str, int]] = []
+        for match in re.finditer(
+            r"\\(begin|end)\{([^{}\r\n]+)\}",
+            context,
+        ):
+            action, environment = match.groups()
+            number = first_line + context[: match.start()].count("\n")
+            if environment not in GITHUB_APPROVED_MATH_ENVIRONMENTS:
+                failures.append(
+                    f"{relative}:{number}: unapproved GitHub math environment "
+                    f"{environment}: not in the reviewed renderer-safe environment set"
+                )
+            if action == "begin":
+                environment_stack.append((environment, number))
+            elif not environment_stack:
+                failures.append(
+                    f"{relative}:{number}: unmatched math environment end: "
+                    f"{environment}"
+                )
+            elif environment_stack[-1][0] != environment:
+                opened, opened_line = environment_stack.pop()
+                failures.append(
+                    f"{relative}:{number}: math environment {opened} opened at "
+                    f"line {opened_line} closes as {environment}"
+                )
+            else:
+                environment_stack.pop()
+        for environment, number in environment_stack:
+            failures.append(
+                f"{relative}:{number}: unclosed math environment: {environment}"
+            )
+    return failures
 
 
 def mask_security_math(
@@ -570,6 +746,7 @@ def check_markdown(
                     f"at line {previous_line} to h{level}"
                 )
         failures.extend(table_failures(visible, relative=relative))
+        failures.extend(github_math_macro_failures(text, relative=relative))
 
         if relative == "docs/SHARING_GUIDE.md" and re.search(
             r"\ball\s+\d+\s+(?:assets?|files?)\b",
@@ -659,7 +836,8 @@ def main() -> int:
                 "HTTPS, and image alt text"
             ),
             "current_normative_markdown": (
-                "math syntax, exact one-h1 structure, heading order, tables, "
+                "math delimiters plus approved commands, control symbols, and "
+                "environments; exact one-h1 structure, heading order, tables, "
                 "and authority wording"
             ),
             "presentation_preserved_by_exact_sha256": sorted(
@@ -670,7 +848,8 @@ def main() -> int:
             "strict_utf8",
             "control_and_bidi_rejection",
             "balanced_fences",
-            "github_math_syntax",
+            "github_math_delimiters",
+            "approved_github_math_commands_symbols_and_environments",
             "heading_structure",
             "table_structure",
             "inline_and_reference_link_integrity",

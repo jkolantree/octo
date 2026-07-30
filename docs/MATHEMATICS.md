@@ -137,9 +137,8 @@ tolerance separately.
 
 ## 4. Observation-descent Galois connection
 
-Let $\operatorname{Rel}(X)$ be relations on a state set $X$, ordered by
-inclusion. Fix a set $Q_0$ of total queries, each with a declared codomain, and
-define
+Let $\mathcal R(X)$ be the subsets of $X\times X$, ordered by inclusion. Fix a
+set $Q_0$ of total queries, each with a declared codomain, and define
 
 ```math
 \ker(q)=\{(x,x')\in X\times X:q(x)=q(x')\}.
@@ -148,29 +147,28 @@ define
 For $Q\subseteq Q_0$, define
 
 ```math
-\operatorname{Ker}(Q)=\bigcap_{q\in Q}\ker(q).
+\mathcal K(Q)=\bigcap_{q\in Q}\ker(q).
 ```
 
-For a relation $R$, define
+where the empty intersection is $X\times X$. For $R\in\mathcal R(X)$, define
 
 ```math
-\operatorname{Desc}(R)
+\mathcal D(R)
 =\{q\in Q_0:R\subseteq\ker(q)\}.
 ```
 
 ### Theorem 3 — observation audit lattice
 
 ```math
-Q\subseteq\operatorname{Desc}(R)
+Q\subseteq\mathcal D(R)
 \quad\Longleftrightarrow\quad
-R\subseteq\operatorname{Ker}(Q).
+R\subseteq\mathcal K(Q).
 ```
 
-Thus $\operatorname{Ker}$ and $\operatorname{Desc}$ form an antitone Galois
-connection. The composites
-$\operatorname{Ker}\operatorname{Desc}$ and
-$\operatorname{Desc}\operatorname{Ker}$ are closure operators on relations
-and query families, respectively.
+Thus $\mathcal K$ and $\mathcal D$ form an antitone Galois connection. The
+composites $(\mathcal K\circ\mathcal D)(R)$ and
+$(\mathcal D\circ\mathcal K)(Q)$ are closure operators on relations and query
+families, respectively.
 
 **Proof.** Both sides say exactly that every query in $Q$ is constant on every
 pair in $R$. Extensivity, monotonicity, and idempotence of the induced
@@ -370,11 +368,10 @@ contract.
 ## 10. Exact observed quotients
 
 Let $i:N\to D$ and $\pi:D\to O$ be chain maps between finite-dimensional
-complexes over $\mathbb Q$. Suppose degreewise that
+complexes over $\mathbb Q$. Suppose degreewise that $i_n$ is injective,
+$\pi_n$ is surjective, and
 
 ```math
-\operatorname{rank}(i_n)=\dim N_n,\qquad
-\operatorname{rank}(\pi_n)=\dim O_n,\qquad
 \pi_n i_n=0,
 ```
 
@@ -384,18 +381,18 @@ and
 \dim N_n+\dim O_n=\dim D_n.
 ```
 
-Injectivity gives $\dim\operatorname{image}(i_n)=\dim N_n$. Surjectivity gives
+Injectivity gives $\dim i_n(N_n)=\dim N_n$. Surjectivity gives
 $\dim\ker(\pi_n)=\dim D_n-\dim O_n=\dim N_n$. The zero composite gives
-$\operatorname{image}(i_n)\subseteq\ker(\pi_n)$. Equal finite dimensions
-therefore force
+$i_n(N_n)\subseteq\ker(\pi_n)$. Equal finite dimensions therefore force
 
 ```math
-\operatorname{image}(i_n)=\ker(\pi_n).
+i_n(N_n)=\ker(\pi_n).
 ```
 
 Thus $0\to N\to D\to O\to0$ is a short exact sequence of chain complexes. The
-`holonomy_version: 0.2.0` exact-kernel route replays these rational rank and
-composition conditions before constructing an observed-derived class. This
+`holonomy_version: 0.2.0` exact-kernel route replays injectivity,
+surjectivity, and the zero-composite condition by exact rational rank and
+matrix calculations before constructing an observed-derived class. This
 certifies the supplied finite quotient algebra; it does not establish that
 $N$ is the scientifically correct nuisance or null subcomplex.
 

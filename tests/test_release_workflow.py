@@ -38,8 +38,8 @@ class ReleaseWorkflowTests(unittest.TestCase):
     def test_release_artifact_order_is_utf8_bytewise_on_windows_paths(self) -> None:
         names = list(
             expected_artifact_names(
-                engine_version="0.3.0a17",
-                public_version="0.3.0-alpha.17",
+                engine_version="0.3.0a18",
+                public_version="0.3.0-alpha.18",
             ).values()
         )
         names.append("RELEASE_MANIFEST.json")
