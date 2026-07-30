@@ -15,7 +15,7 @@ from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_SCHEMA = "bsc-gpt-frozen-candidate-manifest/v1"
-REGISTRY_VERSION = "bsc-gpt-frozen-candidate-registry/v3"
+REGISTRY_VERSION = "bsc-gpt-frozen-candidate-registry/v4"
 OUTPUT_VERSION = "1.0"
 MAX_MANIFEST_BYTES = 8 * 1024 * 1024
 MAX_REGISTRY_FILE_BYTES = 64 * 1024 * 1024
@@ -148,6 +148,7 @@ TEST_FILENAMES = (
     "test_compact_preview_response.py",
     "test_contracts.py",
     "test_defect.py",
+    "test_documentation.py",
     "test_exact.py",
     "test_gpt_artifact_compiler.py",
     "test_gpt_eval_bundle.py",
@@ -187,6 +188,7 @@ REGISTRY: dict[str, tuple[str, ...]] = {
         "pages/profile.js",
         "pages/protocol/BSC_AUDIT_LLM_PACKET.md",
         "pages/protocol/meta.js",
+        "pages/protocol/schemas/audit-return-v0.1.schema.json",
         "pages/return-desk-core.js",
         "scripts/build_publication_assets.py",
         "scripts/check_pages.py",
@@ -242,6 +244,7 @@ REGISTRY: dict[str, tuple[str, ...]] = {
         "scripts/build_gpt_package.py",
         "scripts/build_release.py",
         "scripts/check_compact_preview_response.py",
+        "scripts/check_documentation.py",
         "scripts/check_gpt_eval_bundle.py",
         "scripts/check_gpt_eval_suite.py",
         "scripts/check_gpt_frozen_candidate.py",

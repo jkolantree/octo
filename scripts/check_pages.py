@@ -81,6 +81,7 @@ def verify_pages() -> list[str]:
         "profile.js",
         "protocol/BSC_AUDIT_LLM_PACKET.md",
         "protocol/meta.js",
+        "protocol/schemas/audit-return-v0.1.schema.json",
         "return-desk-core.js",
         "styles.css",
     }
@@ -103,16 +104,27 @@ def verify_pages() -> list[str]:
     post_deploy_tokens = (
         "protocol_meta_sha256: ${{ steps.pages-metadata.outputs.sha256 }}",
         "protocol_version: ${{ steps.pages-metadata.outputs.version }}",
+        "return_schema_sha256: ${{ steps.pages-metadata.outputs.return_schema_sha256 }}",
         "EXPECTED_META_SHA256: ${{ needs.build.outputs.protocol_meta_sha256 }}",
         "EXPECTED_VERSION: ${{ needs.build.outputs.protocol_version }}",
-        '"${base}" -o /tmp/bsc-index.html',
-        '"${base}ja.html" -o /tmp/bsc-ja.html',
-        '"${base}protocol/meta.js" -o /tmp/bsc-protocol-meta.js',
+        "EXPECTED_RETURN_SCHEMA_SHA256: ${{ needs.build.outputs.return_schema_sha256 }}",
+        'smoke_dir="${RUNNER_TEMP}/bsc-pages-smoke"',
+        '"${base}" -o "${smoke_dir}/index.html"',
+        '"${base}ja.html" -o "${smoke_dir}/ja.html"',
+        '"${base}protocol/meta.js" -o "${smoke_dir}/protocol-meta.js"',
+        '"${base}protocol/schemas/audit-return-v0.1.schema.json" '
+        '-o "${smoke_dir}/audit-return-schema.json"',
         '\\"version\\":\\"${EXPECTED_VERSION}\\"',
-        "sha256sum --check --strict",
+        'echo "${EXPECTED_META_SHA256}  ${smoke_dir}/protocol-meta.js" '
+        "| sha256sum --check --strict",
+        'echo "${EXPECTED_RETURN_SCHEMA_SHA256}  '
+        '${smoke_dir}/audit-return-schema.json" | sha256sum --check --strict',
     )
     if any(workflow.count(token) != 1 for token in post_deploy_tokens):
-        failures.append("Pages workflow must smoke-test deployed English, Japanese, and exact protocol metadata")
+        failures.append(
+            "Pages workflow must smoke-test deployed English, Japanese, "
+            "exact protocol metadata, and the linked Return schema"
+        )
 
     page_contracts = {
         "index.html": ("en", "locale-en.js", ("ja", "ja.html")),
@@ -365,9 +377,12 @@ def verify_pages() -> list[str]:
     if not profile_match or profile_match.group(1) != sha256_bytes(profile_source.read_bytes()):
         failures.append("packet builder metadata does not bind the exact GPT profile bytes")
     return_schema = ROOT / "schemas" / "audit-return-v0.1.schema.json"
+    served_return_schema = PAGES / "protocol" / "schemas" / "audit-return-v0.1.schema.json"
     return_match = re.search(r'"schema_sha256":"([0-9a-f]{64})"', profile_text)
     if not return_schema.is_file() or not return_match or return_match.group(1) != sha256_bytes(return_schema.read_bytes()):
         failures.append("Audit Return Desk metadata does not bind the exact return schema bytes")
+    if not served_return_schema.is_file() or served_return_schema.read_bytes() != return_schema.read_bytes():
+        failures.append("published protocol does not serve its exact linked return schema")
     core_schema_match = re.search(r'EXPECTED_SCHEMA_SHA256 = "([0-9a-f]{64})"', return_core)
     if not return_schema.is_file() or not core_schema_match or core_schema_match.group(1) != sha256_bytes(return_schema.read_bytes()):
         failures.append("Audit Return Desk runtime does not bind the exact return schema bytes")
