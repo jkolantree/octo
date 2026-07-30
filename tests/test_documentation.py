@@ -65,17 +65,102 @@ Inline \(x\) is also unsupported.
     def test_code_examples_may_name_rejected_syntax_without_triggering_it(self) -> None:
         text = r"""# Migration guide
 
-Use neither `\[` nor `\(` in public prose.
+Use neither `\[` nor `\(` in public prose. The literal `\operatorname` is
+documentation, not active mathematics.
 
 ```text
 C:\private\example
 <script>alert("inert")</script>
+\operatorname{inert}
 ```
 """
         with tempfile.TemporaryDirectory(prefix="bsc-docs-code-") as directory:
             root = Path(directory)
             path = self.write_document(root, text)
             self.assertEqual(check_markdown(path, root=root), [])
+
+    def test_github_rejected_macro_fails_inline_and_fenced_math(self) -> None:
+        text = r"""# Broken mathematics
+
+Inline $\operatorname{Ker}(Q)$ must fail.
+
+```math
+\operatorname{Desc}(R)=Q.
+```
+"""
+        with tempfile.TemporaryDirectory(prefix="bsc-docs-macro-") as directory:
+            root = Path(directory)
+            path = self.write_document(root, text)
+            failures = check_markdown(path, root=root)
+            rejected = [
+                item for item in failures if "unapproved GitHub math macro" in item
+            ]
+            self.assertEqual(len(rejected), 2)
+            self.assertTrue(all(r"\operatorname" in item for item in rejected))
+
+    def test_unknown_math_macro_requires_renderer_review(self) -> None:
+        text = r"""# Future mathematics
+
+```math
+\futuremacro{x}=x.
+```
+"""
+        with tempfile.TemporaryDirectory(prefix="bsc-docs-future-macro-") as directory:
+            root = Path(directory)
+            path = self.write_document(root, text)
+            failures = check_markdown(path, root=root)
+            self.assertTrue(
+                any(
+                    r"unapproved GitHub math macro \futuremacro" in item
+                    for item in failures
+                )
+            )
+
+    def test_math_control_symbols_have_a_reviewed_set(self) -> None:
+        accepted = r"""# Reviewed symbols
+
+Inline $\{x\,y\}$ is supported.
+"""
+        rejected = r"""# Unreviewed symbol
+
+Inline $x\?y$ must fail.
+"""
+        with tempfile.TemporaryDirectory(prefix="bsc-docs-symbol-") as directory:
+            root = Path(directory)
+            accepted_path = self.write_document(root, accepted, "accepted.md")
+            rejected_path = self.write_document(root, rejected, "rejected.md")
+            self.assertEqual(check_markdown(accepted_path, root=root), [])
+            self.assertTrue(
+                any(
+                    r"unapproved GitHub math control symbol \?" in item
+                    for item in check_markdown(rejected_path, root=root)
+                )
+            )
+
+    def test_math_environments_are_approved_and_paired(self) -> None:
+        text = r"""# Environment review
+
+```math
+\begin{future}
+x=y.
+\end{future}
+```
+
+```math
+\begin{aligned}
+x&=y.
+```
+"""
+        with tempfile.TemporaryDirectory(prefix="bsc-docs-environment-") as directory:
+            root = Path(directory)
+            path = self.write_document(root, text)
+            failures = check_markdown(path, root=root)
+            self.assertTrue(
+                any("unapproved GitHub math environment future" in item for item in failures)
+            )
+            self.assertTrue(
+                any("unclosed math environment: aligned" in item for item in failures)
+            )
 
     def test_controls_paths_active_html_and_magic_counts_fail(self) -> None:
         text = (
@@ -135,7 +220,7 @@ x=y
 
 The historical notation below is presentation text, not a Windows path.
 
-$C:\operatorname{supp}(c)$
+$C:\mathrm{supp}(c)$
 """
         with tempfile.TemporaryDirectory(prefix="bsc-docs-latex-path-") as directory:
             root = Path(directory)

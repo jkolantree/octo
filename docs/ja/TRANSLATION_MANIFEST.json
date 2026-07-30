@@ -9,9 +9,9 @@
   "entries": [
     {
       "source": "README.md",
-      "source_sha256": "656c03b4c1358d8edeb1347a08b760ab34a3a52797c2f631e4b00a83a2cd324d",
+      "source_sha256": "6c891e5699e3235bad708f1e52a6d5df0b4f2651c75898d6472bde6b347aa537",
       "target": "README.ja.md",
-      "target_sha256": "468edf392f41afc64ccd39c213e7439eb716761c6679af1a8ae75b0a001b0317"
+      "target_sha256": "7db0412bfe54e90e6a7c7675e17a32897f310975103c4e7f82de3d733e8ccd83"
     },
     {
       "source": "START_HERE.md",
@@ -27,9 +27,9 @@
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "80cc8c332d597d142c3fd71f79f1329d9c34dea8cebf42833f84cca663edabce",
+      "source_sha256": "38d63407d2c070e784da54cd23abbb3d36200c8e12655fdda2d29f3be7916340",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
-      "target_sha256": "0c0a5a5b23fe0062beca19676dc09506b33cf060597005d8384071c24dc266d1"
+      "target_sha256": "2adf37a40dcb7add8024ed5dad7725a66e605d97efabd3c018c9603825d07a5c"
     },
     {
       "source": "docs/STATUS_MODEL.md",
@@ -39,9 +39,9 @@
     },
     {
       "source": "docs/index.md",
-      "source_sha256": "7a5df3e8c60e31f2146da5b995dde2f633c533594ae4506d8ad950c2f3a2bc34",
+      "source_sha256": "e4b7bbc5e92c9af52e820b862f1ddb24eeb3af7e018d574905413eb1e5d1edf0",
       "target": "docs/ja/index.md",
-      "target_sha256": "a26d6e72b23c4bad7e0d364966bf10a1dfb88c85296af087c89618f4f8196abb"
+      "target_sha256": "701fcb49fbf916f998b93ad613c1225d8581417ccd84bebb09ffc5e36e8ac404"
     },
     {
       "source": "pages/index.html",
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "4c99b4dfae22037a786da23cb3b8ed65b404b02b32efba83320905df96ae2926"
+  "manifest_payload_sha256": "eab366eb066c09198c9c68ee4ed9c5cf922c49f65a0616fffed97cdf640fbb0e"
 }

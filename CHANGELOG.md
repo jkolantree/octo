@@ -2,6 +2,31 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.18 - 2026-07-29
+
+### Corrected
+
+- replaced all active canonical `\operatorname` uses with GitHub-renderer-safe
+  notation and regenerated the exact Knowledge projection;
+- made the observation-descent maps, composition order, and empty-family
+  convention explicit;
+- stated exact observed-quotient injectivity and surjectivity directly and
+  used set-image notation without a custom operator;
+- added math-context extraction and a reviewed command set so current inline
+  and fenced mathematics fail closed on an unapproved command.
+
+### Preserved failure and authority boundary
+
+- preserved `v0.3.0-alpha.17`, whose tagged canonical Mathematics page was
+  observed with 12 GitHub renderer error banners caused by the rejected
+  `\operatorname` macro;
+- corrected the earlier harness conclusion: delimiter, heading, and element
+  counts did not establish renderer acceptance;
+- retained the alpha.17 engine algorithms and schemas, the separately
+  versioned alpha.13 protocol, the live alpha.10 Custom GPT, exact-hash
+  imported research bytes, and every prior tag, release, asset, and negative
+  result.
+
 ## 0.3.0-alpha.17 - 2026-07-29
 
 ### Corrected
