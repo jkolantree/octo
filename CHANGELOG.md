@@ -2,6 +2,36 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.17 - 2026-07-29
+
+### Corrected
+
+- replaced unsupported Markdown math delimiters in current canonical
+  documentation with GitHub-native fenced math and stable plain-Markdown
+  fallback;
+- corrected the observation-descent witness, common-field typing, atomic-route
+  version wording, theorem hypotheses, resource-envelope language, and
+  authority boundaries in the canonical mathematical reference;
+- added a subject/scope/method/evidence/authority map tying each implemented
+  mathematical object to its exact schema, fixture, route, and limitation;
+- nested generated Knowledge headings under one document title and published
+  the exact return schema linked by the Pages protocol;
+- corrected repository-release versus future live-GPT update-candidate wording
+  and removed a stale magic release-asset count.
+
+### Verification and preservation
+
+- added dependency-free documentation lint for UTF-8, controls, GitHub math
+  syntax, headings, local links, unsafe markup and paths, and semantic release
+  wording;
+- added positive source-byte regressions for literal `\forall`, `\frac`,
+  `\begin`, and `\theta`, plus negative delimiter, Setext, control, path,
+  active-HTML, structure, and link fixtures;
+- retained the alpha.16 engine algorithms and schemas, the separately
+  versioned alpha.13 protocol, the live alpha.10 Custom GPT, frozen historical
+  derivatives, separately governed research bytes, and every prior tag and
+  release.
+
 ## 0.3.0-alpha.16 - 2026-07-29
 
 ### Corrected

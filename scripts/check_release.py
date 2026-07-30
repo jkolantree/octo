@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from bsc_audit import __version__  # noqa: E402
 from bsc_audit.contracts import verify_repository_component_contract  # noqa: E402
 from build_gpt_package import verify_package  # noqa: E402
+from check_documentation import documentation_failures  # noqa: E402
 from check_pages import verify_pages  # noqa: E402
 from check_research_packet import verify_packet  # noqa: E402
 
@@ -73,6 +74,10 @@ def main() -> int:
     if gpt_failures:
         fail(f"Custom GPT package failed verification: {gpt_failures[0]}")
 
+    doc_failures = documentation_failures()
+    if doc_failures:
+        fail(f"documentation failed verification: {doc_failures[0]}")
+
     for directory in ("examples", "templates", "schemas", "src/bsc_audit/schema_data"):
         for path in sorted((ROOT / directory).glob("*.json")):
             load_strict_json(path)
@@ -103,18 +108,6 @@ def main() -> int:
         packaged = ROOT / "src" / "bsc_audit" / "schema_data" / schema.name
         if not packaged.is_file() or schema.read_bytes() != packaged.read_bytes():
             fail(f"packaged schema differs from {schema.relative_to(ROOT)}")
-
-    for markdown in sorted(path for path in ROOT.rglob("*.md") if not any(part in {"build", "dist", "release"} or part.endswith(".egg-info") for part in path.relative_to(ROOT).parts)):
-        if markdown == ROOT / "pages" / "protocol" / "BSC_AUDIT_LLM_PACKET.md":
-            # This is an exact, hash-checked mirror of the root packet. Its
-            # relative links intentionally retain the canonical root context.
-            continue
-        for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", markdown.read_text(encoding="utf-8")):
-            target = target.split("#", 1)[0]
-            if not target or re.match(r"^[a-z][a-z0-9+.-]*:", target, re.IGNORECASE):
-                continue
-            if not (markdown.parent / target).resolve().exists():
-                fail(f"broken local link in {markdown.relative_to(ROOT)}: {target}")
 
     html = (ROOT / "START_HERE.html").read_text(encoding="utf-8")
     if not re.search(r"<html[^>]+lang=[\"']en(?:-US)?[\"']", html, re.IGNORECASE):
@@ -149,7 +142,7 @@ def main() -> int:
     if not isinstance(paper_zenodo, dict) or paper_zenodo.get("license") != "CC-BY-4.0":
         fail("paper Zenodo metadata must declare CC-BY-4.0")
     if software_zenodo.get("publication_date") != "2026-07-29":
-        fail("software archive metadata must use the alpha.16 release date")
+        fail("software archive metadata must use the alpha.17 release date")
 
     toolchain = load_strict_json(ROOT / "toolchain.lock.json")
     if not isinstance(toolchain, dict):
@@ -277,7 +270,7 @@ def main() -> int:
 
     citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
     if "date-released: 2026-07-29" not in citation:
-        fail("CITATION.cff must use the alpha.16 release date")
+        fail("CITATION.cff must use the alpha.17 release date")
     public_version = __version__.replace("a", "-alpha.", 1)
     if ".dev" in __version__:
         release_match = re.search(

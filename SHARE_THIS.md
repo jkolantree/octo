@@ -23,16 +23,14 @@ BSC Audit Engine is an open-source research-preview system for structured claim 
 
 The basic idea is simple: freeze one claim, type its objects and observation process, state the ordinary baseline, pre-register independent hard gates, and preserve the result when something fails.
 
-The current Python checker supports a narrow exact core:
-
-- rational chain complexes and transport defects;
-- path-dependence witnesses;
-- finite observation/query descent;
-- product-valued fatal gates with explicit conflict states;
-- dependency propagation;
-- finite atomic-modulus record checks;
-- exact propagation of declared affine upper bounds;
-- scoped arithmetic and local/global recovery gates.
+The current Python checker has a narrow exact core: finite rational
+chain-complex and derived-holonomy replay, exact polynomial identities, finite
+observation descent, declared quantitative-bound composition, and
+product-valued dependency gates. It also preserves non-admissive boundaries
+for external proof-adapter receipts and returned model audits. See the
+[command map](docs/PROGRAMMER_TUTORIAL.md) and the typed
+[mathematical reference](docs/MATHEMATICS.md) for the exact scope, fixtures,
+and authority limits.
 
 It is not a truth machine or automated peer reviewer. A no-blocking result means only that the checks actually run found no blocking condition in the supplied artifact.
 

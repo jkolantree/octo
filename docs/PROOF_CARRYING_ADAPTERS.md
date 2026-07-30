@@ -9,9 +9,9 @@ claims about an execution, but it cannot yet promote a mathematical claim.
 
 An adapter receipt is a finite record
 
-\[
+```math
 R=(J,S,E,A,C,V,o),
-\]
+```
 
 where `J` is the hashed adapter job, `S` the hashed source subject, `E` the
 hashed execution environment, `A` the adapter/tool identity and transcript,

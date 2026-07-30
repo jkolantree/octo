@@ -27,13 +27,17 @@
 - [Status Model 日本語](STATUS_MODEL.md) — research verdict、evidence maturity、execution、deployment、gate、source coverage、CLI decision（規範英語: `docs/STATUS_MODEL.md`）
 - [Threat Model](../THREAT_MODEL.md) — false-pass、leakage、prompt injection、evidence risk
 - [Manifest and Schema](../SCHEMA.md) — versioned interchange contract
+- [Documentation Contract](../DOCUMENTATION.md) — rendering、conclusion typing、privacy、generation、preservation の規範英語
+- [Pseudonymous publication policy](../../PRIVACY.md) — identity allowlist と fail-closed privacy gate
+- [Errata](../../ERRATA.md) — immutable release を書き換えない訂正
+
+## 数学リファレンス
+
 - [Mathematics](../MATHEMATICS.md) — exact definition と theorem statement
 - [Exact Derived Holonomy](../DERIVED_HOLONOMY.md) — strict/homotopy/observation-reduced path comparison
 - [Spectral Obstruction and Limit Gates](../SPECTRAL_OBSTRUCTIONS.md) — shifted-ladder と bounded-jet prime-block boundary
 - [Proof-carrying Adapters](../PROOF_CARRYING_ADAPTERS.md) — non-admissive Lean/SMT/interval receipt boundary
 - [Audit Return Desk 日本語](AUDIT_RETURN_DESK.md) — non-admissive returned-envelope/ledger/projection/local-byte inspection（規範英語: `docs/AUDIT_RETURN_DESK.md`）
-- [Pseudonymous publication policy](../../PRIVACY.md) — identity allowlist と fail-closed privacy gate
-- [Errata](../../ERRATA.md) — immutable release を書き換えない訂正
 - [Derived witnessed-descent packet](../../research/derived-witnessed-descent/README.md) — 保存された note/report/provenance/reproduction limit
 
 ## Project operation
@@ -52,7 +56,7 @@
 
 [LLM Audit Packet](../../BSC_AUDIT_LLM_PACKET.md) は drafting protocol であり executable verifier ではありません。material を attach する前に privacy、prompt-injection、source-coverage rules を読んでください。
 
-static [Pages module](../../pages/README.md) は同じ canonical packet への accessible front door です。alpha.16 は alpha.8 で導入した Audit Return Desk を保持し、exact certificate variant と checked-judgment authority を explicit にし、typed stage receipt と semantic artifact role から release observation を derive します。independently versioned protocol component は alpha.13 と byte-identical のままです。committed protocol、return schema、checksum metadata は mechanically checked for drift です。
+static [Pages module](../../pages/README.md) は同じ canonical packet への accessible front door です。alpha.17 は alpha.16 engine と Audit Return Desk を保持し、mathematical rendering/documentation status を訂正し、normative Markdown を validate し、protocol が link する exact return schema を serve します。independently versioned protocol component は alpha.13 と byte-identical のままです。committed protocol、return schema、checksum metadata は mechanically checked for drift です。
 
 repository には official [Custom GPT](../../gpt/README.md) の deterministic package もあります。これは configuration review、reproducible deployment、compatible fork、verifiable official update を支える source です。direct upload は ChatGPT で処理され、Pages module の local-only boundary を継承しません。package に GPT Action、hosted checker API、account system、cloud-storage service はありません。live availability、exact configuration binding、Preview validation、GitHub release、Pages deployment は別々の state として report されます。
 
