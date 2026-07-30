@@ -21,13 +21,17 @@ Additional starting points:
 - [Status Model](STATUS_MODEL.md) - research verdict, evidence maturity, execution, deployment, gate, source coverage, and CLI decision
 - [Threat Model](THREAT_MODEL.md) - false-pass, leakage, prompt injection, and evidence risks
 - [Manifest and Schema](SCHEMA.md) - versioned interchange contract
+- [Documentation Contract](DOCUMENTATION.md) - rendering, conclusion typing, privacy, generation, and preservation rules
+- [Pseudonymous publication policy](../PRIVACY.md) - identity allowlist and fail-closed privacy gate
+- [Errata](../ERRATA.md) - corrections that do not rewrite immutable releases
+
+## Mathematical reference
+
 - [Mathematics](MATHEMATICS.md) - exact definitions and theorem statements
 - [Exact Derived Holonomy](DERIVED_HOLONOMY.md) - strict, homotopy, and observation-reduced path comparison
 - [Spectral Obstruction and Limit Gates](SPECTRAL_OBSTRUCTIONS.md) - shifted-ladder and bounded-jet prime-block boundaries
 - [Proof-carrying Adapters](PROOF_CARRYING_ADAPTERS.md) - non-admissive Lean, SMT, and interval receipt boundary
 - [Audit Return Desk](AUDIT_RETURN_DESK.md) - non-admissive returned-envelope, ledger, projection, and local-byte inspection
-- [Pseudonymous publication policy](../PRIVACY.md) - identity allowlist and fail-closed privacy gate
-- [Errata](../ERRATA.md) - corrections that do not rewrite immutable releases
 - [Derived witnessed-descent packet](../research/derived-witnessed-descent/README.md) - preserved notes, reports, provenance, and reproduction limits
 
 ## Project operation
@@ -46,7 +50,7 @@ Additional starting points:
 
 The [LLM Audit Packet](../BSC_AUDIT_LLM_PACKET.md) is a drafting protocol, not an executable verifier. Read its privacy, prompt-injection, and source-coverage rules before attaching material.
 
-The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. Alpha.16 retains the Audit Return Desk introduced in alpha.8, makes exact certificate variants and checked-judgment authority explicit, and derives release observations from typed stage receipts and semantic artifact roles. The independently versioned protocol component remains byte-identical to alpha.13; its committed packet, return schema, and checksum metadata are mechanically checked for drift.
+The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. Alpha.17 retains the alpha.16 engine and Audit Return Desk, corrects mathematical rendering and documentation status, validates normative Markdown, and serves the exact return schema linked by the protocol. The independently versioned protocol component remains byte-identical to alpha.13; its committed packet, return schema, and checksum metadata are mechanically checked for drift.
 
 The repository also contains the deterministic package behind the official [Custom GPT](../gpt/README.md). It supports configuration review, reproducible deployments, compatible forks, and verifiable official updates. Direct uploads are processed through ChatGPT and do not inherit the Pages module's local-only boundary. The package includes no GPT Action, hosted checker API, account system, or cloud-storage service. Live availability, exact configuration binding, Preview validation, GitHub release, and Pages deployment are reported as separate states.
 

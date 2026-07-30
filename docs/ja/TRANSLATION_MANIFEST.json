@@ -9,9 +9,9 @@
   "entries": [
     {
       "source": "README.md",
-      "source_sha256": "2800a9008d8024cb9b70d4277c6e850ef2e6cc888b84f3c4485f1f5f19971cbd",
+      "source_sha256": "656c03b4c1358d8edeb1347a08b760ab34a3a52797c2f631e4b00a83a2cd324d",
       "target": "README.ja.md",
-      "target_sha256": "70a5900b5bda05a7a88a9aab43b305d7fc42e7d8e50512ac9d9852c2069e9736"
+      "target_sha256": "468edf392f41afc64ccd39c213e7439eb716761c6679af1a8ae75b0a001b0317"
     },
     {
       "source": "START_HERE.md",
@@ -27,9 +27,9 @@
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "a7e8dd099d30d9d05cbf228047a7edbcc31f745c90bef26a81b3a38b65512ba6",
+      "source_sha256": "80cc8c332d597d142c3fd71f79f1329d9c34dea8cebf42833f84cca663edabce",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
-      "target_sha256": "cf0ccb2371b5567f238f2e9d2e23d898159c778f168ccb6a49f83bf77725fa97"
+      "target_sha256": "0c0a5a5b23fe0062beca19676dc09506b33cf060597005d8384071c24dc266d1"
     },
     {
       "source": "docs/STATUS_MODEL.md",
@@ -39,15 +39,15 @@
     },
     {
       "source": "docs/index.md",
-      "source_sha256": "5fd76723679e935a5399e659eb0af64c6b8d2ae024699244a8e1878e3ede0f54",
+      "source_sha256": "7a5df3e8c60e31f2146da5b995dde2f633c533594ae4506d8ad950c2f3a2bc34",
       "target": "docs/ja/index.md",
-      "target_sha256": "0a334e467389fc498d3d4565af758caa4c25344d00be00f55d2dfafb62de6940"
+      "target_sha256": "a26d6e72b23c4bad7e0d364966bf10a1dfb88c85296af087c89618f4f8196abb"
     },
     {
       "source": "pages/index.html",
-      "source_sha256": "1aa44d99ac8bfe8dbb17c1596ccb060381da53df48218cf7afe9331e1c8edc8e",
+      "source_sha256": "770e6e18d2b79dd795a59ca49d5b87c7395ef26fd4428a39626019b5c6215c13",
       "target": "pages/ja.html",
-      "target_sha256": "592667d7779b7ab362fb8692fa77f1bea41761654f629dc52b708ea2d84be5b2"
+      "target_sha256": "6885a1574595bbe724e24cffc98b7a309a113db5245356fff551c018b04ff13c"
     },
     {
       "source": "pages/locale-en.js",
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "4da5fa0bb856cef71c9ed5df711bba594b1d26a76e369b1dd160942518157d14"
+  "manifest_payload_sha256": "4c99b4dfae22037a786da23cb3b8ed65b404b02b32efba83320905df96ae2926"
 }

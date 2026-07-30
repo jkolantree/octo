@@ -37,6 +37,7 @@ from build_gpt_package import (  # noqa: E402
     STATUS_ONLY_RESEARCH_PROJECTION_EMPTY,
     all_rules,
     archive_name,
+    demote_markdown_headings,
     generated_payload,
     load_strict_json,
     materialize_eval_cases,
@@ -76,6 +77,28 @@ class CustomGptPackageTests(unittest.TestCase):
             self.assertEqual(package_files(first), package_files(second))
             self.assertEqual(package_files(first), generated_payload())
 
+    def test_generated_knowledge_has_one_h1_and_nested_source_headings(self) -> None:
+        payload = generated_payload()
+        for path, data in payload.items():
+            if not path.parts or path.parts[0] != "knowledge":
+                continue
+            text = data.decode("utf-8")
+            h1_lines = re.findall(r"^# (?!#)", text, re.MULTILINE)
+            self.assertEqual(len(h1_lines), 1, path.as_posix())
+            self.assertNotRegex(
+                text,
+                re.compile(r"^# Audit Descent Mathematics$", re.MULTILINE),
+                path.as_posix(),
+            )
+            self.assertRegex(text, re.compile(r"^### ", re.MULTILINE), path.as_posix())
+
+    def test_heading_demotion_ignores_fenced_examples(self) -> None:
+        source = "# Title\n\n## Section\n\n```text\n# literal\n```\n"
+        self.assertEqual(
+            demote_markdown_headings(source),
+            "### Title\n\n#### Section\n\n```text\n# literal\n```\n",
+        )
+
     def test_release_archive_is_deterministic_safe_and_complete(self) -> None:
         self.assertTrue(callable(write_gpt_release_asset))
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-zip-") as directory:
@@ -91,7 +114,7 @@ class CustomGptPackageTests(unittest.TestCase):
         binding = {
             "source_commit": "1" * 40,
             "source_tree": "2" * 40,
-            "source_tag": "v0.3.0-alpha.16",
+            "source_tag": "v0.3.0-alpha.17",
         }
         with tempfile.TemporaryDirectory(prefix="bsc-gpt-bound-zip-") as directory:
             path = write_gpt_release_asset(Path(directory), **binding)
@@ -105,8 +128,8 @@ class CustomGptPackageTests(unittest.TestCase):
             )
 
     def test_final_tree_has_the_exact_release_identity(self) -> None:
-        self.assertEqual(RELEASE_ENGINE_VERSION, "0.3.0a16")
-        self.assertEqual(PUBLIC_VERSION, "0.3.0-alpha.16")
+        self.assertEqual(RELEASE_ENGINE_VERSION, "0.3.0a17")
+        self.assertEqual(PUBLIC_VERSION, "0.3.0-alpha.17")
         self.assertIsNone(require_release_version())
 
     def test_final_knowledge_links_target_the_exact_release_tag(self) -> None:
@@ -116,10 +139,10 @@ class CustomGptPackageTests(unittest.TestCase):
             for path, data in payload.items()
             if path.parts and path.parts[0] == "knowledge"
         )
-        self.assertNotIn("/blob/v0.3.0-alpha.16.dev1/", knowledge)
+        self.assertNotIn("/blob/v0.3.0-alpha.17.dev1/", knowledge)
         self.assertNotIn("https://github.com/jkolantree/octo/blob/main/", knowledge)
         self.assertIn(
-            "https://github.com/jkolantree/octo/blob/v0.3.0-alpha.16/",
+            "https://github.com/jkolantree/octo/blob/v0.3.0-alpha.17/",
             knowledge,
         )
 
@@ -311,7 +334,7 @@ class CustomGptPackageTests(unittest.TestCase):
         for text in (setup, readme):
             self.assertIn("12", text)
             self.assertIn("compact", text.lower())
-            self.assertIn("exact immutable tag `v0.3.0-alpha.16`", text)
+            self.assertIn("exact immutable tag `v0.3.0-alpha.17`", text)
             self.assertIn("new version and tag", text)
             self.assertIn("freeze", text.lower())
             self.assertIn("historical", text.lower())

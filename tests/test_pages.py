@@ -136,6 +136,10 @@ class PagesContractTests(unittest.TestCase):
             contract["execution_activities"],
             schema["$defs"]["activity"]["enum"],
         )
+        self.assertEqual(
+            site_outputs()[Path("protocol/schemas/audit-return-v0.1.schema.json")],
+            schema_bytes,
+        )
 
 
 if __name__ == "__main__":
