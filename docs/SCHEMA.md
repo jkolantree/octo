@@ -3,10 +3,10 @@
 The current research-preview manifest uses:
 
 ```json
-"manifest_version": "0.4.0"
+"manifest_version": "0.5.0"
 ```
 
-The machine-readable contract is [schemas/claim-manifest-v0.4.schema.json](../schemas/claim-manifest-v0.4.schema.json). Manifest `0.3.0` remains accepted for structural inspection under its immutable schema, but every attached result is nonsemantic until a registered replay recomputes it; legacy gate passes and maturity therefore fail closed. The schemas and linter are structural tools, not scientific truth certificates.
+The machine-readable contract is [schemas/claim-manifest-v0.5.schema.json](../schemas/claim-manifest-v0.5.schema.json). Manifests `0.3.0` and `0.4.0` remain accepted under their immutable schemas. Attached results are nonsemantic until a registered replay recomputes them; legacy gate passes and maturity therefore fail closed. The schema and linter grant no authority beyond a replay's exact subject, scope, method, evidence identity, and authority.
 
 ## Required sections
 
@@ -37,7 +37,14 @@ Templates are starting material. Placeholder strings such as `replace-me`, `unas
 Research verdict, evidence maturity, execution status, deployment status, fatal-gate state, and any CLI decision are independent; see [STATUS_MODEL.md](STATUS_MODEL.md). The claim manifest records only the coordinates in its released contract. A separate execution ledger must not be fabricated as manifest evidence. In particular:
 
 - `externally_replicated` requires a passing result recomputed by a registered independent-replication replay; no such replay is currently registered;
-- manifest `0.4.0` admits theorem claims only through the closed `theorem_schema` / `q-polynomial-identity-v0.1` family, whose sole hard gate is `exact_polynomial_identity`, with an authoritative formal AST and a claim-bound exact certificate whose hash and replay share one bounded byte buffer and whose canonical residual is recomputed over `Q`;
+- manifests `0.4.0` and `0.5.0` admit theorem claims only through the closed `theorem_schema` / `q-polynomial-identity-v0.1` family, whose sole hard gate is `exact_polynomial_identity`, with an authoritative formal AST and a claim- and gate-bound exact certificate whose hash and replay share one bounded byte buffer and whose canonical residual is recomputed over `Q`;
+- manifest `0.5.0` also adds the closed
+  `empirical_claim` / `finite-census-affine-bound-v0.1` family, whose sole hard
+  gate is `finite_census_affine_bound`; only a claim- and gate-bound
+  `empirical_certificate` replay with complete frame coverage and its declared
+  positive guard band can support `empirically_passed`; the replay witness
+  binds the canonical certificate and normalized observations independently
+  of the frame and premise hashes;
 - every evidence record outside a registered exact replay—including legacy manifest `0.3.0`, general theorem claims, audit reports, datasets, replications, and counterexamples—is provenance only; its declared `result` cannot decide a gate, raise maturity, trigger dependency propagation, or support promotion;
 - an evidence record and matching artifact hash establish byte identity, never automatic validation of the artifact's mathematical, empirical, or scientific content;
 - `admitted` is structurally representable only after all applicable fatal gates pass.
@@ -60,7 +67,10 @@ arity 16, exponent 16, 4,096 normal-form monomials, 8,192-bit rational
 intermediates, 50,000 counted coefficient operations, and a 1 MiB certificate;
 one audit accepts at most 32 unique theorem artifact bindings and starts at
 most 16 unique content-addressed theorem normalizations. Exceeding any ceiling
-fails closed with `THEOREM_RESOURCE_LIMIT`.
+fails closed with `THEOREM_RESOURCE_LIMIT`; the public `theorem` CLI enforces
+its 1 MiB route ceiling before JSON parsing. The `census` route likewise
+enforces its 4 MiB byte ceiling and a specialized 420,000-entry decoded
+container ceiling; the simultaneous public schema maximum is 233,543 entries.
 
 The manifest's `claim.formal_statement` is authoritative. For this closed
 profile, `claim.title` and `claim.statement` must equal the checker's
@@ -75,6 +85,31 @@ An empty residual is a pass. A valid nonempty residual is a countercertificate
 and demotes the bound fatal gate. The language contains no division,
 inequality, transcendental function, quantifier alternation, imported axiom, or
 external-tool result.
+
+## Closed finite-census replay
+
+[`finite-census-certificate-v0.1.schema.json`](../schemas/finite-census-certificate-v0.1.schema.json)
+defines one conditional observational language. Its authoritative statement
+binds a finite-frame hash, sorted observables, exact rational coefficients, an
+affine upper bound, a positive guard band, and four external-premise hashes.
+The certificate contains a sorted census roster and exactly one rational
+interval box for every unit. Missing, duplicate, or extra units are malformed;
+floats, noncanonical rationals, unknown fields, and nonpositive guard bands
+fail closed.
+
+The checker computes every affine interval minimum and maximum exactly.
+`pass` requires every maximum plus the guard band to remain below the bound.
+A definite lower-bound violation returns `fail` with a counterexample.
+Everything between those cases, including a boundary-only inequality that
+lacks the declared surplus, is `inconclusive`.
+
+The four external premises identify the propositions that the frame denotes
+the target population, unit identities are authentic, measurement enclosures
+are sound, and the guard band is scientifically adequate. Their hashes bind
+premise identities; they are not caller-supplied pass states. The replay can
+support `empirically_passed` for the exact conditional finite-frame claim. It
+cannot support `externally_replicated`, an `admitted` deployment, a causal
+claim, or generalization beyond the frame.
 
 ## Dependency graphs
 
@@ -103,6 +138,7 @@ Pre-1.0 schema versions may change incompatibly. A release must state the schema
 | `0.3.0a16` | same released schemas; registered results are carried as subject-, evidence-, predicate-, scope-, method-, and authority-bound judgments, and unknown domain-check keys fail closed |
 | `0.3.0a17` | same released schemas and engine algorithms as `0.3.0a16`; documentation rendering, status wording, generated projections, and documentation lint are corrected |
 | `0.3.0a18` | same released schemas and engine algorithms as `0.3.0a17`; GitHub-rejected math notation is replaced and active math commands are checked against a reviewed renderer-safe set |
+| `0.3.0a19` | prior formats plus claim manifest `0.5.0` and finite-census certificate `0.1.0`; one robust, premise-identified finite-frame observational claim may reach `empirically_passed` |
 
 The independent derived-holonomy route dispatches `holonomy_version: 0.1.0`
 records to the immutable
@@ -117,4 +153,4 @@ Consumers must reject an unknown major or minor schema unless an explicit migrat
 
 The `v0.3.0-alpha.7` Custom GPT package did not enlarge the claim-manifest schema or the Python checker's authority. Its exact controller and Knowledge package completed the authenticated 27-case Preview gate recorded in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Uploads go through ChatGPT, and no GPT Action or hosted BSC API is included.
 
-Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.18 preserves it unchanged under the independently versioned alpha.13 protocol component. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).
+Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.19 preserves it unchanged under the independently versioned alpha.13 protocol component. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).

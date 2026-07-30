@@ -38,7 +38,14 @@ manifest field `claim.evidence_maturity` は workflow maturity を記録しま�
 - `empirically_passed`
 - `externally_replicated`
 
-後の state ほど強い attached record を必要としますが、存在は authenticity を意味しません。proof、dataset、replication の名前を持つ string は、それだけでは artifact の verification ではありません。同様に、local SHA-256 の一致は inspected bytes の identity を示すだけで、その bytes に valid result が含まれることを示しません。declared evidence result は、registered exact replay がその result を recompute しない限り evidence maturity に影響しません。manifest `0.4.0` には、意図的に closed な replay が現在 1 つだけあります。claim-bound `q-polynomial-identity-v0.1` certificate は authoritative formal AST と residual の exact symbolic replay 後に限り `structurally_checked` を support できます。empirical または independent-replication replay は登録されていないため、`empirically_passed` と `externally_replicated` は blocked のままです。general theorem prose、external-tool receipt、legacy manifest `0.3.0`、その他すべての artifact result は non-admissive のままです。
+後の state ほど強い attached record を必要としますが、存在は authenticity を意味しません。proof、dataset、replication の名前を持つ string は、それだけでは artifact の verification ではありません。同様に、local SHA-256 の一致は inspected bytes の identity を示すだけで、その bytes に valid result が含まれることを示しません。declared evidence result は、registered exact replay がその result を recompute しない限り evidence maturity に影響しません。
+
+manifest `0.5.0` には、意図的に closed な profile が 2 つあります。
+
+- claim- and gate-bound `q-polynomial-identity-v0.1` certificate は、authoritative formal AST と residual の exact symbolic replay 後に限り `structurally_checked` を support できます。
+- claim- and gate-bound `finite-census-affine-bound-v0.1` certificate は、complete finite frame、exact interval bound、positive guard band の replay 後に `empirically_passed` を support できます。ただし authority は、4 個の hash-identified external premise が成立する場合の conditional finite-frame observational proposition に限られます。
+
+census replay は premise の真偽、causation、frame 外への generalization、independent replication、deployment authority を確立しません。independent-replication replay は登録されていないため、`externally_replicated` は blocked のままです。general theorem prose、external-tool receipt、legacy manifest `0.3.0`、その他すべての artifact result は non-admissive のままです。
 
 ## 3. Execution status
 

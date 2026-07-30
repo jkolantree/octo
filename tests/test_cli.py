@@ -6,8 +6,23 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from bsc_audit import __version__
-from bsc_audit.cli import InputError, _enforce_resource_limits, _read_stream_bounded, command, main
+from bsc_audit.census import (
+    MAX_CERTIFICATE_BYTES as MAX_CENSUS_INPUT_BYTES,
+    MAX_CERTIFICATE_CONTAINER_ITEMS as MAX_CENSUS_CONTAINER_ITEMS,
+)
+from bsc_audit.cli import (
+    MAX_CONTAINER_ITEMS,
+    InputError,
+    _enforce_resource_limits,
+    _read_stream_bounded,
+    command,
+    main,
+)
 from bsc_audit.findings import Finding, Severity
+from bsc_audit.theorem import MAX_CERTIFICATE_BYTES as MAX_THEOREM_INPUT_BYTES
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class CliTests(unittest.TestCase):
@@ -140,6 +155,81 @@ class CliTests(unittest.TestCase):
         with self.assertRaises(InputError):
             _read_stream_bounded(GuardedBytesIO(b"1234"), 3)
         self.assertEqual(_read_stream_bounded(GuardedBytesIO(b"1234"), 4), b"1234")
+
+    def test_closed_certificate_routes_enforce_kernel_byte_limits(self):
+        cases = (
+            (
+                "theorem",
+                ROOT / "examples" / "theorem_binomial_identity.json",
+                MAX_THEOREM_INPUT_BYTES,
+            ),
+            (
+                "census",
+                ROOT / "examples" / "census_affine_bound.json",
+                MAX_CENSUS_INPUT_BYTES,
+            ),
+        )
+        for command_name, fixture, byte_limit in cases:
+            with self.subTest(command=command_name), tempfile.TemporaryDirectory() as directory:
+                payload = fixture.read_bytes()
+                path = Path(directory) / f"{command_name}.json"
+                path.write_bytes(payload + b" " * (byte_limit + 1 - len(payload)))
+                status, text = self.invoke([command_name, str(path)])
+            finding = json.loads(text)["findings"][0]
+            self.assertEqual(status, 2)
+            self.assertEqual(finding["code"], "INPUT_MALFORMED")
+            self.assertIn(f"{byte_limit}-byte limit", finding["message"])
+
+    def test_census_route_uses_a_headroom_container_limit(self):
+        schema = json.loads(
+            (
+                ROOT / "schemas" / "finite-census-certificate-v0.1.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        units = schema["properties"]["observations"]["maxItems"]
+        observables = schema["$defs"]["formalStatement"]["properties"][
+            "observables"
+        ]["maxItems"]
+        schema_maximum_entries = (
+            23
+            + 2 * observables
+            + 4 * units
+            + 3 * units * observables
+        )
+        self.assertLessEqual(
+            4 * schema_maximum_entries,
+            3 * MAX_CENSUS_CONTAINER_ITEMS,
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            above_generic = root / "above-generic.json"
+            above_generic.write_text(
+                json.dumps({"items": [None] * (MAX_CONTAINER_ITEMS + 1)}),
+                encoding="utf-8",
+            )
+            status, text = self.invoke(["census", str(above_generic)])
+            self.assertEqual(status, 2)
+            self.assertEqual(
+                json.loads(text)["findings"][0]["code"],
+                "SCHEMA_VALIDATION",
+            )
+
+            above_census = root / "above-census.json"
+            above_census.write_text(
+                json.dumps(
+                    {"items": [None] * (MAX_CENSUS_CONTAINER_ITEMS + 1)}
+                ),
+                encoding="utf-8",
+            )
+            status, text = self.invoke(["census", str(above_census)])
+            finding = json.loads(text)["findings"][0]
+            self.assertEqual(status, 2)
+            self.assertEqual(finding["code"], "INPUT_MALFORMED")
+            self.assertIn(
+                f"container entries exceed {MAX_CENSUS_CONTAINER_ITEMS}",
+                finding["message"],
+            )
 
 
 if __name__ == "__main__":

@@ -38,9 +38,9 @@ class FrozenCandidateManifestTests(unittest.TestCase):
     def test_registry_contract_is_explicit_complete_and_current(self) -> None:
         document, findings = checker.build_manifest(ROOT)
         self.assertEqual(findings, [])
-        self.assertEqual(len(checker.registry_entries()), 173)
-        self.assertEqual(document["file_count"], 173)
-        self.assertEqual(len(document["files"]), 173)
+        self.assertEqual(len(checker.registry_entries()), 181)
+        self.assertEqual(document["file_count"], 181)
+        self.assertEqual(len(document["files"]), 181)
         self.assertEqual(
             [(entry["category"], entry["path"]) for entry in document["files"]],
             list(checker.registry_entries()),
@@ -71,7 +71,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             },
         )
         self.assertEqual(len(checker.KNOWLEDGE_FILENAMES), 5)
-        self.assertEqual(len(checker.TEST_FILENAMES), 36)
+        self.assertEqual(len(checker.TEST_FILENAMES), 39)
         self.assertEqual(
             {
                 path
@@ -80,7 +80,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             },
             {f"tests/{filename}" for filename in checker.TEST_FILENAMES},
         )
-        self.assertEqual(len(checker.SCHEMA_FILENAMES), 12)
+        self.assertEqual(len(checker.SCHEMA_FILENAMES), 14)
         self.assertEqual(
             {
                 path
@@ -129,10 +129,15 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "scripts/gpt_eval_controller.py",
             "schemas/audit-return-v0.1.schema.json",
             "schemas/claim-manifest-v0.4.schema.json",
+            "schemas/claim-manifest-v0.5.schema.json",
+            "schemas/finite-census-certificate-v0.1.schema.json",
             "schemas/theorem-certificate-v0.1.schema.json",
             "src/bsc_audit/schema_data/audit-return-v0.1.schema.json",
             "src/bsc_audit/schema_data/claim-manifest-v0.4.schema.json",
+            "src/bsc_audit/schema_data/claim-manifest-v0.5.schema.json",
+            "src/bsc_audit/schema_data/finite-census-certificate-v0.1.schema.json",
             "src/bsc_audit/schema_data/theorem-certificate-v0.1.schema.json",
+            "src/bsc_audit/census.py",
             "src/bsc_audit/return_desk.py",
             "src/bsc_audit/theorem.py",
             "src/bsc_audit/component_contract.json",
@@ -141,6 +146,8 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "src/bsc_audit/judgment.py",
             "pages/return-desk-core.js",
             "tests/return_desk_runtime.test.cjs",
+            "tests/test_census.py",
+            "tests/test_census_manifest.py",
             "tests/test_compact_preview_response.py",
             "tests/test_gpt_artifact_compiler.py",
             "tests/test_gpt_eval_bundle.py",
@@ -152,6 +159,7 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             "tests/test_pages.py",
             "tests/test_return_desk.py",
             "tests/test_release_contract.py",
+            "tests/test_schema_v05.py",
             "tests/test_theorem.py",
             "tests/test_contracts.py",
             "tests/test_mapping_complex.py",

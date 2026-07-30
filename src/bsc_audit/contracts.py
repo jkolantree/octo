@@ -12,7 +12,7 @@ from typing import Any
 
 
 CONTRACT_RESOURCE = "component_contract.json"
-CONTRACT_SCHEMA = "bsc-component-contract/v1"
+CONTRACT_SCHEMA = "bsc-component-contract/v2"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 TOKEN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,191}$")
 SCHEMA_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.schema\.json$")
@@ -30,6 +30,19 @@ class TheoremKernelIdentity:
     language: str
     certificate_version: str
     gate_id: str
+    authority: str
+    authority_scope: str
+    schema: str
+    schema_sha256: str
+
+
+@dataclass(frozen=True)
+class CensusKernelIdentity:
+    language: str
+    certificate_version: str
+    gate_id: str
+    authority: str
+    authority_scope: str
     schema: str
     schema_sha256: str
 
@@ -47,6 +60,7 @@ class ComponentContract:
     contract_schema: str
     protocol: ProtocolIdentity
     theorem_kernel: TheoremKernelIdentity
+    census_kernel: CensusKernelIdentity
     return_contract: ReturnContractIdentity
     sha256: str
 
@@ -56,6 +70,15 @@ class ComponentContract:
         return {
             "contract_schema": self.contract_schema,
             "contract_sha256": self.sha256,
+            "census_kernel": {
+                "authority": self.census_kernel.authority,
+                "authority_scope": self.census_kernel.authority_scope,
+                "certificate_version": self.census_kernel.certificate_version,
+                "gate_id": self.census_kernel.gate_id,
+                "language": self.census_kernel.language,
+                "schema": self.census_kernel.schema,
+                "schema_sha256": self.census_kernel.schema_sha256,
+            },
             "protocol": {
                 "sha256": self.protocol.sha256,
                 "version": self.protocol.version,
@@ -67,6 +90,8 @@ class ComponentContract:
                 "version": self.return_contract.version,
             },
             "theorem_kernel": {
+                "authority": self.theorem_kernel.authority,
+                "authority_scope": self.theorem_kernel.authority_scope,
                 "certificate_version": self.theorem_kernel.certificate_version,
                 "gate_id": self.theorem_kernel.gate_id,
                 "language": self.theorem_kernel.language,
@@ -129,7 +154,13 @@ def parse_component_contract(data: bytes) -> ComponentContract:
         raise ValueError(f"component contract is not strict JSON: {exc}") from exc
     root = _exact_keys(
         raw,
-        {"contract_schema", "protocol", "return_contract", "theorem_kernel"},
+        {
+            "census_kernel",
+            "contract_schema",
+            "protocol",
+            "return_contract",
+            "theorem_kernel",
+        },
         "$",
     )
     if root["contract_schema"] != CONTRACT_SCHEMA:
@@ -153,6 +184,8 @@ def parse_component_contract(data: bytes) -> ComponentContract:
     theorem = _exact_keys(
         root["theorem_kernel"],
         {
+            "authority",
+            "authority_scope",
             "certificate_version",
             "gate_id",
             "language",
@@ -160,6 +193,19 @@ def parse_component_contract(data: bytes) -> ComponentContract:
             "schema_sha256",
         },
         "$.theorem_kernel",
+    )
+    census = _exact_keys(
+        root["census_kernel"],
+        {
+            "authority",
+            "authority_scope",
+            "certificate_version",
+            "gate_id",
+            "language",
+            "schema",
+            "schema_sha256",
+        },
+        "$.census_kernel",
     )
 
     canonical = (
@@ -189,10 +235,36 @@ def parse_component_contract(data: bytes) -> ComponentContract:
                 "$.theorem_kernel.certificate_version",
             ),
             gate_id=_token(theorem["gate_id"], "$.theorem_kernel.gate_id"),
+            authority=_token(
+                theorem["authority"],
+                "$.theorem_kernel.authority",
+            ),
+            authority_scope=_token(
+                theorem["authority_scope"],
+                "$.theorem_kernel.authority_scope",
+            ),
             schema=_schema_name(theorem["schema"], "$.theorem_kernel.schema"),
             schema_sha256=_digest(
                 theorem["schema_sha256"],
                 "$.theorem_kernel.schema_sha256",
+            ),
+        ),
+        census_kernel=CensusKernelIdentity(
+            language=_token(census["language"], "$.census_kernel.language"),
+            certificate_version=_token(
+                census["certificate_version"],
+                "$.census_kernel.certificate_version",
+            ),
+            gate_id=_token(census["gate_id"], "$.census_kernel.gate_id"),
+            authority=_token(census["authority"], "$.census_kernel.authority"),
+            authority_scope=_token(
+                census["authority_scope"],
+                "$.census_kernel.authority_scope",
+            ),
+            schema=_schema_name(census["schema"], "$.census_kernel.schema"),
+            schema_sha256=_digest(
+                census["schema_sha256"],
+                "$.census_kernel.schema_sha256",
             ),
         ),
         return_contract=ReturnContractIdentity(
@@ -260,6 +332,7 @@ def verify_repository_component_contract(root: Path) -> list[str]:
     schema_root = root / "schemas"
     for label, identity in (
         ("theorem", COMPONENT_CONTRACT.theorem_kernel),
+        ("census", COMPONENT_CONTRACT.census_kernel),
         ("return", COMPONENT_CONTRACT.return_contract),
     ):
         path = schema_root / identity.schema
@@ -288,6 +361,18 @@ def verify_repository_component_contract(root: Path) -> list[str]:
                 ):
                     failures.append(
                         "theorem schema semantic identity differs from component contract"
+                    )
+            elif label == "census":
+                if (
+                    schema["properties"]["certificate_version"]["const"]
+                    != COMPONENT_CONTRACT.census_kernel.certificate_version
+                    or schema["$defs"]["formalStatement"]["properties"][
+                        "language"
+                    ]["const"]
+                    != COMPONENT_CONTRACT.census_kernel.language
+                ):
+                    failures.append(
+                        "census schema semantic identity differs from component contract"
                     )
             elif (
                 schema["properties"]["return_version"]["const"]

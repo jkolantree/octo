@@ -1,0 +1,65 @@
+{
+  "certificate_version": "0.1.0",
+  "claim_id": "synthetic.census.affine-bound",
+  "formal_statement": {
+    "language": "finite-census-affine-bound-v0.1",
+    "field": "Q",
+    "frame_sha256": "sha256:6929e8506ac745ec44865b42f17db338085bc2c497b1d09512f7158541185f05",
+    "observables": [
+      "mass",
+      "temperature"
+    ],
+    "coefficients": {
+      "mass": 1,
+      "temperature": "-1/2"
+    },
+    "relation": {
+      "op": "le",
+      "bound": 10
+    },
+    "required_guard_band": 1,
+    "external_premises": {
+      "frame_denotes_target_population": "sha256:bf76f95d5be22be041c14b6f11b94e310c9df450395d55ec2b1e953c8b963ef6",
+      "unit_identity_authentic": "sha256:5139f612efabb6dfad10e3d5495a2dd1e8fa615969cde4b394dc8ed61ab4ad3c",
+      "measurement_enclosures_sound": "sha256:3c166d08e2421cd5f2b5e290ce8016353fbf5277d82a4d7aa372610cdb1d8446",
+      "guard_band_scientifically_adequate": "sha256:70ca2302ed35be2b3493185ae8fcf35cf2275f8a60434723778e5e901f19474e"
+    }
+  },
+  "population": {
+    "coverage": "census",
+    "declared_size": 2,
+    "unit_ids": [
+      "unit-01",
+      "unit-02"
+    ]
+  },
+  "observations": [
+    {
+      "unit_id": "unit-01",
+      "intervals": {
+        "mass": {
+          "lower": 5,
+          "upper": 6
+        },
+        "temperature": {
+          "lower": 2,
+          "upper": 4
+        }
+      }
+    },
+    {
+      "unit_id": "unit-02",
+      "intervals": {
+        "mass": {
+          "lower": 7,
+          "upper": 8
+        },
+        "temperature": {
+          "lower": 2,
+          "upper": 4
+        }
+      }
+    }
+  ],
+  "declared_result": "pass"
+}

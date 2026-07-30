@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bsc-audit:schema:finite-census-certificate:v0.1",
+  "title": "BSC finite-census affine-bound certificate 0.1.0",
+  "type": "object",
+  "required": [
+    "certificate_version",
+    "claim_id",
+    "formal_statement",
+    "population",
+    "observations",
+    "declared_result"
+  ],
+  "properties": {
+    "certificate_version": {"const": "0.1.0"},
+    "claim_id": {"$ref": "#/$defs/claimId"},
+    "formal_statement": {"$ref": "#/$defs/formalStatement"},
+    "population": {"$ref": "#/$defs/population"},
+    "observations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3072,
+      "items": {"$ref": "#/$defs/observation"}
+    },
+    "declared_result": {"enum": ["pass", "fail", "inconclusive"]}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "claimId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,191}$"
+    },
+    "unitId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,191}$"
+    },
+    "observable": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "nonPlaceholderSha256": {
+      "type": "string",
+      "pattern": "^sha256:(?!0{64}$)[0-9a-f]{64}$"
+    },
+    "rational": {
+      "oneOf": [
+        {"type": "integer"},
+        {
+          "type": "string",
+          "maxLength": 514,
+          "pattern": "^-?(?:0|[1-9][0-9]*)/[1-9][0-9]*$"
+        }
+      ]
+    },
+    "formalStatement": {
+      "type": "object",
+      "required": [
+        "language",
+        "field",
+        "frame_sha256",
+        "observables",
+        "coefficients",
+        "relation",
+        "required_guard_band",
+        "external_premises"
+      ],
+      "properties": {
+        "language": {"const": "finite-census-affine-bound-v0.1"},
+        "field": {"const": "Q"},
+        "frame_sha256": {"$ref": "#/$defs/sha256"},
+        "observables": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/observable"}
+        },
+        "coefficients": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 24,
+          "propertyNames": {"$ref": "#/$defs/observable"},
+          "additionalProperties": {"$ref": "#/$defs/rational"}
+        },
+        "relation": {
+          "type": "object",
+          "required": ["op", "bound"],
+          "properties": {
+            "op": {"const": "le"},
+            "bound": {"$ref": "#/$defs/rational"}
+          },
+          "additionalProperties": false
+        },
+        "required_guard_band": {"$ref": "#/$defs/rational"},
+        "external_premises": {
+          "type": "object",
+          "required": [
+            "frame_denotes_target_population",
+            "unit_identity_authentic",
+            "measurement_enclosures_sound",
+            "guard_band_scientifically_adequate"
+          ],
+          "properties": {
+            "frame_denotes_target_population": {
+              "$ref": "#/$defs/nonPlaceholderSha256"
+            },
+            "unit_identity_authentic": {
+              "$ref": "#/$defs/nonPlaceholderSha256"
+            },
+            "measurement_enclosures_sound": {
+              "$ref": "#/$defs/nonPlaceholderSha256"
+            },
+            "guard_band_scientifically_adequate": {
+              "$ref": "#/$defs/nonPlaceholderSha256"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "population": {
+      "type": "object",
+      "required": ["coverage", "declared_size", "unit_ids"],
+      "properties": {
+        "coverage": {"const": "census"},
+        "declared_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3072
+        },
+        "unit_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3072,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/unitId"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "observation": {
+      "type": "object",
+      "required": ["unit_id", "intervals"],
+      "properties": {
+        "unit_id": {"$ref": "#/$defs/unitId"},
+        "intervals": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 24,
+          "propertyNames": {"$ref": "#/$defs/observable"},
+          "additionalProperties": {"$ref": "#/$defs/interval"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "interval": {
+      "type": "object",
+      "required": ["lower", "upper"],
+      "properties": {
+        "lower": {"$ref": "#/$defs/rational"},
+        "upper": {"$ref": "#/$defs/rational"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

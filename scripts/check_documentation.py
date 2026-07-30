@@ -140,6 +140,17 @@ GITHUB_APPROVED_MATH_MACROS = frozenset(
 )
 GITHUB_APPROVED_MATH_CONTROL_SYMBOLS = frozenset({",", "{", "}"})
 GITHUB_APPROVED_MATH_ENVIRONMENTS = frozenset({"aligned"})
+MATH_MACRO_ARITY = {
+    "boldsymbol": 1,
+    "frac": 2,
+    "left": 1,
+    "mathbb": 1,
+    "mathbf": 1,
+    "mathcal": 1,
+    "mathrm": 1,
+    "mathsf": 1,
+    "right": 1,
+}
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -301,6 +312,138 @@ def github_math_macro_failures(text: str, *, relative: str) -> list[str]:
             failures.append(
                 f"{relative}:{number}: unclosed math environment: {environment}"
             )
+        failures.extend(
+            github_math_structure_failures(
+                context,
+                relative=relative,
+                first_line=first_line,
+            )
+        )
+    return failures
+
+
+def _math_line(first_line: int, context: str, index: int) -> int:
+    return first_line + context[:index].count("\n")
+
+
+def _skip_math_argument(context: str, index: int) -> int | None:
+    """Return the first byte after one TeX argument, or None when absent."""
+
+    while index < len(context) and context[index].isspace():
+        index += 1
+    if index >= len(context) or context[index] == "}":
+        return None
+    if context[index] == "{":
+        depth = 1
+        cursor = index + 1
+        while cursor < len(context):
+            if context[cursor] == "\\":
+                cursor += 2
+                continue
+            if context[cursor] == "{":
+                depth += 1
+            elif context[cursor] == "}":
+                depth -= 1
+                if depth == 0:
+                    return cursor + 1
+            cursor += 1
+        return None
+    if context[index] == "\\":
+        cursor = index + 1
+        if cursor >= len(context):
+            return None
+        if context[cursor].isalpha():
+            while cursor < len(context) and context[cursor].isalpha():
+                cursor += 1
+            return cursor
+        return cursor + 1
+    return index + 1
+
+
+def github_math_structure_failures(
+    context: str,
+    *,
+    relative: str,
+    first_line: int,
+) -> list[str]:
+    """Reject malformed active math even when every command name is approved."""
+
+    failures: list[str] = []
+    brace_stack: list[int] = []
+    cursor = 0
+    while cursor < len(context):
+        if context[cursor] == "\\":
+            cursor += 2
+            continue
+        if context[cursor] == "{":
+            brace_stack.append(cursor)
+        elif context[cursor] == "}":
+            if brace_stack:
+                brace_stack.pop()
+            else:
+                failures.append(
+                    f"{relative}:{_math_line(first_line, context, cursor)}: "
+                    "unmatched math closing brace"
+                )
+        cursor += 1
+    for index in brace_stack:
+        failures.append(
+            f"{relative}:{_math_line(first_line, context, index)}: "
+            "unclosed math brace"
+        )
+
+    commands = list(re.finditer(r"\\([A-Za-z]+)", context))
+    for command_match in commands:
+        command = command_match.group(1)
+        number = _math_line(first_line, context, command_match.start())
+        after = command_match.end()
+        if command in {"begin", "end"}:
+            environment = re.match(r"\{([^{}\r\n]+)\}", context[after:])
+            if environment is None:
+                failures.append(
+                    f"{relative}:{number}: \\{command} requires an immediate "
+                    "braced math environment"
+                )
+            continue
+        arity = MATH_MACRO_ARITY.get(command)
+        if arity is None:
+            continue
+        argument_cursor = after
+        for ordinal in range(1, arity + 1):
+            argument_cursor = _skip_math_argument(context, argument_cursor)
+            if argument_cursor is None:
+                failures.append(
+                    f"{relative}:{number}: \\{command} requires "
+                    f"{arity} math argument{'s' if arity != 1 else ''}; "
+                    f"argument {ordinal} is missing or unclosed"
+                )
+                break
+
+    delimiter_stack: list[int] = []
+    for delimiter in re.finditer(r"\\(left|right)\b", context):
+        action = delimiter.group(1)
+        number = _math_line(first_line, context, delimiter.start())
+        if action == "left":
+            delimiter_stack.append(number)
+        elif delimiter_stack:
+            delimiter_stack.pop()
+        else:
+            failures.append(
+                f"{relative}:{number}: unmatched \\right math delimiter"
+            )
+    for number in delimiter_stack:
+        failures.append(f"{relative}:{number}: unclosed \\left math delimiter")
+
+    begin_aligned = re.compile(r"\\begin\{aligned\}")
+    end_aligned = re.compile(r"\\end\{aligned\}")
+    for ampersand in re.finditer(r"(?<!\\)&", context):
+        prefix = context[: ampersand.start()]
+        if len(begin_aligned.findall(prefix)) <= len(end_aligned.findall(prefix)):
+            number = _math_line(first_line, context, ampersand.start())
+            failures.append(
+                f"{relative}:{number}: math alignment '&' is allowed only "
+                "inside an aligned environment"
+            )
     return failures
 
 
@@ -353,7 +496,12 @@ def visible_lines(text: str, *, name: str) -> tuple[list[tuple[int, str]], list[
                 fence_line = number
                 fence_info = match.group(3).strip()
                 fence_has_content = False
-                if fence_info.casefold() == "math" and fence_info != "math":
+                info_tokens = fence_info.split()
+                if (
+                    info_tokens
+                    and info_tokens[0].casefold() == "math"
+                    and fence_info != "math"
+                ):
                     failures.append(
                         f"{name}:{number}: math fence language must be exactly 'math'"
                     )
