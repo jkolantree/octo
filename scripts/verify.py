@@ -76,7 +76,7 @@ STAGES: dict[str, Stage] = {
         ("{python}", "scripts/check_localization.py"),
     ),
     "release-integrity": Stage(
-        "verify package, Pages, publication, and release invariants",
+        "verify documentation, package, Pages, publication, and release invariants",
         ("{python}", "scripts/check_release.py"),
     ),
 }

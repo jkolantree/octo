@@ -1313,6 +1313,39 @@ def public_source_projection(relative: str, markdown: str) -> str:
     return markdown
 
 
+def demote_markdown_headings(markdown: str, *, levels: int = 2) -> str:
+    """Nest projected Markdown beneath its generated source-block heading."""
+
+    lines: list[str] = []
+    fence_marker: str | None = None
+    fence_length = 0
+    fence_pattern = re.compile(r"^( {0,3})(`{3,}|~{3,})([^\r\n]*)$")
+    heading_pattern = re.compile(r"^( {0,3})(#{1,6})([ \t]+.*)$")
+    for line in markdown.splitlines():
+        fence = fence_pattern.match(line)
+        if fence_marker is None and fence:
+            marker = fence.group(2)
+            fence_marker = marker[0]
+            fence_length = len(marker)
+            lines.append(line)
+            continue
+        if fence_marker is not None:
+            if re.match(
+                rf"^ {{0,3}}{re.escape(fence_marker)}{{{fence_length},}}[ \t]*$",
+                line,
+            ):
+                fence_marker = None
+                fence_length = 0
+            lines.append(line)
+            continue
+        heading = heading_pattern.match(line)
+        if heading:
+            level = min(6, len(heading.group(2)) + levels)
+            line = f"{heading.group(1)}{'#' * level}{heading.group(3)}"
+        lines.append(line)
+    return "\n".join(lines) + ("\n" if markdown.endswith("\n") else "")
+
+
 def withhold_public_digest_values(text: str) -> str:
     """Remove only complete digest values; preserve all non-hash tokens and URLs."""
 
@@ -1335,6 +1368,8 @@ def source_block(relative: str) -> str:
     path = ROOT / relative
     text = path.read_text(encoding="utf-8")
     text = public_source_projection(relative, text)
+    if path.suffix == ".md":
+        text = demote_markdown_headings(text)
     text = rewrite_relative_links(text, relative).rstrip()
     text = withhold_public_digest_values(text)
     if path.suffix == ".json":

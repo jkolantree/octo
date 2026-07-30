@@ -112,6 +112,7 @@ def site_outputs() -> dict[Path, bytes]:
     return {
         Path("protocol/BSC_AUDIT_LLM_PACKET.md"): protocol,
         Path("protocol/meta.js"): metadata,
+        Path("protocol/schemas/audit-return-v0.1.schema.json"): return_schema,
         Path("profile.js"): page_profile,
     }
 

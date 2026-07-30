@@ -225,13 +225,39 @@ complete engine, browser, privacy, localization, Pages, package,
 reproducibility, attestation, and redownload gates; no live GPT or
 research-repository mutation occurs.
 
-## v0.3.0-alpha.17 - proof-relevant degree-two coherence
+## v0.3.0-alpha.17 - documentation and rendering coherence
+
+- render current mathematical documentation with GitHub-native fenced math and
+  stable non-MathJax fallback;
+- correct the observation-descent witness, common-field typing, route-version
+  wording, theorem hypotheses, resource-envelope language, and authority
+  boundaries;
+- map every implemented mathematical subject to its scope, method, evidence
+  identity, engine route, and authority;
+- lint normative Markdown for unsafe delimiters, malformed structure, broken
+  local links, private paths, active markup, hidden controls, and brittle
+  release-count claims;
+- make generated Knowledge heading hierarchy valid and serve the exact schema
+  linked by the Pages protocol;
+- preserve the alpha.16 engine algorithms and schemas, the live alpha.10 GPT,
+  the alpha.13 protocol component, frozen historical derivatives, separately
+  governed research bytes, and every prior tag and release.
+
+Exit criterion: focused positive escape fixtures preserve literal `\forall`,
+`\frac`, `\begin`, and `\theta`; the canonical Mathematics page and generated
+Knowledge render without raw delimiters or accidental headings; the full
+engine, browser, documentation, privacy, localization, Pages, package,
+reproducibility, attestation, and redownload gates pass from the exact clean
+tag. This release adds no degree-two route or new mathematical authority.
+
+## v0.3.0-alpha.18 - proof-relevant degree-two coherence
 
 - accept two explicitly identified degree-one homotopies `H` and `K` with the same boundary;
 - solve `delta_2 Q = H - K` over exact rationals and emit `Q` as the coherence certificate;
 - when no `Q` exists, emit an exact dual annihilator with nonzero pairing against `H - K`;
 - bind every result to the two homotopy identities, mapping-complex coordinates, basis meanings, method, evidence bytes, and formal-only authority;
-- expose this route only after the alpha.16 typed substrate is independently replayed and stable.
+- expose this route only after the alpha.17 documentation and typed-substrate
+  release is independently replayed and stable.
 
 Exit criterion: positive and dual-obstruction fixtures, basis-change
 invariance, sign-law tests, forged-binding tests, resource ceilings with
