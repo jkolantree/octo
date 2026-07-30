@@ -2,6 +2,40 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.19 - 2026-07-30
+
+### Added
+
+- added the closed `finite-census-affine-bound-v0.1` certificate and `census`
+  route using exact rational interval extremization;
+- added immutable claim manifest `0.5.0`, which can advance only that
+  claim-bound, frame-bound, guard-banded observational proposition to
+  `empirically_passed`;
+- added a component-contract identity for the census kernel and exact
+  positive, counterexample, inconclusive, frame-coverage, binding, and
+  resource fixtures.
+- preserved closed theorem replay under manifest `0.5.0`, aligned the
+  64-character census-observable grammar across runtime and schemas, and
+  froze theorem and census authority scopes in the component contract.
+
+### Authority and robustness
+
+- proved the finite-observation indistinguishability boundary and replaced a
+  blanket “finite algebra is not scientific truth” limitation with a typed
+  conditional empirical bridge;
+- require a positive guard band, treat boundary-only evidence as
+  `inconclusive`, retain 25% schema-to-runtime axis headroom, and keep the
+  schema's simultaneous decoded-entry maximum below 56% of the route ceiling;
+- enforce the theorem and census route byte ceilings before parsing, require
+  one verified record to bind both claim and gate before it can raise
+  maturity, and bind census conclusions to distinct certificate and
+  observation digests;
+- keep frame truth, unit authenticity, enclosure soundness, guard-band
+  adequacy, causation, generalization, replication, and deployment as separate
+  authority coordinates;
+- preserve every earlier schema, tag, release, the alpha.13 protocol
+  component, and the live alpha.10 Custom GPT unchanged.
+
 ## 0.3.0-alpha.18 - 2026-07-29
 
 ### Corrected

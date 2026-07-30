@@ -11,6 +11,11 @@ from . import __version__
 from .adapters import audit_adapter_receipt
 from .atomic import audit_atomic_modulus
 from .bicomplex import audit_complex_document
+from .census import (
+    MAX_CERTIFICATE_BYTES as MAX_CENSUS_INPUT_BYTES,
+    MAX_CERTIFICATE_CONTAINER_ITEMS as MAX_CENSUS_CONTAINER_ITEMS,
+    audit_census_certificate,
+)
 from .defect import audit_defect_composition
 from .findings import Finding, Severity, decision, exit_code
 from .gates import _audit_gate_product
@@ -21,7 +26,10 @@ from .plugins import arithmetic_trace_findings, recovery_findings
 from .provenance import sha256_bytes, sha256_json
 from .return_desk import audit_return_document
 from .schema_validation import ROUTE_SCHEMAS, validate_route_schema
-from .theorem import audit_theorem_certificate
+from .theorem import (
+    MAX_CERTIFICATE_BYTES as MAX_THEOREM_INPUT_BYTES,
+    audit_theorem_certificate,
+)
 
 
 MAX_INPUT_BYTES = 8 * 1024 * 1024
@@ -71,7 +79,11 @@ def _reject_constant(value: str) -> None:
     raise InputError(f"non-finite JSON number is forbidden: {value}")
 
 
-def _enforce_resource_limits(value: Any) -> None:
+def _enforce_resource_limits(
+    value: Any,
+    *,
+    max_container_items: int = MAX_CONTAINER_ITEMS,
+) -> None:
     item_count = 0
 
     def enforce_unicode_scalars(text: str) -> None:
@@ -84,8 +96,10 @@ def _enforce_resource_limits(value: Any) -> None:
             raise InputError(f"JSON nesting exceeds {MAX_JSON_DEPTH}")
         if isinstance(item, dict):
             item_count += len(item)
-            if item_count > MAX_CONTAINER_ITEMS:
-                raise InputError(f"JSON container entries exceed {MAX_CONTAINER_ITEMS}")
+            if item_count > max_container_items:
+                raise InputError(
+                    f"JSON container entries exceed {max_container_items}"
+                )
             for key, nested in item.items():
                 enforce_unicode_scalars(key)
                 if len(key) > MAX_STRING_CHARS:
@@ -93,8 +107,10 @@ def _enforce_resource_limits(value: Any) -> None:
                 visit(nested, depth + 1)
         elif isinstance(item, list):
             item_count += len(item)
-            if item_count > MAX_CONTAINER_ITEMS:
-                raise InputError(f"JSON container entries exceed {MAX_CONTAINER_ITEMS}")
+            if item_count > max_container_items:
+                raise InputError(
+                    f"JSON container entries exceed {max_container_items}"
+                )
             for nested in item:
                 visit(nested, depth + 1)
         elif isinstance(item, str):
@@ -127,7 +143,12 @@ def _read_stream_bounded(stream: BinaryIO, max_bytes: int) -> bytes:
             raise InputError(f"input exceeds the {max_bytes}-byte limit")
 
 
-def load_document(path: str) -> LoadedDocument:
+def load_document(
+    path: str,
+    *,
+    max_bytes: int = MAX_INPUT_BYTES,
+    max_container_items: int = MAX_CONTAINER_ITEMS,
+) -> LoadedDocument:
     source = Path(path)
     try:
         size = source.stat().st_size
@@ -135,11 +156,11 @@ def load_document(path: str) -> LoadedDocument:
         raise InputError("input file is unavailable") from exc
     if not source.is_file():
         raise InputError("input path must identify a regular file")
-    if size > MAX_INPUT_BYTES:
-        raise InputError(f"input exceeds the {MAX_INPUT_BYTES}-byte limit")
+    if size > max_bytes:
+        raise InputError(f"input exceeds the {max_bytes}-byte limit")
     try:
         with source.open("rb") as stream:
-            raw_bytes = _read_stream_bounded(stream, MAX_INPUT_BYTES)
+            raw_bytes = _read_stream_bounded(stream, max_bytes)
     except OSError as exc:
         raise InputError("input file could not be read") from exc
     try:
@@ -154,7 +175,10 @@ def load_document(path: str) -> LoadedDocument:
         raise InputError("input is not valid strict JSON") from exc
     if not isinstance(value, dict):
         raise InputError("top-level JSON value must be an object")
-    _enforce_resource_limits(value)
+    _enforce_resource_limits(
+        value,
+        max_container_items=max_container_items,
+    )
     return LoadedDocument(value, sha256_bytes(raw_bytes), sha256_json(value), source.resolve().parent)
 
 
@@ -174,6 +198,7 @@ def _manifest_check_order(command_name: str) -> list[str]:
         "claim_manifest_lint",
         "local_artifact_hashes",
         "semantic_theorem_replay",
+        "semantic_census_replay",
     ]
     if command_name == "audit":
         checks.extend(["gate_product", "dependency_graph"])
@@ -190,6 +215,7 @@ def _semantic_check_name(command_name: str) -> str:
         "adapter": "proof_carrying_adapter_receipt",
         "holonomy": "exact_derived_holonomy",
         "theorem": "exact_q_polynomial_identity",
+        "census": "finite_census_affine_bound",
         "return-desk": "non_admissive_audit_return_inspection",
     }.get(command_name, "custom_auditor")
 
@@ -284,9 +310,20 @@ def _render_error(path: str, message: str, *, internal: bool = False) -> int:
     return 70 if internal else 2
 
 
-def command(path: str, auditor: Auditor, command_name: str = "custom") -> int:
+def command(
+    path: str,
+    auditor: Auditor,
+    command_name: str = "custom",
+    *,
+    max_input_bytes: int = MAX_INPUT_BYTES,
+    max_container_items: int = MAX_CONTAINER_ITEMS,
+) -> int:
     try:
-        document = load_document(path)
+        document = load_document(
+            path,
+            max_bytes=max_input_bytes,
+            max_container_items=max_container_items,
+        )
     except InputError as exc:
         return _render_error(path, str(exc))
     except Exception as exc:  # pragma: no cover - last-resort input-boundary guard
@@ -347,6 +384,7 @@ def main(argv: list[str] | None = None) -> int:
         ("adapter", "audit a non-admissive proof-carrying adapter receipt"),
         ("holonomy", "audit strict, derived, observed-derived, and exact-kernel path holonomy"),
         ("theorem", "replay a closed exact-Q polynomial identity certificate"),
+        ("census", "replay a closed finite-census affine-bound certificate"),
         ("return-desk", "inspect a non-admissive audit-return envelope and its local byte bindings"),
     ):
         child = subparsers.add_parser(name, help=help_text)
@@ -362,9 +400,26 @@ def main(argv: list[str] | None = None) -> int:
         "adapter": audit_adapter_receipt,
         "holonomy": lambda raw, _root: audit_holonomy_document(raw),
         "theorem": audit_theorem_certificate,
+        "census": audit_census_certificate,
         "return-desk": audit_return_document,
     }
-    return command(args.path, auditors[args.command], args.command)
+    route_input_limits = {
+        "theorem": MAX_THEOREM_INPUT_BYTES,
+        "census": MAX_CENSUS_INPUT_BYTES,
+    }
+    route_container_limits = {
+        "census": MAX_CENSUS_CONTAINER_ITEMS,
+    }
+    return command(
+        args.path,
+        auditors[args.command],
+        args.command,
+        max_input_bytes=route_input_limits.get(args.command, MAX_INPUT_BYTES),
+        max_container_items=route_container_limits.get(
+            args.command,
+            MAX_CONTAINER_ITEMS,
+        ),
+    )
 
 
 if __name__ == "__main__":

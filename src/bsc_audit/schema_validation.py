@@ -10,8 +10,8 @@ from .findings import Finding, Severity
 
 
 ROUTE_SCHEMAS = {
-    "lint": "claim-manifest-v0.4.schema.json",
-    "audit": "claim-manifest-v0.4.schema.json",
+    "lint": "claim-manifest-v0.5.schema.json",
+    "audit": "claim-manifest-v0.5.schema.json",
     "complex": "complex-v0.3.schema.json",
     "observe": "observation-v0.3.schema.json",
     "atomic": "atomic-modulus-v0.3.schema.json",
@@ -19,6 +19,7 @@ ROUTE_SCHEMAS = {
     "adapter": "adapter-receipt-v0.1.schema.json",
     "holonomy": "derived-holonomy-v0.2.schema.json",
     "theorem": "theorem-certificate-v0.1.schema.json",
+    "census": "finite-census-certificate-v0.1.schema.json",
     "return-desk": "audit-return-v0.1.schema.json",
 }
 
@@ -165,10 +166,14 @@ def load_schema(route: str) -> dict[str, Any]:
 def validate_route_schema(route: str, value: dict[str, Any]) -> list[Finding]:
     if route not in ROUTE_SCHEMAS:
         return []
-    if route in {"lint", "audit"} and value.get("manifest_version") == "0.3.0":
+    if route in {"lint", "audit"} and value.get("manifest_version") in {
+        "0.3.0",
+        "0.4.0",
+    }:
+        manifest_version = value["manifest_version"]
         resource = files("bsc_audit").joinpath(
             "schema_data",
-            "claim-manifest-v0.3.schema.json",
+            f"claim-manifest-v{manifest_version[:3]}.schema.json",
         )
         schema = json.loads(resource.read_text(encoding="utf-8"))
     elif route == "holonomy" and value.get("holonomy_version") == "0.1.0":

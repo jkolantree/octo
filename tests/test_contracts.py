@@ -21,9 +21,18 @@ from bsc_audit.contracts import (  # noqa: E402
     parse_component_contract,
     verify_repository_component_contract,
 )
+from bsc_audit.census import (  # noqa: E402
+    CENSUS_AUTHORITY,
+    CENSUS_AUTHORITY_SCOPE,
+    CENSUS_GATE_ID,
+    CERTIFICATE_VERSION as CENSUS_CERTIFICATE_VERSION,
+    LANGUAGE as CENSUS_LANGUAGE,
+)
 from bsc_audit.theorem import (  # noqa: E402
     CERTIFICATE_VERSION,
     LANGUAGE,
+    THEOREM_AUTHORITY,
+    THEOREM_AUTHORITY_SCOPE,
     THEOREM_GATE_ID,
 )
 import build_publication_assets as publication  # noqa: E402
@@ -52,6 +61,16 @@ class ComponentContractTests(unittest.TestCase):
         self.assertEqual(CERTIFICATE_VERSION, theorem.certificate_version)
         self.assertEqual(LANGUAGE, theorem.language)
         self.assertEqual(THEOREM_GATE_ID, theorem.gate_id)
+        self.assertEqual(THEOREM_AUTHORITY, theorem.authority)
+        self.assertEqual(THEOREM_AUTHORITY_SCOPE, theorem.authority_scope)
+
+    def test_runtime_census_identity_matches_component_contract(self) -> None:
+        census = COMPONENT_CONTRACT.census_kernel
+        self.assertEqual(CENSUS_CERTIFICATE_VERSION, census.certificate_version)
+        self.assertEqual(CENSUS_LANGUAGE, census.language)
+        self.assertEqual(CENSUS_GATE_ID, census.gate_id)
+        self.assertEqual(CENSUS_AUTHORITY, census.authority)
+        self.assertEqual(CENSUS_AUTHORITY_SCOPE, census.authority_scope)
 
     def test_publication_builder_refuses_protocol_byte_drift(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -68,6 +87,7 @@ class ComponentContractTests(unittest.TestCase):
             {
                 "contract_schema",
                 "contract_sha256",
+                "census_kernel",
                 "protocol",
                 "return_contract",
                 "theorem_kernel",
@@ -82,10 +102,10 @@ class ComponentContractTests(unittest.TestCase):
             ROOT / "src" / "bsc_audit" / "component_contract.json"
         ).read_bytes()
         duplicate = canonical.replace(
-            b'  "contract_schema": "bsc-component-contract/v1",\n',
+            b'  "contract_schema": "bsc-component-contract/v2",\n',
             (
-                b'  "contract_schema": "bsc-component-contract/v1",\n'
-                b'  "contract_schema": "bsc-component-contract/v1",\n'
+                b'  "contract_schema": "bsc-component-contract/v2",\n'
+                b'  "contract_schema": "bsc-component-contract/v2",\n'
             ),
             1,
         )

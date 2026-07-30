@@ -4,6 +4,12 @@ from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any
 
+from .census import (
+    CENSUS_AUTHORITY,
+    CENSUS_AUTHORITY_SCOPE,
+    CENSUS_GATE_ID,
+    LANGUAGE as CENSUS_LANGUAGE,
+)
 from .findings import Finding, Severity
 from .judgment import CheckedJudgment
 from .manifest import (
@@ -11,6 +17,7 @@ from .manifest import (
     EVIDENCE_MATURITY,
     PROOF_KINDS,
     _ManifestAuditContext,
+    _replayed_census_evidence,
     _replayed_theorem_evidence,
     _verified_evidence_ids,
     evidence_index,
@@ -37,6 +44,7 @@ def _bound_evidence_is_valid(
     claim_type: object,
     claim_id: object,
     claim_subject_sha256: str | None,
+    claim_family: object = None,
 ) -> tuple[bool, str, dict[str, Any]]:
     if not isinstance(references, list) or not all(isinstance(value, str) for value in references):
         return False, "unrun", {"reason": "evidence references must be a list of identifiers"}
@@ -95,6 +103,34 @@ def _bound_evidence_is_valid(
                 )
             ):
                 admissible_semantic_replays[evidence_id] = judgment
+    elif (
+        claim_type == "empirical_claim"
+        and claim_family == CENSUS_LANGUAGE
+        and gate_id == CENSUS_GATE_ID
+        and isinstance(claim_id, str)
+        and isinstance(claim_subject_sha256, str)
+    ):
+        for evidence_id, judgment in semantic_replays.items():
+            record = records.get(evidence_id)
+            evidence_sha256 = (
+                record.get("sha256") if isinstance(record, dict) else None
+            )
+            if (
+                isinstance(evidence_sha256, str)
+                and judgment.result in {"pass", "fail", "inconclusive"}
+                and judgment.supports(
+                    subject_id=claim_id,
+                    subject_sha256=claim_subject_sha256,
+                    predicate=CENSUS_GATE_ID,
+                    scope=CENSUS_AUTHORITY_SCOPE,
+                    method_id=CENSUS_LANGUAGE,
+                    evidence_id=evidence_id,
+                    evidence_sha256=evidence_sha256,
+                    authority=CENSUS_AUTHORITY,
+                    result=judgment.result,
+                )
+            ):
+                admissible_semantic_replays[evidence_id] = judgment
     nonsemantic_theorem_ids = (
         (bound_ids & verified_ids) - set(admissible_semantic_replays)
         if claim_type == "theorem_schema"
@@ -138,6 +174,16 @@ def _bound_evidence_is_valid(
             for evidence_id in sorted(
                 bound_ids & set(admissible_semantic_replays)
             )
+            if admissible_semantic_replays[evidence_id].predicate
+            == THEOREM_GATE_ID
+        },
+        "semantic_census_replay": {
+            evidence_id: admissible_semantic_replays[evidence_id].to_dict()
+            for evidence_id in sorted(
+                bound_ids & set(admissible_semantic_replays)
+            )
+            if admissible_semantic_replays[evidence_id].predicate
+            == CENSUS_GATE_ID
         },
         "observed_results": sorted(value for value in observed_results if isinstance(value, str)),
         "declared_state": state,
@@ -206,6 +252,13 @@ def _audit_gate_product(
         verified_ids,
         audit_context,
     )
+    census_replays, _ = _replayed_census_evidence(
+        raw,
+        artifact_root,
+        verified_ids,
+        audit_context,
+    )
+    semantic_replays = {**theorem_replays, **census_replays}
     try:
         claim_subject_sha256 = sha256_json(claim.get("formal_statement"))
     except (TypeError, ValueError):
@@ -236,10 +289,11 @@ def _audit_gate_product(
             record.get("evidence", []),
             records,
             verified_ids,
-            theorem_replays,
+            semantic_replays,
             claim.get("type"),
             claim.get("id"),
             claim_subject_sha256,
+            claim.get("family"),
         )
         computed_states[gate_id] = computed_state
         if not valid_binding:

@@ -280,14 +280,35 @@ localization, Pages, package, reproducibility, attestation, and redownload
 gates pass from the exact clean tag. This release adds no degree-two route or
 new mathematical authority.
 
-## v0.3.0-alpha.19 - proof-relevant degree-two coherence
+## v0.3.0-alpha.19 - finite-census empirical bridge
+
+- add immutable manifest `0.5.0` and one closed
+  `finite-census-affine-bound-v0.1` empirical family;
+- bind an exact finite frame, rational measurement enclosures, affine upper
+  bound, positive guard band, and four external-premise identities;
+- require a complete roster with exactly one sorted observation per unit and
+  reject missing, duplicate, extra, floating, or noncanonical inputs;
+- replay affine interval extrema exactly and distinguish robust pass, definite
+  counterexample, and inconclusive boundary-only evidence;
+- admit `empirically_passed` only from the exact registered census replay while
+  keeping independent replication and deployment authority blocked;
+- preserve theorem replay, every older manifest/schema, the alpha.13 protocol
+  component, the alpha.10 live GPT, and all prior releases unchanged.
+
+Exit criterion: positive, counterexample, interval-crossing, boundary-margin,
+frame-bijection, forged-binding, same-buffer hash, resource-headroom, schema,
+manifest, privacy, release, and legacy-regression gates pass. The release must
+state the finite-observation no-go theorem and may claim only conditional
+observational truth over the exact bound frame.
+
+## v0.3.0-alpha.20 - proof-relevant degree-two coherence
 
 - accept two explicitly identified degree-one homotopies `H` and `K` with the same boundary;
 - solve `delta_2 Q = H - K` over exact rationals and emit `Q` as the coherence certificate;
 - when no `Q` exists, emit an exact dual annihilator with nonzero pairing against `H - K`;
 - bind every result to the two homotopy identities, mapping-complex coordinates, basis meanings, method, evidence bytes, and formal-only authority;
-- expose this route only after the alpha.18 documentation and typed-substrate
-  release is independently replayed and stable.
+- expose this route only after the alpha.19 census and typed-substrate release
+  is independently replayed and stable.
 
 Exit criterion: positive and dual-obstruction fixtures, basis-change
 invariance, sign-law tests, forged-binding tests, resource ceilings with

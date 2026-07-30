@@ -141,8 +141,8 @@ def main() -> int:
         fail("software Zenodo metadata must declare Apache-2.0")
     if not isinstance(paper_zenodo, dict) or paper_zenodo.get("license") != "CC-BY-4.0":
         fail("paper Zenodo metadata must declare CC-BY-4.0")
-    if software_zenodo.get("publication_date") != "2026-07-29":
-        fail("software archive metadata must use the alpha.18 release date")
+    if software_zenodo.get("publication_date") != "2026-07-30":
+        fail("software archive metadata must use the alpha.19 release date")
 
     toolchain = load_strict_json(ROOT / "toolchain.lock.json")
     if not isinstance(toolchain, dict):
@@ -269,8 +269,8 @@ def main() -> int:
                 fail(f"stale repository identifier in {path.relative_to(ROOT)}")
 
     citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
-    if "date-released: 2026-07-29" not in citation:
-        fail("CITATION.cff must use the alpha.18 release date")
+    if "date-released: 2026-07-30" not in citation:
+        fail("CITATION.cff must use the alpha.19 release date")
     public_version = __version__.replace("a", "-alpha.", 1)
     if ".dev" in __version__:
         release_match = re.search(
