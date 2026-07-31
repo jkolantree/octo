@@ -1,5 +1,5 @@
 {
-  "bsc_version": "0.3.0-alpha.19",
+  "bsc_version": "0.3.0-alpha.20",
   "canonical_sources": [
     {
       "bytes": 30377,
@@ -14,12 +14,12 @@
     {
       "bytes": 37588,
       "path": "docs/GPT_FROZEN_CANDIDATE.json",
-      "sha256": "5c41b13f51b95b3eb69338c6fd11f5cf13d341f68ced509572654fc281faa229"
+      "sha256": "985ae82ef19fbf9f84f7adc7aceb0bc47fae4e1ff22ebc0c95b8e8ae52f4aeee"
     },
     {
-      "bytes": 26061,
+      "bytes": 28371,
       "path": "docs/MATHEMATICS.md",
-      "sha256": "38de6c30cacc1001670b1ee22c24cd28caa98b724e1d1cfcbeeabf3ad78a187e"
+      "sha256": "68d6474ece6637f47b49893bdb59f060abef6244d0cd1e5108e6f0d5f90d1cf4"
     },
     {
       "bytes": 4258,
@@ -27,9 +27,9 @@
       "sha256": "91cbd8074de37d151955e106dfa4417b5b839edcabfd24bae2f7c730bc9964af"
     },
     {
-      "bytes": 11989,
+      "bytes": 12146,
       "path": "docs/SCHEMA.md",
-      "sha256": "8999eab7016251fed7890a068cb16f6b302f5e678698eab7088dc6cb2abae33c"
+      "sha256": "21d983c9b1a395ba0010a5b0c361c98d699375242c9f7e51469a439a7532b0ff"
     },
     {
       "bytes": 10954,
@@ -47,9 +47,9 @@
       "sha256": "338f1cf72c121f1a3315779eeb7764035e564951d1c346e67dfd534775304f10"
     },
     {
-      "bytes": 6804,
+      "bytes": 7666,
       "path": "examples/README.md",
-      "sha256": "bcf94a935c15612f56d5b0fd160128b82d307d7c193276e8b5705234496a9145"
+      "sha256": "99d24523548acbd97a6a40e33b0314fa61ece5e6690c8ec04d140cc6a6ee4492"
     },
     {
       "bytes": 30489,
@@ -254,7 +254,7 @@
     {
       "bytes": 407,
       "path": "toolchain.lock.json",
-      "sha256": "c27a9e6ce239550315741047e97df4b0f762039212a10ed8cc885355b3c71e50"
+      "sha256": "f8c1572ae57ba7792bfe5338966c64754e29a4377b5f7b52d6ce226d61e8420b"
     }
   ],
   "capability_declarations": {
@@ -296,7 +296,7 @@
     "ja-truncated-proof",
     "official-service-status-separation"
   ],
-  "engine_version": "0.3.0a19",
+  "engine_version": "0.3.0a20",
   "evaluation_schema": "bsc-custom-gpt-eval/v2",
   "generated_artifacts": [
     {
@@ -307,7 +307,7 @@
     {
       "bytes": 6006,
       "path": "GPT_INSTRUCTIONS.md",
-      "sha256": "74e4bda6e9c920c2e6f7ddb985a2115bb3397bb49660001da2de3a210bfacc07"
+      "sha256": "132ea81a77fdfe4d0a89db1550d2131912bcc404ec66ad363a5a121f2e7ad069"
     },
     {
       "bytes": 3327,
@@ -317,12 +317,12 @@
     {
       "bytes": 10341,
       "path": "GPT_SETUP_AND_PUBLISHING.md",
-      "sha256": "3b76350b134ffcee80d9ba4f041cac4fa6b6f2a43bedc88fc15676396b0c97df"
+      "sha256": "84b46de554eb0effad5523ee6b284307ab9a4305de510c06dd3b5c74c668858a"
     },
     {
       "bytes": 3133,
       "path": "README.md",
-      "sha256": "d9a1e29db6b9dd81fd1dfe42614f9dd109e8677b47e050555a87b04e7b4cfba1"
+      "sha256": "d4246e3d5ff67d44708887fe25693a97c04772798d7bfa6fd97463df45680322"
     },
     {
       "bytes": 84585,
@@ -557,27 +557,27 @@
     {
       "bytes": 4715,
       "path": "knowledge/BSC_JAPANESE_INTERFACE.md",
-      "sha256": "c355f0ab4640203173b9d84643d7eeea93367abc2029993e88c9aed117de9e7b"
+      "sha256": "72306f1b691ced1e6853d3a3d43750c38fe601276e3cf8f25f13032c46f25dde"
     },
     {
       "bytes": 19907,
       "path": "knowledge/BSC_PROTOCOL.md",
-      "sha256": "847e483505f10ec4614879540116747ce8245686c8e0d8003b651ba06124e7d9"
+      "sha256": "15c6644e697d9b53a5299da9dd43184f620054ec2a9c5d9b1ddd58c79f805796"
     },
     {
       "bytes": 10679,
       "path": "knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md",
-      "sha256": "a6e00c105b143c6160205c2c794538713f2459f1f5ad2ac381c293332e22bdef"
+      "sha256": "3fb0726dbe9d753275184992c7509cfead5e8d06d16b8241dda3712a4f8a778d"
     },
     {
-      "bytes": 36330,
+      "bytes": 38870,
       "path": "knowledge/BSC_SUPPORTED_CHECKS.md",
-      "sha256": "c476626efd798f18a58c965635c32e368926b180701b8fcb1a5cda83b959bd63"
+      "sha256": "80c761d867f81f7315eaaa418ef6efa5787b3aadd1c1fb1bf512d59e0a4364be"
     },
     {
-      "bytes": 6030,
+      "bytes": 6892,
       "path": "knowledge/BSC_WORKED_EXAMPLES.md",
-      "sha256": "4b71d9152790faac59aee97a83e38180a7b3404398537f5a808d9bf3ca9f1316"
+      "sha256": "e67812c6e368758d67a277c8223af23e1aec5cd5d60babfd8f4593d4467aa1e8"
     }
   ],
   "generator": {

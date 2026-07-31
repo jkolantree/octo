@@ -301,14 +301,37 @@ manifest, privacy, release, and legacy-regression gates pass. The release must
 state the finite-observation no-go theorem and may claim only conditional
 observational truth over the exact bound frame.
 
-## v0.3.0-alpha.20 - proof-relevant degree-two coherence
+## v0.3.0-alpha.20 - BSC v1.2 simulation-evidence crosswalk
+
+- bind the immutable BSC v1.2.0 release, version DOI, simulation profile, and
+  F10 input and receipt as a minimal upstream evidence slice;
+- project both F10 hosts through the existing `defect-v0.3` route without
+  changing its schema, CLI behavior, or upper-bound-only authority;
+- replay every exact prefix and tolerance comparison, while preserving
+  `violation_basis = exact_actual_error_above_tolerance` as authority supplied
+  by the external F10 recurrence, state paths, and equality witness;
+- state BSC deployment admission as
+  $U^0_{c,j}+\rho_{c,j}\le\tau_{c,j}$ and identify any positive
+  $\gamma_{c,j}$ headroom as a stricter octo policy rather than a stronger BSC
+  theorem;
+- preserve all existing schemas, the alpha.13 protocol component, the
+  alpha.10 live GPT, every prior release, and the separate BSC repository.
+
+Exit criterion: both closed `defect-v0.3` examples and every exact prefix
+regression pass; the crosswalk binds the published BSC identity and exact F10
+disposition basis; canonical and generated documentation render without
+errors; complete engine, browser, privacy, localization, package, Pages, and
+clean-tag release gates pass. No general simulation validator, live GPT
+update, or deployment-admission route is part of this release.
+
+## v0.3.0-alpha.21 - proof-relevant degree-two coherence
 
 - accept two explicitly identified degree-one homotopies `H` and `K` with the same boundary;
 - solve `delta_2 Q = H - K` over exact rationals and emit `Q` as the coherence certificate;
 - when no `Q` exists, emit an exact dual annihilator with nonzero pairing against `H - K`;
 - bind every result to the two homotopy identities, mapping-complex coordinates, basis meanings, method, evidence bytes, and formal-only authority;
-- expose this route only after the alpha.19 census and typed-substrate release
-  is independently replayed and stable.
+- expose this route only after the alpha.20 bounded crosswalk release and the
+  underlying typed substrate are independently replayed and stable.
 
 Exit criterion: positive and dual-obstruction fixtures, basis-change
 invariance, sign-law tests, forged-binding tests, resource ceilings with
