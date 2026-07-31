@@ -1,6 +1,6 @@
 # Programmer Tutorial
 
-The current public prerelease is `v0.3.0-alpha.19`. The `holonomy` route first appeared in alpha.3, the closed `theorem` route in alpha.12, and the closed `census` route in alpha.19. Preserve the exact engine version with every output.
+The current public prerelease is `v0.3.0-alpha.20`. The `holonomy` route first appeared in alpha.3, the closed `theorem` route in alpha.12, and the closed `census` route in alpha.19. Alpha.20 adds F10 examples and documentation over the unchanged `defect` route. Preserve the exact engine version with every output.
 
 This is the repository and Python exact-checker route. It is distinct from the official live [Custom GPT](CUSTOM_GPT_STATUS.md) and the [local browser Pages module](https://jkolantree.github.io/octo/). The repository GPT package is reproducible source and an update candidate; its existence does not prove that its exact bytes are installed or Preview-validated in the live service. ChatGPT uploads are not local-only, ChatGPT tools are not automatically BSC Python, and neither surface provides a GPT Action or hosted checker API.
 
@@ -26,7 +26,7 @@ python run_audit.py --version
 The output must identify the source you intended to audit. The current development checkout reports:
 
 ```text
-bsc-audit 0.3.0a19
+bsc-audit 0.3.0a20
 ```
 
 The published alpha.3 release reports:
@@ -118,7 +118,7 @@ Example shape:
 
 ```json
 {
-  "engine_version": "0.3.0a19",
+  "engine_version": "0.3.0a20",
   "checks": {
     "run": ["strict_json_parse", "finite_observation_descent"],
     "not_run": ["claim_manifest_lint", "gate_product", "domain_plugins"]

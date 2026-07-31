@@ -123,7 +123,7 @@ class PublicationStatusTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("superseded 2026-07-22 snapshot", current_status)
-        self.assertIn("Alpha.8 through alpha.19 boundary", current_status)
+        self.assertIn("Alpha.8 through alpha.20 boundary", current_status)
         self.assertIn(
             "8f9b0e1a046f4d578a203d17162155faa9166578",
             current_status,
@@ -167,7 +167,7 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertIn("PUBLICATION_STATUS.json", (ROOT / "docs" / "CUSTOM_GPT_STATUS.md").read_text(encoding="utf-8"))
 
         required_positioning = {
-            "README.md": "Alpha.10 is the separately observed live baseline; alpha.19 is the current repository version line",
+            "README.md": "Alpha.10 is the separately observed live baseline; alpha.20 is the current repository version line",
             "START_HERE.md": "It is already built and link-shared as a research preview",
             "docs/index.md": "is built and link-shared",
             "docs/CUSTOM_GPT_STATUS.md": "is built and link-shared as a research preview",

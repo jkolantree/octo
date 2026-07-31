@@ -34,6 +34,7 @@
 ## 数学リファレンス
 
 - [Mathematics](../MATHEMATICS.md) — exact definition と theorem statement
+- [BSC v1.2 Simulation-Evidence Crosswalk](../BSC_V1_2_SIMULATION_CROSSWALK.md) — immutable upstream F10 identity、exact recurrence projection、authority boundary
 - [Exact Derived Holonomy](../DERIVED_HOLONOMY.md) — strict/homotopy/observation-reduced path comparison
 - [Spectral Obstruction and Limit Gates](../SPECTRAL_OBSTRUCTIONS.md) — shifted-ladder と bounded-jet prime-block boundary
 - [Proof-carrying Adapters](../PROOF_CARRYING_ADAPTERS.md) — non-admissive Lean/SMT/interval receipt boundary
@@ -56,7 +57,7 @@
 
 [LLM Audit Packet](../../BSC_AUDIT_LLM_PACKET.md) は drafting protocol であり executable verifier ではありません。material を attach する前に privacy、prompt-injection、source-coverage rules を読んでください。
 
-static [Pages module](../../pages/README.md) は同じ canonical packet への accessible front door です。alpha.19 は alpha.18 renderer recovery と Audit Return Desk を保持し、closed finite-census conditional empirical bridge を engine に追加します。4 external premise identities、causal truth、unsampled generalization、independent replication、deployment permission は確立しません。independently versioned protocol component は alpha.13 と byte-identical のままです。committed protocol、return schema、checksum metadata は mechanically checked for drift です。
+static [Pages module](../../pages/README.md) は同じ canonical packet への accessible front door です。alpha.20 は renderer-safe documentation と alpha.19 engine schema を保持し、existing affine-bound kernel に bounded BSC v1.2 F10 crosswalk だけを追加します。general simulation validator または deployment authority は追加しません。independently versioned protocol component は alpha.13 と byte-identical のままです。committed protocol、return schema、checksum metadata は mechanically checked for drift です。
 
 repository には official [Custom GPT](../../gpt/README.md) の deterministic package もあります。これは configuration review、reproducible deployment、compatible fork、verifiable official update を支える source です。direct upload は ChatGPT で処理され、Pages module の local-only boundary を継承しません。package に GPT Action、hosted checker API、account system、cloud-storage service はありません。live availability、exact configuration binding、Preview validation、GitHub release、Pages deployment は別々の state として report されます。
 

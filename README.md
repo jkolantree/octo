@@ -3,11 +3,11 @@
 Research-preview software for making mathematical and scientific claims easier to inspect, challenge, reproduce, and demote.
 
 **Official Custom GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) (live research preview)<br>
-**Repository version line:** `v0.3.0-alpha.19` ([verify GitHub release state](https://github.com/jkolantree/octo/releases))<br>
+**Repository version line:** `v0.3.0-alpha.20` ([verify GitHub release state](https://github.com/jkolantree/octo/releases))<br>
 **Validation boundary:** the live indexed-Knowledge state is `NON_ADMISSIBLE_UNHASHABLE`; product observations and engine proofs remain separate, and this is a research preview rather than certification<br>
 **Project status:** experimental; suitable for research audits and known-answer tests, not for unattended scientific, clinical, legal, safety, or policy decisions.
 
-Related research: On Boundaries of Evidence / Boundary-State Calculus is maintained separately at https://github.com/jkolantree/BSC. This audit engine is an experimental companion; it does not certify the manuscript or establish theorem status.
+Related research: On Boundaries of Evidence / Boundary-State Calculus is maintained separately at https://github.com/jkolantree/BSC. This audit engine is an experimental companion; it does not certify the manuscript or establish theorem status. Alpha.20 crosswalks only the immutable [BSC v1.2.0](https://github.com/jkolantree/BSC/releases/tag/v1.2.0) simulation-profile/F10 evidence slice.
 
 [日本語](README.ja.md) | [Historical publication snapshot](docs/PUBLICATION_STATUS.json)
 
@@ -32,13 +32,15 @@ The engine checks a narrow set of declared structural obligations. Current route
 - fatal dependency propagation in acyclic claim graphs;
 - finite atomic-modulus record checks;
 - exact propagation of declared affine upper bounds;
+- exact F10 coupled-surrogate regression projections with the external
+  actual-error equality witness kept separate;
 - scoped arithmetic-trace and local/global recovery gates;
 - subject-, evidence-, method-, scope-, and authority-bound replay judgments;
 - non-admissive, hash-bound Lean/SMT/interval adapter receipts;
 - non-admissive inspection of returned audit envelopes, ledgers, projections, receipts, and local artifact hashes;
 - canonical JSON hashing.
 
-The engine does **not** determine whether an arbitrary theory is true, reconstruct an arbitrary proof, validate an external evidence identifier, certify empirical replication, or grant moral, legal, clinical, or deployment permission. Claim manifest `0.5.0` preserves the closed exact-polynomial theorem family and adds one empirical family: `finite-census-affine-bound-v0.1`. The new kernel checks a complete declared finite frame, exact rational measurement-enclosure boxes, one affine upper-bound predicate, and a frozen positive guard band. Its witness separately binds the canonical certificate, normalized observations, frame, and premise hashes; a manifest judgment exists only when the same verified evidence binds both the claim and the census gate. A robust pass establishes that conditional observational proposition only if the four hash-identified external premises hold; the engine does not establish that the frame, unit identities, measurement enclosures, or scientific-adequacy premise are true. Causation, generalization beyond the frame, replication, and deployment remain outside its authority. A replay result is decisive only for the exact subject, evidence bytes, predicate, scope, method, and authority recorded in its checked judgment; a shared label such as `pass` transfers none of those coordinates. Every other declared result—including hash-matched proofs, datasets, replications, and arithmetic-obligation evidence—remains provenance unless a registered exact replay recomputes it. A `no_blocking_findings` result means only that the checks actually run found no blocking condition.
+The engine does **not** determine whether an arbitrary theory is true, reconstruct an arbitrary proof, validate an external evidence identifier, certify empirical replication, or grant moral, legal, clinical, or deployment permission. Claim manifest `0.5.0` preserves the closed exact-polynomial theorem family and adds one empirical family: `finite-census-affine-bound-v0.1`. The census kernel checks a complete declared finite frame, exact rational measurement-enclosure boxes, one affine upper-bound predicate, and a frozen positive guard band. Its witness separately binds the canonical certificate, normalized observations, frame, and premise hashes; a manifest judgment exists only when the same verified evidence binds both the claim and the census gate. A robust pass establishes that conditional observational proposition only if the four hash-identified external premises hold; the engine does not establish that the frame, unit identities, measurement enclosures, or scientific-adequacy premise are true. Alpha.20 adds no simulation schema or validator. Its existing `defect` kernel replays supplied F10 affine bounds, while the separately hash-bound upstream F10 state paths and equality witness are the authority for Host B's exact actual-error violation. Causation, generalization beyond either declared frame, replication, and deployment remain outside octo's authority. A replay result is decisive only for the exact subject, evidence bytes, predicate, scope, method, and authority recorded in its checked judgment; a shared label such as `pass` transfers none of those coordinates. Every other declared result—including hash-matched proofs, datasets, replications, and arithmetic-obligation evidence—remains provenance unless a registered exact replay recomputes it. A `no_blocking_findings` result means only that the checks actually run found no blocking condition.
 
 ## Choose an entry point
 
@@ -46,7 +48,7 @@ The engine does **not** determine whether an arbitrary theory is true, reconstru
 2. **Local browser Packet Builder and Audit Return Desk:** [open the accessible English GitHub Pages module](https://jkolantree.github.io/octo/) or the deployed [Japanese route](https://jkolantree.github.io/octo/ja.html) to construct a versioned packet or inspect a returned `audit_return.json` draft and selected artifact bytes locally. Neither function uploads the target, calls an LLM, or runs Python.
 3. **Repository and Python engine - exact checker route:** use [docs/PROGRAMMER_TUTORIAL.md](docs/PROGRAMMER_TUTORIAL.md) for versioned schemas, fixtures, finite exact checks, and preserved command output. This is the only route here that runs the BSC checker.
 
-The repository contains the deterministic Custom GPT package lineage used for independent inspection, reproducible deployments, compatible forks, and verifiable updates. Alpha.10 is the separately observed live baseline; alpha.19 is the current repository version line. Its tag target and GitHub release state must be verified externally rather than inferred from this file. Its regenerated package is unvalidated as a future live-GPT update candidate and is not installed live. The byte-identical protocol component remains versioned `0.3.0-alpha.13`, independently of the engine release. Indexed Knowledge bytes are not independently retrievable, so they cannot support engine gates. The older timestamped JSON snapshot is preserved as historical evidence.
+The repository contains the deterministic Custom GPT package lineage used for independent inspection, reproducible deployments, compatible forks, and verifiable updates. Alpha.10 is the separately observed live baseline; alpha.20 is the current repository version line. Its tag target and GitHub release state must be verified externally rather than inferred from this file. Its regenerated package is unvalidated as a future live-GPT update candidate and is not installed live. The byte-identical protocol component remains versioned `0.3.0-alpha.13`, independently of the engine release. Indexed Knowledge bytes are not independently retrievable, so they cannot support engine gates. The older timestamped JSON snapshot is preserved as historical evidence.
 
 Supporting routes:
 
@@ -58,6 +60,7 @@ Supporting routes:
 - **Documentation contract:** [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md)
 - **Example catalog:** [examples/README.md](examples/README.md)
 - **Mathematical definitions:** [docs/MATHEMATICS.md](docs/MATHEMATICS.md)
+- **BSC v1.2 simulation crosswalk:** [docs/BSC_V1_2_SIMULATION_CROSSWALK.md](docs/BSC_V1_2_SIMULATION_CROSSWALK.md)
 - **Derived holonomy:** [docs/DERIVED_HOLONOMY.md](docs/DERIVED_HOLONOMY.md)
 - **Spectral obstruction boundary:** [docs/SPECTRAL_OBSTRUCTIONS.md](docs/SPECTRAL_OBSTRUCTIONS.md)
 - **Preserved derived witnessed-descent research packet:** [research/derived-witnessed-descent/README.md](research/derived-witnessed-descent/README.md)
@@ -97,6 +100,18 @@ Its pass means every supplied rational enclosure satisfies the affine bound
 with the declared guard band. The output names the exact frame, method,
 evidence identities, authority, and four unresolved external premises. It
 does not turn those premise hashes into worldly truth.
+
+Replay the two F10 affine-bound projections:
+
+```bash
+python run_audit.py defect examples/defect_f10_host_a.json
+python run_audit.py defect examples/defect_f10_host_b.json
+```
+
+Both commands validate exact propagation of supplied upper bounds. Host B's
+actual fixture violation is established only by the separately identified
+BSC v1.2 F10 state paths and equality witness recorded in the
+[crosswalk](docs/BSC_V1_2_SIMULATION_CROSSWALK.md).
 
 Run a strict mismatch that is harmless on homology:
 
