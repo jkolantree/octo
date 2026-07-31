@@ -18,9 +18,9 @@ from scripts.release_contract import (
 
 COMMIT = "1" * 40
 TREE = "2" * 40
-TAG = "v0.3.0-alpha.19"
-ENGINE_VERSION = "0.3.0a19"
-PUBLIC_VERSION = "0.3.0-alpha.19"
+TAG = "v0.3.0-alpha.20"
+ENGINE_VERSION = "0.3.0a20"
+PUBLIC_VERSION = "0.3.0-alpha.20"
 
 
 class ReleaseContractTests(unittest.TestCase):

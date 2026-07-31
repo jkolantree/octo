@@ -22,6 +22,9 @@ Examples are known-answer fixtures for the checker. They are not evidence that t
 | `atomic_modulus_evasion.json` | `atomic` | `demoted` | 1 | A sample exceeds the declared concentration bound. |
 | `defect_composition_valid.json` | `defect` | `no_blocking_findings` | 0 | The declared composite encloses the exactly propagated affine upper bound. |
 | `defect_composition_understated.json` | `defect` | `demoted` | 1 | The declared composite understates at least one propagated upper-bound coordinate. |
+| `defect_f10_host_a.json` | `defect` | `no_blocking_findings` | 0 | Ten exact Host A stages propagate to `1023/51200`; this route establishes a supplied upper bound, not simulator truth. |
+| `defect_f10_host_b.json` | `defect` | `no_blocking_findings` | 0 | Ten exact Host B stages propagate to `6513215599/100000000000`; the route does not infer a tolerance violation from an upper bound alone. |
+| `f10_coupled_surrogate_crosswalk.json` | not a CLI input | not applicable | not applicable | Binds the external BSC v1.2 F10 receipt and preserves `violation_basis = exact_actual_error_above_tolerance` separately from octo's bound replay. |
 | `null_conflicting_referenced.json` | `audit` | `blocked` | 1 | Hash-matched pass/fail labels are provenance only, so the declared pass fails closed to `unrun`. |
 | `null_omitted_bound_failure.json` | `audit` | `blocked` | 1 | Omitting a hash-only failure cannot create a pass; every unreplayed gate remains `unrun`. |
 | `null_failed_proof.json` | `audit` | `blocked` | 1 | A failed formal-proof artifact cannot satisfy theorem support. |
@@ -58,6 +61,9 @@ These fixtures exercise the closed, explicitly non-admissive return envelope. Ru
 
 - `no_blocking_findings` means only that the relevant command found no blocking condition in the supplied object.
 - The checker does not establish that a finite relation, matrix, evidence identifier, or model is a faithful description of the external world.
+- The F10 `defect` inputs replay only supplied affine upper bounds. Host B's
+  actual fixture violation comes from the separately identified exact
+  recurrence, state paths, and equality witness in the BSC v1.2 receipt.
 - Example hashes and evidence references must resolve before an example is presented as a complete preservation packet.
 - Do not edit a negative fixture into a passing example; add a new fixture so the original failure remains reproducible.
 
