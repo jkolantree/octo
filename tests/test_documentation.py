@@ -30,7 +30,7 @@ The literal commands remain source text and never become control bytes.
 \forall x,\qquad
 \frac{a}{b},\qquad
 \begin{aligned}
-f(\theta)&=\theta^2.
+f(\theta)&=\theta^2+\gamma+\tau.
 \end{aligned}
 ```
 """
@@ -39,7 +39,14 @@ f(\theta)&=\theta^2.
             path = self.write_document(root, text)
             self.assertEqual(check_markdown(path, root=root), [])
             data = path.read_bytes()
-            for literal in (b"\\forall", b"\\frac", b"\\begin", b"\\theta"):
+            for literal in (
+                b"\\forall",
+                b"\\frac",
+                b"\\begin",
+                b"\\theta",
+                b"\\gamma",
+                b"\\tau",
+            ):
                 self.assertIn(literal, data)
             self.assertNotIn(b"\x0c", data)
 
@@ -412,6 +419,25 @@ Do not publish {private_path} or [run](javascript:alert(1)).
                     for item in check_markdown(bad, root=root)
                 )
             )
+
+    def test_f10_crosswalk_preserves_the_authority_boundary(self) -> None:
+        text = (ROOT / "docs" / "BSC_V1_2_SIMULATION_CROSSWALK.md").read_text(
+            encoding="utf-8"
+        )
+        normalized = " ".join(text.split())
+        for required in (
+            "exact_propagation_of_supplied_affine_upper_bounds_only",
+            "violation_basis = exact_actual_error_above_tolerance",
+            "An upper bound above a tolerance would be inconclusive",
+            "Equality is admissible under that theorem but has zero certified slack",
+            "stricter octo release or deployment policy",
+            "Normalized_Scale_Profiles.md` is not a mathematical dependency",
+            "It is a crosswalk record, not a new CLI input schema",
+            "Deployment authority | Not granted",
+        ):
+            self.assertIn(required, normalized)
+        self.assertIn(r"\gamma_{c,j}>0", text)
+        self.assertIn("adds no general simulation validator", text.lower())
 
 
 if __name__ == "__main__":

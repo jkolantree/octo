@@ -26,6 +26,7 @@ transport, external scientific truth, release state, or deployment.
 | Polynomial identity kernel (§11) | Syntactically admitted terms in the closed rational-polynomial language and resource envelope | Canonical sparse-polynomial normalization through `theorem` | No execution evidence asserted; contract/example: [`theorem-certificate-v0.1` schema](../schemas/theorem-certificate-v0.1.schema.json) and [binomial fixture](../examples/theorem_binomial_identity.json) | Formal identity of the authoritative AST only |
 | Checked judgments (§12) | Registered replay results consumed by matching obligations | Exact tuple validation inside the engine | No execution evidence asserted; contract/test source: [`test_judgment.py`](../tests/test_judgment.py) | Authority-typing firewall; not external truth or deployment authority |
 | Finite-census empirical bridge (§13) | One exact declared finite frame, rational measurement enclosures, affine upper bound, and positive guard band | Exact interval extremization through `census` | No execution evidence asserted; contract/example: [`finite-census-certificate-v0.1` schema](../schemas/finite-census-certificate-v0.1.schema.json) and [synthetic fixture](../examples/census_affine_bound.json) | Conditional observational proposition only; four external premise identities remain unresolved |
+| BSC v1.2 F10 bridge (§14) | One published ten-step exact coupled-surrogate fixture | Existing `AffineDefect.then` replay plus the separately identified F10 equality witness | No execution evidence asserted; [crosswalk](BSC_V1_2_SIMULATION_CROSSWALK.md), [Host A](../examples/defect_f10_host_a.json), [Host B](../examples/defect_f10_host_b.json) | Octo propagates supplied upper bounds; only the external exact state paths establish Host B's actual fixture violation |
 
 The links identify versioned contracts and example inputs; this table does not
 assert that a command ran. Actual execution requires a separately identified
@@ -554,7 +555,52 @@ contains 233,543 decoded entries—about 55.6% of the route ceiling—while each
 axis remains at 75% of its kernel cap. Neither safety boundary is treated as
 an optimization target.
 
-## 14. Status
+## 14. BSC v1.2 coupled-surrogate crosswalk
+
+The separately published BSC v1.2 claim BSC-SIM-03 has the same affine
+prefix form as the discrepancy coordinate of `AffineDefect.then`. For the F10
+hosts, ten supplied steps with amplification $a_h$ and new bound $1/100$
+compose to
+
+```math
+E_n
+=
+\frac{1}{100}\sum_{r=0}^{n-1}a_h^r.
+```
+
+Octo proves that exact result only as propagation of the supplied rational
+upper bounds. F10's stronger Host B conclusion uses a separate upstream
+equality witness: the exact reference and surrogate recurrences, initial
+states, and every state-path value make the propagated expression equal the
+actual fixture error. Consequently the retained F10 receipt records
+`violation_basis = exact_actual_error_above_tolerance`; octo does not infer
+that basis from an upper bound above tolerance.
+
+The exact comparisons are:
+
+- Host A: $E_{10}=1023/51200$ and
+  $1/20-E_{10}=1537/51200$;
+- Host B: $E_6=468559/10000000<1/20$, the first violation is step 7 with
+  $E_7-1/20=217031/100000000$, and the endpoint margin is
+  $E_{10}-1/20=1513215599/100000000000$.
+
+BSC v1.2 deployment admission uses
+$U^0_{c,j}+\rho_{c,j}\le\tau_{c,j}$. Equality is admissible under that
+theorem but has zero certified slack. A stricter octo policy may require
+
+```math
+U^0_{c,j}+\rho_{c,j}+\gamma_{c,j}\le\tau_{c,j},
+\qquad
+\gamma_{c,j}>0.
+```
+
+The positive $\gamma_{c,j}$ is octo safety headroom, not a stronger reading
+of the BSC theorem and not the BSC Boolean gate symbol $g_{c,k}$. Alpha.20
+adds no deployment-admission route. The immutable upstream identities,
+dependency slice, exact disposition basis, and full authority boundary are in
+the [BSC v1.2 Simulation-Evidence Crosswalk](BSC_V1_2_SIMULATION_CROSSWALK.md).
+
+## 15. Status
 
 - **Mathematical propositions:** Theorems 1–4 and the finite-dimensional
   splitting, quotient, and polynomial statements are supported here by manual
@@ -565,9 +611,11 @@ an optimization target.
   language or resource envelope. Schemas and fixtures identify contracts and
   examples; they do not execute themselves.
 - **External semantics and truth:** The registered census kernel can establish
-  its exact conditional finite-frame proposition. Basis meanings, premise
-  truth, proof identifiers, causal models, unsampled populations, and evidence
-  authenticity remain external obligations.
+  its exact conditional finite-frame proposition. The F10 state-path equality
+  proves only its identified finite fixture disposition. Basis meanings,
+  premise truth, proof identifiers, causal models, untested simulators,
+  unsampled populations, and evidence authenticity remain external
+  obligations.
 - **Operational authority:** Test success, hashes, release identity,
   transport, live-GPT state, and deployment permission are separate
   conclusions recorded outside this mathematical reference.

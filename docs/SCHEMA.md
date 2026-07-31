@@ -139,6 +139,7 @@ Pre-1.0 schema versions may change incompatibly. A release must state the schema
 | `0.3.0a17` | same released schemas and engine algorithms as `0.3.0a16`; documentation rendering, status wording, generated projections, and documentation lint are corrected |
 | `0.3.0a18` | same released schemas and engine algorithms as `0.3.0a17`; GitHub-rejected math notation is replaced and active math commands are checked against a reviewed renderer-safe set |
 | `0.3.0a19` | prior formats plus claim manifest `0.5.0` and finite-census certificate `0.1.0`; one robust, premise-identified finite-frame observational claim may reach `empirically_passed` |
+| `0.3.0a20` | same released schemas and CLI semantics as `0.3.0a19`; adds only the bounded BSC v1.2 F10 crosswalk, exact defect examples, and regressions |
 
 The independent derived-holonomy route dispatches `holonomy_version: 0.1.0`
 records to the immutable
@@ -153,4 +154,4 @@ Consumers must reject an unknown major or minor schema unless an explicit migrat
 
 The `v0.3.0-alpha.7` Custom GPT package did not enlarge the claim-manifest schema or the Python checker's authority. Its exact controller and Knowledge package completed the authenticated 27-case Preview gate recorded in [CUSTOM_GPT_STATUS.md](CUSTOM_GPT_STATUS.md). Uploads go through ChatGPT, and no GPT Action or hosted BSC API is included.
 
-Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.19 preserves it unchanged under the independently versioned alpha.13 protocol component. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).
+Alpha.8 added the separate closed [`audit-return-v0.1.schema.json`](../schemas/audit-return-v0.1.schema.json); alpha.20 preserves it unchanged under the independently versioned alpha.13 protocol component. It describes a draft, non-admissive returned-audit envelope and does not enlarge the claim-manifest schema or grant the checker truth, proof, citation, execution-authentication, evidence-admission, or deployment authority. See [AUDIT_RETURN_DESK.md](AUDIT_RETURN_DESK.md).

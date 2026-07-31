@@ -1,0 +1,70 @@
+{
+  "record_schema": "octo-bsc-v1.2-f10-crosswalk/v1",
+  "upstream_evidence": {
+    "repository": "https://github.com/jkolantree/BSC",
+    "release": "https://github.com/jkolantree/BSC/releases/tag/v1.2.0",
+    "tag": "v1.2.0",
+    "commit": "5fdcb3e1de15b04ed037da135717d316e45f28b1",
+    "tree": "7328eee577c7595c5381e129c62d5c0b1fe78e30",
+    "version_doi": "10.5281/zenodo.21711341",
+    "release_context": {
+      "paper": {
+        "path": "paper/On_Boundaries_of_Evidence.pdf",
+        "sha256": "106631826fc417549d68927418759b856e5610c7c0c27ab53c33665994a60b8c"
+      }
+    },
+    "dependency_slice": {
+      "simulation_profile": {
+        "path": "framework/Simulation_Evidence_Profile.md",
+        "sha256": "2f6ebf949995cf4e3b955cea2d4e52612d08b27668a46d9177767e9b9b5ed7ac"
+      },
+      "f10_input": {
+        "path": "fixtures/F10_coupled_surrogate/input.json",
+        "sha256": "cb8ffa494ace2cc204d02f3060eaf04783abb89b0c66c161c42415b8538f9497"
+      },
+      "f10_receipt": {
+        "path": "fixtures/F10_coupled_surrogate/verification_receipt.json",
+        "sha256": "7296f8aa486c52669eee34b83889cae177d51c059696a52646f3135e86d630b8"
+      }
+    },
+    "not_a_dependency": "framework/Normalized_Scale_Profiles.md"
+  },
+  "octo_projection": {
+    "engine_route": "defect",
+    "schema": "defect-v0.3",
+    "kernel": "bsc_audit.defect.AffineDefect.then",
+    "authority": "exact_propagation_of_supplied_affine_upper_bounds_only",
+    "host_examples": {
+      "HOST-A": "examples/defect_f10_host_a.json",
+      "HOST-B": "examples/defect_f10_host_b.json"
+    }
+  },
+  "external_f10_dispositions": {
+    "tolerance": "1/20",
+    "HOST-A": {
+      "endpoint_error": "1023/51200",
+      "endpoint_margin_below_tolerance": "1537/51200",
+      "first_violation_step": null,
+      "tolerance_disposition": "within_tolerance",
+      "violation_basis": "none"
+    },
+    "HOST-B": {
+      "step_6_error": "468559/10000000",
+      "step_7_margin_above_tolerance": "217031/100000000",
+      "endpoint_error": "6513215599/100000000000",
+      "endpoint_margin_above_tolerance": "1513215599/100000000000",
+      "first_violation_step": 7,
+      "tolerance_disposition": "tolerance_violated",
+      "violation_basis": "exact_actual_error_above_tolerance"
+    }
+  },
+  "authority_boundary": {
+    "product_correctness": "octo replays the declared affine composition exactly over rational inputs",
+    "artifact_identity": "this record binds the published BSC v1.2 simulation-profile and F10 input and receipt bytes by release identity and SHA-256",
+    "actual_execution": "an octo defect run establishes only its own exact upper-bound propagation; the retained BSC F10 receipt records the separate exact state-path execution",
+    "harness_validity": "octo regressions recompute every prefix and exact comparison but do not replace the upstream F10 checker or its negative mutants",
+    "transport_behavior": "repository and release verification bind published files; no live Custom GPT or indexed Knowledge binding follows",
+    "external_truth": "neither replay establishes accuracy for an untested simulator, operating region, coupling, horizon, or physical system",
+    "deployment_authority": "not_granted"
+  }
+}
