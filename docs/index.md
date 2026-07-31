@@ -28,6 +28,7 @@ Additional starting points:
 ## Mathematical reference
 
 - [Mathematics](MATHEMATICS.md) - exact definitions and theorem statements
+- [BSC v1.2 Simulation-Evidence Crosswalk](BSC_V1_2_SIMULATION_CROSSWALK.md) - immutable upstream F10 identity, exact recurrence projection, and authority boundary
 - [Exact Derived Holonomy](DERIVED_HOLONOMY.md) - strict, homotopy, and observation-reduced path comparison
 - [Spectral Obstruction and Limit Gates](SPECTRAL_OBSTRUCTIONS.md) - shifted-ladder and bounded-jet prime-block boundaries
 - [Proof-carrying Adapters](PROOF_CARRYING_ADAPTERS.md) - non-admissive Lean, SMT, and interval receipt boundary
@@ -50,7 +51,7 @@ Additional starting points:
 
 The [LLM Audit Packet](../BSC_AUDIT_LLM_PACKET.md) is a drafting protocol, not an executable verifier. Read its privacy, prompt-injection, and source-coverage rules before attaching material.
 
-The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. Alpha.18 retains the alpha.16 engine and Audit Return Desk, replaces the alpha.17 GitHub-rejected math macro with renderer-safe notation, validates active math macros as well as Markdown structure, and serves the exact return schema linked by the protocol. The independently versioned protocol component remains byte-identical to alpha.13; its committed packet, return schema, and checksum metadata are mechanically checked for drift.
+The static [Pages module](../pages/README.md) is the accessible front door to that same canonical packet. Alpha.20 retains the renderer-safe documentation and alpha.19 engine schemas, and adds only an exact BSC v1.2 F10 crosswalk over the existing affine-bound kernel. It adds no general simulation validator or deployment authority. The independently versioned protocol component remains byte-identical to alpha.13; its committed packet, return schema, and checksum metadata are mechanically checked for drift.
 
 The repository also contains the deterministic package behind the official [Custom GPT](../gpt/README.md). It supports configuration review, reproducible deployments, compatible forks, and verifiable official updates. Direct uploads are processed through ChatGPT and do not inherit the Pages module's local-only boundary. The package includes no GPT Action, hosted checker API, account system, or cloud-storage service. Live availability, exact configuration binding, Preview validation, GitHub release, and Pages deployment are reported as separate states.
 

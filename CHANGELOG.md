@@ -2,6 +2,32 @@
 
 All notable public changes are recorded here. Pre-1.0 interfaces may change incompatibly; migration notes preserve prior artifacts.
 
+## 0.3.0-alpha.20 - 2026-07-30
+
+### Added
+
+- added a hash-bound crosswalk to the immutable BSC v1.2.0
+  simulation-profile/F10 evidence slice without importing upstream research
+  bytes;
+- added two closed `defect-v0.3` examples and exact regressions for every F10
+  Host A and Host B prefix, crossing, endpoint, and rational tolerance margin;
+- recorded `violation_basis = exact_actual_error_above_tolerance` in a typed
+  sidecar so Host B's actual fixture violation remains sourced to the external
+  exact recurrence, state paths, and equality witness.
+
+### Authority and compatibility
+
+- retained `AffineDefect.then` as exact propagation of supplied affine upper
+  bounds; an upper bound above tolerance remains inconclusive about actual
+  violation;
+- distinguished the BSC theorem
+  $U^0_{c,j}+\rho_{c,j}\le\tau_{c,j}$ from a stricter octo policy with explicit
+  positive $\gamma_{c,j}$ headroom;
+- added no simulation schema, general validator, CLI behavior, deployment
+  authority, or live Custom GPT update;
+- preserved every prior release, all existing schemas, the alpha.13 protocol
+  component, the alpha.10 live GPT, and the separate BSC repository.
+
 ## 0.3.0-alpha.19 - 2026-07-30
 
 ### Added

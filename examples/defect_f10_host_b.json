@@ -1,0 +1,19 @@
+{
+  "steps": [
+    {"lipschitz": "9/10", "epsilon": "1/100", "failure_probability": 0},
+    {"lipschitz": "9/10", "epsilon": "1/100", "failure_probability": 0},
+    {"lipschitz": "9/10", "epsilon": "1/100", "failure_probability": 0},
+    {"lipschitz": "9/10", "epsilon": "1/100", "failure_probability": 0},
+    {"lipschitz": "9/10", "epsilon": "1/100", "failure_probability": 0},
+    {"lipschitz": "9/10", "epsilon": "1/100", "failure_probability": 0},
+    {"lipschitz": "9/10", "epsilon": "1/100", "failure_probability": 0},
+    {"lipschitz": "9/10", "epsilon": "1/100", "failure_probability": 0},
+    {"lipschitz": "9/10", "epsilon": "1/100", "failure_probability": 0},
+    {"lipschitz": "9/10", "epsilon": "1/100", "failure_probability": 0}
+  ],
+  "declared_composite": {
+    "lipschitz": "3486784401/10000000000",
+    "epsilon": "6513215599/100000000000",
+    "failure_probability": 0
+  }
+}
