@@ -300,7 +300,7 @@
       "authority_class": "FRESH_UNPROMOTED_SUCCESSOR_CANDIDATE",
       "commit": null,
       "evidence_status": "LOCAL_CANDIDATE_DEFINED_PREVIEW_NOT_RUN_UNPROMOTED",
-      "exact_scope": "Local authority-lock, crosswalk, and attachment-free inline-fixture Preview candidate derived from the exact alpha.20 baseline and preserved r2 commit in a fresh standalone clone.",
+      "exact_scope": "Local attachment-free Preview candidate derived from the exact alpha.20 baseline and preserved failed r3 commit 95be855993306c6e16a5e3929ff78e8c6688dec9 in a fresh standalone clone. It changes only compact science/authority typing plus candidate and history bindings; no evaluation definition, engine, schema, CLI, or API authority is added.",
       "namespace": "OCTO_SUCCESSOR_CANDIDATE",
       "observation_method": "Deterministic local generation and verification; final Git commit and tree are external self-binding objects.",
       "observed_at": "2026-08-17",
@@ -310,7 +310,8 @@
       ],
       "prohibited_inferences": [
         "The candidate is a release or live configuration.",
-        "The candidate has run Preview cases."
+        "The candidate has run Preview cases.",
+        "The candidate inherits any r3 Preview result."
       ],
       "project": "Octo Custom GPT",
       "public_crosswalk": {
@@ -324,7 +325,7 @@
       },
       "sources": [
         {
-          "branch": "codex/gpt-inline-eval-20260817-r3",
+          "branch": "codex/gpt-deployment-verdict-20260817-r4",
           "kind": "local_candidate"
         }
       ],
@@ -334,7 +335,7 @@
         "A live Builder installation or Preview run.",
         "A tag, release, push, PR, Pages deployment, DOI, or Zenodo record."
       ],
-      "version": "bsc-claim-auditor-2026-08-17-inline-r3"
+      "version": "bsc-claim-auditor-2026-08-17-deployment-r4"
     },
     {
       "authority_class": "IMPLEMENTED_SUPPORTED_CHECK",
@@ -901,8 +902,8 @@
     }
   ],
   "candidate": {
-    "branch": "codex/gpt-inline-eval-20260817-r3",
-    "candidate_id": "bsc-claim-auditor-2026-08-17-inline-r3",
+    "branch": "codex/gpt-deployment-verdict-20260817-r4",
+    "candidate_id": "bsc-claim-auditor-2026-08-17-deployment-r4",
     "external_mutation_authority": "NONE",
     "preview_status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
     "profile_role": "AUTHORITY_RECONCILIATION_ONLY_NO_NEW_ENGINE_AUTHORITY",
@@ -1421,7 +1422,7 @@
   "source": {
     "availability": "REPOSITORY_ONLY_NOT_IN_UPLOAD_ZIP",
     "path": "gpt/_source/GPT_AUTHORITY_LOCK.json",
-    "sha256": "ec1c9ab41d228d708a4f7c2f84261e3fb9f20cf436ad7dc440a8e8fb7a6e876f"
+    "sha256": "e6bd185c6d26d8f5e4452173939053d2420fe1e07f80153016ca12ef476e2f25"
   },
   "successor_inline_fixture_projection": {
     "access_token": "inline_fixture_read_only",

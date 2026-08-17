@@ -654,6 +654,10 @@ class CustomGptPackageTests(unittest.TestCase):
                 "outside_current_knowledge only. Missing=>PBU; closed exact proof=>proven without author work; "
                 "ill_posed=undefined; refuted=disproof."
             ),
+            "no_category_leakage": (
+                "Keep informal/analogy informal until checked; never equate correlation/mechanism, "
+                "finite/global, equality/causation, math/deployment, ethics/theorem."
+            ),
             "fail_closed": (
                 "Missing evidence/execution: unresolved, no pass/refute, gates unrun. Missing/truncated proof=>"
                 "THEOREM PBU; never true/no-counterexample/proven; completion=repair. Exact countertrace refutes "
@@ -662,6 +666,10 @@ class CustomGptPackageTests(unittest.TestCase):
             "independent_fatal_gates": (
                 "Gates independent; admission iff all fatal gates pass; unrun/fail/conflict blocks; no score "
                 "rescue. Proven/strong claim/lemma=>evidence-derived pass gate, else demote/omit."
+            ),
+            "deployment_separation": (
+                "No scientific/clinical/legal/policy/safety/deployment certification from math. Authority "
+                "action/refusal gets no research ID/verdict."
             ),
             "execution_label_precision": (
                 "Unsupported claimed runs stay reported_but_unverified, with current execution not_run. Do not "
@@ -708,6 +716,7 @@ class CustomGptPackageTests(unittest.TestCase):
             ),
         }
         self.assertEqual(all_rules(profile)[0]["id"], "separate_status_axes")
+        self.assertEqual(len(all_rules(profile)), 40)
         self.assertEqual({rule_id: rules[rule_id] for rule_id in expected_rules}, expected_rules)
         self.assertEqual(
             next(
@@ -718,9 +727,10 @@ class CustomGptPackageTests(unittest.TestCase):
             "Visible: exact objects/quantifiers/hypotheses/conclusion; every proof step/obligation; certificate/"
             "tool limits.",
         )
-        instruction_length = len(
-            generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
+        instruction_text = generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode(
+            "utf-8"
         )
+        instruction_length = len(instruction_text)
         self.assertLessEqual(
             instruction_length,
             OPERATING_GPT_INSTRUCTION_CHARACTERS,
@@ -729,6 +739,13 @@ class CustomGptPackageTests(unittest.TestCase):
             MAX_GPT_INSTRUCTION_CHARACTERS - instruction_length,
             MAX_GPT_INSTRUCTION_CHARACTERS // 4,
         )
+        for overfit_literal in (
+            "deployment-from-mathematical-result",
+            "Lyapunov",
+            "Case 10",
+            "sensor calibration",
+        ):
+            self.assertNotIn(overfit_literal, instruction_text)
 
         spec = load_strict_json(ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json")
         cases = {case["id"]: case for case in spec["cases"]}
@@ -1757,9 +1774,24 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertEqual(frozen["controller"]["status"], "NOT_RUN_PREVIEW_NOT_AUTHORIZED")
         self.assertEqual(frozen["controller"]["regression_case_count"], 12)
         self.assertEqual(frozen["controller"]["prospective_case_count"], 14)
-        self.assertRegex(frozen["controller"]["run_order_sha256"], r"^[0-9a-f]{64}$")
+        self.assertEqual(
+            frozen["controller"]["run_order_sha256"],
+            "bb1caa393b61a69b28efdc6737d63e14b2ecbb4ad5de9ef483cca2d4b2d70ae0",
+        )
         self.assertEqual(frozen["successor_regressions"]["count"], 12)
         self.assertEqual(frozen["prospective_cases"]["count"], 14)
+        self.assertEqual(
+            frozen["successor_regressions"]["definition_set_sha256"],
+            "09aece93c987740daf38d3a17ca9bdf9daf7512f90ecae1dd8ffe94a3bfba689",
+        )
+        self.assertEqual(
+            frozen["prospective_cases"]["definition_set_sha256"],
+            "9ab0a7b87751609ff995d970c990c3f27212ed8dd3b589bdfbfa8453eba2b4eb",
+        )
+        self.assertEqual(
+            frozen["inline_fixture_projection"]["definition_sha256"],
+            "d52506754198a0765f816b6fbef56515cd83009e54f245235f57adf098b95516",
+        )
         self.assertEqual(
             tuple(frozen["successor_regressions"]["order"]),
             COMPACT_PREVIEW_CASE_IDS,
@@ -1803,6 +1835,34 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertEqual(
             frozen["prospective_cases"]["status"],
             "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
+        )
+        authority_bundle = json.loads(
+            payload[Path("evals/GPT_AUTHORITY_CASES.json")]
+        )
+        deployment = next(
+            item
+            for item in authority_bundle["successor_regression_cases"]
+            if item["id"] == "deployment-from-mathematical-result"
+        )
+        self.assertEqual(
+            deployment["canonical_lock_definition_sha256"],
+            "c42e9e97b5f8ca0ac9f44cff7bc371a4bd9618ab2d72bdc6ab9317519ad301b2",
+        )
+        self.assertEqual(
+            deployment["source_case_record_sha256"],
+            "dfcb876fbe7aa2040471ea6fbb49c49e12b8b142e8bc81afc6d65683fc25dcd6",
+        )
+        self.assertEqual(
+            deployment["effective_preview_input_sha256"],
+            "4696e90c589cfebe14f8992d844cabce617985c34b1b8ff45811daf3394ea496",
+        )
+        self.assertEqual(
+            deployment["canonical_fixture_binding"],
+            {
+                "bytes": 319,
+                "path": "evals/fixtures/deployment_overreach.txt",
+                "sha256": "24b7463a9ae7fe0193a3ca25c21b4ce2ecd07261783600ba300e0b083c9245a5",
+            },
         )
         self.assertEqual(
             frozen["owner_editor_observation"]["capabilities"]["apps"],

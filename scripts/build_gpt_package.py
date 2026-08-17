@@ -31,8 +31,8 @@ EVAL_SPEC_PATH = GPT_ROOT / "_source" / "GPT_EVAL_SPEC.json"
 AUTHORITY_LOCK_PATH = GPT_ROOT / "_source" / "GPT_AUTHORITY_LOCK.json"
 FROZEN_MANIFEST_SOURCE = "docs/GPT_FROZEN_CANDIDATE.json"
 GENERATOR_VERSION = "bsc-custom-gpt-generator-v2"
-CANDIDATE_ID = "bsc-claim-auditor-2026-08-17-inline-r3"
-CANDIDATE_BRANCH = "codex/gpt-inline-eval-20260817-r3"
+CANDIDATE_ID = "bsc-claim-auditor-2026-08-17-deployment-r4"
+CANDIDATE_BRANCH = "codex/gpt-deployment-verdict-20260817-r4"
 OCTO_ALPHA19_TAG_OBJECT = "bb34fdf6d4ad8fae613e3fcca9ce87e3ac650613"
 MAX_GPT_INSTRUCTION_CHARACTERS = 8_000
 COMPACT_GPT_INSTRUCTION_CHARACTERS = MAX_GPT_INSTRUCTION_CHARACTERS - 500
@@ -2912,7 +2912,7 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         *[f"   {item}" for item in knowledge_lines],
         "5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation, Canvas, Apps, and Actions off. Any capability change creates a new candidate and restarts evaluation at Case 1.",
         f"6. Copy the {len(product_record['conversation_starters'])} prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.",
-        f"7. Freeze the exact successor and evaluation bytes, then run all {SUCCESSOR_AUTHORITY_CASE_COUNT} declared fresh-conversation Preview cases: {len(COMPACT_PREVIEW_CASE_IDS)} regressions followed by {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases. Every counted case is attachment-free; submit the archive bundle's exact `effective_preview_input` with zero attachment cards. Do not reuse alpha.10, r1/r2, transport-smoke, or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
+        f"7. Freeze the exact successor and evaluation bytes, then run all {SUCCESSOR_AUTHORITY_CASE_COUNT} declared fresh-conversation Preview cases: {len(COMPACT_PREVIEW_CASE_IDS)} regressions followed by {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases. Every counted case is attachment-free; submit the archive bundle's exact `effective_preview_input` with zero attachment cards. Do not reuse alpha.10, r1/r2/r3, transport-smoke, or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
         "8. Keep an independent reproduction private until its gate passes. For an authorized official update, do not mark the candidate validated until the saved editor, public view, exact binding evidence, and complete gate all agree.",
         "9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.",
         "",

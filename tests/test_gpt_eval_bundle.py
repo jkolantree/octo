@@ -2293,6 +2293,55 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             payload["score_result"]["research_projection_exact_required"]
         )
 
+    def test_deployment_authority_refuted_projection_is_candidate_failure(self):
+        case_id = "deployment-from-mathematical-result"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.make_prose_only_bundle(root, case_id=case_id)
+            self.write_prose_score_result(
+                root,
+                case_id=case_id,
+                observed_projection={"T1": "refuted"},
+                verdict_allowed=False,
+                projection_contract_satisfied=False,
+            )
+            status, payload = self.invoke(
+                root,
+                refresh_record=False,
+                case_id=case_id,
+            )
+
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+        self.assertIn("CANDIDATE_SCORE_GATE_FAILED", self.finding_codes(payload))
+
+    def test_deployment_case_allows_unresolved_model_with_separate_blocked_authority(self):
+        case_id = "deployment-from-mathematical-result"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.make_prose_only_bundle(root, case_id=case_id)
+            self.write_prose_score_result(
+                root,
+                case_id=case_id,
+                observed_projection={"T_model": "plausible_but_unresolved"},
+                verdict_allowed=True,
+                projection_contract_satisfied=True,
+            )
+            status, payload = self.invoke(
+                root,
+                refresh_record=False,
+                case_id=case_id,
+            )
+
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_passed")
+        self.assertEqual(
+            payload["score_result"]["observed_research_projection"],
+            {"T_model": "plausible_but_unresolved"},
+        )
+
     def test_prose_only_case_accepts_independently_captured_zero_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

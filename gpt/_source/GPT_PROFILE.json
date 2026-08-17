@@ -342,7 +342,7 @@
         {
           "id": "deployment_separation",
           "severity": "fatal",
-          "text": "No scientific/clinical/legal/policy/safety/deployment certification from math.",
+          "text": "No scientific/clinical/legal/policy/safety/deployment certification from math. Authority action/refusal gets no research ID/verdict.",
           "provenance": [
             "docs/STATUS_MODEL.md#4-deployment-status"
           ]

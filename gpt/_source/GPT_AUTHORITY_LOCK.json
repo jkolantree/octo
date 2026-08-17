@@ -1,8 +1,8 @@
 {
   "authority_lock_schema": "bsc-gpt-authority-lock/v4",
   "candidate": {
-    "candidate_id": "bsc-claim-auditor-2026-08-17-inline-r3",
-    "branch": "codex/gpt-inline-eval-20260817-r3",
+    "candidate_id": "bsc-claim-auditor-2026-08-17-deployment-r4",
+    "branch": "codex/gpt-deployment-verdict-20260817-r4",
     "state": "FRESH_UNPROMOTED_SUCCESSOR_CANDIDATE",
     "profile_role": "AUTHORITY_RECONCILIATION_ONLY_NO_NEW_ENGINE_AUTHORITY",
     "preview_status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
@@ -429,11 +429,11 @@
       "project": "Octo Custom GPT",
       "namespace": "OCTO_SUCCESSOR_CANDIDATE",
       "authority_class": "FRESH_UNPROMOTED_SUCCESSOR_CANDIDATE",
-      "version": "bsc-claim-auditor-2026-08-17-inline-r3",
+      "version": "bsc-claim-auditor-2026-08-17-deployment-r4",
       "tag": null,
       "commit": null,
       "tree": null,
-      "exact_scope": "Local authority-lock, crosswalk, and attachment-free inline-fixture Preview candidate derived from the exact alpha.20 baseline and preserved r2 commit in a fresh standalone clone.",
+      "exact_scope": "Local attachment-free Preview candidate derived from the exact alpha.20 baseline and preserved failed r3 commit 95be855993306c6e16a5e3929ff78e8c6688dec9 in a fresh standalone clone. It changes only compact science/authority typing plus candidate and history bindings; no evaluation definition, engine, schema, CLI, or API authority is added.",
       "observed_at": "2026-08-17",
       "observation_method": "Deterministic local generation and verification; final Git commit and tree are external self-binding objects.",
       "evidence_status": "LOCAL_CANDIDATE_DEFINED_PREVIEW_NOT_RUN_UNPROMOTED",
@@ -443,7 +443,8 @@
       ],
       "prohibited_inferences": [
         "The candidate is a release or live configuration.",
-        "The candidate has run Preview cases."
+        "The candidate has run Preview cases.",
+        "The candidate inherits any r3 Preview result."
       ],
       "unavailable_evidence": [
         "A live Builder installation or Preview run.",
@@ -452,7 +453,7 @@
       "sources": [
         {
           "kind": "local_candidate",
-          "branch": "codex/gpt-inline-eval-20260817-r3"
+          "branch": "codex/gpt-deployment-verdict-20260817-r4"
         }
       ],
       "public_crosswalk": {

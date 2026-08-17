@@ -2,7 +2,7 @@
 
 **Official GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is `LIVE` and can be used now.
 
-**This repository package:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE`; successor candidate `bsc-claim-auditor-2026-08-17-inline-r3` has state `PENDING`, live binding `NON_ADMISSIBLE_UNHASHABLE`, and Preview validation `PENDING`.
+**This repository package:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE`; successor candidate `bsc-claim-auditor-2026-08-17-deployment-r4` has state `PENDING`, live binding `NON_ADMISSIBLE_UNHASHABLE`, and Preview validation `PENDING`.
 
 **Version boundary:** the engine/source baseline is the existing `0.3.0-alpha.20` tag and release. This changed successor candidate cannot reuse `v0.3.0-alpha.20`. Any later authorized repository release requires a new version, a new never-before-used tag, and a separately authorized release action.
 
@@ -20,7 +20,7 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
 
 1. For an independent reproduction or fork, open `https://chatgpt.com/gpts` and select **Create**. For an authorized update of the official GPT, open its existing editor and use **Edit/Configure**. A fork must not imply official status.
 2. Copy the Name, Description, and category recommendation from `GPT_PUBLIC_METADATA.md`.
-3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 5916 characters and 5952 UTF-8 bytes before pasting; the operating cap is 6000 characters (75% of the 8000-character Builder maximum and 1500 characters below the compact ceiling).
+3. Paste all of `GPT_INSTRUCTIONS.md` into Instructions. Confirm both boundary lines are present and that the complete file remains 5970 characters and 6006 UTF-8 bytes before pasting; the operating cap is 6000 characters (75% of the 8000-character Builder maximum and 1500 characters below the compact ceiling).
 4. Upload these Knowledge files in this exact order:
    1. `BSC_PROTOCOL.md` — 19907 bytes — SHA-256 `15c6644e697d9b53a5299da9dd43184f620054ec2a9c5d9b1ddd58c79f805796` — Deterministic Knowledge wrapper containing the canonical normative protocol
    2. `BSC_STATUS_AND_EVIDENCE_MODEL.md` — 10679 bytes — SHA-256 `3fb0726dbe9d753275184992c7509cfead5e8d06d16b8241dda3712a4f8a778d` — Research, evidence, gate, execution, deployment, and CLI status boundaries
@@ -29,7 +29,7 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
    5. `BSC_JAPANESE_INTERFACE.md` — 4715 bytes — SHA-256 `72306f1b691ced1e6853d3a3d43750c38fe601276e3cf8f25f13032c46f25dde` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
 5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation, Canvas, Apps, and Actions off. Any capability change creates a new candidate and restarts evaluation at Case 1.
 6. Copy the 4 prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.
-7. Freeze the exact successor and evaluation bytes, then run all 26 declared fresh-conversation Preview cases: 12 regressions followed by 14 prospective authority cases. Every counted case is attachment-free; submit the archive bundle's exact `effective_preview_input` with zero attachment cards. Do not reuse alpha.10, r1/r2, transport-smoke, or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.
+7. Freeze the exact successor and evaluation bytes, then run all 26 declared fresh-conversation Preview cases: 12 regressions followed by 14 prospective authority cases. Every counted case is attachment-free; submit the archive bundle's exact `effective_preview_input` with zero attachment cards. Do not reuse alpha.10, r1/r2/r3, transport-smoke, or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.
 8. Keep an independent reproduction private until its gate passes. For an authorized official update, do not mark the candidate validated until the saved editor, public view, exact binding evidence, and complete gate all agree.
 9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.
 

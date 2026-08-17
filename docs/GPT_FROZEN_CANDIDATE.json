@@ -39,7 +39,7 @@
       "bytes": 13643,
       "category": "browser_return_desk",
       "path": "pages/profile.js",
-      "sha256": "f695c94fe471777eb4b554d2e62a6e32512610d926634492ea19e520650fb826"
+      "sha256": "bf4528202d00e187f64a730a162050308c1afd19172d6f9e90ad1e3b554ec878"
     },
     {
       "bytes": 30377,
@@ -78,22 +78,22 @@
       "sha256": "b5248c39e46afd5aad9ff1272578a3f214130451e5dbdc885b88ad8b779b2e3d"
     },
     {
-      "bytes": 5952,
+      "bytes": 6006,
       "category": "candidate",
       "path": "gpt/GPT_INSTRUCTIONS.md",
-      "sha256": "72346909ab379b9c5411e1f1845e0a414fe9de13566e244ef90d3aeefc5efd3a"
+      "sha256": "8fa86d031098a741a7f6da196b2786aff3cd45e7830163e1eb846cd2c591027e"
     },
     {
-      "bytes": 85304,
+      "bytes": 85545,
       "category": "candidate",
       "path": "gpt/_source/GPT_AUTHORITY_LOCK.json",
-      "sha256": "ec1c9ab41d228d708a4f7c2f84261e3fb9f20cf436ad7dc440a8e8fb7a6e876f"
+      "sha256": "e6bd185c6d26d8f5e4452173939053d2420fe1e07f80153016ca12ef476e2f25"
     },
     {
-      "bytes": 26699,
+      "bytes": 26753,
       "category": "candidate",
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "2caf07eb9a89df48cf9c33b4a0991da3f05f782b3db7b61adef79eb63955086f"
+      "sha256": "fb857a6451b966cf73d6f25fb9c6f6c2cc619969dd867b5046e3e05d47cddbc4"
     },
     {
       "bytes": 4715,
@@ -132,10 +132,10 @@
       "sha256": "92627dc74f430ac63219378aafe119254cc5d74bd137ad63fc8d809c64a6f99d"
     },
     {
-      "bytes": 110564,
+      "bytes": 110805,
       "category": "evaluation",
       "path": "gpt/evals/GPT_AUTHORITY_CASES.json",
-      "sha256": "b5f56c3bce047584ad36a67b5bb2970dde395071732712c54f55dc3cc2f723bb"
+      "sha256": "db67dc22d499213241e7cd5b266a13fc8b5eb1afccfe19e5cd6f065c67655d39"
     },
     {
       "bytes": 84585,
@@ -150,10 +150,10 @@
       "sha256": "5fa1127a526023d4ae6498e8eb17f6a2484470d0a3f128d9dcf54437a59b64ff"
     },
     {
-      "bytes": 31971,
+      "bytes": 34052,
       "category": "evaluation",
       "path": "gpt/evals/GPT_EVAL_PROVENANCE.md",
-      "sha256": "8ec70bae7015c6a41c64f4851f4cb277cc1cb653cb39eec2f41774a0b5388908"
+      "sha256": "52acd69c6bcd966374a398ccec06ce44a6c1a65d2ae33c3c4c95076279db3f11"
     },
     {
       "bytes": 15616,
@@ -438,10 +438,10 @@
       "sha256": "ef3499a71578e7058a4ba44c8f62439674f4dd3f9200580833f46bb1ef2f43ed"
     },
     {
-      "bytes": 31971,
+      "bytes": 34052,
       "category": "protocol_and_provenance",
       "path": "gpt/_source/GPT_EVAL_PROVENANCE.md",
-      "sha256": "8ec70bae7015c6a41c64f4851f4cb277cc1cb653cb39eec2f41774a0b5388908"
+      "sha256": "52acd69c6bcd966374a398ccec06ce44a6c1a65d2ae33c3c4c95076279db3f11"
     },
     {
       "bytes": 15616,
@@ -840,10 +840,10 @@
       "sha256": "5a2b60671ac7ee542acd3f531339c33e59e2e51cf311883d06abc2b7798885c5"
     },
     {
-      "bytes": 118928,
+      "bytes": 120995,
       "category": "tests",
       "path": "tests/test_gpt_eval_bundle.py",
-      "sha256": "bf72c511e089d69a09d328b616866df9ace8d02df6f3a57d416e55bc5154085c"
+      "sha256": "4f181d86ae25e032cfd5ff99afaa2d35e39616668a3cab677605b9a7e40e97fc"
     },
     {
       "bytes": 86727,
@@ -864,10 +864,10 @@
       "sha256": "31a613596ac39caf916663e1d680a9661ffacbc1050b7fd9fa3e42550d2db1ed"
     },
     {
-      "bytes": 83812,
+      "bytes": 86380,
       "category": "tests",
       "path": "tests/test_gpt_package.py",
-      "sha256": "966784164b485ec179ccccb8ee78d9dfb5ae8c4543b50c635ae86de5075a898d"
+      "sha256": "0d3fca32495726571d19b108fb7a862d4862608dccd4e4a98533567fb3765e44"
     },
     {
       "bytes": 21107,
@@ -1002,10 +1002,10 @@
       "sha256": "c4fd5172b87becdba5e7eb6bfb33a488cf83a9dfe85ed68c078ccc136552906d"
     },
     {
-      "bytes": 189560,
+      "bytes": 189574,
       "category": "tooling",
       "path": "scripts/build_gpt_package.py",
-      "sha256": "27775843dae2e50c148cc8bc642985f98727fbca57e1e319bfce14cddb79e2a3"
+      "sha256": "3f1865dd0e5587b03a11146a8eccca77864d249b331b3b522eb7273215d457ac"
     },
     {
       "bytes": 26048,
