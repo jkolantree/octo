@@ -2,7 +2,7 @@
 
 **Official GPT:** [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is `LIVE` and can be used now.
 
-**This repository package:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE`; successor candidate `bsc-claim-auditor-2026-08-16-r1` has state `PENDING`, live binding `NON_ADMISSIBLE_UNHASHABLE`, and Preview validation `PENDING`.
+**This repository package:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE`; successor candidate `bsc-claim-auditor-2026-08-17-md-r2` has state `PENDING`, live binding `NON_ADMISSIBLE_UNHASHABLE`, and Preview validation `PENDING`.
 
 **Version boundary:** the engine/source baseline is the existing `0.3.0-alpha.20` tag and release. This changed successor candidate cannot reuse `v0.3.0-alpha.20`. Any later authorized repository release requires a new version, a new never-before-used tag, and a separately authorized release action.
 
@@ -29,7 +29,7 @@ Open [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063
    5. `BSC_JAPANESE_INTERFACE.md` — 4715 bytes — SHA-256 `72306f1b691ced1e6853d3a3d43750c38fe601276e3cf8f25f13032c46f25dde` — Japanese interface and canonical-token glossary; translated explanations never redefine the protocol
 5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation, Canvas, Apps, and Actions off. Any capability change creates a new candidate and restarts evaluation at Case 1.
 6. Copy the 4 prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.
-7. Freeze the exact successor and evaluation bytes, then run all 26 declared fresh-conversation Preview cases: 12 regressions followed by 14 prospective authority cases. Do not reuse alpha.10 or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.
+7. Freeze the exact successor and evaluation bytes, then run all 26 declared fresh-conversation Preview cases: 12 regressions followed by 14 prospective authority cases. For every regression, use the archive bundle's exact `effective_preview_input` and `preview_attachment_path`. Do not reuse alpha.10, r1 transport-smoke, or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.
 8. Keep an independent reproduction private until its gate passes. For an authorized official update, do not mark the candidate validated until the saved editor, public view, exact binding evidence, and complete gate all agree.
 9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.
 
@@ -52,9 +52,9 @@ Run these 12 successor regression cases first, from the beginning in fresh conve
 11. `ja-truncated-proof`
 12. `official-service-status-separation`
 
-Of the 11 retained case IDs, 10 are scientific cases. For the nine that explicitly select Standard, Adversarial, or Formal depth, reuse the matching fixture and scientific oracle from `evals/GPT_EVAL_CASES.jsonl` and run the generated compact duties1-9/at-most-5-headings/no-export `preview_prompt`. The `known-false-continuity` prompt deliberately specifies no input depth so it exercises the configured default Quick route; its prompt does not request duties 1-9, and the response checker requires canonical `refuted`, at most 250 words, at most four visible blocks, and no table. The remaining retained case, `official-service-status-separation`, is status-only: use its generated `STATUS-ONLY` `preview_prompt`, require `status_record_read_only` and an empty scientific projection `{}`, and do not apply duties 1-9. `GPT_EVAL_CASES.jsonl` otherwise remains the preserved historical 39-case artifact suite; its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded.
+Of the 11 retained case IDs, 10 are scientific cases. Use the scientific oracle from the preserved `evals/GPT_EVAL_CASES.jsonl`, but use the successor-only `effective_preview_input` and `preview_attachment_path` from `evals/GPT_AUTHORITY_CASES.json`. Ten distinct `.md` attachments under `evals/preview_transport/` are raw-byte copies of their canonical `.txt` fixtures; Cases 1 and 2 share `known_true_induction.md`. The contradictory-evidence case remains JSON. The `known-false-continuity` effective prompt deliberately specifies no input depth so it exercises the configured default Quick route; it does not request duties 1-9, and the response checker requires canonical `refuted`, at most 250 words, at most four visible blocks, and no table. `official-service-status-separation` is status-only: require `status_record_read_only` and an empty scientific projection `{}`, and do not apply duties 1-9. The historical JSONL's `.txt` prompts, old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes remain preserved and do not govern or validate this successor.
 
-The remaining synthetic control, `artifact-export-disabled-control`, is not a retained JSONL case. It reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.
+The remaining synthetic control, `artifact-export-disabled-control`, is not a retained JSONL case. It reuses the byte-identical `known_true_induction.md` transport alias and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.
 
 Then run these 14 prospective authority cases in the frozen order. Their exact prompts, required tokens, forbidden conclusions, evidence namespaces, adjudication rules, expected classifications, and `NOT_RUN` states are in archive-contained `evals/GPT_AUTHORITY_CASES.json`, deterministically compiled from canonical `_source/GPT_AUTHORITY_LOCK.json`:
 
@@ -73,7 +73,7 @@ Then run these 14 prospective authority cases in the frozen order. Their exact p
 25. `authority-poisoned-conflict`
 26. `authority-unsupported-execution`
 
-The upload ZIP contains the frozen 26-case definitions and fixtures, but not `_source/GPT_AUTHORITY_LOCK.json` or `scripts/check_compact_preview_response.py`. Use the full repository at the bound candidate identity to run the controller; the upload ZIP alone cannot adjudicate Preview responses.
+The upload ZIP contains the frozen 26-case definitions, canonical fixtures, and byte-identical Markdown transport aliases, but not `_source/GPT_AUTHORITY_LOCK.json` or `scripts/check_compact_preview_response.py`. Use the full repository at the bound candidate identity to run the controller; the upload ZIP alone cannot adjudicate Preview responses.
 
 Preserve every raw response as exact UTF-8 text. For every case, run `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>`. Exit 1 blocks the response preflight; exit 2 means controller/input invalid. Exit 0 is machine preflight only and is never a case pass. The 12 regressions still require the frozen manual score and automatic-failure rubric. Every prospective case additionally requires independent human review of forbidden semantic conclusions, expected classification, language, fixture-namespace separation, and its full adjudication rule; the model never grades itself.
 
@@ -87,6 +87,7 @@ A genuine candidate failure ends that counted suite. Any authorized root-cause r
 - Instructions boundary lines and counts were checked.
 - All 26 Preview cases were run in order and raw responses preserved.
 - Every preserved response cleared `check_compact_preview_response.py` before the applicable independent manual scoring or semantic adjudication; native exit 0 alone was not treated as a case pass.
+- Every successor regression used the frozen effective prompt and actual attachment path; no historical `.txt` prompt was silently substituted.
 - No unsupported execution claim received a pass.
 - Upload privacy language appears in the GPT's behavior.
 - Builder profile, icon metadata if any, and public fields contain no personal identifiers.

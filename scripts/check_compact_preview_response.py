@@ -13,7 +13,7 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 AUTHORITY_LOCK_PATH = ROOT / "gpt" / "_source" / "GPT_AUTHORITY_LOCK.json"
-CHECKER_VERSION = "1.5"
+CHECKER_VERSION = "1.6"
 MAX_RESPONSE_CHARACTERS = 12_000
 MAX_RESPONSE_UTF8_BYTES = MAX_RESPONSE_CHARACTERS * 4
 DEFAULT_QUICK_CASE_ID = "known-false-continuity"
@@ -226,7 +226,7 @@ def load_prospective_authority_cases(
     )
     if not isinstance(document, dict):
         raise ValueError("authority lock must be a JSON object")
-    if document.get("authority_lock_schema") != "bsc-gpt-authority-lock/v2":
+    if document.get("authority_lock_schema") != "bsc-gpt-authority-lock/v3":
         raise ValueError("authority lock schema is not recognized")
 
     authority_records = document.get("authority_records")

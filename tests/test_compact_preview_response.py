@@ -81,7 +81,7 @@ class CompactPreviewResponseTests(unittest.TestCase):
         )
         self.assertEqual(MAX_DEFAULT_QUICK_WORDS, 250)
         self.assertEqual(MAX_DEFAULT_QUICK_BLOCKS, 4)
-        self.assertEqual(CHECKER_VERSION, "1.5")
+        self.assertEqual(CHECKER_VERSION, "1.6")
 
     def test_no_depth_control_accepts_short_heading_qualifiers(self) -> None:
         response = "\n\n".join(
@@ -735,9 +735,9 @@ class CompactPreviewResponseTests(unittest.TestCase):
             duplicate = Path(directory) / "duplicate.json"
             duplicate.write_text(
                 original.replace(
-                    '"authority_lock_schema": "bsc-gpt-authority-lock/v2",',
-                    '"authority_lock_schema": "bsc-gpt-authority-lock/v2",\n'
-                    '  "authority_lock_schema": "bsc-gpt-authority-lock/v2",',
+                    '"authority_lock_schema": "bsc-gpt-authority-lock/v3",',
+                    '"authority_lock_schema": "bsc-gpt-authority-lock/v3",\n'
+                    '  "authority_lock_schema": "bsc-gpt-authority-lock/v3",',
                     1,
                 ),
                 encoding="utf-8",

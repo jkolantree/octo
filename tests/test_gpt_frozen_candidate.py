@@ -22,6 +22,11 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             path = root / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(f"{category}\n{relative}\n".encode("utf-8"))
+        for alias_name in checker.EVAL_TRANSPORT_ALIAS_FILENAMES:
+            stem = Path(alias_name).stem
+            source = root / "gpt" / "evals" / "fixtures" / f"{stem}.txt"
+            alias = root / "gpt" / "evals" / "preview_transport" / alias_name
+            alias.write_bytes(source.read_bytes())
 
     def invoke(self, root: Path, *argv: str) -> tuple[int, dict]:
         output = io.StringIO()
@@ -38,9 +43,9 @@ class FrozenCandidateManifestTests(unittest.TestCase):
     def test_registry_contract_is_explicit_complete_and_current(self) -> None:
         document, findings = checker.build_manifest(ROOT)
         self.assertEqual(findings, [])
-        self.assertEqual(len(checker.registry_entries()), 183)
-        self.assertEqual(document["file_count"], 183)
-        self.assertEqual(len(document["files"]), 183)
+        self.assertEqual(len(checker.registry_entries()), 193)
+        self.assertEqual(document["file_count"], 193)
+        self.assertEqual(len(document["files"]), 193)
         self.assertEqual(document["file_count"], len(checker.registry_entries()))
         self.assertEqual(len(document["files"]), len(checker.registry_entries()))
         self.assertEqual(
@@ -63,6 +68,18 @@ class FrozenCandidateManifestTests(unittest.TestCase):
             },
         )
         self.assertEqual(len(checker.EVAL_FIXTURE_FILENAMES), 39)
+        self.assertEqual(
+            {
+                path
+                for category, path in checker.registry_entries()
+                if category == "evaluation_transport_aliases"
+            },
+            {
+                f"gpt/evals/preview_transport/{filename}"
+                for filename in checker.EVAL_TRANSPORT_ALIAS_FILENAMES
+            },
+        )
+        self.assertEqual(len(checker.EVAL_TRANSPORT_ALIAS_FILENAMES), 10)
         self.assertEqual(
             {
                 path
@@ -365,6 +382,28 @@ class FrozenCandidateManifestTests(unittest.TestCase):
 
             self.assertNotEqual(status, 0)
             self.assertIn("REGISTRY_FILE_MISSING", self.finding_codes(payload))
+            self.assertFalse(manifest.exists())
+
+        with tempfile.TemporaryDirectory(prefix="bsc-frozen-alias-drift-") as directory:
+            root = Path(directory)
+            self.materialize_registry(root)
+            alias = (
+                root
+                / "gpt"
+                / "evals"
+                / "preview_transport"
+                / "known_true_induction.md"
+            )
+            alias.write_bytes(alias.read_bytes() + b"drift")
+            manifest = root / "candidate.freeze.json"
+
+            status, payload = checker.write_manifest(manifest, root)
+
+            self.assertNotEqual(status, 0)
+            self.assertIn(
+                "REGISTRY_EVAL_TRANSPORT_ALIAS_MISMATCH",
+                self.finding_codes(payload),
+            )
             self.assertFalse(manifest.exists())
 
     def test_closed_test_and_schema_sets_ignore_cache_but_reject_new_sources(self) -> None:

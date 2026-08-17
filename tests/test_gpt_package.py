@@ -1365,6 +1365,7 @@ class CustomGptPackageTests(unittest.TestCase):
     def test_authority_lock_is_closed_typed_and_not_evaluated(self) -> None:
         lock = load_strict_json(AUTHORITY_LOCK_PATH)
         validate_authority_lock(lock)
+        self.assertEqual(lock["authority_lock_schema"], "bsc-gpt-authority-lock/v3")
         self.assertEqual(lock["candidate"]["candidate_id"], CANDIDATE_ID)
         self.assertEqual(lock["candidate"]["branch"], CANDIDATE_BRANCH)
         self.assertEqual(
@@ -1389,6 +1390,22 @@ class CustomGptPackageTests(unittest.TestCase):
                 and item["historical_evidence_transfer"] == "PROHIBITED"
                 for item in lock["successor_regression_cases"]
             )
+        )
+        transport = lock["successor_preview_transport"]
+        self.assertEqual(
+            transport["profile"],
+            "bsc-preview-byte-identical-markdown-alias/v1",
+        )
+        self.assertEqual(transport["derivation"], "RAW_BYTE_COPY_NO_NORMALIZATION")
+        self.assertEqual(transport["historical_eval_suite_mutation"], "PROHIBITED")
+        self.assertEqual(len(transport["aliases"]), 10)
+        self.assertEqual(
+            {
+                item["preview_attachment_path"]
+                for item in lock["successor_regression_cases"]
+                if item["preview_attachment_path"].endswith(".md")
+            },
+            {alias["alias_path"] for alias in transport["aliases"]},
         )
         historical = lock["historical_alpha10_preview_gate"]
         self.assertEqual(
@@ -1498,6 +1515,41 @@ class CustomGptPackageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_authority_lock(changed_alpha19_tag)
 
+        stale_successor_branch = copy.deepcopy(lock)
+        successor_record = next(
+            item
+            for item in stale_successor_branch["authority_records"]
+            if item["namespace"] == "OCTO_SUCCESSOR_CANDIDATE"
+        )
+        successor_record["sources"][0]["branch"] = (
+            "codex/gpt-authority-lock-20260816-r1"
+        )
+        with self.assertRaises(ValueError):
+            validate_authority_lock(stale_successor_branch)
+
+        changed_alias_digest = copy.deepcopy(lock)
+        changed_alias_digest["successor_preview_transport"]["aliases"][0][
+            "sha256"
+        ] = "0" * 64
+        with self.assertRaises(ValueError):
+            validate_authority_lock(changed_alias_digest)
+
+        wrong_alias_extension = copy.deepcopy(lock)
+        wrong_alias_extension["successor_preview_transport"]["aliases"][0][
+            "alias_path"
+        ] = "evals/preview_transport/assumption_present.txt"
+        with self.assertRaises(ValueError):
+            validate_authority_lock(wrong_alias_extension)
+
+        prompt_path_mismatch = copy.deepcopy(lock)
+        prompt_path_mismatch["successor_regression_cases"][1]["input_binding"][
+            "input"
+        ] = prompt_path_mismatch["successor_regression_cases"][1]["input_binding"][
+            "input"
+        ].replace("known_true_induction.md", "known_true_induction.txt", 1)
+        with self.assertRaises(ValueError):
+            validate_authority_lock(prompt_path_mismatch)
+
     def test_generated_authority_crosswalk_stays_in_five_file_roster(self) -> None:
         lock = load_strict_json(AUTHORITY_LOCK_PATH)
         crosswalk = render_authority_crosswalk(lock).decode("utf-8")
@@ -1531,12 +1583,24 @@ class CustomGptPackageTests(unittest.TestCase):
     def test_archive_authority_case_bundle_is_closed_and_resolvable(self) -> None:
         lock = load_strict_json(AUTHORITY_LOCK_PATH)
         payload = generated_payload()
-        bundle_bytes = render_authority_case_bundle(lock)
+        records = [
+            json.loads(line)
+            for line in payload[Path("evals/GPT_EVAL_CASES.jsonl")]
+            .decode("utf-8")
+            .splitlines()
+        ]
+        records_by_id = {record["id"]: record for record in records}
+        bundle_bytes = render_authority_case_bundle(lock, records, payload)
         self.assertEqual(
             bundle_bytes,
             payload[Path("evals/GPT_AUTHORITY_CASES.json")],
         )
         bundle = json.loads(bundle_bytes)
+        self.assertEqual(
+            bundle["authority_case_bundle_schema"],
+            "bsc-gpt-authority-case-bundle/v2",
+        )
+        self.assertEqual(bundle["authority_lock_schema"], "bsc-gpt-authority-lock/v3")
         self.assertEqual(
             bundle["source"]["sha256"],
             sha256_bytes(AUTHORITY_LOCK_PATH.read_bytes()),
@@ -1561,6 +1625,18 @@ class CustomGptPackageTests(unittest.TestCase):
         )
         regressions = bundle["successor_regression_cases"]
         prospective = bundle["prospective_cases"]
+        transport = bundle["successor_preview_transport"]
+        self.assertEqual(
+            transport["profile"],
+            "bsc-preview-byte-identical-markdown-alias/v1",
+        )
+        self.assertEqual(len(transport["aliases"]), 10)
+        for alias in transport["aliases"]:
+            source = payload[Path(alias["source_path"])]
+            projected = payload[Path(alias["alias_path"])]
+            self.assertEqual(projected, source)
+            self.assertEqual(len(projected), alias["bytes"])
+            self.assertEqual(sha256_bytes(projected), alias["sha256"])
         self.assertEqual(tuple(item["id"] for item in regressions), COMPACT_PREVIEW_CASE_IDS)
         self.assertEqual(tuple(item["id"] for item in prospective), PROSPECTIVE_AUTHORITY_CASE_IDS)
         self.assertTrue(
@@ -1588,8 +1664,48 @@ class CustomGptPackageTests(unittest.TestCase):
                     input_binding["repository_path"],
                     f"gpt/{input_binding['path']}",
                 )
+                source_record = records_by_id[projected["id"]]
+                self.assertEqual(
+                    projected["effective_preview_input"],
+                    render_preview_prompt(
+                        source_record,
+                        Path(projected["preview_attachment_path"]).name,
+                    ),
+                )
+            else:
+                self.assertEqual(
+                    projected["effective_preview_input"],
+                    input_binding["input"],
+                )
+            self.assertEqual(
+                projected["effective_preview_input_sha256"],
+                sha256_bytes(projected["effective_preview_input"].encode("utf-8")),
+            )
+            self.assertEqual(
+                projected["preview_attachment_binding"]["path"],
+                projected["preview_attachment_path"],
+            )
             for fixture in projected["fixture_paths"]:
                 self.assertIn(Path(fixture), payload)
+        by_id = {item["id"]: item for item in regressions}
+        self.assertEqual(
+            by_id["known-true-induction"]["preview_attachment_path"],
+            by_id["artifact-export-disabled-control"]["preview_attachment_path"],
+        )
+        self.assertTrue(
+            by_id["known-true-induction"]["effective_preview_input"].startswith(
+                "Target attachment for this case: known_true_induction.md\n\n"
+            )
+        )
+        self.assertEqual(
+            by_id["contradictory-verified-evidence"]["preview_attachment_path"],
+            "evals/fixtures/null_conflicting_referenced.json",
+        )
+        self.assertTrue(
+            records_by_id["known-true-induction"]["preview_prompt"].startswith(
+                "Target attachment for this case: known_true_induction.txt\n\n"
+            )
+        )
         self.assertNotRegex(
             bundle_bytes.decode("utf-8"),
             r"chatgpt\.com/g/[^\s\"]+/c/",
@@ -1627,6 +1743,21 @@ class CustomGptPackageTests(unittest.TestCase):
             data = payload[Path(item["path"].removeprefix("gpt/"))]
             self.assertEqual(item["bytes"], len(data))
             self.assertEqual(item["sha256"], sha256_bytes(data))
+
+        transport = frozen["preview_transport"]
+        self.assertEqual(
+            transport["profile"],
+            "bsc-preview-byte-identical-markdown-alias/v1",
+        )
+        self.assertEqual(transport["derivation"], "RAW_BYTE_COPY_NO_NORMALIZATION")
+        self.assertEqual(transport["historical_eval_suite_mutation"], "PROHIBITED")
+        self.assertEqual(len(transport["aliases"]), 10)
+        self.assertRegex(transport["definition_sha256"], r"^[0-9a-f]{64}$")
+        for alias in transport["aliases"]:
+            self.assertEqual(
+                payload[Path(alias["alias_path"])],
+                payload[Path(alias["source_path"])],
+            )
 
         self.assertEqual(frozen["controller"]["status"], "NOT_RUN_PREVIEW_NOT_AUTHORIZED")
         self.assertEqual(frozen["controller"]["regression_case_count"], 12)

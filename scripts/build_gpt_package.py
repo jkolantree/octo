@@ -31,8 +31,8 @@ EVAL_SPEC_PATH = GPT_ROOT / "_source" / "GPT_EVAL_SPEC.json"
 AUTHORITY_LOCK_PATH = GPT_ROOT / "_source" / "GPT_AUTHORITY_LOCK.json"
 FROZEN_MANIFEST_SOURCE = "docs/GPT_FROZEN_CANDIDATE.json"
 GENERATOR_VERSION = "bsc-custom-gpt-generator-v1"
-CANDIDATE_ID = "bsc-claim-auditor-2026-08-16-r1"
-CANDIDATE_BRANCH = "codex/gpt-authority-lock-20260816-r1"
+CANDIDATE_ID = "bsc-claim-auditor-2026-08-17-md-r2"
+CANDIDATE_BRANCH = "codex/gpt-md-transport-20260817-r2"
 OCTO_ALPHA19_TAG_OBJECT = "bb34fdf6d4ad8fae613e3fcca9ce87e3ac650613"
 MAX_GPT_INSTRUCTION_CHARACTERS = 8_000
 COMPACT_GPT_INSTRUCTION_CHARACTERS = MAX_GPT_INSTRUCTION_CHARACTERS - 500
@@ -362,6 +362,19 @@ SUCCESSOR_PREVIEW_CASE_IDS = (
     COMPACT_PREVIEW_CASE_IDS + PROSPECTIVE_AUTHORITY_CASE_IDS
 )
 
+EXPECTED_TRANSPORT_ALIAS_SOURCES = (
+    "evals/fixtures/assumption_present.txt",
+    "evals/fixtures/assumption_removed.txt",
+    "evals/fixtures/decisive_calculation_not_executed.txt",
+    "evals/fixtures/deployment_overreach.txt",
+    "evals/fixtures/ja_truncated_proof.txt",
+    "evals/fixtures/known_false_continuity.txt",
+    "evals/fixtures/known_true_induction.txt",
+    "evals/fixtures/official_service_status.txt",
+    "evals/fixtures/poisoned_prompt_injection.txt",
+    "evals/fixtures/truncated_proof.txt",
+)
+
 AUTHORITY_CANDIDATE_KEYS = {
     "candidate_id",
     "branch",
@@ -449,6 +462,7 @@ AUTHORITY_LOCK_KEYS = {
     "authority_records",
     "public_crosswalk_order",
     "historical_alpha10_preview_gate",
+    "successor_preview_transport",
     "successor_regression_cases",
     "prospective_cases",
     "failure_taxonomy",
@@ -491,10 +505,28 @@ SUCCESSOR_REGRESSION_KEYS = {
     "id",
     "input_binding",
     "fixture_paths",
+    "preview_attachment_path",
     "adjudication_rule",
     "expected_classification",
     "candidate_status",
     "historical_evidence_transfer",
+}
+
+TRANSPORT_ALIAS_KEYS = {
+    "source_path",
+    "alias_path",
+    "upload_filename",
+    "bytes",
+    "sha256",
+    "byte_relation",
+}
+
+SUCCESSOR_PREVIEW_TRANSPORT_KEYS = {
+    "profile",
+    "purpose",
+    "derivation",
+    "historical_eval_suite_mutation",
+    "aliases",
 }
 
 
@@ -534,8 +566,8 @@ def validate_authority_lock(lock: dict[str, Any]) -> None:
 
     if set(lock) != AUTHORITY_LOCK_KEYS:
         raise ValueError("authority lock top-level contract differs from the reviewed schema")
-    if lock.get("authority_lock_schema") != "bsc-gpt-authority-lock/v2":
-        raise ValueError("authority lock schema is not bsc-gpt-authority-lock/v2")
+    if lock.get("authority_lock_schema") != "bsc-gpt-authority-lock/v3":
+        raise ValueError("authority lock schema is not bsc-gpt-authority-lock/v3")
 
     candidate = lock.get("candidate")
     if not isinstance(candidate, dict) or set(candidate) != AUTHORITY_CANDIDATE_KEYS:
@@ -568,7 +600,7 @@ def validate_authority_lock(lock: dict[str, Any]) -> None:
         raise ValueError("authority controller must remain not run")
     if controller.get("runtime") != (
         "CPython 3.12.13 exact-token preflight via "
-        "check_compact_preview_response.py v1.5; authenticated ChatGPT Preview "
+        "check_compact_preview_response.py v1.6; authenticated ChatGPT Preview "
         "plus independent human semantic review required later"
     ):
         raise ValueError("authority controller runtime differs from the reviewed runtime")
@@ -740,6 +772,17 @@ def validate_authority_lock(lock: dict[str, Any]) -> None:
         for source in alpha19_record["sources"]
     ):
         raise ValueError("alpha.19 Instructions authority lacks the exact annotated tag object")
+    successor_record = next(
+        record
+        for record in records
+        if record["namespace"] == "OCTO_SUCCESSOR_CANDIDATE"
+    )
+    if (
+        successor_record.get("version") != CANDIDATE_ID
+        or successor_record.get("sources")
+        != [{"kind": "local_candidate", "branch": CANDIDATE_BRANCH}]
+    ):
+        raise ValueError("successor authority record differs from the exact candidate identity")
 
     crosswalk_order = lock.get("public_crosswalk_order")
     if (
@@ -817,6 +860,54 @@ def validate_authority_lock(lock: dict[str, Any]) -> None:
     }:
         raise ValueError("historical alpha.10 definition relations differ from the exact comparison")
 
+    transport = lock.get("successor_preview_transport")
+    if not isinstance(transport, dict) or set(transport) != SUCCESSOR_PREVIEW_TRANSPORT_KEYS:
+        raise ValueError("successor Preview transport record differs from the closed schema")
+    if transport.get("profile") != "bsc-preview-byte-identical-markdown-alias/v1":
+        raise ValueError("successor Preview transport profile differs")
+    if transport.get("purpose") != "SUCCESSOR_REGRESSION_ATTACHMENT_TRANSPORT_ONLY":
+        raise ValueError("successor Preview transport purpose differs")
+    if transport.get("derivation") != "RAW_BYTE_COPY_NO_NORMALIZATION":
+        raise ValueError("successor Preview transport derivation differs")
+    if transport.get("historical_eval_suite_mutation") != "PROHIBITED":
+        raise ValueError("successor Preview transport permits historical-suite mutation")
+    aliases = transport.get("aliases")
+    if not isinstance(aliases, list) or len(aliases) != len(EXPECTED_TRANSPORT_ALIAS_SOURCES):
+        raise ValueError("successor Preview transport must contain exactly ten aliases")
+    if tuple(
+        alias.get("source_path") for alias in aliases if isinstance(alias, dict)
+    ) != EXPECTED_TRANSPORT_ALIAS_SOURCES:
+        raise ValueError("successor Preview transport source order differs")
+    aliases_by_path: dict[str, dict[str, Any]] = {}
+    for alias in aliases:
+        if not isinstance(alias, dict) or set(alias) != TRANSPORT_ALIAS_KEYS:
+            raise ValueError("successor Preview transport alias differs from the closed schema")
+        source_path = alias.get("source_path")
+        if not isinstance(source_path, str):
+            raise ValueError("successor Preview transport alias lacks a source path")
+        source = PurePosixPath(source_path)
+        expected_alias = f"evals/preview_transport/{source.stem}.md"
+        if source.suffix != ".txt" or source.parent.as_posix() != "evals/fixtures":
+            raise ValueError("successor Preview transport source is not a canonical text fixture")
+        if alias.get("alias_path") != expected_alias:
+            raise ValueError("successor Preview transport alias path is not the exact Markdown projection")
+        if alias.get("upload_filename") != PurePosixPath(expected_alias).name:
+            raise ValueError("successor Preview transport upload filename differs from its alias path")
+        if alias.get("byte_relation") != "BYTE_IDENTICAL_TO_CANONICAL_FIXTURE":
+            raise ValueError("successor Preview transport does not require byte identity")
+        source_file = ROOT / "gpt" / Path(*source.parts)
+        if not source_file.is_file() or source_file.is_symlink():
+            raise ValueError("successor Preview transport source is missing or symbolic")
+        source_bytes = source_file.read_bytes()
+        if (
+            alias.get("bytes") != len(source_bytes)
+            or alias.get("sha256") != sha256_bytes(source_bytes)
+        ):
+            raise ValueError("successor Preview transport source length or digest differs")
+        if expected_alias in aliases_by_path:
+            raise ValueError("successor Preview transport alias paths are duplicated")
+        aliases_by_path[expected_alias] = alias
+
     regressions = lock.get("successor_regression_cases")
     if not isinstance(regressions, list) or len(regressions) != len(COMPACT_PREVIEW_CASE_IDS):
         raise ValueError("authority lock must contain exactly 12 successor regression cases")
@@ -824,6 +915,7 @@ def validate_authority_lock(lock: dict[str, Any]) -> None:
         raise ValueError("historical regression order is not exactly 1 through 12")
     if tuple(item.get("id") for item in regressions if isinstance(item, dict)) != COMPACT_PREVIEW_CASE_IDS:
         raise ValueError("historical regression identities differ from the compact roster")
+    used_alias_paths: list[str] = []
     for regression in regressions:
         if not isinstance(regression, dict) or set(regression) != SUCCESSOR_REGRESSION_KEYS:
             raise ValueError("successor regression differs from the closed definition schema")
@@ -843,6 +935,41 @@ def validate_authority_lock(lock: dict[str, Any]) -> None:
             raise ValueError(f"historical regression {regression.get('id')} has a noncanonical input binding")
         if binding["kind"] == "inline" and not isinstance(binding.get("input"), str):
             raise ValueError(f"historical regression {regression.get('id')} lacks exact inline input")
+        fixture_paths = regression.get("fixture_paths")
+        preview_attachment_path = regression.get("preview_attachment_path")
+        if (
+            not isinstance(fixture_paths, list)
+            or len(fixture_paths) != 1
+            or not isinstance(fixture_paths[0], str)
+            or not isinstance(preview_attachment_path, str)
+            or preview_attachment_path != fixture_paths[0]
+        ):
+            raise ValueError(f"successor regression {regression.get('id')} lacks one exact Preview attachment")
+        fixture_path = fixture_paths[0]
+        if fixture_path.endswith(".md"):
+            if fixture_path not in aliases_by_path:
+                raise ValueError(f"successor regression {regression.get('id')} uses an undeclared Markdown alias")
+            used_alias_paths.append(fixture_path)
+        elif (
+            regression.get("id") != "contradictory-verified-evidence"
+            or fixture_path != "evals/fixtures/null_conflicting_referenced.json"
+        ):
+            raise ValueError(f"successor regression {regression.get('id')} bypasses the Markdown transport policy")
+        if binding["kind"] == "inline":
+            upload_name = PurePosixPath(preview_attachment_path).name
+            if not binding["input"].startswith(
+                f"Target attachment for this case: {upload_name}\n\n"
+            ):
+                raise ValueError(f"successor regression {regression.get('id')} inline prompt mismatches its attachment")
+    if set(used_alias_paths) != set(aliases_by_path) or len(used_alias_paths) != 11:
+        raise ValueError("successor regression roster does not use the exact ten-alias transport set")
+    known_true_alias = "evals/preview_transport/known_true_induction.md"
+    if used_alias_paths.count(known_true_alias) != 2 or any(
+        used_alias_paths.count(path) != 1
+        for path in aliases_by_path
+        if path != known_true_alias
+    ):
+        raise ValueError("successor regression alias reuse differs from the exact 11-case mapping")
 
     prospective = lock.get("prospective_cases")
     if not isinstance(prospective, list) or len(prospective) != len(PROSPECTIVE_AUTHORITY_CASE_IDS):
@@ -2305,29 +2432,134 @@ def render_scorecard(spec: dict[str, Any]) -> bytes:
     return ("\n".join(lines).rstrip() + "\n").encode("utf-8")
 
 
-def render_authority_case_bundle(lock: dict[str, Any]) -> bytes:
-    """Compile the exact offline 26-case authority bundle for archive users."""
+def materialize_preview_transport(
+    lock: dict[str, Any],
+    payload: dict[Path, bytes],
+) -> None:
+    """Add raw-byte Markdown aliases without mutating canonical evaluation fixtures."""
 
-    validate_authority_lock(lock)
-    regression_cases = copy.deepcopy(lock["successor_regression_cases"])
-    for projected, canonical in zip(
-        regression_cases,
-        lock["successor_regression_cases"],
-        strict=True,
-    ):
-        projected["canonical_lock_definition_sha256"] = sha256_bytes(
-            json_bytes(canonical)
-        )
+    for alias in lock["successor_preview_transport"]["aliases"]:
+        source_path = Path(alias["source_path"])
+        alias_path = Path(alias["alias_path"])
+        source_bytes = payload.get(source_path)
+        if source_bytes is None:
+            raise ValueError(f"Preview transport source is absent: {source_path.as_posix()}")
+        if (
+            len(source_bytes) != alias["bytes"]
+            or sha256_bytes(source_bytes) != alias["sha256"]
+        ):
+            raise ValueError(f"Preview transport source binding differs: {source_path.as_posix()}")
+        if alias_path in payload:
+            raise ValueError(f"Preview transport alias collides: {alias_path.as_posix()}")
+        payload[alias_path] = source_bytes
+
+
+def project_successor_regressions(
+    lock: dict[str, Any],
+    records: list[dict[str, Any]],
+    payload: dict[Path, bytes],
+) -> list[dict[str, Any]]:
+    """Project the exact successor prompts and attachment bytes from one shared source."""
+
+    by_id = {record["id"]: record for record in records}
+    aliases_by_path = {
+        alias["alias_path"]: alias
+        for alias in lock["successor_preview_transport"]["aliases"]
+    }
+    projections: list[dict[str, Any]] = []
+    for canonical in lock["successor_regression_cases"]:
+        projected = copy.deepcopy(canonical)
         input_binding = projected["input_binding"]
-        if input_binding.get("kind") == "generated_eval_case":
+        source_record: dict[str, Any] | None
+        if input_binding["kind"] == "generated_eval_case":
+            source_record = by_id[canonical["id"]]
             repository_path = input_binding["path"]
             if not repository_path.startswith("gpt/"):
                 raise ValueError("generated regression input is not rooted under gpt/")
             input_binding["repository_path"] = repository_path
             input_binding["path"] = repository_path.removeprefix("gpt/")
+        else:
+            source_record = None
+
+        attachment_path = canonical["preview_attachment_path"]
+        alias = aliases_by_path.get(attachment_path)
+        attachment_bytes = payload.get(Path(attachment_path))
+        if attachment_bytes is None:
+            raise ValueError(f"successor Preview attachment is absent: {attachment_path}")
+        if alias is not None:
+            canonical_bytes = payload.get(Path(alias["source_path"]))
+            if canonical_bytes is None or attachment_bytes != canonical_bytes:
+                raise ValueError(f"successor Preview alias is not byte-identical: {attachment_path}")
+            if (
+                len(attachment_bytes) != alias["bytes"]
+                or sha256_bytes(attachment_bytes) != alias["sha256"]
+            ):
+                raise ValueError(f"successor Preview alias binding differs: {attachment_path}")
+
+        if source_record is None:
+            effective_input = input_binding["input"]
+        else:
+            if alias is None:
+                canonical_name = Path(source_record["fixture_paths"][0]).name
+                effective_name = Path(attachment_path).name
+            else:
+                canonical_name = Path(alias["source_path"]).name
+                effective_name = alias["upload_filename"]
+            canonical_input = render_preview_prompt(source_record, canonical_name)
+            if source_record.get("preview_prompt") != canonical_input:
+                raise ValueError(f"canonical Preview prompt drifted: {canonical['id']}")
+            effective_input = render_preview_prompt(source_record, effective_name)
+            if alias is not None:
+                expected_first = f"Target attachment for this case: {canonical_name}\n\n"
+                effective_first = f"Target attachment for this case: {effective_name}\n\n"
+                if (
+                    not canonical_input.startswith(expected_first)
+                    or not effective_input.startswith(effective_first)
+                    or canonical_input.removeprefix(expected_first)
+                    != effective_input.removeprefix(effective_first)
+                ):
+                    raise ValueError(f"successor Preview prompt changed beyond its attachment suffix: {canonical['id']}")
+
+        projected["canonical_lock_definition_sha256"] = sha256_bytes(
+            json_bytes(canonical)
+        )
+        projected["source_case_record_sha256"] = (
+            sha256_bytes(json_bytes(source_record)) if source_record is not None else None
+        )
+        projected["effective_preview_input"] = effective_input
+        projected["effective_preview_input_sha256"] = sha256_bytes(
+            effective_input.encode("utf-8")
+        )
+        projected["preview_attachment_binding"] = {
+            "path": attachment_path,
+            "upload_filename": Path(attachment_path).name,
+            "bytes": len(attachment_bytes),
+            "sha256": sha256_bytes(attachment_bytes),
+            "classification": (
+                "BYTE_IDENTICAL_MARKDOWN_ALIAS"
+                if alias is not None
+                else "CANONICAL_JSON_ATTACHMENT"
+            ),
+            "canonical_source_path": (
+                alias["source_path"] if alias is not None else attachment_path
+            ),
+        }
+        projections.append(projected)
+    return projections
+
+
+def render_authority_case_bundle(
+    lock: dict[str, Any],
+    records: list[dict[str, Any]],
+    payload: dict[Path, bytes],
+) -> bytes:
+    """Compile the exact offline 26-case authority bundle for archive users."""
+
+    validate_authority_lock(lock)
+    regression_cases = project_successor_regressions(lock, records, payload)
     return json_bytes(
         {
-            "authority_case_bundle_schema": "bsc-gpt-authority-case-bundle/v1",
+            "authority_case_bundle_schema": "bsc-gpt-authority-case-bundle/v2",
             "source": {
                 "path": "gpt/_source/GPT_AUTHORITY_LOCK.json",
                 "sha256": sha256(AUTHORITY_LOCK_PATH),
@@ -2345,6 +2577,7 @@ def render_authority_case_bundle(lock: dict[str, Any]) -> bytes:
             "historical_alpha10_preview_gate": lock[
                 "historical_alpha10_preview_gate"
             ],
+            "successor_preview_transport": lock["successor_preview_transport"],
             "successor_regression_cases": regression_cases,
             "prospective_cases": lock["prospective_cases"],
             "failure_taxonomy": lock["failure_taxonomy"],
@@ -2377,7 +2610,12 @@ def render_evaluation_boundary(profile: dict[str, Any]) -> bytes:
         "repository `_source/GPT_AUTHORITY_LOCK.json`. Machine exit 0 is preflight only; "
         "independent human semantic review remains mandatory. The historical "
         "alpha.10 result is separately bound and does not transfer.\n\n"
-        "The upload ZIP contains the frozen definitions and fixtures, but not the "
+        "The ten Markdown files under `evals/preview_transport/` are frozen raw-byte "
+        "aliases of the canonical text fixtures. Successor operators must use each "
+        "case's exact `effective_preview_input` and `preview_attachment_path`; the "
+        "preserved historical JSONL continues to name the canonical `.txt` fixtures.\n\n"
+        "The upload ZIP contains the frozen definitions, canonical fixtures, and "
+        "Markdown transport aliases, but not the "
         "repository-only authority lock or response-checker script. The full repository "
         "at the bound candidate identity is required to run the controller; the upload "
         "ZIP alone cannot adjudicate Preview responses.\n\n"
@@ -2432,9 +2670,15 @@ def successor_regression_freeze(
     records: list[dict[str, Any]],
     payload: dict[Path, bytes],
 ) -> dict[str, Any]:
-    """Hash the exact 12 successor definitions, generated prompts, and fixtures."""
+    """Hash the exact 12 successor definitions, effective prompts, and attachments."""
 
     by_id = {record["id"]: record for record in records}
+    projections = project_successor_regressions(lock, records, payload)
+    projections_by_id = {projection["id"]: projection for projection in projections}
+    aliases_by_path = {
+        alias["alias_path"]: alias
+        for alias in lock["successor_preview_transport"]["aliases"]
+    }
     definition_hashes: dict[str, str] = {}
     for definition in lock["successor_regression_cases"]:
         binding = definition["input_binding"]
@@ -2442,21 +2686,26 @@ def successor_regression_freeze(
             source_record = by_id[definition["id"]]
         else:
             source_record = None
-        fixture_bindings = []
-        for relative in definition["fixture_paths"]:
-            path = Path(relative)
-            data = payload[path]
-            fixture_bindings.append(
-                {
-                    "path": relative,
-                    "bytes": len(data),
-                    "sha256": sha256_bytes(data),
-                }
-            )
+        projection = projections_by_id[definition["id"]]
+        preview_binding = projection["preview_attachment_binding"]
+        canonical_path = preview_binding["canonical_source_path"]
+        canonical_data = payload[Path(canonical_path)]
         definition_material = {
             "governance": definition,
-            "generated_case": source_record,
-            "fixture_bindings": fixture_bindings,
+            "source_case_record": source_record,
+            "effective_preview_input": projection["effective_preview_input"],
+            "effective_preview_input_sha256": projection[
+                "effective_preview_input_sha256"
+            ],
+            "preview_attachment_binding": preview_binding,
+            "canonical_fixture_binding": {
+                "path": canonical_path,
+                "bytes": len(canonical_data),
+                "sha256": sha256_bytes(canonical_data),
+            },
+            "transport_alias_definition": aliases_by_path.get(
+                definition["preview_attachment_path"]
+            ),
         }
         definition_hashes[definition["id"]] = sha256_bytes(
             json_bytes(definition_material)
@@ -2466,6 +2715,10 @@ def successor_regression_freeze(
         "order": [definition["id"] for definition in lock["successor_regression_cases"]],
         "definition_sha256_by_id": definition_hashes,
         "definition_set_sha256": sha256_bytes(json_bytes(definition_hashes)),
+        "transport_profile": lock["successor_preview_transport"]["profile"],
+        "transport_definition_sha256": sha256_bytes(
+            json_bytes(lock["successor_preview_transport"])
+        ),
         "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
         "historical_evidence_transfer": "PROHIBITED",
     }
@@ -2569,6 +2822,17 @@ def successor_candidate_freeze(
         },
         "candidate_capability_declarations": profile["capabilities"],
         "knowledge_files": knowledge_files,
+        "preview_transport": {
+            "profile": lock["successor_preview_transport"]["profile"],
+            "derivation": lock["successor_preview_transport"]["derivation"],
+            "historical_eval_suite_mutation": lock[
+                "successor_preview_transport"
+            ]["historical_eval_suite_mutation"],
+            "aliases": lock["successor_preview_transport"]["aliases"],
+            "definition_sha256": sha256_bytes(
+                json_bytes(lock["successor_preview_transport"])
+            ),
+        },
         "controller": {
             "controller_id": controller["controller_id"],
             "status": controller["status"],
@@ -2647,7 +2911,7 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         *[f"   {item}" for item in knowledge_lines],
         "5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation, Canvas, Apps, and Actions off. Any capability change creates a new candidate and restarts evaluation at Case 1.",
         f"6. Copy the {len(product_record['conversation_starters'])} prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.",
-        f"7. Freeze the exact successor and evaluation bytes, then run all {SUCCESSOR_AUTHORITY_CASE_COUNT} declared fresh-conversation Preview cases: {len(COMPACT_PREVIEW_CASE_IDS)} regressions followed by {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases. Do not reuse alpha.10 or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
+        f"7. Freeze the exact successor and evaluation bytes, then run all {SUCCESSOR_AUTHORITY_CASE_COUNT} declared fresh-conversation Preview cases: {len(COMPACT_PREVIEW_CASE_IDS)} regressions followed by {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases. For every regression, use the archive bundle's exact `effective_preview_input` and `preview_attachment_path`. Do not reuse alpha.10, r1 transport-smoke, or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
         "8. Keep an independent reproduction private until its gate passes. For an authorized official update, do not mark the candidate validated until the saved editor, public view, exact binding evidence, and complete gate all agree.",
         "9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.",
         "",
@@ -2659,15 +2923,15 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "",
         *compact_gate_lines,
         "",
-        "Of the 11 retained case IDs, 10 are scientific cases. For the nine that explicitly select Standard, Adversarial, or Formal depth, reuse the matching fixture and scientific oracle from `evals/GPT_EVAL_CASES.jsonl` and run the generated compact duties1-9/at-most-5-headings/no-export `preview_prompt`. The `known-false-continuity` prompt deliberately specifies no input depth so it exercises the configured default Quick route; its prompt does not request duties 1-9, and the response checker requires canonical `refuted`, at most 250 words, at most four visible blocks, and no table. The remaining retained case, `official-service-status-separation`, is status-only: use its generated `STATUS-ONLY` `preview_prompt`, require `status_record_read_only` and an empty scientific projection `{}`, and do not apply duties 1-9. `GPT_EVAL_CASES.jsonl` otherwise remains the preserved historical 39-case artifact suite; its old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes are superseded.",
+        "Of the 11 retained case IDs, 10 are scientific cases. Use the scientific oracle from the preserved `evals/GPT_EVAL_CASES.jsonl`, but use the successor-only `effective_preview_input` and `preview_attachment_path` from `evals/GPT_AUTHORITY_CASES.json`. Ten distinct `.md` attachments under `evals/preview_transport/` are raw-byte copies of their canonical `.txt` fixtures; Cases 1 and 2 share `known_true_induction.md`. The contradictory-evidence case remains JSON. The `known-false-continuity` effective prompt deliberately specifies no input depth so it exercises the configured default Quick route; it does not request duties 1-9, and the response checker requires canonical `refuted`, at most 250 words, at most four visible blocks, and no table. `official-service-status-separation` is status-only: require `status_record_read_only` and an empty scientific projection `{}`, and do not apply duties 1-9. The historical JSONL's `.txt` prompts, old ordering, preflights, machine-record duties, controller/transport requirements, and prior outcomes remain preserved and do not govern or validate this successor.",
         "",
-        "The remaining synthetic control, `artifact-export-disabled-control`, is not a retained JSONL case. It reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.",
+        "The remaining synthetic control, `artifact-export-disabled-control`, is not a retained JSONL case. It reuses the byte-identical `known_true_induction.md` transport alias and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.",
         "",
         f"Then run these {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases in the frozen order. Their exact prompts, required tokens, forbidden conclusions, evidence namespaces, adjudication rules, expected classifications, and `NOT_RUN` states are in archive-contained `evals/GPT_AUTHORITY_CASES.json`, deterministically compiled from canonical `_source/GPT_AUTHORITY_LOCK.json`:",
         "",
         *prospective_gate_lines,
         "",
-        "The upload ZIP contains the frozen 26-case definitions and fixtures, but not `_source/GPT_AUTHORITY_LOCK.json` or `scripts/check_compact_preview_response.py`. Use the full repository at the bound candidate identity to run the controller; the upload ZIP alone cannot adjudicate Preview responses.",
+        "The upload ZIP contains the frozen 26-case definitions, canonical fixtures, and byte-identical Markdown transport aliases, but not `_source/GPT_AUTHORITY_LOCK.json` or `scripts/check_compact_preview_response.py`. Use the full repository at the bound candidate identity to run the controller; the upload ZIP alone cannot adjudicate Preview responses.",
         "",
         "Preserve every raw response as exact UTF-8 text. For every case, run `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>`. Exit 1 blocks the response preflight; exit 2 means controller/input invalid. Exit 0 is machine preflight only and is never a case pass. The 12 regressions still require the frozen manual score and automatic-failure rubric. Every prospective case additionally requires independent human review of forbidden semantic conclusions, expected classification, language, fixture-namespace separation, and its full adjudication rule; the model never grades itself.",
         "",
@@ -2681,6 +2945,7 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "- Instructions boundary lines and counts were checked.",
         f"- All {SUCCESSOR_AUTHORITY_CASE_COUNT} Preview cases were run in order and raw responses preserved.",
         "- Every preserved response cleared `check_compact_preview_response.py` before the applicable independent manual scoring or semantic adjudication; native exit 0 alone was not treated as a case pass.",
+        "- Every successor regression used the frozen effective prompt and actual attachment path; no historical `.txt` prompt was silently substituted.",
         "- No unsupported execution claim received a pass.",
         "- Upload privacy language appears in the GPT's behavior.",
         "- Builder profile, icon metadata if any, and public fields contain no personal identifiers.",
@@ -2812,6 +3077,7 @@ def generated_payload(
     payload[Path("GPT_CONVERSATION_STARTERS.md")] = render_starters(profile)
     records, fixtures = materialize_eval_cases(spec)
     payload.update(fixtures)
+    materialize_preview_transport(authority_lock, payload)
     payload[Path("evals/GPT_EVAL_CASES.jsonl")] = b"".join(
         (json.dumps(record, sort_keys=True, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
         for record in records
@@ -2820,7 +3086,7 @@ def generated_payload(
     payload[Path("evals/GPT_MANUAL_SCORECARD.md")] = render_scorecard(spec)
     payload[Path("evals/README.md")] = render_evaluation_boundary(profile)
     payload[Path("evals/GPT_AUTHORITY_CASES.json")] = render_authority_case_bundle(
-        authority_lock
+        authority_lock, records, payload
     )
     for destination, source in EVAL_GOVERNANCE_SOURCES.items():
         payload[Path(destination)] = (ROOT / source).read_bytes()
@@ -3212,6 +3478,44 @@ def validate_payload(
             )
         except (json.JSONDecodeError, ValueError) as exc:
             failures.append(f"generated JSON is not strict: {path.as_posix()}: {exc}")
+    transport_aliases = authority_lock.get("successor_preview_transport", {}).get(
+        "aliases", []
+    )
+    expected_transport_paths = {
+        Path(alias["alias_path"])
+        for alias in transport_aliases
+        if isinstance(alias, dict) and isinstance(alias.get("alias_path"), str)
+    }
+    actual_transport_paths = {
+        path
+        for path in payload
+        if len(path.parts) == 3 and path.parts[:2] == ("evals", "preview_transport")
+    }
+    if actual_transport_paths != expected_transport_paths or len(expected_transport_paths) != 10:
+        failures.append("successor Preview transport payload differs from the exact ten-alias roster")
+    for alias in transport_aliases:
+        if not isinstance(alias, dict):
+            continue
+        source = payload.get(Path(alias.get("source_path", "")))
+        projected = payload.get(Path(alias.get("alias_path", "")))
+        if (
+            source is None
+            or projected is None
+            or projected != source
+            or len(projected) != alias.get("bytes")
+            or sha256_bytes(projected) != alias.get("sha256")
+        ):
+            failures.append(
+                f"successor Preview transport alias differs from its canonical fixture: {alias.get('alias_path')}"
+            )
+    try:
+        expected_authority_bundle = render_authority_case_bundle(
+            authority_lock, records, payload
+        )
+        if payload.get(Path("evals/GPT_AUTHORITY_CASES.json")) != expected_authority_bundle:
+            failures.append("successor authority case bundle differs from the exact effective prompts")
+    except (KeyError, TypeError, ValueError) as exc:
+        failures.append(f"successor authority case bundle is invalid: {exc}")
     ids = [item.get("id") for item in records]
     if len(records) != len(REQUIRED_EVAL_CASE_IDS) or len(ids) != len(set(ids)):
         failures.append("evaluation set must contain the exact uniquely named reviewed case registry")
