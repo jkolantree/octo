@@ -13,7 +13,7 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 AUTHORITY_LOCK_PATH = ROOT / "gpt" / "_source" / "GPT_AUTHORITY_LOCK.json"
-CHECKER_VERSION = "1.6"
+CHECKER_VERSION = "1.7"
 MAX_RESPONSE_CHARACTERS = 12_000
 MAX_RESPONSE_UTF8_BYTES = MAX_RESPONSE_CHARACTERS * 4
 DEFAULT_QUICK_CASE_ID = "known-false-continuity"
@@ -96,6 +96,8 @@ RESEARCH_VERDICT_TOKENS = (
     "ill_posed",
     "outside_current_knowledge",
 )
+JAPANESE_SCRIPT_RE = re.compile(r"[\u3040-\u30ff\u3400-\u9fff]")
+MIN_STATUS_JAPANESE_CHARACTERS = 20
 
 STANDALONE_HASH_VALUE_RE = re.compile(
     r"(?<![0-9A-Fa-f])(?:[0-9A-Fa-f]{64}|[0-9A-Fa-f]{40})(?![0-9A-Fa-f])"
@@ -226,7 +228,7 @@ def load_prospective_authority_cases(
     )
     if not isinstance(document, dict):
         raise ValueError("authority lock must be a JSON object")
-    if document.get("authority_lock_schema") != "bsc-gpt-authority-lock/v3":
+    if document.get("authority_lock_schema") != "bsc-gpt-authority-lock/v4":
         raise ValueError("authority lock schema is not recognized")
 
     authority_records = document.get("authority_records")
@@ -251,6 +253,8 @@ def load_prospective_authority_cases(
     controller = document.get("controller")
     if not isinstance(controller, dict):
         raise ValueError("authority lock controller is missing")
+    if controller.get("controller_id") != "bsc-gpt-authority-preflight-and-human-review/v3":
+        raise ValueError("authority lock controller identity differs")
     run_order = controller.get("run_order")
     if (
         not isinstance(run_order, list)
@@ -622,6 +626,16 @@ def validate_compact_preview_response(
                 )
             )
 
+    if case_id == "ja-truncated-proof" and not _contains_exact_authority_token(
+        response, "possibly_truncated"
+    ):
+        findings.append(
+            _finding(
+                "JAPANESE_COVERAGE_TOKEN_MISSING",
+                "the Japanese truncated-proof response must preserve possibly_truncated",
+            )
+        )
+
     if case_id in PROSPECTIVE_AUTHORITY_CASE_IDS:
         if prospective_cases is None:
             try:
@@ -741,6 +755,31 @@ def validate_compact_preview_response(
                 "a status-only response must not create or report a scientific gate",
             )
         )
+    if case_id == "official-service-status-separation":
+        canonical_lines = {
+            required_literal for _, required_literal in required_status_literals
+        }
+        explanatory_lines = []
+        for line in response.splitlines():
+            candidate = line.strip().strip("`*- ")
+            if candidate == "status_record_read_only" or any(
+                required_literal in candidate for required_literal in canonical_lines
+            ):
+                continue
+            explanatory_lines.append(line)
+        japanese_count = len(
+            JAPANESE_SCRIPT_RE.findall("\n".join(explanatory_lines))
+        )
+        if japanese_count < MIN_STATUS_JAPANESE_CHARACTERS:
+            findings.append(
+                _finding(
+                    "STATUS_REQUESTED_JAPANESE_EXPLANATION_MISSING",
+                    (
+                        "the status-only response lacks a meaningful Japanese explanation "
+                        f"outside canonical token lines (minimum {MIN_STATUS_JAPANESE_CHARACTERS} script characters)"
+                    ),
+                )
+            )
     return findings
 
 

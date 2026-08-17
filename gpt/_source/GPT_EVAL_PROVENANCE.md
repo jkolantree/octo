@@ -430,3 +430,28 @@ evidence. The old freeze is not reusable. All local gates and both preflights
 must restart under a new exact freeze, D01 must pass before D02 is consumed,
 and the complete counted suite must then restart from C001. The live GPT,
 GitHub refs, tags, releases, and publication state remain unchanged.
+
+## 2026-08-17 r2 counted failure and attachment-free r3 redesign
+
+The r2 candidate was frozen at commit
+`449ae7dcbbaf306fbce266be6168182c4fe9db32`, tree
+`d5ce02e49f3eacc0a25bebf440385cdd8eaa9817`. Its counted run preserved
+passes for Cases 1 through 11, then stopped at Case 12
+`official-service-status-separation`. The Case 12 response cleared the v1.6
+machine preflight but contained no Japanese explanation and omitted material
+installation/validation and indexed-Knowledge limitations. The frozen human
+gate used the conservative score 16/20, classified the candidate as failed,
+and left Cases 13 through 26 `NOT_RUN`. Case 12 was not retried, and none of
+the r2 passes transfers to a repaired candidate.
+
+R3 is a new candidate and input profile. It removes file attachments from all
+26 counted cases. For each of the 12 regressions, the builder inserts the
+unchanged canonical fixture bytes exactly once inside an explicit untrusted
+inline-fixture envelope; the 14 prospective cases remain inline. The
+historical 39-case JSONL, its fixtures, its expectations, and the alpha.10
+record remain unchanged. A separate automated attachment smoke may be run as
+uncounted transport evidence, but it cannot validate or invalidate the
+attachment-free behavior suite. The changed Instructions, response checker,
+controller, and effective prompts require a new freeze and a complete restart
+at Case 1. No live Update, push, merge, tag, release, or publication follows
+from this redesign.

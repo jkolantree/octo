@@ -33,11 +33,6 @@ NON_NARRATIVE_MARKDOWN = {
     # but adding presentation headings would change its protocol bytes.
     "gpt/GPT_INSTRUCTIONS.md",
 }
-NON_NARRATIVE_MARKDOWN_PREFIXES = (
-    # Frozen raw-byte evaluation attachments, not prose documentation. Security,
-    # privacy, UTF-8, and link checks still apply; only heading/style rules do not.
-    "gpt/evals/preview_transport/",
-)
 PROHIBITED_FORMAT_CODEPOINTS = {
     0x00AD,  # soft hyphen
     0x061C,  # Arabic letter mark
@@ -186,10 +181,7 @@ def is_style_checked(path: Path, *, root: Path = ROOT) -> bool:
     """Grandfather presentation only while one exact preserved digest matches."""
 
     relative = path.relative_to(root).as_posix()
-    if relative in NON_NARRATIVE_MARKDOWN or any(
-        relative.startswith(prefix)
-        for prefix in NON_NARRATIVE_MARKDOWN_PREFIXES
-    ):
+    if relative in NON_NARRATIVE_MARKDOWN:
         return False
     expected = PRESERVED_PRESENTATION_SHA256.get(relative)
     return expected is None or sha256_bytes(path.read_bytes()) != expected

@@ -23,16 +23,6 @@ class DocumentationTests(unittest.TestCase):
         path.write_text(text, encoding="utf-8", newline="\n")
         return path
 
-    def test_preview_transport_markdown_is_attachment_not_prose_documentation(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="bsc-preview-transport-docs-") as directory:
-            root = Path(directory)
-            alias = root / "gpt" / "evals" / "preview_transport" / "claim.md"
-            alias.parent.mkdir(parents=True)
-            alias.write_text("Claim: exact raw-byte attachment.\n", encoding="utf-8")
-
-            self.assertFalse(is_style_checked(alias, root=root))
-            self.assertEqual(documentation_failures(root), [])
-
     def test_github_math_fence_preserves_literal_latex_escapes(self) -> None:
         text = r"""# Mathematical guide
 

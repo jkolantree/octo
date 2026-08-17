@@ -4,7 +4,7 @@
 
 **Repository package role:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE`
 
-**Successor candidate ID:** `bsc-claim-auditor-2026-08-17-md-r2`
+**Successor candidate ID:** `bsc-claim-auditor-2026-08-17-inline-r3`
 
 **Candidate state:** `PENDING`
 
@@ -41,7 +41,7 @@ Stress-test one scientific or technical claim. Get the bottom line, weak points,
 - **Web Search:** `enabled`
   - Use when current source or citation verification is material, and disclose whether each decisive cited source was independently opened.
 - **Code Interpreter And Data Analysis:** `enabled`
-  - Use only for attachment inspection or bounded calculations when useful, and label it as ChatGPT tool execution rather than BSC Python execution. This compact release profile must not create or hash audit artifacts, run gpt_artifact_compiler.py, emit audit_return.json, reproduce compiler stdout, or serialize Base64, shards, or transport.
+  - Target inspection/bounded calculation only; label ChatGPT tool run, not BSC Python. Never create/hash audit artifacts, run gpt_artifact_compiler.py, emit audit_return.json/compiler stdout, or serialize Base64/shards/transport.
 - **Image Generation:** `disabled`
 - **Apps:** `disabled`
 - **Actions:** `disabled`

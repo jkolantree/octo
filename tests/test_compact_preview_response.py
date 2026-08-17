@@ -37,7 +37,9 @@ from check_compact_preview_response import (  # noqa: E402
 STATUS_CASE_ID = "official-service-status-separation"
 VALID_STATUS_RESPONSE = "\n".join(
     (
-        "状態記録を読み取り専用で確認しました。",
+        "公式GPTは利用できます。",
+        "ただし、この記録だけでは候補が導入済みまたは検証済みとは言えません。",
+        "独立に取得できないindexed Knowledgeの内部バイトはengine gateの根拠にできません。",
         "status_record_read_only",
         "service_availability=LIVE",
         f"public_url={OFFICIAL_GPT_URL}",
@@ -81,7 +83,7 @@ class CompactPreviewResponseTests(unittest.TestCase):
         )
         self.assertEqual(MAX_DEFAULT_QUICK_WORDS, 250)
         self.assertEqual(MAX_DEFAULT_QUICK_BLOCKS, 4)
-        self.assertEqual(CHECKER_VERSION, "1.6")
+        self.assertEqual(CHECKER_VERSION, "1.7")
 
     def test_no_depth_control_accepts_short_heading_qualifiers(self) -> None:
         response = "\n\n".join(
@@ -369,6 +371,42 @@ class CompactPreviewResponseTests(unittest.TestCase):
             [],
         )
 
+    def test_status_only_case_requires_meaningful_japanese_outside_token_lines(self) -> None:
+        token_only = "\n".join(VALID_STATUS_RESPONSE.splitlines()[3:10])
+        english_only = "Official service is available.\n" + token_only
+        tiny_garnish = "はい。\n" + token_only
+        for response in (token_only, english_only, tiny_garnish):
+            with self.subTest(response=response[:40]):
+                self.assertIn(
+                    "STATUS_REQUESTED_JAPANESE_EXPLANATION_MISSING",
+                    self.finding_codes(
+                        validate_compact_preview_response(STATUS_CASE_ID, response)
+                    ),
+                )
+        self.assertNotIn(
+            "STATUS_REQUESTED_JAPANESE_EXPLANATION_MISSING",
+            self.finding_codes(
+                validate_compact_preview_response(STATUS_CASE_ID, VALID_STATUS_RESPONSE)
+            ),
+        )
+
+    def test_japanese_truncated_case_requires_canonical_coverage_token(self) -> None:
+        self.assertIn(
+            "JAPANESE_COVERAGE_TOKEN_MISSING",
+            self.finding_codes(
+                validate_compact_preview_response(
+                    "ja-truncated-proof",
+                    "証明の後半が欠けているため plausible_but_unresolved です。",
+                )
+            ),
+        )
+        self.assertEqual(
+            validate_compact_preview_response(
+                "ja-truncated-proof",
+                "coverage=possibly_truncated。証明の後半が欠けているため plausible_but_unresolved です。",
+            ),
+            [],
+        )
     def test_reproduction_route_does_not_require_absent_live_binding(self) -> None:
         self.assertNotIn(
             "live_binding_state=NON_ADMISSIBLE_UNHASHABLE",
@@ -735,9 +773,9 @@ class CompactPreviewResponseTests(unittest.TestCase):
             duplicate = Path(directory) / "duplicate.json"
             duplicate.write_text(
                 original.replace(
-                    '"authority_lock_schema": "bsc-gpt-authority-lock/v3",',
-                    '"authority_lock_schema": "bsc-gpt-authority-lock/v3",\n'
-                    '  "authority_lock_schema": "bsc-gpt-authority-lock/v3",',
+                    '"authority_lock_schema": "bsc-gpt-authority-lock/v4",',
+                    '"authority_lock_schema": "bsc-gpt-authority-lock/v4",\n'
+                    '  "authority_lock_schema": "bsc-gpt-authority-lock/v4",',
                     1,
                 ),
                 encoding="utf-8",

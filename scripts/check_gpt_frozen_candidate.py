@@ -15,7 +15,7 @@ from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_SCHEMA = "bsc-gpt-frozen-candidate-manifest/v1"
-REGISTRY_VERSION = "bsc-gpt-frozen-candidate-registry/v5"
+REGISTRY_VERSION = "bsc-gpt-frozen-candidate-registry/v6"
 OUTPUT_VERSION = "1.0"
 MAX_MANIFEST_BYTES = 8 * 1024 * 1024
 MAX_REGISTRY_FILE_BYTES = 64 * 1024 * 1024
@@ -40,6 +40,9 @@ MANIFEST_KEYS = {
 EXCLUDED_CYCLE_PATHS = (
     "gpt/GPT_RELEASE_MANIFEST.json",
     "gpt/SHA256SUMS",
+)
+FORBIDDEN_RETIRED_PATHS = (
+    "gpt/evals/preview_transport",
 )
 
 EVAL_FIXTURE_FILENAMES = (
@@ -82,19 +85,6 @@ EVAL_FIXTURE_FILENAMES = (
     "truncated_proof.txt",
     "unconventional_hypothesis.txt",
     "unverifiable_citation.txt",
-)
-
-EVAL_TRANSPORT_ALIAS_FILENAMES = (
-    "assumption_present.md",
-    "assumption_removed.md",
-    "decisive_calculation_not_executed.md",
-    "deployment_overreach.md",
-    "ja_truncated_proof.md",
-    "known_false_continuity.md",
-    "known_true_induction.md",
-    "official_service_status.md",
-    "poisoned_prompt_injection.md",
-    "truncated_proof.md",
 )
 
 KNOWLEDGE_FILENAMES = (
@@ -237,10 +227,6 @@ REGISTRY: dict[str, tuple[str, ...]] = {
     "evaluation_fixtures": tuple(
         f"gpt/evals/fixtures/{filename}" for filename in EVAL_FIXTURE_FILENAMES
     ),
-    "evaluation_transport_aliases": tuple(
-        f"gpt/evals/preview_transport/{filename}"
-        for filename in EVAL_TRANSPORT_ALIAS_FILENAMES
-    ),
     "protocol_and_provenance": (
         "BSC_AUDIT_LLM_PACKET.md",
         "docs/ALPHA8_PREFLIGHT_REPAIR_ADDENDUM.md",
@@ -300,7 +286,6 @@ CLOSED_DIRECTORIES: dict[str, tuple[str, ...]] = {
         "README.md",
     ),
     "gpt/evals/fixtures": EVAL_FIXTURE_FILENAMES,
-    "gpt/evals/preview_transport": EVAL_TRANSPORT_ALIAS_FILENAMES,
     "gpt/knowledge": KNOWLEDGE_FILENAMES,
     "schemas": SCHEMA_FILENAMES,
     "src/bsc_audit": tuple(sorted((*BSC_MODULE_FILENAMES, "component_contract.json"))),
@@ -592,23 +577,6 @@ def _validate_registry_definition() -> list[dict[str, Any]]:
             )
         )
 
-    alias_paths = REGISTRY.get("evaluation_transport_aliases", ())
-    expected_alias_paths = tuple(
-        f"gpt/evals/preview_transport/{filename}"
-        for filename in EVAL_TRANSPORT_ALIAS_FILENAMES
-    )
-    if (
-        len(EVAL_TRANSPORT_ALIAS_FILENAMES) != 10
-        or alias_paths != expected_alias_paths
-    ):
-        findings.append(
-            _finding(
-                "REGISTRY_EVAL_TRANSPORT_ALIAS_SET_INVALID",
-                "$.registry.evaluation_transport_aliases",
-                "the explicit successor Preview transport registry must contain exactly ten Markdown aliases",
-            )
-        )
-
     required_paths = {
         "gpt/GPT_INSTRUCTIONS.md",
         "gpt/_source/GPT_PROFILE.json",
@@ -709,6 +677,30 @@ def _inspect_registry(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
         )
         return records, findings
 
+    for relative_path in FORBIDDEN_RETIRED_PATHS:
+        candidate = resolved_root.joinpath(*PurePosixPath(relative_path).parts)
+        try:
+            candidate.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            findings.append(
+                _finding(
+                    "REGISTRY_RETIRED_PATH_UNREADABLE",
+                    relative_path,
+                    "a retired candidate path could not be inspected",
+                    detail=str(exc),
+                )
+            )
+            continue
+        findings.append(
+            _finding(
+                "REGISTRY_RETIRED_PATH_PRESENT",
+                relative_path,
+                "a retired attachment-transport path must remain absent",
+            )
+        )
+
     for relative_directory, expected_names in CLOSED_DIRECTORIES.items():
         directory = resolved_root.joinpath(*PurePosixPath(relative_directory).parts)
         suffixes = CLOSED_DIRECTORY_SUFFIXES.get(relative_directory)
@@ -808,27 +800,6 @@ def _inspect_registry(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
                 "sha256": digest,
             }
         )
-    records_by_path = {record["path"]: record for record in records}
-    for alias_name in EVAL_TRANSPORT_ALIAS_FILENAMES:
-        stem = PurePosixPath(alias_name).stem
-        source_path = f"gpt/evals/fixtures/{stem}.txt"
-        alias_path = f"gpt/evals/preview_transport/{alias_name}"
-        source = records_by_path.get(source_path)
-        alias = records_by_path.get(alias_path)
-        if (
-            source is None
-            or alias is None
-            or source["bytes"] != alias["bytes"]
-            or source["sha256"] != alias["sha256"]
-        ):
-            findings.append(
-                _finding(
-                    "REGISTRY_EVAL_TRANSPORT_ALIAS_MISMATCH",
-                    alias_path,
-                    "a successor Preview Markdown alias is not byte-identical to its canonical text fixture",
-                    detail={"source_path": source_path},
-                )
-            )
     return records, findings
 
 

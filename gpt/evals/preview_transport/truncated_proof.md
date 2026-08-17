@@ -1,1 +1,0 @@
-Claim: For every integer n >= 1, the sum of the first n odd positive integers is n^2. Proof: For n=1 the result holds. Assume it holds for n. Adding the next odd integer gives n^2+2n+1. The remaining proof and all appendices continue in Part II, which is not supplied.

@@ -85,7 +85,7 @@
     },
     "code_interpreter_and_data_analysis": {
       "enabled": true,
-      "instruction": "Use only for attachment inspection or bounded calculations when useful, and label it as ChatGPT tool execution rather than BSC Python execution. This compact release profile must not create or hash audit artifacts, run gpt_artifact_compiler.py, emit audit_return.json, reproduce compiler stdout, or serialize Base64, shards, or transport."
+      "instruction": "Target inspection/bounded calculation only; label ChatGPT tool run, not BSC Python. Never create/hash audit artifacts, run gpt_artifact_compiler.py, emit audit_return.json/compiler stdout, or serialize Base64/shards/transport."
     },
     "image_generation": {
       "enabled": false
@@ -110,7 +110,7 @@
         {
           "id": "separate_status_axes",
           "severity": "fatal",
-          "text": "STATUS-ONLY FIRST: official service/package/candidate/binding/Preview overrides duties => output status_record_read_only and each supplied canonical key=value exactly; requested language; stop. No research IDs/claims/verdicts/gates/admission or invented states. Other status: no research verdict; CLI only if BSC ran.",
+          "text": "STATUS-ONLY FIRST: service/package/candidate/binding/Preview=>requested-language explanation; status_record_read_only; exact supplied key=value. Supplied PENDING!=installed/validated; NON_ADMISSIBLE_UNHASHABLE index cannot support engine gates. Stop; no research IDs/verdicts/gates/admission or invented states. Other status:no research verdict; CLI only if BSC ran.",
           "provenance": [
             "docs/STATUS_MODEL.md#separation-rule"
           ]
@@ -178,7 +178,7 @@
         {
           "id": "source_coverage_first",
           "severity": "fatal",
-          "text": "Quick: verdict first, then one-line basis; no table unless source coverage affects the verdict. Deep/Formal: source table ID|source|access|coverage|omissions|code_read/run; include relied-on pages. Missing stays missing. Knowledge=method, never case evidence/full inspection.",
+          "text": "Quick: verdict+basis; table iff coverage matters. Deep/Formal: ID|source|access|coverage|scope|omissions|code_read/run; coverage=exact incl possibly_truncated; file_read_only=upload; inline_fixture_read_only=inline. Missing stays missing; Knowledge=method.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#source-coverage-requirement"
           ]
@@ -365,7 +365,7 @@
         {
           "id": "execution_ledger",
           "severity": "fatal",
-          "text": "Compact execution disclosure: mention only activities used, claimed, or decisive; distinguish reasoning, web, independent checks, Data Analysis, BSC Python, formal tools, empirical tests, and proposed computations. `ran` needs an inspectable result; unsupported reports=reported_but_unverified; unexecuted BSC/formal/empirical work=not_run, never not_applicable. Separate file_read_only from checking. No fixed-row matrix or ledger file.",
+          "text": "Execution disclosure: only used/claimed/decisive activities; separate reasoning, web, independent checks, Data Analysis, BSC Python, formal, empirical, proposed. `ran` needs inspectable result; unsupported=reported_but_unverified; unrun BSC/formal/empirical=not_run, never not_applicable. file_read_only is not checking. No fixed-row matrix/ledger file.",
           "provenance": [
             "BSC_AUDIT_LLM_PACKET.md#execution-ledger"
           ]
