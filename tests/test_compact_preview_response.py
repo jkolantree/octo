@@ -21,10 +21,15 @@ from check_compact_preview_response import (  # noqa: E402
     MAX_RESPONSE_CHARACTERS,
     MAX_RESPONSE_UTF8_BYTES,
     OFFICIAL_GPT_URL,
+    PROSPECTIVE_AUTHORITY_CASE_IDS,
+    PROSPECTIVE_AUTHORITY_CASE_ORDER,
     RESEARCH_VERDICT_TOKENS,
     REQUIRED_STATUS_LITERALS_BY_CASE,
     STATUS_ONLY_CASE_IDS,
     SUPPORTED_CASE_IDS,
+    _definition_sha256,
+    load_prospective_authority_cases,
+    result_payload,
     validate_compact_preview_response,
 )
 
@@ -76,7 +81,7 @@ class CompactPreviewResponseTests(unittest.TestCase):
         )
         self.assertEqual(MAX_DEFAULT_QUICK_WORDS, 250)
         self.assertEqual(MAX_DEFAULT_QUICK_BLOCKS, 4)
-        self.assertEqual(CHECKER_VERSION, "1.4")
+        self.assertEqual(CHECKER_VERSION, "1.5")
 
     def test_no_depth_control_accepts_short_heading_qualifiers(self) -> None:
         response = "\n\n".join(
@@ -308,14 +313,16 @@ class CompactPreviewResponseTests(unittest.TestCase):
             ),
         )
 
-    def test_digest_guard_is_global_and_does_not_echo_digest(self) -> None:
-        digests = (
+    def test_hash_guard_is_global_and_does_not_echo_value(self) -> None:
+        hash_values = (
             "a" * 64,
             "ABCDEF0123456789" * 4,
             f"sha256:{'1a' * 32}",
             f"`{'0f' * 32}`",
+            "b" * 40,
+            f"commit:{'2c' * 20}",
         )
-        for response in digests:
+        for response in hash_values:
             with self.subTest(response_prefix=response[:8]):
                 findings = validate_compact_preview_response(
                     "known-true-induction",
@@ -327,8 +334,14 @@ class CompactPreviewResponseTests(unittest.TestCase):
                 )
                 self.assertNotIn(response.strip("`").removeprefix("sha256:"), json.dumps(findings))
 
-    def test_digest_guard_requires_exactly_64_hex_characters(self) -> None:
-        for response in ("a" * 63, "a" * 65, OFFICIAL_GPT_URL):
+    def test_hash_guard_requires_exactly_40_or_64_hex_characters(self) -> None:
+        for response in (
+            "a" * 39,
+            "a" * 41,
+            "a" * 63,
+            "a" * 65,
+            OFFICIAL_GPT_URL,
+        ):
             with self.subTest(response=response[:16]):
                 self.assertNotIn(
                     "COMPACT_DIGEST_VALUE_FORBIDDEN",
@@ -635,6 +648,120 @@ class CompactPreviewResponseTests(unittest.TestCase):
             self.finding_codes(oversized),
         )
 
+    def test_prospective_authority_roster_is_grounded_and_machine_checkable(self) -> None:
+        cases = load_prospective_authority_cases()
+        self.assertEqual(tuple(cases), PROSPECTIVE_AUTHORITY_CASE_ORDER)
+        self.assertEqual(len(cases), 14)
+        self.assertEqual(set(cases), PROSPECTIVE_AUTHORITY_CASE_IDS)
+        self.assertTrue(COMPACT_PREVIEW_CASE_IDS.isdisjoint(PROSPECTIVE_AUTHORITY_CASE_IDS))
+        for case_id, case in cases.items():
+            with self.subTest(case_id=case_id):
+                prompt = case["input"]
+                required_tokens = case["required_tokens"]
+                self.assertTrue(all(token in prompt for token in required_tokens))
+                response = "\n".join(required_tokens)
+                self.assertEqual(
+                    validate_compact_preview_response(
+                        case_id,
+                        response,
+                        prospective_cases=cases,
+                    ),
+                    [],
+                )
+                self.assertRegex(_definition_sha256(case), r"^[0-9a-f]{64}$")
+
+    def test_prospective_authority_tokens_are_exact_and_boundary_safe(self) -> None:
+        cases = load_prospective_authority_cases()
+        case_id = "authority-unsupported-execution"
+        required = list(cases[case_id]["required_tokens"])
+        valid = "\n".join(required)
+        for mutation in (
+            valid.replace("NOT_RUN", "NOT_RUNNER", 1),
+            valid.replace("NO_EXECUTABLE_ADAPTER", "no_executable_adapter", 1),
+        ):
+            with self.subTest(mutation=mutation[:40]):
+                self.assertIn(
+                    "AUTHORITY_REQUIRED_TOKEN_MISSING",
+                    self.finding_codes(
+                        validate_compact_preview_response(
+                            case_id,
+                            mutation,
+                            prospective_cases=cases,
+                        )
+                    ),
+                )
+
+        q26_id = "authority-q26-direct-lean"
+        q26_response = "\n".join(cases[q26_id]["required_tokens"])
+        q26_mutation = q26_response.replace("gamma(Q26)=14", "gamma(Q26)=140", 1)
+        self.assertIn(
+            "AUTHORITY_REQUIRED_TOKEN_MISSING",
+            self.finding_codes(
+                validate_compact_preview_response(
+                    q26_id,
+                    q26_mutation,
+                    prospective_cases=cases,
+                )
+            ),
+        )
+
+    def test_prospective_machine_clearance_never_claims_semantic_case_pass(self) -> None:
+        cases = load_prospective_authority_cases()
+        case = cases["authority-alpha10-vs-alpha19"]
+        response = "\n".join(
+            [*case["required_tokens"], case["forbidden_conclusions"][0]]
+        )
+        findings = validate_compact_preview_response(
+            case["id"],
+            response,
+            prospective_cases=cases,
+        )
+        self.assertEqual(findings, [])
+        payload = result_payload(case["id"], findings, authority_case=case)
+        self.assertEqual(
+            payload["status"],
+            "preflight_clear_manual_review_pending",
+        )
+        self.assertEqual(payload["machine_preflight_status"], "CLEAR")
+        self.assertEqual(payload["evaluation_scope"], "MACHINE_PREFLIGHT_ONLY")
+        self.assertTrue(payload["manual_semantic_review_required"])
+        self.assertEqual(payload["manual_semantic_review_status"], "NOT_RUN")
+        self.assertEqual(payload["case_adjudication_status"], "PENDING_HUMAN_REVIEW")
+
+    def test_prospective_authority_loader_fails_closed_on_bad_lock(self) -> None:
+        source = ROOT / "gpt" / "_source" / "GPT_AUTHORITY_LOCK.json"
+        original = source.read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory(prefix="bsc-authority-lock-") as directory:
+            duplicate = Path(directory) / "duplicate.json"
+            duplicate.write_text(
+                original.replace(
+                    '"authority_lock_schema": "bsc-gpt-authority-lock/v2",',
+                    '"authority_lock_schema": "bsc-gpt-authority-lock/v2",\n'
+                    '  "authority_lock_schema": "bsc-gpt-authority-lock/v2",',
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                load_prospective_authority_cases(duplicate)
+
+            unknown = Path(directory) / "unknown.json"
+            unknown_document = json.loads(original)
+            unknown_document["prospective_cases"][0][
+                "evidence_fixture_namespaces"
+            ][0] = "UNKNOWN_AUTHORITY_NAMESPACE"
+            unknown.write_text(
+                json.dumps(
+                    unknown_document,
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                load_prospective_authority_cases(unknown)
+
     def test_cli_returns_native_zero_and_nonzero_statuses(self) -> None:
         script = ROOT / "scripts" / "check_compact_preview_response.py"
         environment = dict(os.environ)
@@ -659,7 +786,15 @@ class CompactPreviewResponseTests(unittest.TestCase):
             )
             self.assertEqual(passed.returncode, 0, passed.stdout + passed.stderr)
             passed_payload = json.loads(passed.stdout)
-            self.assertEqual(passed_payload["status"], "pass")
+            self.assertEqual(
+                passed_payload["status"],
+                "preflight_clear_manual_review_pending",
+            )
+            self.assertEqual(passed_payload["machine_preflight_status"], "CLEAR")
+            self.assertEqual(
+                passed_payload["case_adjudication_status"],
+                "PENDING_HUMAN_REVIEW",
+            )
             self.assertEqual(passed_payload["checker"], "compact_preview_response")
             self.assertEqual(passed_payload["checker_version"], CHECKER_VERSION)
 
@@ -710,6 +845,45 @@ class CompactPreviewResponseTests(unittest.TestCase):
                 self.finding_codes(json.loads(bounded.stdout)["findings"]),
             )
 
+    def test_cli_prospective_case_reports_preflight_not_case_pass(self) -> None:
+        script = ROOT / "scripts" / "check_compact_preview_response.py"
+        cases = load_prospective_authority_cases()
+        case = cases["authority-q26-root-cnf"]
+        environment = dict(os.environ)
+        environment["PYTHONDONTWRITEBYTECODE"] = "1"
+        with tempfile.TemporaryDirectory(prefix="bsc-authority-response-") as directory:
+            response_file = Path(directory) / "response.txt"
+            response_file.write_text("\n".join(case["required_tokens"]), encoding="utf-8")
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--case-id",
+                    case["id"],
+                    "--response-file",
+                    str(response_file),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                env=environment,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            payload = json.loads(completed.stdout)
+            self.assertEqual(payload["evaluation_scope"], "MACHINE_PREFLIGHT_ONLY")
+            self.assertEqual(
+                payload["status"],
+                "preflight_clear_manual_review_pending",
+            )
+            self.assertEqual(payload["machine_preflight_status"], "CLEAR")
+            self.assertEqual(payload["manual_semantic_review_status"], "NOT_RUN")
+            self.assertEqual(payload["case_adjudication_status"], "PENDING_HUMAN_REVIEW")
+            self.assertEqual(
+                payload["authority_case_definition_sha256"],
+                _definition_sha256(case),
+            )
+
     def test_status_only_case_registry_is_exact(self) -> None:
         self.assertEqual(
             STATUS_ONLY_CASE_IDS,
@@ -743,7 +917,9 @@ class CompactPreviewResponseTests(unittest.TestCase):
         )
         self.assertEqual(
             SUPPORTED_CASE_IDS,
-            COMPACT_PREVIEW_CASE_IDS | STATUS_ONLY_CASE_IDS,
+            COMPACT_PREVIEW_CASE_IDS
+            | STATUS_ONLY_CASE_IDS
+            | PROSPECTIVE_AUTHORITY_CASE_IDS,
         )
         self.assertEqual(
             RESEARCH_VERDICT_TOKENS,

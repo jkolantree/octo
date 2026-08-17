@@ -1,8 +1,8 @@
 # Historical artifact-profile evaluation expectations
 
-**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This preserved 39-case suite, its old ordering, preflights, machine-record/controller/transport requirements, and prior results do not govern or validate the compact public GPT. Use the exact 12-case roster in `GPT_SETUP_AND_PUBLISHING.md` for the current candidate.
+**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This preserved 39-case suite, its old ordering, preflights, machine-record/controller/transport requirements, and prior results do not govern or validate the successor. The successor gate is the frozen 12 regression plus 14 prospective roster in `GPT_SETUP_AND_PUBLISHING.md`.
 
-The records below remain available for forensic and regression history. Their observable-behavior oracles are not a current promotion gate.
+The archive-contained `GPT_AUTHORITY_CASES.json` re-binds the exact current bytes of 11 named records below as regression definitions; its twelfth regression is the separately frozen synthetic export-disabled control. Those 12 definitions are all `NOT_RUN_PREVIEW_NOT_AUTHORIZED`. The other records remain forensic history only. No prior result or score transfers, and this document alone does not select a gate.
 
 ## `known-true-induction` — simple known-true claim with sufficient evidence
 

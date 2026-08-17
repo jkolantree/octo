@@ -9,7 +9,7 @@
     "candidate_state": "PENDING",
     "live_binding_state": "NON_ADMISSIBLE_UNHASHABLE",
     "preview_validation_state": "PENDING",
-    "preview_gate_case_count": 12,
+    "preview_gate_case_count": 26,
     "preview_gate_case_ids": [
       "known-true-induction",
       "artifact-export-disabled-control",
@@ -22,7 +22,21 @@
       "contradictory-verified-evidence",
       "deployment-from-mathematical-result",
       "ja-truncated-proof",
-      "official-service-status-separation"
+      "official-service-status-separation",
+      "authority-alpha10-vs-alpha19",
+      "authority-alpha19-instructions-vs-index",
+      "authority-bsc-release-vs-main",
+      "authority-bsc-core-v15",
+      "authority-q26-direct-lean",
+      "authority-q26-root-cnf",
+      "authority-c13-pr16",
+      "authority-astra-stable-v107",
+      "authority-astra-maintenance-overlay",
+      "authority-astra-v108-candidate-ja",
+      "authority-analogy-vs-executable",
+      "authority-not-applicable-statuses",
+      "authority-poisoned-conflict",
+      "authority-unsupported-execution"
     ],
     "historical_evaluation_suite_status": "SUPERSEDED_ARTIFACT_PROFILE_39_CASES",
     "japanese_interface_status": "BETA",
@@ -85,7 +99,7 @@
     },
     "canvas": {
       "enabled": false,
-      "optional": true
+      "optional": false
     }
   },
   "instruction_sections": [

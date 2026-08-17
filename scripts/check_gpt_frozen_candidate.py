@@ -93,6 +93,7 @@ KNOWLEDGE_FILENAMES = (
 )
 
 SOURCE_CONTROL_FILENAMES = (
+    "GPT_AUTHORITY_LOCK.json",
     "GPT_EVAL_PROVENANCE.md",
     "GPT_EVAL_SPEC.json",
     "GPT_FROZEN_EVALUATION_PROTOCOL.json",
@@ -201,6 +202,7 @@ REGISTRY: dict[str, tuple[str, ...]] = {
     ),
     "candidate": (
         "gpt/GPT_INSTRUCTIONS.md",
+        "gpt/_source/GPT_AUTHORITY_LOCK.json",
         "gpt/_source/GPT_PROFILE.json",
         "gpt/knowledge/BSC_JAPANESE_INTERFACE.md",
         "gpt/knowledge/BSC_PROTOCOL.md",
@@ -210,6 +212,7 @@ REGISTRY: dict[str, tuple[str, ...]] = {
     ),
     "evaluation": (
         "gpt/_source/GPT_EVAL_SPEC.json",
+        "gpt/evals/GPT_AUTHORITY_CASES.json",
         "gpt/evals/GPT_EVAL_CASES.jsonl",
         "gpt/evals/GPT_EVAL_EXPECTATIONS.md",
         "gpt/evals/GPT_EVAL_PROVENANCE.md",
@@ -270,6 +273,7 @@ REGISTRY: dict[str, tuple[str, ...]] = {
 CLOSED_DIRECTORIES: dict[str, tuple[str, ...]] = {
     "gpt/_source": SOURCE_CONTROL_FILENAMES,
     "gpt/evals": (
+        "GPT_AUTHORITY_CASES.json",
         "GPT_EVAL_CASES.jsonl",
         "GPT_EVAL_EXPECTATIONS.md",
         "GPT_EVAL_PROVENANCE.md",

@@ -8,15 +8,21 @@ official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed
 
 ## Current state
 
-2026-07-28 に alpha.10 release/live Update/post-save verification を observe し、その後 alpha.20 repository version line を作成しました。tag target と GitHub release state は external observation です。generated package は future live-GPT update candidate として separately unvalidated です:
+2026-07-28 の alpha.10 live observation と 12-case result は historical evidence として保持します。2026-08-16 の fresh read-only owner-editor inspection では alpha.19 incumbent を observe しました。repository、owner-editor、hidden index、public behavior、evaluation、successor candidate の authority は分離します:
 
 | Surface | State | Exact binding または boundary |
 |---|---|---|
-| Official Custom GPT | **live; alpha.10 saved state observed** | saved owner editor と public page は下記 exact 4 starters を示した。Web Search/Data Analysis on、Image Generation off、App/Action なし |
+| Current owner-editor state、2026-08-16 observation | **`OWNER_EDITOR_OBSERVED_ALPHA19_INCUMBENT`** | saved Instructions は alpha.19 を示す。Name、description、下記 4 starters は一致。Web Search/Data Analysis on、Image Generation off、Action は absent。Apps と Canvas は `NOT_OBSERVED`。sharing は Anyone with link、GPT Store disabled。field は変更していない |
+| Current saved Instructions | **`SOURCE_BOUND_TO_ALPHA19_INSTRUCTIONS`** | exact comparison は 5,970 characters、6,006 UTF-8 bytes、47 lines、SHA-256 `74e4bda6e9c920c2e6f7ddb985a2115bb3397bb49660001da2de3a210bfacc07` で、repository alpha.19 Instructions と一致。この binding は Knowledge には transfer しない |
+| Visible Knowledge roster | **filenames/order `OBSERVED`** | visible order は Supported Checks、Status and Evidence Model、Japanese Interface、Worked Examples、Protocol。repository order は Protocol、Status and Evidence Model、Supported Checks、Worked Examples、Japanese Interface。この mismatch は provenance evidence であり、自動的な behavioral failure ではない |
+| Live indexed Knowledge | **`NON_ADMISSIBLE_UNHASHABLE`** | ChatGPT は indexed Knowledge bytes を independent hash 用に expose しない。repository upload-source hashes は repository files だけに適用し、internal live index との equality は `UNKNOWN` のまま |
+| Fresh public-chat behavior、2026-08-16 observation | **`OBSERVED_PUBLIC_BEHAVIOR_SINGLE_PROMPT`** | one fresh response は `status_record_read_only`、`BASELINE_DECISION=PRESERVE_ALPHA19_AS_OBSERVED_LIVE_INCUMBENT`、`LIVE_INDEXED_KNOWLEDGE=NON_ADMISSIBLE_UNHASHABLE` を出力した。prompt scope は保持したが exact prompt bytes は保持していない one fresh response の behavior evidence であり、complete Preview validation や hidden-index identity ではない |
+| Public page、2026-08-17 direct reinspection attempt | **`NOT_CHECKED_BROWSER_UNAVAILABLE`** | in-app Browser target attempt は `No browser is available` を返し、browser inventory は empty だった。visible public-page name、description、starters、page state を repository や search evidence から推論していない |
+| Alpha.10 live configuration | **`HISTORICAL_LAST_EVALUATED_LIVE_CONFIGURATION`** | 2026-07-28 saved-editor、Update、post-save records は historical alpha.10 evidence として保持し、alpha.19 evidence に書き換えない |
 | Alpha.10 compact Preview gate | **live Update 前に pass_12_of_12** | exact alpha.10 candidate は normal/default Preview mode で predetermined 12 fresh-conversation cases に pass。historical 39-case campaign は restart/count していない |
 | Alpha.10 post-save starter smoke | **pass** | 4 fresh-session starters と short Quick follow-up 1件が bounded language/routing contract に一致 |
 | Alpha.20 repository source/package | **versioned source; generated package は future live update 未検証・live 未導入** | candidate は alpha.19 の全 schema/engine route を保持し、existing affine-bound kernel に bounded/hash-identified BSC v1.2 F10 crosswalk を追加する。Host B の exact fixture violation は octo upper bound 単独ではなく external equality witness が確立する。この source row だけでは tag/GitHub release publication を確立しない。この lane では owner-editor Update も alpha.20 Preview claim も行わない |
-| Exact live/source binding | **`NON_ADMISSIBLE_UNHASHABLE`** | saved-editor fields、public starter order、capabilities、filenames、behavior は observe 可能。ChatGPT は indexed Knowledge bytes を independent hash 用に expose しないため、live index は engine gate、theorem replay、scientific admission の証拠にならない |
+| Local successor candidate | **`bsc-claim-auditor-2026-08-16-r1`; `FRESH_UNPROMOTED_SUCCESSOR_CANDIDATE`** | bounded local authority reconciliation、public crosswalk、response-preflight controller、26-case evaluation definition のみで、engine、scientific schema、CLI、API、live authority は追加しない。12 regressions + 14 prospective authority cases はすべて `NOT_RUN_PREVIEW_NOT_AUTHORIZED`。live Update、upload、push、PR、tag、release、publication を意味しない |
 | Repository version line | **v0.3.0-alpha.20; publication は external verification が必要** | tag target、GitHub release、assets、keyless attestations は promotion 後に separately check する service record。byte-identical public protocol は component version `0.3.0-alpha.13` のままで、prior tag を move/relabel しない |
 | Alpha.17 renderer failure | **preserved historical release; documentation transport defect** | [`v0.3.0-alpha.17`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.17) は commit `425f8df49cacc163d6b5fd65d795fa6aeeafafd1`、tree `2b72d75d2d8ea0fbf0dd18d3bafdb8251a6a3486` のまま。tagged canonical Mathematics page は `\operatorname` を GitHub が reject したため 12 renderer error banners を表示した。tag、release、assets、negative observation は変更しない |
 | Earlier GitHub prerelease | **preserved historical release** | [`v0.3.0-alpha.16`](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.16) は commit `9798d51c443eb104318ce402fd27adb7958f5352`、tree `356a65804a2af18664f3d7ca67f2588514c9779c` のまま |
@@ -29,11 +35,13 @@ official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed
 | GitHub release object | **mutable service record** | GitHub は `immutable=false` と報告した。release assets と release-page metadata を intrinsically immutable と表現しない |
 | Public Pages | **deployment は separately verified** | [English](https://jkolantree.github.io/octo/) と [Japanese](https://jkolantree.github.io/octo/ja.html) route は Pages deployment 後に independently versioned alpha.13 protocol component metadata と一致する必要がある |
 
-availability、targeted regression、source CI は complete Preview validation の代用ではありません。preserved 39-case artifact-profile campaign、D01/D02 preflight、compiler/transport requirements、negative results は historical evidence として残し、compact 12-case gate に restart/splice しません。
+availability、targeted regression、source CI は complete Preview validation の代用ではありません。preserved 39-case artifact-profile campaign、D01/D02 preflight、compiler/transport requirements、negative results は historical evidence として残し、successor の frozen 12-regression + 14-prospective gate に restart/splice しません。
+
+A synchronization/control gap is observed; its cause and intent remain unresolved.
 
 ## Current compact contract and maintenance boundary
 
-Instructions は ordinary no-depth claim を Quick に route します。verdict first、250 words 以下、4 short blocks 以下で、materially necessary でない table は使いません。alpha.10 はこの contract を保持し、exact starter-literal dispatch を generic no-claim/example inference より優先します。
+Instructions は ordinary no-depth claim を Quick に route します。verdict first、250 words 以下、4 short blocks 以下で、materially necessary でない table は使いません。historical alpha.10 configuration と source-bound alpha.19 Instructions はこの contract を保持し、exact starter-literal dispatch を generic no-claim/example inference より優先します。
 
 canonical starter list は exactly:
 
@@ -44,7 +52,7 @@ canonical starter list は exactly:
 
 official GPT は引き続き 5 public Knowledge uploads を使います。retired `BSC_EXECUTION_AND_RECEIPTS.md` derivative は standalone repository history です。downloadable machine record、compiler output、Base64、shards、transport、section 10 は public GPT の外に残ります。
 
-prior artifact-profile result は compact profile を validate しません。exact 12-case roster は、将来 `pass_12_of_12` または fully Preview-validated と主張するための gate です。
+prior artifact-profile result も alpha.10 result も successor を validate しません。将来 fully Preview-validated と主張するには、unchanged candidate 1件で frozen 26-case gate、すなわち 12 successor regressions + 14 prospective authority cases の全件を order どおりに完了する必要があります。
 
 ## Exact trust boundary
 
@@ -61,7 +69,7 @@ Alpha.8 は `c6120093…` の exact tagged package です。later live/main UX h
 
 Alpha.9 は `b87d9e28…` の exact tagged package です。bounded maintenance release を含み、predetermined 12-case candidate gate に pass しましたが、fresh post-save smoke は real Japanese intake-starter failure を1件 preserve しました。tag、release、assets、failure record は変更しません。
 
-Alpha.10 は `99b0804e…` の exact tagged package であり、separately observed live GPT baseline です。Alpha.11 は `f4d9f43e…` に preserve されます。Alpha.13 は exact theorem replay と corrected release guard を preserve します。Alpha.14 は exact mapping-complex mathematics を統合し、unreplayed manifest declaration を non-decisive にし、component identity と distribution identity を分離します。Alpha.15 は certificate variant と registered judgment の authority を explicit にし、observed stage receipt から release claim を derive します。その exact local tag build は host-dependent artifact order で publication 前に fail closed しました。Alpha.16 は same typed substrate を preserve し、artifact order を explicit UTF-8 byte order にします。Alpha.17 は engine algorithm/schema を保持して documentation structure を訂正しましたが、tagged Mathematics page には GitHub-rejected macro が残り 12 renderer errors を表示しました。その negative transport result は historical evidence として保存します。Alpha.18 は notation を置き換え、permanent active-math regression を追加します。Alpha.19 は renderer recovery を保持し、closed finite-census conditional empirical bridge を追加します。Alpha.20 は schema/CLI/live state を変更せず、bounded BSC v1.2 F10 crosswalk を追加します。regenerated GPT package は unvalidated future live update candidate のままで、live GPT には load しません。existing tags と release history は変更しません。
+Alpha.10 は `99b0804e…` の exact tagged package であり、historical last evaluated live configuration です。fresh 2026-08-16 owner-editor observation は alpha.19 incumbent を示しますが、exact-byte source binding は Instructions のみで、indexed Knowledge は `NON_ADMISSIBLE_UNHASHABLE` のままです。Alpha.11 は `f4d9f43e…` に preserve されます。Alpha.13 は exact theorem replay と corrected release guard を preserve します。Alpha.14 は exact mapping-complex mathematics を統合し、unreplayed manifest declaration を non-decisive にし、component identity と distribution identity を分離します。Alpha.15 は certificate variant と registered judgment の authority を explicit にし、observed stage receipt から release claim を derive します。その exact local tag build は host-dependent artifact order で publication 前に fail closed しました。Alpha.16 は same typed substrate を preserve し、artifact order を explicit UTF-8 byte order にします。Alpha.17 は engine algorithm/schema を保持して documentation structure を訂正しましたが、tagged Mathematics page には GitHub-rejected macro が残り 12 renderer errors を表示しました。その negative transport result は historical evidence として保存します。Alpha.18 は notation を置き換え、permanent active-math regression を追加します。Alpha.19 は renderer recovery を保持し、closed finite-census conditional empirical bridge を追加します。Alpha.20 は schema/CLI/live state を変更せず、bounded BSC v1.2 F10 crosswalk を追加します。regenerated GPT package は unvalidated future live update candidate のままで、live GPT には load しません。existing tags と release history は変更しません。
 
 Alpha.12 tag は move せず、release も backfill しません。Alpha.13 は同じ mathematical scope を new version で carry forward し、tag type check の前に authoritative remote annotated tag object を restore します。
 

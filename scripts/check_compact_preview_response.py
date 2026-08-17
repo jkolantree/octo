@@ -4,13 +4,16 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
 from typing import Sequence
 
 
-CHECKER_VERSION = "1.4"
+ROOT = Path(__file__).resolve().parents[1]
+AUTHORITY_LOCK_PATH = ROOT / "gpt" / "_source" / "GPT_AUTHORITY_LOCK.json"
+CHECKER_VERSION = "1.5"
 MAX_RESPONSE_CHARACTERS = 12_000
 MAX_RESPONSE_UTF8_BYTES = MAX_RESPONSE_CHARACTERS * 4
 DEFAULT_QUICK_CASE_ID = "known-false-continuity"
@@ -42,7 +45,28 @@ STATUS_ONLY_CASE_IDS = frozenset(
         "official-service-status-separation",
     }
 )
-SUPPORTED_CASE_IDS = COMPACT_PREVIEW_CASE_IDS | STATUS_ONLY_CASE_IDS
+PROSPECTIVE_AUTHORITY_CASE_ORDER = (
+    "authority-alpha10-vs-alpha19",
+    "authority-alpha19-instructions-vs-index",
+    "authority-bsc-release-vs-main",
+    "authority-bsc-core-v15",
+    "authority-q26-direct-lean",
+    "authority-q26-root-cnf",
+    "authority-c13-pr16",
+    "authority-astra-stable-v107",
+    "authority-astra-maintenance-overlay",
+    "authority-astra-v108-candidate-ja",
+    "authority-analogy-vs-executable",
+    "authority-not-applicable-statuses",
+    "authority-poisoned-conflict",
+    "authority-unsupported-execution",
+)
+PROSPECTIVE_AUTHORITY_CASE_IDS = frozenset(PROSPECTIVE_AUTHORITY_CASE_ORDER)
+SUPPORTED_CASE_IDS = (
+    COMPACT_PREVIEW_CASE_IDS
+    | STATUS_ONLY_CASE_IDS
+    | PROSPECTIVE_AUTHORITY_CASE_IDS
+)
 COMMON_STATUS_LITERALS = (
     ("public_url", f"public_url={OFFICIAL_GPT_URL}"),
     ("service_availability", "service_availability=LIVE"),
@@ -73,8 +97,8 @@ RESEARCH_VERDICT_TOKENS = (
     "outside_current_knowledge",
 )
 
-STANDALONE_DIGEST_RE = re.compile(
-    r"(?<![0-9A-Fa-f])[0-9A-Fa-f]{64}(?![0-9A-Fa-f])"
+STANDALONE_HASH_VALUE_RE = re.compile(
+    r"(?<![0-9A-Fa-f])(?:[0-9A-Fa-f]{64}|[0-9A-Fa-f]{40})(?![0-9A-Fa-f])"
 )
 RESEARCH_CLAIM_ID_RE = re.compile(
     r"(?<![A-Za-z0-9_])(?:C|T)[0-9]+(?![A-Za-z0-9_])"
@@ -166,6 +190,116 @@ QUICK_BLOCK_LABELS = (
     "Weakest point",
     "Best next check",
 )
+
+
+def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    value: dict[str, object] = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError(f"duplicate key {key!r}")
+        value[key] = item
+    return value
+
+
+def _definition_sha256(case: dict[str, object]) -> str:
+    payload = json.dumps(
+        case,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def load_prospective_authority_cases(
+    path: Path = AUTHORITY_LOCK_PATH,
+) -> dict[str, dict[str, object]]:
+    """Load the fixed prospective roster without importing the package builder."""
+
+    document = json.loads(
+        path.read_text(encoding="utf-8"),
+        object_pairs_hook=_strict_object,
+        parse_constant=lambda item: (_ for _ in ()).throw(
+            ValueError(f"non-finite value {item}")
+        ),
+    )
+    if not isinstance(document, dict):
+        raise ValueError("authority lock must be a JSON object")
+    if document.get("authority_lock_schema") != "bsc-gpt-authority-lock/v2":
+        raise ValueError("authority lock schema is not recognized")
+
+    authority_records = document.get("authority_records")
+    if not isinstance(authority_records, list) or not authority_records:
+        raise ValueError("authority lock has no authority records")
+    namespaces = {
+        record.get("namespace")
+        for record in authority_records
+        if isinstance(record, dict) and isinstance(record.get("namespace"), str)
+    }
+    if len(namespaces) != len(authority_records):
+        raise ValueError("authority record namespaces are missing or duplicated")
+
+    cases = document.get("prospective_cases")
+    if not isinstance(cases, list):
+        raise ValueError("authority lock prospective cases must be a list")
+    if tuple(
+        case.get("id") for case in cases if isinstance(case, dict)
+    ) != PROSPECTIVE_AUTHORITY_CASE_ORDER:
+        raise ValueError("authority lock prospective roster or order differs")
+
+    controller = document.get("controller")
+    if not isinstance(controller, dict):
+        raise ValueError("authority lock controller is missing")
+    run_order = controller.get("run_order")
+    if (
+        not isinstance(run_order, list)
+        or tuple(run_order[-len(PROSPECTIVE_AUTHORITY_CASE_ORDER) :])
+        != PROSPECTIVE_AUTHORITY_CASE_ORDER
+    ):
+        raise ValueError("authority controller run order does not bind the prospective roster")
+
+    by_id: dict[str, dict[str, object]] = {}
+    for case in cases:
+        if not isinstance(case, dict):
+            raise ValueError("prospective authority case must be an object")
+        case_id = case.get("id")
+        required_tokens = case.get("required_tokens")
+        fixture_namespaces = case.get("evidence_fixture_namespaces")
+        if (
+            not isinstance(case_id, str)
+            or not isinstance(required_tokens, list)
+            or not required_tokens
+            or not all(isinstance(token, str) and token for token in required_tokens)
+            or len(required_tokens) != len(set(required_tokens))
+        ):
+            raise ValueError("prospective authority case has invalid required tokens")
+        if (
+            not isinstance(fixture_namespaces, list)
+            or not fixture_namespaces
+            or not all(
+                isinstance(namespace, str) and namespace in namespaces
+                for namespace in fixture_namespaces
+            )
+            or len(fixture_namespaces) != len(set(fixture_namespaces))
+        ):
+            raise ValueError("prospective authority case has an unknown fixture namespace")
+        if case.get("status") != "NOT_RUN_PREVIEW_NOT_AUTHORIZED":
+            raise ValueError("prospective authority case improperly claims execution")
+        prompt = case.get("input")
+        if not isinstance(prompt, str) or any(
+            token not in prompt for token in required_tokens
+        ):
+            raise ValueError("prospective authority case has an ungrounded required token")
+        by_id[case_id] = case
+    return by_id
+
+
+def _contains_exact_authority_token(response: str, token: str) -> bool:
+    return re.search(
+        r"(?<![A-Za-z0-9_])" + re.escape(token) + r"(?![A-Za-z0-9_])",
+        response,
+    ) is not None
 
 
 def _finding(code: str, message: str) -> dict[str, str]:
@@ -390,6 +524,8 @@ def _default_quick_blocks(
 def validate_compact_preview_response(
     case_id: str,
     response: str,
+    *,
+    prospective_cases: dict[str, dict[str, object]] | None = None,
 ) -> list[dict[str, str]]:
     """Return deterministic findings without repeating prohibited response data."""
 
@@ -412,14 +548,14 @@ def validate_compact_preview_response(
             )
         )
 
-    digest_count = len(STANDALONE_DIGEST_RE.findall(response))
-    if digest_count:
+    hash_value_count = len(STANDALONE_HASH_VALUE_RE.findall(response))
+    if hash_value_count:
         findings.append(
             _finding(
                 "COMPACT_DIGEST_VALUE_FORBIDDEN",
                 (
                     "the compact Preview response contains "
-                    f"{digest_count} standalone 64-hex digest value(s)"
+                    f"{hash_value_count} standalone 40- or 64-hex hash/digest value(s)"
                 ),
             )
         )
@@ -485,6 +621,52 @@ def validate_compact_preview_response(
                     "the default-Quick control case must contain canonical refuted",
                 )
             )
+
+    if case_id in PROSPECTIVE_AUTHORITY_CASE_IDS:
+        if prospective_cases is None:
+            try:
+                prospective_cases = load_prospective_authority_cases()
+            except (OSError, UnicodeError, ValueError, json.JSONDecodeError):
+                findings.append(
+                    _finding(
+                        "AUTHORITY_CONTROLLER_INVALID",
+                        "the frozen prospective authority definitions could not be validated",
+                    )
+                )
+                return findings
+        case = prospective_cases.get(case_id)
+        if not isinstance(case, dict):
+            findings.append(
+                _finding(
+                    "AUTHORITY_CONTROLLER_INVALID",
+                    "the case ID is absent from the validated prospective authority definitions",
+                )
+            )
+            return findings
+        required_tokens = case.get("required_tokens")
+        if not isinstance(required_tokens, list):
+            findings.append(
+                _finding(
+                    "AUTHORITY_CONTROLLER_INVALID",
+                    "the prospective authority case has no validated required-token list",
+                )
+            )
+            return findings
+        missing_tokens = [
+            token
+            for token in required_tokens
+            if isinstance(token, str)
+            and not _contains_exact_authority_token(response, token)
+        ]
+        if missing_tokens:
+            findings.append(
+                _finding(
+                    "AUTHORITY_REQUIRED_TOKEN_MISSING",
+                    "missing exact prospective authority tokens: "
+                    + ", ".join(missing_tokens),
+                )
+            )
+        return findings
 
     required_status_literals = REQUIRED_STATUS_LITERALS_BY_CASE.get(case_id)
     if required_status_literals is None:
@@ -565,14 +747,31 @@ def validate_compact_preview_response(
 def result_payload(
     case_id: str,
     findings: list[dict[str, str]],
+    *,
+    authority_case: dict[str, object] | None = None,
 ) -> dict[str, object]:
-    return {
+    checker_status = (
+        "preflight_clear_manual_review_pending" if not findings else "blocked"
+    )
+    payload: dict[str, object] = {
         "case_id": case_id,
         "checker": "compact_preview_response",
         "checker_version": CHECKER_VERSION,
+        "evaluation_scope": "MACHINE_PREFLIGHT_ONLY",
         "findings": findings,
-        "status": "pass" if not findings else "blocked",
+        "manual_semantic_review_required": True,
+        "manual_semantic_review_status": "NOT_RUN",
+        "machine_preflight_status": "CLEAR" if not findings else "BLOCKED",
+        "status": checker_status,
     }
+    payload["case_adjudication_status"] = (
+        "PENDING_HUMAN_REVIEW" if not findings else "BLOCKED_BEFORE_HUMAN_REVIEW"
+    )
+    if authority_case is not None:
+        payload["authority_case_definition_sha256"] = _definition_sha256(
+            authority_case
+        )
+    return payload
 
 
 def _emit(payload: dict[str, object]) -> None:
@@ -586,6 +785,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--case-id", required=True)
     parser.add_argument("--response-file", required=True, type=Path)
     args = parser.parse_args(argv)
+
+    prospective_cases: dict[str, dict[str, object]] | None = None
+    authority_case: dict[str, object] | None = None
+    if args.case_id in PROSPECTIVE_AUTHORITY_CASE_IDS:
+        try:
+            prospective_cases = load_prospective_authority_cases()
+            authority_case = prospective_cases[args.case_id]
+        except (OSError, UnicodeError, ValueError, KeyError, json.JSONDecodeError):
+            findings = [
+                _finding(
+                    "AUTHORITY_CONTROLLER_INVALID",
+                    "the frozen prospective authority definitions could not be validated",
+                )
+            ]
+            _emit(result_payload(args.case_id, findings))
+            return 2
 
     try:
         with args.response_file.open("rb") as response_stream:
@@ -625,8 +840,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         _emit(result_payload(args.case_id, findings))
         return 2
 
-    findings = validate_compact_preview_response(args.case_id, response)
-    _emit(result_payload(args.case_id, findings))
+    findings = validate_compact_preview_response(
+        args.case_id,
+        response,
+        prospective_cases=prospective_cases,
+    )
+    _emit(result_payload(args.case_id, findings, authority_case=authority_case))
     return 0 if not findings else 1
 
 

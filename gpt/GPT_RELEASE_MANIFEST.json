@@ -12,9 +12,9 @@
       "sha256": "ebe6ade5bb1c290cc745c5c30988e04df0893269022e7f8980f284bbd68a72e0"
     },
     {
-      "bytes": 37588,
+      "bytes": 37993,
       "path": "docs/GPT_FROZEN_CANDIDATE.json",
-      "sha256": "985ae82ef19fbf9f84f7adc7aceb0bc47fae4e1ff22ebc0c95b8e8ae52f4aeee"
+      "sha256": "169db596894e8c7d9b09a41e027ced463f2b7e853a35318a299382f717110c20"
     },
     {
       "bytes": 28371,
@@ -52,6 +52,11 @@
       "sha256": "99d24523548acbd97a6a40e33b0314fa61ece5e6690c8ec04d140cc6a6ee4492"
     },
     {
+      "bytes": 84495,
+      "path": "gpt/_source/GPT_AUTHORITY_LOCK.json",
+      "sha256": "f6bb947709f3d5e6b86c4f3a4f77cb010b2a10182402f6e880819bfb95f13b94"
+    },
+    {
       "bytes": 30489,
       "path": "gpt/_source/GPT_EVAL_PROVENANCE.md",
       "sha256": "28a5da245a46b4744519f47abade0181f693b522949869187b647ad42d7c5215"
@@ -72,9 +77,9 @@
       "sha256": "371977e98d4465045dee4c3c8a732dd9db87b701ebbde969dca0d1d731214e49"
     },
     {
-      "bytes": 26324,
+      "bytes": 26865,
       "path": "gpt/_source/GPT_PROFILE.json",
-      "sha256": "f0dacd30f82325177e67687e8d4085b216ceddc67a804fe629568bf64d6befe9"
+      "sha256": "eda100b5f9d128ddd8b287a4c0f10e9e5a9e6833c4507857ae5177f471d58fe9"
     },
     {
       "bytes": 75464,
@@ -107,9 +112,9 @@
       "sha256": "39d1c174d92c7d7383f1ae094af5d7d3796ca2e49082ac2f74f3764a34dd44f9"
     },
     {
-      "bytes": 130885,
+      "bytes": 174589,
       "path": "scripts/build_gpt_package.py",
-      "sha256": "ee90d287b4be51b3bae5edeb51b662b7eecde6ad4801ae0aad4221a179702aaf"
+      "sha256": "ba01c9619fe63607db5dc6081c4ccda49628459ea5fbb7b32018fb882ff87d11"
     },
     {
       "bytes": 8078,
@@ -117,9 +122,9 @@
       "sha256": "0c46ccdd5f82ce0811cb708c14d6c02d4658694b6c8f5a63f60f7d27023d0796"
     },
     {
-      "bytes": 20183,
+      "bytes": 28757,
       "path": "scripts/check_compact_preview_response.py",
-      "sha256": "41638bce34f41ab08244db4b387c64034e96d6c47f14005be2efe7601b860fd9"
+      "sha256": "8b08a65ec92075c79b887ab81cfad91a237382986ee254835669701d0b64cd40"
     },
     {
       "bytes": 134831,
@@ -132,9 +137,9 @@
       "sha256": "cfe1d850884348af9e4d0aca746081c246574ec6532c556b7a7512a7430e1f69"
     },
     {
-      "bytes": 44280,
+      "bytes": 44440,
       "path": "scripts/check_gpt_frozen_candidate.py",
-      "sha256": "743ae7b2b48759026133ec2935aecb06f0113b98e9417d4ed303bb214e9ae9ab"
+      "sha256": "05ac9e4ce3933de1b79b56d1b2120c36b23e69b0a6970f7a20e67b6e7a915fc0"
     },
     {
       "bytes": 91394,
@@ -202,9 +207,9 @@
       "sha256": "2cb498aedbfc7906a632d4d19283b0ed39dac047562a4ed37d757aec2faa3370"
     },
     {
-      "bytes": 28381,
+      "bytes": 35891,
       "path": "tests/test_compact_preview_response.py",
-      "sha256": "e17e0ed054d1271c7bad0bfbeff05940e30327a99f2f5589a045776ffd548e0f"
+      "sha256": "478f18bf8237e9fb4ebe120349d52f1ff0faad5f56cf008630c0edcca7871f9e"
     },
     {
       "bytes": 77022,
@@ -227,9 +232,9 @@
       "sha256": "b0d6643b796c131eefab182691c6dcdede147ab7bd5ea23ac77bc24222f675a9"
     },
     {
-      "bytes": 21696,
+      "bytes": 21995,
       "path": "tests/test_gpt_frozen_candidate.py",
-      "sha256": "b4f27edfe1c378d22b6cfb16ad72cccd9aaf0c2215636d4d25b527a2027e7ad1"
+      "sha256": "674b05ed296ebf330317f7920b78c384c76c976b55b497e88c954c98f6eed691"
     },
     {
       "bytes": 42133,
@@ -267,7 +272,7 @@
     },
     "canvas": {
       "enabled": false,
-      "optional": true
+      "optional": false
     },
     "code_interpreter_and_data_analysis": {
       "enabled": true,
@@ -310,19 +315,24 @@
       "sha256": "132ea81a77fdfe4d0a89db1550d2131912bcc404ec66ad363a5a121f2e7ad069"
     },
     {
-      "bytes": 3327,
+      "bytes": 4509,
       "path": "GPT_PUBLIC_METADATA.md",
-      "sha256": "8a165c7a56b19a54a629a6af6fface382179640335d5519f60f8827d7c09b013"
+      "sha256": "5e9d17e142fc037656d0ec42533f4ff9ab207219b6317b1491a320cbf58f3b25"
     },
     {
-      "bytes": 10341,
+      "bytes": 11787,
       "path": "GPT_SETUP_AND_PUBLISHING.md",
-      "sha256": "84b46de554eb0effad5523ee6b284307ab9a4305de510c06dd3b5c74c668858a"
+      "sha256": "e762e214af91242fdb86f9219e5fabe705d5f24602bdec59f8e705429c3079f8"
     },
     {
-      "bytes": 3133,
+      "bytes": 3399,
       "path": "README.md",
-      "sha256": "d4246e3d5ff67d44708887fe25693a97c04772798d7bfa6fd97463df45680322"
+      "sha256": "7c3b45468bb8581363f790feabc7d0bb9e9ea108b8609e87fbac664a2d146767"
+    },
+    {
+      "bytes": 83726,
+      "path": "evals/GPT_AUTHORITY_CASES.json",
+      "sha256": "f9dffe232122a1e80e8ce8904af0758a8823181660a2630187248012f4f77de8"
     },
     {
       "bytes": 84585,
@@ -330,9 +340,9 @@
       "sha256": "28756a259922d025f3696cf6801cdc0bee4a834eca5199283007b9e1ab3d5172"
     },
     {
-      "bytes": 72317,
+      "bytes": 72600,
       "path": "evals/GPT_EVAL_EXPECTATIONS.md",
-      "sha256": "eab2b375330edb7b79c35d7926537b391d195708a3fa668a8e38b5e5298f18ec"
+      "sha256": "5fa1127a526023d4ae6498e8eb17f6a2484470d0a3f128d9dcf54437a59b64ff"
     },
     {
       "bytes": 30489,
@@ -350,14 +360,14 @@
       "sha256": "371977e98d4465045dee4c3c8a732dd9db87b701ebbde969dca0d1d731214e49"
     },
     {
-      "bytes": 6092,
+      "bytes": 6257,
       "path": "evals/GPT_MANUAL_SCORECARD.md",
-      "sha256": "6c7f71333c145c99a028d18cc4b3da5900eeee5b41be0b2a085f40e835fc8361"
+      "sha256": "cff54f0cffe740ac5e4bd2c109fd258bb64039147c1b1245ae1e2e8cdebd6dc9"
     },
     {
-      "bytes": 967,
+      "bytes": 2263,
       "path": "evals/README.md",
-      "sha256": "88bab2d733834ba8c441627f1c6b5f482a0bee0bb042e79cdc5d0df5a79af836"
+      "sha256": "70834f7c30a04f4c8ed56d811ae926cd56f34dc2befe0e41cd43435308ccea67"
     },
     {
       "bytes": 97,
@@ -570,9 +580,9 @@
       "sha256": "3fb0726dbe9d753275184992c7509cfead5e8d06d16b8241dda3712a4f8a778d"
     },
     {
-      "bytes": 38870,
+      "bytes": 46273,
       "path": "knowledge/BSC_SUPPORTED_CHECKS.md",
-      "sha256": "80c761d867f81f7315eaaa418ef6efa5787b3aadd1c1fb1bf512d59e0a4364be"
+      "sha256": "af9fe25a44e8dd83db2f4c415559a0a25290cf11b745e8e25452ab2c607a963c"
     },
     {
       "bytes": 6892,
@@ -582,7 +592,7 @@
   ],
   "generator": {
     "path": "scripts/build_gpt_package.py",
-    "sha256": "ee90d287b4be51b3bae5edeb51b662b7eecde6ad4801ae0aad4221a179702aaf",
+    "sha256": "ba01c9619fe63607db5dc6081c4ccda49628459ea5fbb7b32018fb882ff87d11",
     "version": "bsc-custom-gpt-generator-v1"
   },
   "historical_artifact_evaluation_case_count": 39,
@@ -638,7 +648,7 @@
     "candidate_state": "PENDING",
     "live_binding_state": "NON_ADMISSIBLE_UNHASHABLE",
     "package_role": "REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE",
-    "preview_gate_case_count": 12,
+    "preview_gate_case_count": 26,
     "preview_validation_state": "PENDING",
     "public_url": "https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor",
     "service_availability": "LIVE"
@@ -659,6 +669,387 @@
   "source_commit_binding": "The tracked package avoids a circular self-reference. The tagged release builder injects the exact commit, tree, and tag into the standalone archive and its outer RELEASE_MANIFEST.json.",
   "source_tag": null,
   "source_tree": null,
+  "successor_candidate_freeze": {
+    "authority_lock": {
+      "bytes": 84495,
+      "path": "gpt/_source/GPT_AUTHORITY_LOCK.json",
+      "sha256": "f6bb947709f3d5e6b86c4f3a4f77cb010b2a10182402f6e880819bfb95f13b94"
+    },
+    "branch": "codex/gpt-authority-lock-20260816-r1",
+    "candidate_capability_declarations": {
+      "actions": {
+        "enabled": false,
+        "instruction": "The official configuration includes no GPT Action."
+      },
+      "apps": {
+        "enabled": false
+      },
+      "canvas": {
+        "enabled": false,
+        "optional": false
+      },
+      "code_interpreter_and_data_analysis": {
+        "enabled": true,
+        "instruction": "Use only for attachment inspection or bounded calculations when useful, and label it as ChatGPT tool execution rather than BSC Python execution. This compact release profile must not create or hash audit artifacts, run gpt_artifact_compiler.py, emit audit_return.json, reproduce compiler stdout, or serialize Base64, shards, or transport."
+      },
+      "image_generation": {
+        "enabled": false
+      },
+      "web_search": {
+        "enabled": true,
+        "instruction": "Use when current source or citation verification is material, and disclose whether each decisive cited source was independently opened."
+      }
+    },
+    "candidate_id": "bsc-claim-auditor-2026-08-16-r1",
+    "controller": {
+      "adjudication_sha256": "fca5d11452807aac1560859e3d4a17b872611492912a8ddfbc6bca7038911a20",
+      "controller_id": "bsc-gpt-authority-preflight-and-human-review/v2",
+      "prospective_case_count": 14,
+      "regression_case_count": 12,
+      "repair_policy": "NEW_CANDIDATE_AND_RESTART_AT_CASE_1",
+      "retry_policy": "NEVER_RETRY_FOR_LUCK",
+      "run_order_sha256": "bb1caa393b61a69b28efdc6737d63e14b2ecbb4ad5de9ef483cca2d4b2d70ae0",
+      "runtime": "CPython 3.12.13 exact-token preflight via check_compact_preview_response.py v1.5; authenticated ChatGPT Preview plus independent human semantic review required later",
+      "source_files": [
+        {
+          "bytes": 84495,
+          "path": "gpt/_source/GPT_AUTHORITY_LOCK.json",
+          "sha256": "f6bb947709f3d5e6b86c4f3a4f77cb010b2a10182402f6e880819bfb95f13b94"
+        },
+        {
+          "bytes": 26865,
+          "path": "gpt/_source/GPT_PROFILE.json",
+          "sha256": "eda100b5f9d128ddd8b287a4c0f10e9e5a9e6833c4507857ae5177f471d58fe9"
+        },
+        {
+          "bytes": 69135,
+          "path": "gpt/_source/GPT_EVAL_SPEC.json",
+          "sha256": "92627dc74f430ac63219378aafe119254cc5d74bd137ad63fc8d809c64a6f99d"
+        },
+        {
+          "bytes": 174589,
+          "path": "scripts/build_gpt_package.py",
+          "sha256": "ba01c9619fe63607db5dc6081c4ccda49628459ea5fbb7b32018fb882ff87d11"
+        },
+        {
+          "bytes": 28757,
+          "path": "scripts/check_compact_preview_response.py",
+          "sha256": "8b08a65ec92075c79b887ab81cfad91a237382986ee254835669701d0b64cd40"
+        }
+      ],
+      "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+    },
+    "failure_taxonomy": [
+      "PRODUCT_FAILURE",
+      "CONTROLLER_INVALID",
+      "TRANSPORT_LIMITED",
+      "ENVIRONMENT_LIMITED",
+      "NOT_CHECKED",
+      "UNKNOWN"
+    ],
+    "framework_crosswalk": {
+      "bytes": 7356,
+      "embedded_path": "gpt/knowledge/BSC_SUPPORTED_CHECKS.md#framework-authority-crosswalk",
+      "sha256": "98a426ecc9f38e9874d4c6e584d08938fcd406163ffe75e68b62e3c255de373d"
+    },
+    "historical_preview_evidence": {
+      "record": {
+        "candidate_binding": {
+          "checker_sha256": "44dee2e431f9b09652b2dd363b3aea7b923f5b547d7e59431e23ed710b338c9c",
+          "commit": "99b0804e161a4cfeb166785bd35920aa64f53c40",
+          "eval_jsonl_sha256": "67ad79d5bae7c319f655df7ed34b9b5e5082ec724417e05860c74f3cb5340a89",
+          "instructions_sha256": "64823f455df162624cc91d9df9218b125d16454a182c5491ff4f6779c9ed2313",
+          "profile_sha256": "f7f35911d261e17d9658e02a87e4ff30f72646b71dbb5f1c09d7d2f0c5ff5de0",
+          "release_manifest_sha256": "84779fdb2927f789b2d6b984988616c5418467dd89ba882c5481732914bc4001",
+          "setup_sha256": "89fb84658b94e5826e26c967074fddadfa6b54e60f2d9314c98251141e9843ad",
+          "tag": "v0.3.0-alpha.10",
+          "tag_object": "f40a89141a7abbadfdb52d7d3573bc3d88d2abb6",
+          "tree": "e5c7ef2fbc6e311b6fe97bf22f1e05ee98ed5f96"
+        },
+        "case_bindings": [
+          {
+            "alpha10_case_record_sha256": "b222dd09c849ffba37cdb58d65a093bc745cb516f81bbc1ef96673ce69c05522",
+            "alpha10_fixture_sha256": "85050a5818cf4682ef0e0f9a34ff8a0000f7576c8d53f25735cd78f1fc752ce7",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#known-true-induction",
+            "alpha20_relation": "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE",
+            "id": "known-true-induction",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_exact_prompt_sha256": null,
+            "alpha10_exact_prompt_status": "UNKNOWN_NOT_RETAINED",
+            "alpha10_procedure_description_sha256": "fd8109fc5b2661abdbdcf50ad64f8d6308c63ec70b62cd0a7a06c5002c27841f",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/GPT_SETUP_AND_PUBLISHING.md",
+            "alpha20_relation": "DESCRIPTION_AND_FIXTURE_SEMANTICS_MATCH_EXACT_INPUT_NOT_BYTE_COMPARABLE",
+            "id": "artifact-export-disabled-control",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_case_record_sha256": "43c8758cc88837542728d54ee562c26c9a36c67bd0ab31db28eb8d0b1afe208b",
+            "alpha10_fixture_sha256": "5083027d7cc53f76f8e1b3cea392fbefbcfcc3feda693973f9aabd65ecfd4378",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#known-false-continuity",
+            "alpha20_relation": "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE",
+            "id": "known-false-continuity",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_case_record_sha256": "08679d994b557f56203668d07bf00e40714fa06a63a96f81924129d7fb0015af",
+            "alpha10_fixture_sha256": "816707b10fecd335b82de0198f7e39f19e29ab3716f5b407612f3a9170438f22",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#assumption-present",
+            "alpha20_relation": "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE",
+            "id": "assumption-present",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_case_record_sha256": "61b1217becbea1146279f00a9cd19dc2299f9f5451d5f47e2606cf5fd3b74edd",
+            "alpha10_fixture_sha256": "df442501cd8f5b7c3066cdfdfb0af953ed77c3bd1302bbb62dad69c359c19f9f",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#assumption-removed",
+            "alpha20_relation": "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE",
+            "id": "assumption-removed",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_case_record_sha256": "586d34b56c9e0419a95245a846bb74e9b9dfd9336ce00ef035004ca2e02a49ff",
+            "alpha10_fixture_sha256": "5fa9c984cee9ef652389a4a9e7184f5b4b37214420c333875c00e60777c3c824",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#truncated-proof",
+            "alpha20_relation": "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE",
+            "id": "truncated-proof",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_case_record_sha256": "6dec8e2fb8060a905fbeb09059b4d6f823ae881e70f01a8693c0ec673cf84bf0",
+            "alpha10_fixture_sha256": "3206eb86bfc8d58d8abca36d6a29828c80ece690d2abcdfcf345c92fe6796625",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#decisive-calculation-not-executed",
+            "alpha20_relation": "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE",
+            "id": "decisive-calculation-not-executed",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_case_record_sha256": "533d14adf56c326c72df3b38d547e8e22e89faf6482bb418e64dd1fe719863d1",
+            "alpha10_fixture_sha256": "0e441a245c505f6cbd9348a159cd3a92fee1f39f5dec2220323d0967d18e781f",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#poisoned-source-prompt-injection",
+            "alpha20_relation": "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE",
+            "id": "poisoned-source-prompt-injection",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_case_record_sha256": "85e4b6ae7f2867ebf65399d467a5acf2c771f85c18b42bc3ec587595464b1a6c",
+            "alpha10_fixture_sha256": "9fcaa16bf7ff0929db7635ccfabc1df293ed3f50733c6acec304161bf4e177ef",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#contradictory-verified-evidence",
+            "alpha20_relation": "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE",
+            "id": "contradictory-verified-evidence",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_case_record_sha256": "168e2117276f68eadc7722ab047e038e5dd70627fdd31e9612d883d7f7c1b81d",
+            "alpha10_fixture_sha256": "24b7463a9ae7fe0193a3ca25c21b4ce2ecd07261783600ba300e0b083c9245a5",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#deployment-from-mathematical-result",
+            "alpha20_relation": "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE",
+            "id": "deployment-from-mathematical-result",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_case_record_sha256": "9919dd7ebdda8dd1f06e7e963be75a98e9207d95bce23d3c2a2c9d82f2f65233",
+            "alpha10_fixture_sha256": "bd85579d3f98a6b3e936efc669e3d64e5939d548a58368945d272dea5a872979",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#ja-truncated-proof",
+            "alpha20_relation": "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE",
+            "id": "ja-truncated-proof",
+            "transfer": "PROHIBITED"
+          },
+          {
+            "alpha10_case_record_sha256": "dc7556c855ea0cb6c4616d71c251883a96cd89714ae2728bdfc8445535b8a0fa",
+            "alpha10_fixture_sha256": "85220abcda81a9842de84834fdb8047af612ccbebb81901ebb21be4881122480",
+            "alpha10_source": "v0.3.0-alpha.10:gpt/evals/GPT_EVAL_CASES.jsonl#official-service-status-separation",
+            "alpha20_case_record_sha256": "5ec49a43c46245ed5ca6bd6c593174de60622fda7db3375f35d8f1bfdb1e964c",
+            "alpha20_fixture_sha256": "8d0b018749cb7d584270d0493af5a8006dc11ca81e5ccad075cc43a9b2c11d65",
+            "alpha20_relation": "CHANGED_FIXTURE_EXPECTED_ORACLE_AND_CHECKER_LITERAL",
+            "id": "official-service-status-separation",
+            "preview_prompt_sha256": "d92cb776a1a05438b128ceb0949ded8bfffc0d2131639096159483ba128a96d0",
+            "transfer": "PROHIBITED"
+          }
+        ],
+        "definition_binding_status": "ELEVEN_EXACT_TAGGED_RECORDS_ONE_DESCRIPTION_ONLY",
+        "result": "PASS_12_OF_12_OBSERVED_ALPHA10_ONLY",
+        "result_authority": "HISTORICAL_BEHAVIOR_OBSERVATION",
+        "roster_sha256": "d379a0a84ba8cb2c53ddd656da6636dccef083142d28a0b4c5e85e862e57367e",
+        "transfer_to_successor": "PROHIBITED"
+      },
+      "sha256": "ffcda17ed9f3d92761f242df0ff0185d61bedaaac67ddd1a493c411cf712cafa"
+    },
+    "instructions": {
+      "bytes": 6006,
+      "characters": 5970,
+      "lines": 47,
+      "path": "gpt/GPT_INSTRUCTIONS.md",
+      "sha256": "132ea81a77fdfe4d0a89db1550d2131912bcc404ec66ad363a5a121f2e7ad069"
+    },
+    "knowledge_files": [
+      {
+        "bytes": 19907,
+        "filename": "BSC_PROTOCOL.md",
+        "order": 1,
+        "path": "gpt/knowledge/BSC_PROTOCOL.md",
+        "sha256": "15c6644e697d9b53a5299da9dd43184f620054ec2a9c5d9b1ddd58c79f805796"
+      },
+      {
+        "bytes": 10679,
+        "filename": "BSC_STATUS_AND_EVIDENCE_MODEL.md",
+        "order": 2,
+        "path": "gpt/knowledge/BSC_STATUS_AND_EVIDENCE_MODEL.md",
+        "sha256": "3fb0726dbe9d753275184992c7509cfead5e8d06d16b8241dda3712a4f8a778d"
+      },
+      {
+        "bytes": 46273,
+        "filename": "BSC_SUPPORTED_CHECKS.md",
+        "order": 3,
+        "path": "gpt/knowledge/BSC_SUPPORTED_CHECKS.md",
+        "sha256": "af9fe25a44e8dd83db2f4c415559a0a25290cf11b745e8e25452ab2c607a963c"
+      },
+      {
+        "bytes": 6892,
+        "filename": "BSC_WORKED_EXAMPLES.md",
+        "order": 4,
+        "path": "gpt/knowledge/BSC_WORKED_EXAMPLES.md",
+        "sha256": "e67812c6e368758d67a277c8223af23e1aec5cd5d60babfd8f4593d4467aa1e8"
+      },
+      {
+        "bytes": 4715,
+        "filename": "BSC_JAPANESE_INTERFACE.md",
+        "order": 5,
+        "path": "gpt/knowledge/BSC_JAPANESE_INTERFACE.md",
+        "sha256": "72306f1b691ced1e6853d3a3d43750c38fe601276e3cf8f25f13032c46f25dde"
+      }
+    ],
+    "owner_editor_observation": {
+      "capabilities": {
+        "actions": "NONE_OBSERVED",
+        "apps": "NOT_OBSERVED",
+        "canvas": "NOT_OBSERVED",
+        "code_interpreter_and_data_analysis": "ENABLED_OBSERVED",
+        "image_generation": "DISABLED_OBSERVED",
+        "recommended_model": "NONE_OBSERVED",
+        "web_search": "ENABLED_OBSERVED"
+      },
+      "indexed_knowledge": "NON_ADMISSIBLE_UNHASHABLE",
+      "instructions": {
+        "bytes": 6006,
+        "characters": 5970,
+        "classification": "SOURCE_BOUND_TO_ALPHA19_INSTRUCTIONS",
+        "lines": 47,
+        "sha256": "74e4bda6e9c920c2e6f7ddb985a2115bb3397bb49660001da2de3a210bfacc07"
+      },
+      "knowledge_visible_order": [
+        "BSC_SUPPORTED_CHECKS.md",
+        "BSC_STATUS_AND_EVIDENCE_MODEL.md",
+        "BSC_JAPANESE_INTERFACE.md",
+        "BSC_WORKED_EXAMPLES.md",
+        "BSC_PROTOCOL.md"
+      ],
+      "observation_date": "2026-08-16",
+      "repository_prescribed_order": [
+        "BSC_PROTOCOL.md",
+        "BSC_STATUS_AND_EVIDENCE_MODEL.md",
+        "BSC_SUPPORTED_CHECKS.md",
+        "BSC_WORKED_EXAMPLES.md",
+        "BSC_JAPANESE_INTERFACE.md"
+      ],
+      "sharing": "ANYONE_WITH_LINK_OBSERVED_GPT_STORE_DISABLED",
+      "surface": "OWNER_EDITOR_OBSERVED_ALPHA19_INCUMBENT"
+    },
+    "preview_status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
+    "prospective_cases": {
+      "count": 14,
+      "definition_set_sha256": "9ab0a7b87751609ff995d970c990c3f27212ed8dd3b589bdfbfa8453eba2b4eb",
+      "definition_sha256_by_id": {
+        "authority-alpha10-vs-alpha19": "28595e59d715c9375968085b59fa42e3a686ec12d2bb066183d3f12f673cbd5c",
+        "authority-alpha19-instructions-vs-index": "f5cfaff154dd0c63b89807753b8c455d1eafcef0ee75b0278c5b75e150900f86",
+        "authority-analogy-vs-executable": "cd7b61027df519d20eab93176731e321e5931dc6dd690296b1e02d4582cff989",
+        "authority-astra-maintenance-overlay": "a0f4a02c3efd289138ef496981e7882bf6f98e41a68260fe7864e1837f97c60d",
+        "authority-astra-stable-v107": "c25711eebeb79fabfbfc4b366205653a4711266d4e42ed6a312d6b81edea5799",
+        "authority-astra-v108-candidate-ja": "a67e8ff16c0a51eed2ef962f2af30cc264fd40b3fc391461d664be520a64af67",
+        "authority-bsc-core-v15": "38d8f9c9c30de42f528f72c8cfd5d9004615de3285c9ba7386dc99fb8e6982bc",
+        "authority-bsc-release-vs-main": "997c9e3d1aed89776464e965621eac18e504a9f27117322d3de7e2a1092a4cf5",
+        "authority-c13-pr16": "f1a2e6231b532d66329584ca7a2d27f0691d87f468c3a6bdbd3842887cbf93a8",
+        "authority-not-applicable-statuses": "8e40963134b50ce794f947fe1d3d47bff3098edf78d519eaaa9f2a31c9f20b7e",
+        "authority-poisoned-conflict": "adaeaed7c0bcd318cd30b6c832bda8f0bd9368d12a3335a1be7dc62677b0abf4",
+        "authority-q26-direct-lean": "ec6e96ee82e87c51aeefcb2a88fab8c279eaab1bb1569e0d26fb5e32c78c3979",
+        "authority-q26-root-cnf": "23696e2965739bd0a7802164565eb251ce42ab59d927f28c1538822d34dc3537",
+        "authority-unsupported-execution": "a70da0a2d4572a24164be122fdc376f2930c53a787ea1903b39bc4491f6d3c01"
+      },
+      "order": [
+        "authority-alpha10-vs-alpha19",
+        "authority-alpha19-instructions-vs-index",
+        "authority-bsc-release-vs-main",
+        "authority-bsc-core-v15",
+        "authority-q26-direct-lean",
+        "authority-q26-root-cnf",
+        "authority-c13-pr16",
+        "authority-astra-stable-v107",
+        "authority-astra-maintenance-overlay",
+        "authority-astra-v108-candidate-ja",
+        "authority-analogy-vs-executable",
+        "authority-not-applicable-statuses",
+        "authority-poisoned-conflict",
+        "authority-unsupported-execution"
+      ],
+      "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+    },
+    "public_metadata": {
+      "category_recommendation": "Education",
+      "conversation_starters": [
+        "Start a 60-second claim audit",
+        "60秒で主張を点検する",
+        "Show a simple example first",
+        "まず簡単な例を見る"
+      ],
+      "description": "Stress-test one scientific or technical claim. Get the bottom line, weak points, and best next test. 科学・技術の主張を簡潔に点検します。日本語対応はベータ版です。Research aid—not certification.",
+      "name": "BSC Claim Auditor"
+    },
+    "source_identity": {
+      "baseline": {
+        "commit": "bcdd04575c88757241182f991c2877fb480369d2",
+        "repository": "https://github.com/jkolantree/octo.git",
+        "tree": "24648efb7eea3a6ded14fd70d62808b154d462d6",
+        "version": "0.3.0-alpha.20"
+      },
+      "candidate_commit_tree_binding": "EXTERNAL_GIT_OBJECT_REQUIRED_TO_AVOID_CIRCULAR_SELF_REFERENCE"
+    },
+    "state": "FRESH_UNPROMOTED_SUCCESSOR_CANDIDATE",
+    "successor_regressions": {
+      "count": 12,
+      "definition_set_sha256": "2af44c2ab630f6ca0cf63076002b36e67b71439d02c997a596078200bdb51f11",
+      "definition_sha256_by_id": {
+        "artifact-export-disabled-control": "04e61d90ff5687728bc92bf24557185aa9873a971e058ea1abf095063ba44fc4",
+        "assumption-present": "a0a0528165209146d3515ed30ca9286e437776a841e84db849d2e4007652812d",
+        "assumption-removed": "4231e6e9255441a6734ca1e61d8416576ee89728d99ca530fb10f40e1c9f39f2",
+        "contradictory-verified-evidence": "c99083f616a7136e34ce3fdbba9e909756178cbd5d8d51c72589f7ba39f8ecb8",
+        "decisive-calculation-not-executed": "da901955eba2592946014ad507af89ae20810f9f2ffbecf5d796a1337c3f2712",
+        "deployment-from-mathematical-result": "214886bb4673f8753ccac76a30eee59543e925154847da660e06606b079292ee",
+        "ja-truncated-proof": "b89a2d6b4e0ced3e8671d85e0fe187a53df1f497483b5e0b4991309564380b38",
+        "known-false-continuity": "d5dfaf915dcc32486d067f96d18c3f2ecbde80d053d414b59ef7c05fbb44cece",
+        "known-true-induction": "6f7f00995d3aea836c0e3247c143cd4e97908b738b438d8256e2917a4fc90153",
+        "official-service-status-separation": "d1324793d7ae21be155ed7a0651b5b5ca01010c8792a03ca770a60a4b2af1365",
+        "poisoned-source-prompt-injection": "5ecc4bb9235a3aa278c466d5505d319a9966846a5703272c91f9cf0a20b9d53c",
+        "truncated-proof": "88ddad781f8ed2d55778f7660c5d4c40e9c8bf37b6ea2624ebb3a306ca2e9fbc"
+      },
+      "historical_evidence_transfer": "PROHIBITED",
+      "order": [
+        "known-true-induction",
+        "artifact-export-disabled-control",
+        "known-false-continuity",
+        "assumption-present",
+        "assumption-removed",
+        "truncated-proof",
+        "decisive-calculation-not-executed",
+        "poisoned-source-prompt-injection",
+        "contradictory-verified-evidence",
+        "deployment-from-mathematical-result",
+        "ja-truncated-proof",
+        "official-service-status-separation"
+      ],
+      "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+    }
+  },
   "supported_audit_depths": [
     "quick",
     "standard",

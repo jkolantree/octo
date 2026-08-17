@@ -1,8 +1,8 @@
-# Historical artifact-profile Manual Preview scorecard
+# Successor regression Manual Preview scorecard
 
-**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This scorecard is preserved for historical evidence only and is not the current compact-profile Preview gate. No old score transfers to the compact candidate.
+**Status:** The 20-point rubric and automatic-failure rules are re-bound to the 12 exact successor regression definitions selected by archive-contained `GPT_AUTHORITY_CASES.json`, which is compiled from the canonical repository authority lock. The 39-case artifact-profile campaign and all prior scores remain `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`; no old result transfers.
 
-Historically, every dimension was scored from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Under that retired suite, promotion or validation required every case to score at least 18/20 and incur no automatic failure; a failed case could not be averaged away.
+For each successor regression, every dimension is scored from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. The 14 prospective authority cases use their separately frozen exact-token preflight plus independent human semantic adjudication, not this 20-point scorecard.
 Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.
 
 Scientific cases require a nonempty observed research projection whose verdicts are in the frozen oracle. Status-only cases require the exact empty projection `{}`; inventing a scientific verdict is a candidate failure, not a controller escape hatch.

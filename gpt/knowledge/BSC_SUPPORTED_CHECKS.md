@@ -10,6 +10,7 @@
 
 - `docs/MATHEMATICS.md`
 - `docs/DERIVED_HOLONOMY.md`
+- `gpt/_source/GPT_AUTHORITY_LOCK.json`
 
 Paths identify the offline repository sources. Digest values are deliberately withheld from public Knowledge and remain available only in offline release verification records.
 
@@ -753,3 +754,38 @@ The current public contract is [`derived-holonomy-v0.2.schema.json`](https://git
 #### Current boundary
 
 The route does not expose higher coherent homotopies, invariant naturality, a query-holonomy Galois search, physical truth validation, or proof-assistant certification. The shared mapping-complex kernel is a prerequisite for later degree-2 coherence work, not evidence that such a public contract already exists. A clear result establishes only the finite equations and bindings actually checked. The explicit non-admissive warning is permanent output semantics, not an invitation to infer that an external declaration is true or false.
+
+
+---
+
+## Framework authority crosswalk
+
+This table is generated from the offline authority lock. It classifies source authority and executable support; it does not turn a theorem, release, reviewed candidate, or analogy into a new implemented check.
+
+All public links in this table are navigation or observed-state locators; tag, release, pull-request, live-service, and branch pages may change. Exact tag objects, commits, trees, release identifiers, and hashes remain in the offline lock and do not appear in this public Knowledge projection.
+
+The classifications are snapshot records from observations and explicit check attempts dated 2026-08-16 through 2026-08-17; navigation links do not update them. Retrieve current sources afresh before answering a current-status question.
+
+| Authority token | Classification | Exact scope | Evidence / executable status | Stop line | Locator |
+|---|---|---|---|---|---|
+| `OCTO_ALPHA10_HISTORICAL_EVALUATION` | `HISTORICAL_ALPHA10_ONLY` | Compact 12-case pass for exact alpha.10. | Historical Preview evidence only. | No later GPT inherits the pass. | [Octo alpha.10 release (navigation)](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.10) |
+| `OWNER_EDITOR_OBSERVED_ALPHA19_INCUMBENT` | `OBSERVED_SAVED_FIELDS` | Visible owner-editor fields only. | No new executable authority. | No hidden-index byte claim. | [Official public GPT (live navigation)](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) |
+| `SOURCE_BOUND_TO_ALPHA19_INSTRUCTIONS` | `EXACT_INSTRUCTIONS_MATCH` | Instructions bytes only. | No Knowledge or Preview authority. | Do not extend the match to hidden state. | [Octo alpha.19 Instructions (tag navigation)](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.19/gpt/GPT_INSTRUCTIONS.md) |
+| `LIVE_INDEXED_KNOWLEDGE=NON_ADMISSIBLE_UNHASHABLE` | `UNKNOWN_BYTES` | Hidden service index. | Public behavior can be observed; bytes cannot. | No repository-to-index equality claim. | [Official public GPT (live navigation)](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) |
+| `PUBLIC_PAGE=NOT_CHECKED` | `ENVIRONMENT_LIMITED_BROWSER_UNAVAILABLE` | Direct visible public-page fields. | No direct page observation was available. | Do not infer page fields from owner-editor, repository, or fresh-chat evidence. | [Official public GPT (live navigation)](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) |
+| `PUBLIC_FRESH_CHAT=OBSERVED_SINGLE_RESPONSE` | `BEHAVIOR_OBSERVATION` | One fresh public response; exact prompt bytes not retained. | Observed service output; no GPT/Octo execution route added. | Not complete Preview validation or index identity. | [Official public GPT (live navigation)](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) |
+| `OCTO_ALPHA20_DEVELOPMENT_SOURCE` | `UNINSTALLED_SOURCE_BASELINE` | Repository package and bounded F10 crosswalk. | Existing alpha.19 engine routes only. | Not live-installed or Preview-validated. | [Octo alpha.20 release (navigation)](https://github.com/jkolantree/octo/releases/tag/v0.3.0-alpha.20) |
+| `FRESH_UNPROMOTED_SUCCESSOR_CANDIDATE` | `LOCAL_ONLY` | Authority lock and generated crosswalk. | No new engine support. | Not a release or live state. | [Octo repository (navigation)](https://github.com/jkolantree/octo) |
+| `OCTO_BSC_F10=IMPLEMENTED_SUPPORTED_CHECK` | `IMPLEMENTED_SUPPORTED_CHECK` | Exact v1.2 F10 affine-bound projection. | Existing defect route plus separate equality witness. | Not a general BSC validator. | [F10 crosswalk (tag navigation)](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.20/docs/BSC_V1_2_SIMULATION_CROSSWALK.md) |
+| `BSC_RELEASE_V1_4_0` | `RELEASED_AUTHORITY` | Exact v1.4.0 release tree. | Only release-contained routes and artifacts. | No post-release Core, Q26, or C13 authority. | [BSC v1.4.0 release (navigation)](https://github.com/jkolantree/BSC/releases/tag/v1.4.0) |
+| `BSC_MAIN_POST_RELEASE` | `POST_RELEASE_MAIN_RESEARCH` | Date-bound main state after v1.4.0. | Namespace-specific external CI only; no general GPT/Octo execution route. | Main is not a release. | [BSC main (navigation; observed state is date-bound)](https://github.com/jkolantree/BSC/tree/main) |
+| `BSC_CORE_V1_5_RESEARCH_MILESTONE` | `POST_RELEASE_RESEARCH_MILESTONE` | Typed Core claims at exact main source. | External Lean evidence for selected claims; no GPT/Octo execution route. | Not a release or empirical theory. | [BSC Core v1.5 on main (navigation)](https://github.com/jkolantree/BSC/blob/main/BSC_CORE_V1_5.md) |
+| `Q26_LEAN=EXTERNALLY_CHECKED_DIRECT_THEOREM` | `FORMAL_THEOREM` | Exact Q26 finite-board theorem. | External Lean/nanoda acceptance evidence; no GPT/Octo execution route. | No root-CNF or whole-BSC transfer. | [Q26 formal directory on main (navigation)](https://github.com/jkolantree/BSC/tree/main/formal/q26_grid_annihilator) |
+| `Q26_ROOT_CNF=UNKNOWN_UNCHANGED` | `UNKNOWN_CERTIFICATE_LANE` | Independent root-CNF evidence. | No retained replayable root proof and no GPT/Octo execution route. | Do not import the Lean theorem status. | [Q26 evidence boundary on main (navigation)](https://github.com/jkolantree/BSC/blob/main/formal/q26_grid_annihilator/README.md) |
+| `C13_PR16=OPEN_NOT_MAIN` | `NON_MAIN_CANDIDATE` | Open PR #16 candidate only. | No current-main route or kernel theorem. | Not BSC main or release authority. | [BSC PR #16 (date-bound live navigation)](https://github.com/jkolantree/BSC/pull/16) |
+| `ASTRA_STABLE_V1_0_7` | `RELEASED_AUTHORITY` | Exact stable claim matrix and release artifacts. | ASTRA's declared local checks only. | Not peer review, empirical validation, or BSC support. | [ASTRA v1.0.7 release (navigation)](https://github.com/jkolantree/astra/releases/tag/v1.0.7) |
+| `ASTRA_MAIN_POST_RELEASE` | `POST_RELEASE_MAIN_RESEARCH` | Date-bound mutable main after v1.0.7. | External resource-local checks only; no GPT/Octo execution route. | Main is not the stable release. | [ASTRA main (navigation; observed state is date-bound)](https://github.com/jkolantree/astra/tree/main) |
+| `ASTRA_M1=UNPROMOTED_MAINTENANCE_OVERLAY` | `UNPROMOTED_MAINTENANCE_EVIDENCE` | Separate source-repair overlay. | Coverage accounting, not scientific promotion. | Does not rewrite stable v1.0.7. | [ASTRA M1 overlay on main (navigation)](https://github.com/jkolantree/astra/blob/main/evidence/claim_source_coverage_v1.0.7_maintenance_overlay_m1.json) |
+| `ASTRA_V1_0_8=REVIEWED_UNPROMOTED_CANDIDATE` | `REVIEWED_UNPROMOTED_CANDIDATE` | Namespaced Endogenous Visibility package. | Declared local package checks only. | Not release, peer review, or empirical validation. | [ASTRA v1.0.8 candidate on main (navigation)](https://github.com/jkolantree/astra/tree/main/resources/sppt-astra-v1.0.8-candidate) |
+| `STRUCTURAL_ANALOGY` | `NON_EXECUTABLE_ANALOGY` | Method and governance patterns only. | None implied. | No scientific or theorem equivalence. | [ASTRA stable framework (release navigation)](https://github.com/jkolantree/astra/releases/tag/v1.0.7) |
+| `NO_EXECUTABLE_ADAPTER` | `PROPOSED_ONLY` | Future separately typed adapter only. | UNSUPPORTED_EXECUTION today. | Natural-language crosswalk is not code. | [Octo supported-check boundary (tag navigation)](https://github.com/jkolantree/octo/blob/v0.3.0-alpha.20/docs/BSC_V1_2_SIMULATION_CROSSWALK.md) |

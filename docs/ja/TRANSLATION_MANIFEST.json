@@ -9,9 +9,9 @@
   "entries": [
     {
       "source": "README.md",
-      "source_sha256": "2229d46d338056df3f952397aeb8475eb38d3a046880e815debc9c191e38c3b7",
+      "source_sha256": "9ab8c12879434706246bea0dd1c8823ded4d8d177dfe176f7b255100f4820f68",
       "target": "README.ja.md",
-      "target_sha256": "07dd0211881c3daefabcc6ac395ff7dc4743592341d52d6a48f3f2897104f67b"
+      "target_sha256": "2ab0d260a60d3ea44a0a0fb7e6eea5a9bb6ae31285220b07fa7b0cfd8cd4f63a"
     },
     {
       "source": "START_HERE.md",
@@ -27,9 +27,9 @@
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "8de4c6200d3e88adc3010f92cb46ec34be82f4354ea7dc63f386c61038ecda6f",
+      "source_sha256": "c9294ee00691528f2a885383f4002203fc16fb600d61eb8892091c4b6049c44f",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
-      "target_sha256": "28f053b7a52e652bc367db0b2d6e53b5d2c570c4568620b0478280ff609e3f3e"
+      "target_sha256": "022d435cc7e530abff72024cf01a087a8dc2c9fe53dfb020742a8673dddd5b43"
     },
     {
       "source": "docs/STATUS_MODEL.md",
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "81565c09adf0de57524817e0510729fc63ddb03c00d8c1d4164a66bfec3bfea3"
+  "manifest_payload_sha256": "84aa0203662739e31bf9793067e65271b09980cb3f47caf36f1123f91bfe1c5a"
 }

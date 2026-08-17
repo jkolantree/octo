@@ -15,6 +15,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from build_gpt_package import (  # noqa: E402
+    AUTHORITY_FAILURE_TAXONOMY,
+    AUTHORITY_LOCK_PATH,
+    CANDIDATE_BRANCH,
+    CANDIDATE_ID,
     COMPACT_PREVIEW_CASE_IDS,
     EVAL_GOVERNANCE_SOURCES,
     EXPECTED_CONVERSATION_STARTERS,
@@ -26,6 +30,7 @@ from build_gpt_package import (  # noqa: E402
     OFFICIAL_GPT_URL,
     OPERATING_GPT_INSTRUCTION_CHARACTERS,
     PROFILE_PATH,
+    PROSPECTIVE_AUTHORITY_CASE_IDS,
     REQUIRED_EVAL_CASE_REQUIREMENTS,
     REQUIRED_EVAL_CASE_IDS,
     REQUIRED_JAPANESE_CRITICAL_EVAL_CASE_IDS,
@@ -35,18 +40,24 @@ from build_gpt_package import (  # noqa: E402
     REQUIRED_STATUS_REPRODUCTION_EVAL_CASE_IDS,
     SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED,
     STATUS_ONLY_RESEARCH_PROJECTION_EMPTY,
+    SUCCESSOR_AUTHORITY_CASE_COUNT,
+    SUCCESSOR_PREVIEW_CASE_IDS,
     all_rules,
     archive_name,
     demote_markdown_headings,
     generated_payload,
     load_strict_json,
+    json_bytes,
     materialize_eval_cases,
     package_files,
     provenance_paths,
     render_instructions,
+    render_authority_case_bundle,
+    render_authority_crosswalk,
     render_preview_prompt,
     sha256_bytes,
     validate_evaluation_governance,
+    validate_authority_lock,
     validate_exact_eval_oracles,
     validate_starter_routing,
     verify_archive,
@@ -109,6 +120,15 @@ class CustomGptPackageTests(unittest.TestCase):
             self.assertEqual(verify_archive(first), [])
             with zipfile.ZipFile(first) as archive:
                 self.assertEqual(len(archive.namelist()), len(set(archive.namelist())))
+                bundle_name = next(
+                    name
+                    for name in archive.namelist()
+                    if name.endswith("/evals/GPT_AUTHORITY_CASES.json")
+                )
+                self.assertEqual(
+                    archive.read(bundle_name),
+                    generated_payload()[Path("evals/GPT_AUTHORITY_CASES.json")],
+                )
 
     def test_release_archive_binds_exact_commit_tree_and_tag(self) -> None:
         binding = {
@@ -324,18 +344,27 @@ class CustomGptPackageTests(unittest.TestCase):
             "Promotion or validation requires every case to score at least 18/20 and incur no "
             "automatic failure; never average away a failed case."
         )
-        for relative in ("GPT_SETUP_AND_PUBLISHING.md", "evals/GPT_MANUAL_SCORECARD.md"):
-            text = payload[Path(relative)].decode("utf-8")
-            self.assertIn(mandatory_gate, text, relative)
-            self.assertNotIn("Recommended pass", text, relative)
-            self.assertNotIn("18/20 is recommended", text, relative)
+        scorecard = payload[Path("evals/GPT_MANUAL_SCORECARD.md")].decode("utf-8")
+        self.assertIn(mandatory_gate, scorecard)
+        self.assertIn("12 exact successor regression definitions", scorecard)
+        self.assertIn("14 prospective authority cases", scorecard)
+        self.assertIn("no old result transfers", scorecard.lower())
+        self.assertNotIn("Recommended pass", scorecard)
+        self.assertNotIn("18/20 is recommended", scorecard)
+        expectations = payload[Path("evals/GPT_EVAL_EXPECTATIONS.md")].decode("utf-8")
+        self.assertIn("re-binds the exact current bytes of 11 named records", expectations)
+        self.assertIn("twelfth regression", expectations)
+        self.assertIn("NOT_RUN_PREVIEW_NOT_AUTHORIZED", expectations)
         setup = payload[Path("GPT_SETUP_AND_PUBLISHING.md")].decode("utf-8")
         readme = payload[Path("README.md")].decode("utf-8")
         for text in (setup, readme):
             self.assertIn("12", text)
-            self.assertIn("compact", text.lower())
-            self.assertIn("exact immutable tag `v0.3.0-alpha.20`", text)
-            self.assertIn("new version and tag", text)
+            self.assertIn("14", text)
+            self.assertIn("26", text)
+            self.assertIn("successor", text.lower())
+            self.assertIn("cannot reuse", text)
+            self.assertIn("new version", text)
+            self.assertIn("new never-before-used tag", text)
             self.assertIn("freeze", text.lower())
             self.assertIn("historical", text.lower())
             self.assertIn("39", text)
@@ -344,6 +373,8 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertIn("no files", setup)
         self.assertIn("complete restart from Case 1", setup)
         self.assertIn("same frozen candidate", setup)
+        self.assertIn("exit 0 is machine preflight only", setup.lower())
+        self.assertIn("independent human review", setup)
         self.assertIn("normal/default model mode", setup)
         self.assertIn("remove any **Heavy** model-mode selection", setup)
         self.assertIn("separate from the BSC audit depth", setup)
@@ -1155,6 +1186,8 @@ class CustomGptPackageTests(unittest.TestCase):
         profile = load_strict_json(PROFILE_PATH)
         self.assertFalse(profile["capabilities"]["actions"]["enabled"])
         self.assertFalse(profile["capabilities"]["apps"]["enabled"])
+        self.assertFalse(profile["capabilities"]["canvas"]["enabled"])
+        self.assertFalse(profile["capabilities"]["canvas"]["optional"])
         instructions = generated_payload()[Path("GPT_INSTRUCTIONS.md")].decode("utf-8")
         self.assertIn("Packet Builder local-only excludes GPT uploads", instructions)
         self.assertIn("ChatGPT settings/terms apply", instructions)
@@ -1198,9 +1231,10 @@ class CustomGptPackageTests(unittest.TestCase):
             self.assertIn("compact", text.lower())
             self.assertIn("standalone tooling", text)
         self.assertIn("historical and superseded", setup)
-        self.assertIn("These 12 cases, not the historical 39-case suite", setup)
+        self.assertIn("Then run these 14 prospective authority cases", setup)
+        self.assertIn("The preserved 39-case artifact-profile suite", setup)
         self.assertIn(
-            "do not collapse those states or claim that the compact profile passed",
+            "do not collapse those states or claim the successor passed",
             setup,
         )
 
@@ -1213,10 +1247,13 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertEqual(product["candidate_state"], "PENDING")
         self.assertEqual(product["live_binding_state"], "NON_ADMISSIBLE_UNHASHABLE")
         self.assertEqual(product["preview_validation_state"], "PENDING")
-        self.assertEqual(product["preview_gate_case_count"], 12)
+        self.assertEqual(
+            product["preview_gate_case_count"],
+            SUCCESSOR_AUTHORITY_CASE_COUNT,
+        )
         self.assertEqual(
             tuple(product["preview_gate_case_ids"]),
-            COMPACT_PREVIEW_CASE_IDS,
+            SUCCESSOR_PREVIEW_CASE_IDS,
         )
         self.assertEqual(
             product["historical_evaluation_suite_status"],
@@ -1280,6 +1317,12 @@ class CustomGptPackageTests(unittest.TestCase):
         metadata = payload[Path("GPT_PUBLIC_METADATA.md")].decode("utf-8")
         self.assertIn(OFFICIAL_GPT_URL, metadata)
         self.assertIn("candidate state:** `pending`", metadata.lower())
+        self.assertIn(
+            "Successor candidate capability declarations (not incumbent observations)",
+            metadata,
+        )
+        self.assertIn("Apps and Canvas were `NOT_OBSERVED`", metadata)
+        self.assertIn("12 regressions plus 14 prospective authority cases", metadata)
         self.assertIn("**Japanese interface:** `BETA`", metadata)
         self.assertIn("native-speaker terminology review `PENDING`", metadata)
         setup = payload[Path("GPT_SETUP_AND_PUBLISHING.md")].decode("utf-8")
@@ -1293,9 +1336,18 @@ class CustomGptPackageTests(unittest.TestCase):
             "utf-8"
         )
         self.assertEqual(rendered_starters.count("## Starter "), 4)
+        evaluation_boundary = payload[Path("evals/README.md")].decode("utf-8")
+        self.assertIn("exactly 26 fresh-conversation cases", evaluation_boundary)
+        self.assertIn("Successor regressions (12)", evaluation_boundary)
+        self.assertIn("Prospective authority cases (14)", evaluation_boundary)
+        self.assertIn("Machine exit 0 is preflight only", evaluation_boundary)
+        self.assertNotIn("contains exactly 12 fresh-conversation cases", evaluation_boundary)
         manifest = json.loads(payload[Path("GPT_RELEASE_MANIFEST.json")])
         self.assertEqual(manifest["official_service_and_candidate_state"]["public_url"], OFFICIAL_GPT_URL)
-        self.assertEqual(manifest["official_service_and_candidate_state"]["preview_gate_case_count"], 12)
+        self.assertEqual(
+            manifest["official_service_and_candidate_state"]["preview_gate_case_count"],
+            SUCCESSOR_AUTHORITY_CASE_COUNT,
+        )
         self.assertEqual(
             tuple(manifest["compact_preview_gate_case_ids"]),
             COMPACT_PREVIEW_CASE_IDS,
@@ -1308,6 +1360,331 @@ class CustomGptPackageTests(unittest.TestCase):
                 "native_speaker_terminology_review": "PENDING",
                 "canonical_language": "en",
             },
+        )
+
+    def test_authority_lock_is_closed_typed_and_not_evaluated(self) -> None:
+        lock = load_strict_json(AUTHORITY_LOCK_PATH)
+        validate_authority_lock(lock)
+        self.assertEqual(lock["candidate"]["candidate_id"], CANDIDATE_ID)
+        self.assertEqual(lock["candidate"]["branch"], CANDIDATE_BRANCH)
+        self.assertEqual(
+            lock["candidate"]["state"],
+            "FRESH_UNPROMOTED_SUCCESSOR_CANDIDATE",
+        )
+        self.assertEqual(
+            lock["controller"]["status"],
+            "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
+        )
+        self.assertEqual(
+            tuple(item["id"] for item in lock["successor_regression_cases"]),
+            COMPACT_PREVIEW_CASE_IDS,
+        )
+        self.assertEqual(
+            tuple(item["id"] for item in lock["prospective_cases"]),
+            PROSPECTIVE_AUTHORITY_CASE_IDS,
+        )
+        self.assertTrue(
+            all(
+                item["candidate_status"] == "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+                and item["historical_evidence_transfer"] == "PROHIBITED"
+                for item in lock["successor_regression_cases"]
+            )
+        )
+        historical = lock["historical_alpha10_preview_gate"]
+        self.assertEqual(
+            historical["result"],
+            "PASS_12_OF_12_OBSERVED_ALPHA10_ONLY",
+        )
+        self.assertEqual(historical["transfer_to_successor"], "PROHIBITED")
+        relations = [item["alpha20_relation"] for item in historical["case_bindings"]]
+        self.assertEqual(relations.count("BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE"), 10)
+        self.assertEqual(relations.count("CHANGED_FIXTURE_EXPECTED_ORACLE_AND_CHECKER_LITERAL"), 1)
+        self.assertEqual(
+            relations.count(
+                "DESCRIPTION_AND_FIXTURE_SEMANTICS_MATCH_EXACT_INPUT_NOT_BYTE_COMPARABLE"
+            ),
+            1,
+        )
+        synthetic = next(
+            item
+            for item in historical["case_bindings"]
+            if item["id"] == "artifact-export-disabled-control"
+        )
+        self.assertEqual(synthetic["alpha10_exact_prompt_status"], "UNKNOWN_NOT_RETAINED")
+        self.assertIsNone(synthetic["alpha10_exact_prompt_sha256"])
+        self.assertTrue(
+            all(
+                item["status"] == "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+                for item in lock["prospective_cases"]
+            )
+        )
+        self.assertEqual(tuple(lock["failure_taxonomy"]), AUTHORITY_FAILURE_TAXONOMY)
+        namespaces = {item["namespace"] for item in lock["authority_records"]}
+        for namespace in (
+            "OCTO_ALPHA10_HISTORICAL_LIVE_CONFIGURATION",
+            "OCTO_OWNER_EDITOR_ALPHA19_INCUMBENT",
+            "OCTO_ALPHA19_INSTRUCTIONS_SOURCE",
+            "OCTO_LIVE_INDEXED_KNOWLEDGE",
+            "OCTO_PUBLIC_PAGE_STATE",
+            "OCTO_PUBLIC_FRESH_CHAT_BEHAVIOR",
+            "OCTO_ALPHA20_DEVELOPMENT_SOURCE",
+            "OCTO_SUCCESSOR_CANDIDATE",
+            "BSC_RELEASE_1_4_0",
+            "BSC_POST_RELEASE_MAIN",
+            "BSC_CORE_1_5_RESEARCH_MILESTONE",
+            "BSC_Q26_DIRECT_LEAN_THEOREM",
+            "BSC_Q26_ROOT_CNF_UNKNOWN",
+            "BSC_C13_NON_MAIN_CANDIDATE",
+            "ASTRA_STABLE_1_0_7",
+            "ASTRA_POST_RELEASE_MAIN",
+            "ASTRA_M1_MAINTENANCE_OVERLAY",
+            "ASTRA_1_0_8_REVIEWED_UNPROMOTED_CANDIDATE",
+            "ASTRA_BSC_OCTO_STRUCTURAL_RELATION",
+            "CROSS_PROJECT_EXECUTABLE_ADAPTER",
+        ):
+            self.assertIn(namespace, namespaces)
+
+    def test_authority_lock_mutations_fail_closed(self) -> None:
+        lock = load_strict_json(AUTHORITY_LOCK_PATH)
+
+        missing_field = copy.deepcopy(lock)
+        missing_field["authority_records"][0].pop("unavailable_evidence")
+        with self.assertRaises(ValueError):
+            validate_authority_lock(missing_field)
+
+        transferred_history = copy.deepcopy(lock)
+        transferred_history["successor_regression_cases"][0][
+            "historical_evidence_transfer"
+        ] = "ALLOWED"
+        with self.assertRaises(ValueError):
+            validate_authority_lock(transferred_history)
+
+        fabricated_history = copy.deepcopy(lock)
+        fabricated_history["historical_alpha10_preview_gate"]["case_bindings"][1][
+            "alpha10_exact_prompt_sha256"
+        ] = "0" * 64
+        with self.assertRaises(ValueError):
+            validate_authority_lock(fabricated_history)
+
+        external_mutation = copy.deepcopy(lock)
+        external_mutation["candidate"]["external_mutation_authority"] = "LIVE_UPDATE"
+        with self.assertRaises(ValueError):
+            validate_authority_lock(external_mutation)
+
+        weakened_controller = copy.deepcopy(lock)
+        weakened_controller["controller"]["adjudication"] = "token check only"
+        with self.assertRaises(ValueError):
+            validate_authority_lock(weakened_controller)
+
+        omitted_surface = copy.deepcopy(lock)
+        omitted_surface["public_crosswalk_order"].remove(
+            "OCTO_PUBLIC_FRESH_CHAT_BEHAVIOR"
+        )
+        with self.assertRaises(ValueError):
+            validate_authority_lock(omitted_surface)
+
+        fabricated_run = copy.deepcopy(lock)
+        fabricated_run["prospective_cases"][0]["status"] = "PASS"
+        with self.assertRaises(ValueError):
+            validate_authority_lock(fabricated_run)
+
+        changed_alpha19_tag = copy.deepcopy(lock)
+        alpha19 = next(
+            item
+            for item in changed_alpha19_tag["authority_records"]
+            if item["namespace"] == "OCTO_ALPHA19_INSTRUCTIONS_SOURCE"
+        )
+        alpha19["sources"][0]["annotated_tag_object"] = "0" * 40
+        with self.assertRaises(ValueError):
+            validate_authority_lock(changed_alpha19_tag)
+
+    def test_generated_authority_crosswalk_stays_in_five_file_roster(self) -> None:
+        lock = load_strict_json(AUTHORITY_LOCK_PATH)
+        crosswalk = render_authority_crosswalk(lock).decode("utf-8")
+        self.assertEqual(crosswalk.count("## Framework authority crosswalk"), 1)
+        self.assertIn("OCTO_BSC_F10=IMPLEMENTED_SUPPORTED_CHECK", crosswalk)
+        self.assertIn("Q26_ROOT_CNF=UNKNOWN_UNCHANGED", crosswalk)
+        self.assertIn("ASTRA_V1_0_8=REVIEWED_UNPROMOTED_CANDIDATE", crosswalk)
+        self.assertIn("PUBLIC_FRESH_CHAT=OBSERVED_SINGLE_RESPONSE", crosswalk)
+        self.assertIn("STRUCTURAL_ANALOGY", crosswalk)
+        self.assertIn("NO_EXECUTABLE_ADAPTER", crosswalk)
+        self.assertIn("Evidence / executable status", crosswalk)
+        self.assertEqual(crosswalk.count("\n| `"), 21)
+        self.assertIn("All public links in this table are navigation", crosswalk)
+        self.assertIn("dated 2026-08-16 through 2026-08-17", crosswalk)
+        self.assertNotIn("immutable locators", crosswalk)
+        self.assertNotRegex(crosswalk, r"(?<![0-9A-Fa-f])[0-9A-Fa-f]{40}(?![0-9A-Fa-f])")
+        self.assertNotRegex(crosswalk, r"(?<![0-9A-Fa-f])[0-9A-Fa-f]{64}(?![0-9A-Fa-f])")
+        self.assertNotRegex(crosswalk, r"chatgpt\.com/g/[^\s)]+/c/")
+
+        payload = generated_payload()
+        knowledge_paths = [
+            path
+            for path in payload
+            if path.parts and path.parts[0] == "knowledge"
+        ]
+        self.assertEqual(len(knowledge_paths), 5)
+        supported = payload[Path("knowledge/BSC_SUPPORTED_CHECKS.md")].decode("utf-8")
+        self.assertEqual(supported.count("## Framework authority crosswalk"), 1)
+        self.assertIn("`gpt/_source/GPT_AUTHORITY_LOCK.json`", supported)
+
+    def test_archive_authority_case_bundle_is_closed_and_resolvable(self) -> None:
+        lock = load_strict_json(AUTHORITY_LOCK_PATH)
+        payload = generated_payload()
+        bundle_bytes = render_authority_case_bundle(lock)
+        self.assertEqual(
+            bundle_bytes,
+            payload[Path("evals/GPT_AUTHORITY_CASES.json")],
+        )
+        bundle = json.loads(bundle_bytes)
+        self.assertEqual(
+            bundle["source"]["sha256"],
+            sha256_bytes(AUTHORITY_LOCK_PATH.read_bytes()),
+        )
+        self.assertEqual(
+            bundle["source"]["availability"],
+            "REPOSITORY_ONLY_NOT_IN_UPLOAD_ZIP",
+        )
+        self.assertEqual(
+            bundle["controller_availability"]["classification"],
+            "REPOSITORY_ONLY_NOT_IN_UPLOAD_ZIP",
+        )
+        self.assertEqual(
+            bundle["controller_availability"]["archive_capability"],
+            "DEFINITIONS_ONLY_CANNOT_ADJUDICATE_PREVIEW",
+        )
+        self.assertTrue(
+            all(
+                Path(path) not in payload
+                for path in bundle["controller_availability"]["source_paths"]
+            )
+        )
+        regressions = bundle["successor_regression_cases"]
+        prospective = bundle["prospective_cases"]
+        self.assertEqual(tuple(item["id"] for item in regressions), COMPACT_PREVIEW_CASE_IDS)
+        self.assertEqual(tuple(item["id"] for item in prospective), PROSPECTIVE_AUTHORITY_CASE_IDS)
+        self.assertTrue(
+            all(
+                item["candidate_status"] == "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+                for item in regressions
+            )
+        )
+        self.assertTrue(
+            all(item["status"] == "NOT_RUN_PREVIEW_NOT_AUTHORIZED" for item in prospective)
+        )
+        for projected, canonical in zip(
+            regressions,
+            lock["successor_regression_cases"],
+            strict=True,
+        ):
+            self.assertEqual(
+                projected["canonical_lock_definition_sha256"],
+                sha256_bytes(json_bytes(canonical)),
+            )
+            input_binding = projected["input_binding"]
+            if input_binding["kind"] == "generated_eval_case":
+                self.assertIn(Path(input_binding["path"]), payload)
+                self.assertEqual(
+                    input_binding["repository_path"],
+                    f"gpt/{input_binding['path']}",
+                )
+            for fixture in projected["fixture_paths"]:
+                self.assertIn(Path(fixture), payload)
+        self.assertNotRegex(
+            bundle_bytes.decode("utf-8"),
+            r"chatgpt\.com/g/[^\s\"]+/c/",
+        )
+
+    def test_successor_manifest_freezes_terminal_bytes_and_case_definitions(self) -> None:
+        payload = generated_payload()
+        manifest = json.loads(payload[Path("GPT_RELEASE_MANIFEST.json")])
+        frozen = manifest["successor_candidate_freeze"]
+        self.assertEqual(frozen["candidate_id"], CANDIDATE_ID)
+        self.assertEqual(frozen["branch"], CANDIDATE_BRANCH)
+        instructions = payload[Path("GPT_INSTRUCTIONS.md")]
+        self.assertEqual(frozen["instructions"]["bytes"], len(instructions))
+        self.assertEqual(
+            frozen["instructions"]["characters"],
+            len(instructions.decode("utf-8")),
+        )
+        self.assertEqual(
+            frozen["instructions"]["lines"],
+            len(instructions.decode("utf-8").splitlines()),
+        )
+        self.assertEqual(frozen["instructions"]["sha256"], sha256_bytes(instructions))
+
+        self.assertEqual(
+            [item["filename"] for item in frozen["knowledge_files"]],
+            [
+                "BSC_PROTOCOL.md",
+                "BSC_STATUS_AND_EVIDENCE_MODEL.md",
+                "BSC_SUPPORTED_CHECKS.md",
+                "BSC_WORKED_EXAMPLES.md",
+                "BSC_JAPANESE_INTERFACE.md",
+            ],
+        )
+        for item in frozen["knowledge_files"]:
+            data = payload[Path(item["path"].removeprefix("gpt/"))]
+            self.assertEqual(item["bytes"], len(data))
+            self.assertEqual(item["sha256"], sha256_bytes(data))
+
+        self.assertEqual(frozen["controller"]["status"], "NOT_RUN_PREVIEW_NOT_AUTHORIZED")
+        self.assertEqual(frozen["controller"]["regression_case_count"], 12)
+        self.assertEqual(frozen["controller"]["prospective_case_count"], 14)
+        self.assertRegex(frozen["controller"]["run_order_sha256"], r"^[0-9a-f]{64}$")
+        self.assertEqual(frozen["successor_regressions"]["count"], 12)
+        self.assertEqual(frozen["prospective_cases"]["count"], 14)
+        self.assertEqual(
+            tuple(frozen["successor_regressions"]["order"]),
+            COMPACT_PREVIEW_CASE_IDS,
+        )
+        self.assertEqual(
+            tuple(frozen["prospective_cases"]["order"]),
+            PROSPECTIVE_AUTHORITY_CASE_IDS,
+        )
+        self.assertTrue(
+            all(
+                re.fullmatch(r"[0-9a-f]{64}", digest)
+                for digest in frozen["successor_regressions"][
+                    "definition_sha256_by_id"
+                ].values()
+            )
+        )
+        self.assertEqual(
+            frozen["successor_regressions"]["status"],
+            "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
+        )
+        self.assertEqual(
+            frozen["successor_regressions"]["historical_evidence_transfer"],
+            "PROHIBITED",
+        )
+        self.assertEqual(
+            frozen["historical_preview_evidence"]["record"]["result"],
+            "PASS_12_OF_12_OBSERVED_ALPHA10_ONLY",
+        )
+        self.assertNotIn(
+            "PASS_ALPHA10_ONLY",
+            json.dumps(frozen["successor_regressions"], sort_keys=True),
+        )
+        self.assertTrue(
+            all(
+                re.fullmatch(r"[0-9a-f]{64}", digest)
+                for digest in frozen["prospective_cases"][
+                    "definition_sha256_by_id"
+                ].values()
+            )
+        )
+        self.assertEqual(
+            frozen["prospective_cases"]["status"],
+            "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
+        )
+        self.assertEqual(
+            frozen["owner_editor_observation"]["capabilities"]["apps"],
+            "NOT_OBSERVED",
+        )
+        self.assertEqual(
+            frozen["owner_editor_observation"]["capabilities"]["canvas"],
+            "NOT_OBSERVED",
         )
 
 

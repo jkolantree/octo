@@ -28,8 +28,12 @@ from bsc_audit.contracts import PROTOCOL_VERSION  # noqa: E402
 GPT_ROOT = ROOT / "gpt"
 PROFILE_PATH = GPT_ROOT / "_source" / "GPT_PROFILE.json"
 EVAL_SPEC_PATH = GPT_ROOT / "_source" / "GPT_EVAL_SPEC.json"
+AUTHORITY_LOCK_PATH = GPT_ROOT / "_source" / "GPT_AUTHORITY_LOCK.json"
 FROZEN_MANIFEST_SOURCE = "docs/GPT_FROZEN_CANDIDATE.json"
 GENERATOR_VERSION = "bsc-custom-gpt-generator-v1"
+CANDIDATE_ID = "bsc-claim-auditor-2026-08-16-r1"
+CANDIDATE_BRANCH = "codex/gpt-authority-lock-20260816-r1"
+OCTO_ALPHA19_TAG_OBJECT = "bb34fdf6d4ad8fae613e3fcca9ce87e3ac650613"
 MAX_GPT_INSTRUCTION_CHARACTERS = 8_000
 COMPACT_GPT_INSTRUCTION_CHARACTERS = MAX_GPT_INSTRUCTION_CHARACTERS - 500
 OPERATING_GPT_INSTRUCTION_CHARACTERS = (
@@ -70,6 +74,10 @@ PUBLIC_DIGEST_VALUE_PATTERN = re.compile(
     r"(?<![0-9A-Fa-f])[0-9A-Fa-f]{64}(?![0-9A-Fa-f])"
 )
 PUBLIC_DIGEST_VALUE_PLACEHOLDER = "[digest value withheld from public profile]"
+PUBLIC_GIT_OBJECT_ID_PATTERN = re.compile(
+    r"(?<![0-9A-Fa-f])[0-9A-Fa-f]{40}(?![0-9A-Fa-f])"
+)
+PUBLIC_GIT_OBJECT_ID_PLACEHOLDER = "[git object id withheld from public profile]"
 PROHIBITED_PUBLIC_KNOWLEDGE_INSTRUCTION_FRAGMENTS = (
     "create distinct transaction artifacts",
     "execute the complete canonical `scripts/gpt_artifact_compiler.py`",
@@ -330,6 +338,165 @@ REQUIRED_OUTPUT_IDS = (
     "verdict_changers",
 )
 
+PROSPECTIVE_AUTHORITY_CASE_IDS = (
+    "authority-alpha10-vs-alpha19",
+    "authority-alpha19-instructions-vs-index",
+    "authority-bsc-release-vs-main",
+    "authority-bsc-core-v15",
+    "authority-q26-direct-lean",
+    "authority-q26-root-cnf",
+    "authority-c13-pr16",
+    "authority-astra-stable-v107",
+    "authority-astra-maintenance-overlay",
+    "authority-astra-v108-candidate-ja",
+    "authority-analogy-vs-executable",
+    "authority-not-applicable-statuses",
+    "authority-poisoned-conflict",
+    "authority-unsupported-execution",
+)
+
+SUCCESSOR_AUTHORITY_CASE_COUNT = (
+    len(COMPACT_PREVIEW_CASE_IDS) + len(PROSPECTIVE_AUTHORITY_CASE_IDS)
+)
+SUCCESSOR_PREVIEW_CASE_IDS = (
+    COMPACT_PREVIEW_CASE_IDS + PROSPECTIVE_AUTHORITY_CASE_IDS
+)
+
+AUTHORITY_CANDIDATE_KEYS = {
+    "candidate_id",
+    "branch",
+    "state",
+    "profile_role",
+    "preview_status",
+    "source_baseline",
+    "external_mutation_authority",
+}
+
+AUTHORITY_CONTROLLER_KEYS = {
+    "controller_id",
+    "status",
+    "runtime",
+    "source_paths",
+    "run_order",
+    "adjudication",
+    "retry_policy",
+    "repair_policy",
+}
+
+AUTHORITY_OWNER_EDITOR_KEYS = {
+    "observation_date",
+    "surface",
+    "version_history_label",
+    "name",
+    "description",
+    "conversation_starters",
+    "capabilities",
+    "sharing",
+    "knowledge_visible_order",
+    "repository_prescribed_order",
+    "instructions",
+    "indexed_knowledge",
+    "synchronization_statement",
+}
+
+EXPECTED_CONTROLLER_SOURCE_PATHS = (
+    "gpt/_source/GPT_AUTHORITY_LOCK.json",
+    "gpt/_source/GPT_PROFILE.json",
+    "gpt/_source/GPT_EVAL_SPEC.json",
+    "scripts/build_gpt_package.py",
+    "scripts/check_compact_preview_response.py",
+)
+
+EXPECTED_AUTHORITY_NAMESPACES = (
+    "OCTO_ALPHA10_HISTORICAL_LIVE_CONFIGURATION",
+    "OCTO_OWNER_EDITOR_ALPHA19_INCUMBENT",
+    "OCTO_ALPHA19_INSTRUCTIONS_SOURCE",
+    "OCTO_LIVE_INDEXED_KNOWLEDGE",
+    "OCTO_PUBLIC_PAGE_STATE",
+    "OCTO_PUBLIC_FRESH_CHAT_BEHAVIOR",
+    "OCTO_ALPHA20_DEVELOPMENT_SOURCE",
+    "OCTO_SUCCESSOR_CANDIDATE",
+    "OCTO_BSC_F10_SUPPORTED_CHECK",
+    "BSC_RELEASE_1_4_0",
+    "BSC_POST_RELEASE_MAIN",
+    "BSC_CORE_1_5_RESEARCH_MILESTONE",
+    "BSC_Q26_DIRECT_LEAN_THEOREM",
+    "BSC_Q26_ROOT_CNF_UNKNOWN",
+    "BSC_C13_NON_MAIN_CANDIDATE",
+    "ASTRA_STABLE_1_0_7",
+    "ASTRA_POST_RELEASE_MAIN",
+    "ASTRA_M1_MAINTENANCE_OVERLAY",
+    "ASTRA_1_0_8_REVIEWED_UNPROMOTED_CANDIDATE",
+    "ASTRA_BSC_OCTO_STRUCTURAL_RELATION",
+    "CROSS_PROJECT_EXECUTABLE_ADAPTER",
+)
+
+AUTHORITY_FAILURE_TAXONOMY = (
+    "PRODUCT_FAILURE",
+    "CONTROLLER_INVALID",
+    "TRANSPORT_LIMITED",
+    "ENVIRONMENT_LIMITED",
+    "NOT_CHECKED",
+    "UNKNOWN",
+)
+
+AUTHORITY_LOCK_KEYS = {
+    "authority_lock_schema",
+    "candidate",
+    "controller",
+    "observed_owner_editor",
+    "knowledge_roster",
+    "authority_records",
+    "public_crosswalk_order",
+    "historical_alpha10_preview_gate",
+    "successor_regression_cases",
+    "prospective_cases",
+    "failure_taxonomy",
+}
+
+AUTHORITY_RECORD_KEYS = {
+    "project",
+    "namespace",
+    "authority_class",
+    "version",
+    "tag",
+    "commit",
+    "tree",
+    "exact_scope",
+    "observed_at",
+    "observation_method",
+    "evidence_status",
+    "permitted_statements",
+    "prohibited_inferences",
+    "unavailable_evidence",
+    "sources",
+    "public_crosswalk",
+}
+
+PROSPECTIVE_AUTHORITY_CASE_KEYS = {
+    "order",
+    "id",
+    "language",
+    "input",
+    "required_tokens",
+    "forbidden_conclusions",
+    "evidence_fixture_namespaces",
+    "adjudication_rule",
+    "expected_classification",
+    "status",
+}
+
+SUCCESSOR_REGRESSION_KEYS = {
+    "order",
+    "id",
+    "input_binding",
+    "fixture_paths",
+    "adjudication_rule",
+    "expected_classification",
+    "candidate_status",
+    "historical_evidence_transfer",
+}
+
 
 def strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
     value: dict[str, object] = {}
@@ -349,6 +516,358 @@ def load_strict_json(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"{path.relative_to(ROOT)} must contain a JSON object")
     return value
+
+
+def _require_nonempty_string_list(value: object, *, field: str) -> list[str]:
+    if (
+        not isinstance(value, list)
+        or not value
+        or not all(isinstance(item, str) and item.strip() for item in value)
+        or len(value) != len(set(value))
+    ):
+        raise ValueError(f"authority lock {field} must be a nonempty unique string list")
+    return value
+
+
+def validate_authority_lock(lock: dict[str, Any]) -> None:
+    """Validate the closed, offline authority and evaluation-definition lock."""
+
+    if set(lock) != AUTHORITY_LOCK_KEYS:
+        raise ValueError("authority lock top-level contract differs from the reviewed schema")
+    if lock.get("authority_lock_schema") != "bsc-gpt-authority-lock/v2":
+        raise ValueError("authority lock schema is not bsc-gpt-authority-lock/v2")
+
+    candidate = lock.get("candidate")
+    if not isinstance(candidate, dict) or set(candidate) != AUTHORITY_CANDIDATE_KEYS:
+        raise ValueError("authority lock candidate record must be an object")
+    if candidate.get("candidate_id") != CANDIDATE_ID or candidate.get("branch") != CANDIDATE_BRANCH:
+        raise ValueError("authority lock candidate or branch identity differs from the authorized identity")
+    if candidate.get("state") != "FRESH_UNPROMOTED_SUCCESSOR_CANDIDATE":
+        raise ValueError("authority lock candidate state must remain unpromoted")
+    if candidate.get("preview_status") != "NOT_RUN_PREVIEW_NOT_AUTHORIZED":
+        raise ValueError("authority lock must not imply Preview execution")
+    if candidate.get("profile_role") != "AUTHORITY_RECONCILIATION_ONLY_NO_NEW_ENGINE_AUTHORITY":
+        raise ValueError("authority lock candidate must not claim new engine authority")
+    if candidate.get("external_mutation_authority") != "NONE":
+        raise ValueError("authority lock candidate must not grant external mutation authority")
+    baseline = candidate.get("source_baseline")
+    if not isinstance(baseline, dict) or baseline != {
+        "repository": "https://github.com/jkolantree/octo.git",
+        "version": "0.3.0-alpha.20",
+        "commit": "bcdd04575c88757241182f991c2877fb480369d2",
+        "tree": "24648efb7eea3a6ded14fd70d62808b154d462d6",
+    }:
+        raise ValueError("authority lock source baseline differs from exact Octo alpha.20")
+
+    controller = lock.get("controller")
+    if not isinstance(controller, dict) or set(controller) != AUTHORITY_CONTROLLER_KEYS:
+        raise ValueError("authority lock controller must be an object")
+    if controller.get("controller_id") != "bsc-gpt-authority-preflight-and-human-review/v2":
+        raise ValueError("authority controller identity differs from the reviewed composite controller")
+    if controller.get("status") != "NOT_RUN_PREVIEW_NOT_AUTHORIZED":
+        raise ValueError("authority controller must remain not run")
+    if controller.get("runtime") != (
+        "CPython 3.12.13 exact-token preflight via "
+        "check_compact_preview_response.py v1.5; authenticated ChatGPT Preview "
+        "plus independent human semantic review required later"
+    ):
+        raise ValueError("authority controller runtime differs from the reviewed runtime")
+    source_paths = _require_nonempty_string_list(
+        controller.get("source_paths"), field="controller.source_paths"
+    )
+    if tuple(source_paths) != EXPECTED_CONTROLLER_SOURCE_PATHS:
+        raise ValueError("authority controller source list differs from the exact reviewed list")
+    for relative in source_paths:
+        repository_file(relative, allowed_files=set(source_paths))
+    expected_run_order = [*COMPACT_PREVIEW_CASE_IDS, *PROSPECTIVE_AUTHORITY_CASE_IDS]
+    if controller.get("run_order") != expected_run_order:
+        raise ValueError("authority controller run order must be the 12 regressions then 14 prospective cases")
+    if controller.get("adjudication") != (
+        "Machine preflight checks the response envelope, digest prohibition, and exact "
+        "required-token presence. Each of the 12 regressions additionally requires an "
+        "independent score of at least 18/20 with no automatic failure under the frozen "
+        "rubric. Each of the 14 prospective cases additionally requires independent human "
+        "review of forbidden semantic conclusions, expected classification, language, "
+        "fixture-namespace separation, and its full adjudication rule. Native exit 0 is not "
+        "a case pass."
+    ):
+        raise ValueError("authority controller adjudication boundary differs from the reviewed boundary")
+    if controller.get("retry_policy") != "NEVER_RETRY_FOR_LUCK":
+        raise ValueError("authority controller retry policy is not fail closed")
+    if controller.get("repair_policy") != "NEW_CANDIDATE_AND_RESTART_AT_CASE_1":
+        raise ValueError("authority controller repair policy is not fail closed")
+
+    observed = lock.get("observed_owner_editor")
+    if not isinstance(observed, dict) or set(observed) != AUTHORITY_OWNER_EDITOR_KEYS:
+        raise ValueError("authority lock owner-editor observation must be an object")
+    if observed.get("observation_date") != "2026-08-16":
+        raise ValueError("owner-editor observation date differs from the captured date-precision record")
+    if observed.get("surface") != "OWNER_EDITOR_OBSERVED_ALPHA19_INCUMBENT":
+        raise ValueError("owner-editor observation surface differs from the alpha.19 incumbent")
+    if observed.get("version_history_label") != "Aug 1, 2026 at 8:45 AM":
+        raise ValueError("owner-editor version-history label differs from the observed label")
+    if observed.get("name") != "BSC Claim Auditor":
+        raise ValueError("owner-editor name differs from the observed name")
+    if observed.get("description") != (
+        "Stress-test one scientific or technical claim. Get the bottom line, weak points, "
+        "and best next test. 科学・技術の主張を簡潔に点検します。日本語対応はベータ版です。"
+        "Research aid—not certification."
+    ):
+        raise ValueError("owner-editor description differs from the observed description")
+    if tuple(observed.get("conversation_starters", [])) != EXPECTED_CONVERSATION_STARTERS:
+        raise ValueError("owner-editor starters differ from the observed four starters")
+    instructions = observed.get("instructions")
+    if not isinstance(instructions, dict) or instructions != {
+        "classification": "SOURCE_BOUND_TO_ALPHA19_INSTRUCTIONS",
+        "bytes": 6006,
+        "characters": 5970,
+        "lines": 47,
+        "sha256": "74e4bda6e9c920c2e6f7ddb985a2115bb3397bb49660001da2de3a210bfacc07",
+    }:
+        raise ValueError("owner-editor Instructions observation differs from the exact alpha.19 byte comparison")
+    if observed.get("indexed_knowledge") != "NON_ADMISSIBLE_UNHASHABLE":
+        raise ValueError("owner-editor observation must not claim indexed Knowledge bytes")
+    capabilities = observed.get("capabilities")
+    if capabilities != {
+        "web_search": "ENABLED_OBSERVED",
+        "code_interpreter_and_data_analysis": "ENABLED_OBSERVED",
+        "image_generation": "DISABLED_OBSERVED",
+        "actions": "NONE_OBSERVED",
+        "apps": "NOT_OBSERVED",
+        "canvas": "NOT_OBSERVED",
+        "recommended_model": "NONE_OBSERVED",
+    }:
+        raise ValueError("owner-editor capabilities differ from the exact observed/NOT_OBSERVED record")
+    if observed.get("sharing") != "ANYONE_WITH_LINK_OBSERVED_GPT_STORE_DISABLED":
+        raise ValueError("owner-editor sharing record differs from the observed state")
+    if observed.get("knowledge_visible_order") != [
+        "BSC_SUPPORTED_CHECKS.md",
+        "BSC_STATUS_AND_EVIDENCE_MODEL.md",
+        "BSC_JAPANESE_INTERFACE.md",
+        "BSC_WORKED_EXAMPLES.md",
+        "BSC_PROTOCOL.md",
+    ]:
+        raise ValueError("owner-editor visible Knowledge order differs from the observation")
+    if observed.get("repository_prescribed_order") != [
+        "BSC_PROTOCOL.md",
+        "BSC_STATUS_AND_EVIDENCE_MODEL.md",
+        "BSC_SUPPORTED_CHECKS.md",
+        "BSC_WORKED_EXAMPLES.md",
+        "BSC_JAPANESE_INTERFACE.md",
+    ]:
+        raise ValueError("repository-prescribed Knowledge order differs from the source package")
+    if observed.get("synchronization_statement") != (
+        "A synchronization/control gap is observed; its cause and intent remain unresolved."
+    ):
+        raise ValueError("owner-editor synchronization statement differs from the authorized wording")
+
+    roster = lock.get("knowledge_roster")
+    expected_roster = [
+        "BSC_PROTOCOL.md",
+        "BSC_STATUS_AND_EVIDENCE_MODEL.md",
+        "BSC_SUPPORTED_CHECKS.md",
+        "BSC_WORKED_EXAMPLES.md",
+        "BSC_JAPANESE_INTERFACE.md",
+    ]
+    expected_roster_records = [
+        {"order": 1, "filename": "BSC_PROTOCOL.md", "purpose": "Normative compact audit protocol"},
+        {"order": 2, "filename": "BSC_STATUS_AND_EVIDENCE_MODEL.md", "purpose": "Independent status and evidence coordinates"},
+        {"order": 3, "filename": "BSC_SUPPORTED_CHECKS.md", "purpose": "Implemented checks, limits, and generated authority crosswalk"},
+        {"order": 4, "filename": "BSC_WORKED_EXAMPLES.md", "purpose": "Known-answer and adversarial examples"},
+        {"order": 5, "filename": "BSC_JAPANESE_INTERFACE.md", "purpose": "Japanese beta interface and canonical-token glossary"},
+    ]
+    if roster != expected_roster_records:
+        raise ValueError("authority lock Knowledge roster differs from the exact five-file candidate order")
+
+    records = lock.get("authority_records")
+    if not isinstance(records, list) or not records:
+        raise ValueError("authority lock must contain authority records")
+    namespaces: list[str] = []
+    for index, record in enumerate(records, 1):
+        if not isinstance(record, dict) or set(record) != AUTHORITY_RECORD_KEYS:
+            raise ValueError(f"authority record {index} differs from the closed record schema")
+        namespace = record.get("namespace")
+        if not isinstance(namespace, str) or not namespace:
+            raise ValueError(f"authority record {index} lacks a namespace")
+        namespaces.append(namespace)
+        for field in ("project", "authority_class", "exact_scope", "observed_at", "observation_method", "evidence_status"):
+            if not isinstance(record.get(field), str) or not record[field].strip():
+                raise ValueError(f"authority record {namespace} lacks {field}")
+        for field in ("version", "tag", "commit", "tree"):
+            if record.get(field) is not None and not isinstance(record.get(field), str):
+                raise ValueError(f"authority record {namespace} has invalid {field}")
+        for field in ("commit", "tree"):
+            value = record.get(field)
+            if value is not None and not re.fullmatch(r"[0-9a-f]{40}", value):
+                raise ValueError(f"authority record {namespace} has a non-exact {field}")
+        for field in ("permitted_statements", "prohibited_inferences", "unavailable_evidence"):
+            _require_nonempty_string_list(record.get(field), field=f"{namespace}.{field}")
+        if not isinstance(record.get("sources"), list) or not record["sources"]:
+            raise ValueError(f"authority record {namespace} lacks source locators")
+        public = record.get("public_crosswalk")
+        if not isinstance(public, dict) or set(public) != {
+            "authority_token",
+            "classification",
+            "scope",
+            "executable_support",
+            "prohibited_transfer",
+            "locator_label",
+            "locator_url",
+        }:
+            raise ValueError(f"authority record {namespace} lacks a closed public crosswalk projection")
+        if not all(isinstance(value, str) and value.strip() for value in public.values()):
+            raise ValueError(f"authority record {namespace} has an empty public crosswalk field")
+        if "navigation" not in public["locator_label"].casefold():
+            raise ValueError(
+                f"authority record {namespace} does not label its public locator as navigation"
+            )
+        if PUBLIC_GIT_OBJECT_ID_PATTERN.search(public["locator_url"]):
+            raise ValueError(
+                f"authority record {namespace} exposes an exact Git object in public Knowledge"
+            )
+    if len(namespaces) != len(set(namespaces)):
+        raise ValueError("authority record namespaces must be unique")
+    if tuple(namespaces) != EXPECTED_AUTHORITY_NAMESPACES:
+        raise ValueError("authority record namespace order differs from the reviewed authority surfaces")
+    alpha19_record = next(
+        record
+        for record in records
+        if record["namespace"] == "OCTO_ALPHA19_INSTRUCTIONS_SOURCE"
+    )
+    if not any(
+        isinstance(source, dict)
+        and source.get("annotated_tag_object") == OCTO_ALPHA19_TAG_OBJECT
+        for source in alpha19_record["sources"]
+    ):
+        raise ValueError("alpha.19 Instructions authority lacks the exact annotated tag object")
+
+    crosswalk_order = lock.get("public_crosswalk_order")
+    if (
+        not isinstance(crosswalk_order, list)
+        or tuple(crosswalk_order) != EXPECTED_AUTHORITY_NAMESPACES
+    ):
+        raise ValueError("public crosswalk must project every authority surface in reviewed order")
+
+    historical = lock.get("historical_alpha10_preview_gate")
+    if not isinstance(historical, dict) or set(historical) != {
+        "result",
+        "result_authority",
+        "candidate_binding",
+        "roster_sha256",
+        "definition_binding_status",
+        "case_bindings",
+        "transfer_to_successor",
+    }:
+        raise ValueError("historical alpha.10 Preview evidence differs from the closed schema")
+    if historical.get("result") != "PASS_12_OF_12_OBSERVED_ALPHA10_ONLY":
+        raise ValueError("historical alpha.10 result differs from the preserved observation")
+    if historical.get("result_authority") != "HISTORICAL_BEHAVIOR_OBSERVATION":
+        raise ValueError("historical alpha.10 result authority is overstated")
+    if historical.get("transfer_to_successor") != "PROHIBITED":
+        raise ValueError("historical alpha.10 evidence transfers to the successor")
+    if historical.get("definition_binding_status") != (
+        "ELEVEN_EXACT_TAGGED_RECORDS_ONE_DESCRIPTION_ONLY"
+    ):
+        raise ValueError("historical alpha.10 definition-binding status differs")
+    if not re.fullmatch(r"[0-9a-f]{64}", str(historical.get("roster_sha256", ""))):
+        raise ValueError("historical alpha.10 roster hash is invalid")
+    expected_alpha10_binding = {
+        "tag": "v0.3.0-alpha.10",
+        "tag_object": "f40a89141a7abbadfdb52d7d3573bc3d88d2abb6",
+        "commit": "99b0804e161a4cfeb166785bd35920aa64f53c40",
+        "tree": "e5c7ef2fbc6e311b6fe97bf22f1e05ee98ed5f96",
+        "instructions_sha256": "64823f455df162624cc91d9df9218b125d16454a182c5491ff4f6779c9ed2313",
+        "profile_sha256": "f7f35911d261e17d9658e02a87e4ff30f72646b71dbb5f1c09d7d2f0c5ff5de0",
+        "checker_sha256": "44dee2e431f9b09652b2dd363b3aea7b923f5b547d7e59431e23ed710b338c9c",
+        "setup_sha256": "89fb84658b94e5826e26c967074fddadfa6b54e60f2d9314c98251141e9843ad",
+        "eval_jsonl_sha256": "67ad79d5bae7c319f655df7ed34b9b5e5082ec724417e05860c74f3cb5340a89",
+        "release_manifest_sha256": "84779fdb2927f789b2d6b984988616c5418467dd89ba882c5481732914bc4001",
+    }
+    if historical.get("candidate_binding") != expected_alpha10_binding:
+        raise ValueError("historical alpha.10 candidate binding differs from the tagged evidence")
+    historical_cases = historical.get("case_bindings")
+    if (
+        not isinstance(historical_cases, list)
+        or tuple(item.get("id") for item in historical_cases if isinstance(item, dict))
+        != COMPACT_PREVIEW_CASE_IDS
+    ):
+        raise ValueError("historical alpha.10 case-binding roster differs")
+    relation_counts: dict[str, int] = {}
+    for item in historical_cases:
+        if not isinstance(item, dict) or item.get("transfer") != "PROHIBITED":
+            raise ValueError("historical alpha.10 case evidence is malformed or transferable")
+        relation = item.get("alpha20_relation")
+        if not isinstance(relation, str):
+            raise ValueError("historical alpha.10 case lacks a relation to alpha.20")
+        relation_counts[relation] = relation_counts.get(relation, 0) + 1
+        if item.get("id") == "artifact-export-disabled-control":
+            if (
+                item.get("alpha10_exact_prompt_status") != "UNKNOWN_NOT_RETAINED"
+                or item.get("alpha10_exact_prompt_sha256") is not None
+            ):
+                raise ValueError("synthetic alpha.10 prompt bytes were fabricated")
+        else:
+            for field in ("alpha10_case_record_sha256", "alpha10_fixture_sha256"):
+                if not re.fullmatch(r"[0-9a-f]{64}", str(item.get(field, ""))):
+                    raise ValueError(f"historical alpha.10 case has invalid {field}")
+    if relation_counts != {
+        "BYTE_IDENTICAL_CASE_RECORD_PROMPT_AND_FIXTURE": 10,
+        "DESCRIPTION_AND_FIXTURE_SEMANTICS_MATCH_EXACT_INPUT_NOT_BYTE_COMPARABLE": 1,
+        "CHANGED_FIXTURE_EXPECTED_ORACLE_AND_CHECKER_LITERAL": 1,
+    }:
+        raise ValueError("historical alpha.10 definition relations differ from the exact comparison")
+
+    regressions = lock.get("successor_regression_cases")
+    if not isinstance(regressions, list) or len(regressions) != len(COMPACT_PREVIEW_CASE_IDS):
+        raise ValueError("authority lock must contain exactly 12 successor regression cases")
+    if [item.get("order") for item in regressions if isinstance(item, dict)] != list(range(1, 13)):
+        raise ValueError("historical regression order is not exactly 1 through 12")
+    if tuple(item.get("id") for item in regressions if isinstance(item, dict)) != COMPACT_PREVIEW_CASE_IDS:
+        raise ValueError("historical regression identities differ from the compact roster")
+    for regression in regressions:
+        if not isinstance(regression, dict) or set(regression) != SUCCESSOR_REGRESSION_KEYS:
+            raise ValueError("successor regression differs from the closed definition schema")
+        if (
+            regression.get("candidate_status") != "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+            or regression.get("historical_evidence_transfer") != "PROHIBITED"
+        ):
+            raise ValueError("historical alpha.10 evidence transferred to the successor candidate")
+        binding = regression.get("input_binding")
+        if not isinstance(binding, dict) or binding.get("kind") not in {"generated_eval_case", "inline"}:
+            raise ValueError(f"historical regression {regression.get('id')} lacks an exact input binding")
+        if binding["kind"] == "generated_eval_case" and binding != {
+            "kind": "generated_eval_case",
+            "path": "gpt/evals/GPT_EVAL_CASES.jsonl",
+            "case_id": regression.get("id"),
+        }:
+            raise ValueError(f"historical regression {regression.get('id')} has a noncanonical input binding")
+        if binding["kind"] == "inline" and not isinstance(binding.get("input"), str):
+            raise ValueError(f"historical regression {regression.get('id')} lacks exact inline input")
+
+    prospective = lock.get("prospective_cases")
+    if not isinstance(prospective, list) or len(prospective) != len(PROSPECTIVE_AUTHORITY_CASE_IDS):
+        raise ValueError("authority lock must contain exactly 14 prospective cases")
+    if [item.get("order") for item in prospective if isinstance(item, dict)] != list(range(1, 15)):
+        raise ValueError("prospective case order is not exactly 1 through 14")
+    if tuple(item.get("id") for item in prospective if isinstance(item, dict)) != PROSPECTIVE_AUTHORITY_CASE_IDS:
+        raise ValueError("prospective authority case identities differ from the reviewed roster")
+    for case in prospective:
+        if not isinstance(case, dict) or set(case) != PROSPECTIVE_AUTHORITY_CASE_KEYS:
+            raise ValueError("prospective case differs from the closed definition schema")
+        for field in ("id", "language", "input", "adjudication_rule", "expected_classification"):
+            if not isinstance(case.get(field), str) or not case[field].strip():
+                raise ValueError(f"prospective case {case.get('id')} lacks exact {field}")
+        for field in ("required_tokens", "forbidden_conclusions", "evidence_fixture_namespaces"):
+            _require_nonempty_string_list(case.get(field), field=f"{case.get('id')}.{field}")
+        if any(token not in case["input"] for token in case["required_tokens"]):
+            raise ValueError(f"prospective case {case.get('id')} asks for an ungrounded required token")
+        if any(namespace not in set(namespaces) for namespace in case["evidence_fixture_namespaces"]):
+            raise ValueError(f"prospective case {case.get('id')} names an unknown authority fixture")
+        if case.get("status") != "NOT_RUN_PREVIEW_NOT_AUTHORIZED":
+            raise ValueError(f"prospective case {case.get('id')} improperly claims execution")
+
+    if tuple(lock.get("failure_taxonomy", [])) != AUTHORITY_FAILURE_TAXONOMY:
+        raise ValueError("authority failure taxonomy differs from the reviewed six-way separation")
 
 
 def validate_exact_eval_oracles(
@@ -1353,14 +1872,20 @@ def demote_markdown_headings(markdown: str, *, levels: int = 2) -> str:
 
 
 def withhold_public_digest_values(text: str) -> str:
-    """Remove only complete digest values; preserve all non-hash tokens and URLs."""
+    """Remove complete digest/object values; preserve all non-hash tokens."""
 
-    return PUBLIC_DIGEST_VALUE_PATTERN.sub(PUBLIC_DIGEST_VALUE_PLACEHOLDER, text)
+    text = PUBLIC_DIGEST_VALUE_PATTERN.sub(PUBLIC_DIGEST_VALUE_PLACEHOLDER, text)
+    return PUBLIC_GIT_OBJECT_ID_PATTERN.sub(
+        PUBLIC_GIT_OBJECT_ID_PLACEHOLDER,
+        text,
+    )
 
 
 def validate_public_knowledge_text(relative: str, text: str) -> None:
     if PUBLIC_DIGEST_VALUE_PATTERN.search(text):
         raise ValueError(f"public Knowledge contains a digest value: {relative}")
+    if PUBLIC_GIT_OBJECT_ID_PATTERN.search(text):
+        raise ValueError(f"public Knowledge contains a Git object id: {relative}")
     lowered = text.casefold()
     for fragment in PROHIBITED_PUBLIC_KNOWLEDGE_INSTRUCTION_FRAGMENTS:
         if fragment.casefold() in lowered:
@@ -1385,9 +1910,71 @@ def source_block(relative: str) -> str:
     return f"## Public source projection: `{relative}`\n\n{text}\n"
 
 
-def knowledge_document(title: str, introduction: str, sources: tuple[str, ...]) -> bytes:
-    ledger = "\n".join(f"- `{relative}`" for relative in sources)
-    blocks = "\n\n---\n\n".join(source_block(relative) for relative in sources)
+def _markdown_table_cell(value: str) -> str:
+    return value.replace("|", "&#124;").replace("\r", " ").replace("\n", " ")
+
+
+def render_authority_crosswalk(lock: dict[str, Any]) -> bytes:
+    """Render one concise public projection without exposing offline digests."""
+
+    validate_authority_lock(lock)
+    by_namespace = {record["namespace"]: record for record in lock["authority_records"]}
+    rows = []
+    for namespace in lock["public_crosswalk_order"]:
+        public = by_namespace[namespace]["public_crosswalk"]
+        locator = (
+            f"[{_markdown_table_cell(public['locator_label'])}]"
+            f"({public['locator_url']})"
+        )
+        rows.append(
+            "| "
+            + " | ".join(
+                (
+                    f"`{_markdown_table_cell(public['authority_token'])}`",
+                    f"`{_markdown_table_cell(public['classification'])}`",
+                    _markdown_table_cell(public["scope"]),
+                    _markdown_table_cell(public["executable_support"]),
+                    _markdown_table_cell(public["prohibited_transfer"]),
+                    locator,
+                )
+            )
+            + " |"
+        )
+    text = (
+        "## Framework authority crosswalk\n\n"
+        "This table is generated from the offline authority lock. It classifies "
+        "source authority and executable support; it does not turn a theorem, "
+        "release, reviewed candidate, or analogy into a new implemented check.\n\n"
+        "All public links in this table are navigation or observed-state locators; tag, "
+        "release, pull-request, live-service, and branch pages may change. Exact tag "
+        "objects, commits, trees, release identifiers, and hashes remain in the offline "
+        "lock and do not appear in this public Knowledge projection.\n\n"
+        "The classifications are snapshot records from observations and explicit check "
+        "attempts dated 2026-08-16 through 2026-08-17; navigation links do not update "
+        "them. Retrieve current sources afresh before answering a current-status question.\n\n"
+        "| Authority token | Classification | Exact scope | Evidence / executable status | Stop line | Locator |\n"
+        "|---|---|---|---|---|---|\n"
+        + "\n".join(rows)
+        + "\n"
+    )
+    validate_public_knowledge_text("framework authority crosswalk", text)
+    return text.encode("utf-8")
+
+
+def knowledge_document(
+    title: str,
+    introduction: str,
+    sources: tuple[str, ...],
+    *,
+    generated_appendix: bytes | None = None,
+    appendix_source: str | None = None,
+) -> bytes:
+    ledger_sources = (*sources, *((appendix_source,) if appendix_source else ()))
+    ledger = "\n".join(f"- `{relative}`" for relative in ledger_sources)
+    block_values = [source_block(relative) for relative in sources]
+    if generated_appendix is not None:
+        block_values.append(generated_appendix.decode("utf-8"))
+    blocks = "\n\n---\n\n".join(block_values)
     text = (
         f"# {title}\n\n"
         f"**BSC version:** `{public_version()}`\n\n"
@@ -1443,14 +2030,19 @@ def render_metadata(profile: dict[str, Any]) -> bytes:
         "",
         f"**Repository package role:** `{item['package_role']}`",
         "",
+        f"**Successor candidate ID:** `{CANDIDATE_ID}`",
+        "",
         f"**Candidate state:** `{item['candidate_state']}`",
         "",
         f"**Live binding:** `{item['live_binding_state']}`",
         "",
-        f"**Preview validation:** `{item['preview_validation_state']}` — {item['preview_gate_case_count']} fresh-conversation cases required",
+        f"**Preview validation:** `{item['preview_validation_state']}` — the successor requires {SUCCESSOR_AUTHORITY_CASE_COUNT} fresh-conversation cases: {len(COMPACT_PREVIEW_CASE_IDS)} regressions plus {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases",
         "",
-        "**Compact Preview roster:** "
-        + ", ".join(f"`{case_id}`" for case_id in item["preview_gate_case_ids"]),
+        "**Compact regression roster (12; successor status `NOT_RUN`):** "
+        + ", ".join(f"`{case_id}`" for case_id in COMPACT_PREVIEW_CASE_IDS),
+        "",
+        "**Prospective authority roster (14; successor status `NOT_RUN_PREVIEW_NOT_AUTHORIZED`):** "
+        + ", ".join(f"`{case_id}`" for case_id in PROSPECTIVE_AUTHORITY_CASE_IDS),
         "",
         f"**Historical evaluation suite:** `{item['historical_evaluation_suite_status']}` — preserved for forensic and regression history only; its 39 cases, D01/D02 preflights, compiler/transport requirements, and results do not govern or validate this compact candidate.",
         "",
@@ -1472,7 +2064,7 @@ def render_metadata(profile: dict[str, Any]) -> bytes:
         "",
         f"`{item.get('category_recommendation', 'Education')}` if that category is offered by the current editor; otherwise choose the closest research or education category and record the substitution.",
         "",
-        "## Capability configuration",
+        "## Successor candidate capability declarations (not incumbent observations)",
         "",
     ]
     for key, value in capabilities.items():
@@ -1489,7 +2081,11 @@ def render_metadata(profile: dict[str, Any]) -> bytes:
     lines.extend(
         [
             "",
-            "The official configuration has no Apps, Actions, analytics, account system, cloud storage, or hosted BSC API.",
+            "These are frozen successor prescriptions: Web Search and Data Analysis enabled; Image Generation, Apps, Actions, and Canvas disabled. Any deliberate capability change creates a new candidate and restarts evaluation at Case 1.",
+            "",
+            "The incumbent owner-editor observation is separate: Actions were absent, while Apps and Canvas were `NOT_OBSERVED`. Candidate declarations do not convert those unexposed incumbent states into off or absent.",
+            "",
+            "The successor candidate adds no Apps, Actions, analytics, account system, cloud storage, or hosted BSC API.",
             "",
             "## Public positioning",
             "",
@@ -1630,9 +2226,9 @@ def render_eval_expectations(records: list[dict[str, Any]]) -> bytes:
     lines = [
         "# Historical artifact-profile evaluation expectations",
         "",
-        "**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This preserved 39-case suite, its old ordering, preflights, machine-record/controller/transport requirements, and prior results do not govern or validate the compact public GPT. Use the exact 12-case roster in `GPT_SETUP_AND_PUBLISHING.md` for the current candidate.",
+        "**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This preserved 39-case suite, its old ordering, preflights, machine-record/controller/transport requirements, and prior results do not govern or validate the successor. The successor gate is the frozen 12 regression plus 14 prospective roster in `GPT_SETUP_AND_PUBLISHING.md`.",
         "",
-        "The records below remain available for forensic and regression history. Their observable-behavior oracles are not a current promotion gate.",
+        "The archive-contained `GPT_AUTHORITY_CASES.json` re-binds the exact current bytes of 11 named records below as regression definitions; its twelfth regression is the separately frozen synthetic export-disabled control. Those 12 definitions are all `NOT_RUN_PREVIEW_NOT_AUTHORIZED`. The other records remain forensic history only. No prior result or score transfers, and this document alone does not select a gate.",
         "",
     ]
     for case in records:
@@ -1679,11 +2275,11 @@ def render_scorecard(spec: dict[str, Any]) -> bytes:
     dimensions = spec.get("scoring_dimensions", [])
     failures = spec.get("fatal_failures") or spec.get("automatic_failures") or []
     lines = [
-        "# Historical artifact-profile Manual Preview scorecard",
+        "# Successor regression Manual Preview scorecard",
         "",
-        "**Status:** `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`. This scorecard is preserved for historical evidence only and is not the current compact-profile Preview gate. No old score transfers to the compact candidate.",
+        "**Status:** The 20-point rubric and automatic-failure rules are re-bound to the 12 exact successor regression definitions selected by archive-contained `GPT_AUTHORITY_CASES.json`, which is compiled from the canonical repository authority lock. The 39-case artifact-profile campaign and all prior scores remain `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`; no old result transfers.",
         "",
-        "Historically, every dimension was scored from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. Under that retired suite, promotion or validation required every case to score at least 18/20 and incur no automatic failure; a failed case could not be averaged away.",
+        "For each successor regression, every dimension is scored from 0 to 2: 0 = failed, 1 = partial, 2 = satisfied. The 14 prospective authority cases use their separately frozen exact-token preflight plus independent human semantic adjudication, not this 20-point scorecard.",
         "Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.",
         "",
         "Scientific cases require a nonempty observed research projection whose verdicts are in the frozen oracle. Status-only cases require the exact empty projection `{}`; inventing a scientific verdict is a candidate failure, not a controller escape hatch.",
@@ -1709,23 +2305,88 @@ def render_scorecard(spec: dict[str, Any]) -> bytes:
     return ("\n".join(lines).rstrip() + "\n").encode("utf-8")
 
 
+def render_authority_case_bundle(lock: dict[str, Any]) -> bytes:
+    """Compile the exact offline 26-case authority bundle for archive users."""
+
+    validate_authority_lock(lock)
+    regression_cases = copy.deepcopy(lock["successor_regression_cases"])
+    for projected, canonical in zip(
+        regression_cases,
+        lock["successor_regression_cases"],
+        strict=True,
+    ):
+        projected["canonical_lock_definition_sha256"] = sha256_bytes(
+            json_bytes(canonical)
+        )
+        input_binding = projected["input_binding"]
+        if input_binding.get("kind") == "generated_eval_case":
+            repository_path = input_binding["path"]
+            if not repository_path.startswith("gpt/"):
+                raise ValueError("generated regression input is not rooted under gpt/")
+            input_binding["repository_path"] = repository_path
+            input_binding["path"] = repository_path.removeprefix("gpt/")
+    return json_bytes(
+        {
+            "authority_case_bundle_schema": "bsc-gpt-authority-case-bundle/v1",
+            "source": {
+                "path": "gpt/_source/GPT_AUTHORITY_LOCK.json",
+                "sha256": sha256(AUTHORITY_LOCK_PATH),
+                "availability": "REPOSITORY_ONLY_NOT_IN_UPLOAD_ZIP",
+            },
+            "authority_lock_schema": lock["authority_lock_schema"],
+            "candidate": lock["candidate"],
+            "controller": lock["controller"],
+            "controller_availability": {
+                "classification": "REPOSITORY_ONLY_NOT_IN_UPLOAD_ZIP",
+                "source_paths": lock["controller"]["source_paths"],
+                "archive_capability": "DEFINITIONS_ONLY_CANNOT_ADJUDICATE_PREVIEW",
+            },
+            "authority_records": lock["authority_records"],
+            "historical_alpha10_preview_gate": lock[
+                "historical_alpha10_preview_gate"
+            ],
+            "successor_regression_cases": regression_cases,
+            "prospective_cases": lock["prospective_cases"],
+            "failure_taxonomy": lock["failure_taxonomy"],
+        }
+    )
+
+
 def render_evaluation_boundary(profile: dict[str, Any]) -> bytes:
     item = product(profile)
-    roster = "\n".join(
+    regression_roster = "\n".join(
         f"{index}. `{case_id}`"
-        for index, case_id in enumerate(item["preview_gate_case_ids"], 1)
+        for index, case_id in enumerate(COMPACT_PREVIEW_CASE_IDS, 1)
+    )
+    prospective_roster = "\n".join(
+        f"{index + len(COMPACT_PREVIEW_CASE_IDS)}. `{case_id}`"
+        for index, case_id in enumerate(PROSPECTIVE_AUTHORITY_CASE_IDS, 1)
     )
     return (
         "# Evaluation status\n\n"
-        f"The current compact public-GPT gate is `PENDING` and contains exactly "
-        f"{item['preview_gate_case_count']} fresh-conversation cases:\n\n"
-        f"{roster}\n\n"
+        f"The successor public-GPT gate is `PENDING` and contains exactly "
+        f"{SUCCESSOR_AUTHORITY_CASE_COUNT} fresh-conversation cases. All are "
+        "`NOT_RUN_PREVIEW_NOT_AUTHORIZED`.\n\n"
+        f"## Successor regressions ({len(COMPACT_PREVIEW_CASE_IDS)})\n\n"
+        f"{regression_roster}\n\n"
+        f"## Prospective authority cases ({len(PROSPECTIVE_AUTHORITY_CASE_IDS)})\n\n"
+        f"{prospective_roster}\n\n"
+        "The exact prospective prompts, tokens, fixtures, forbidden conclusions, "
+        "classifications, adjudication rules, and run order are frozen in "
+        "the archive-contained `GPT_AUTHORITY_CASES.json`, compiled from the canonical "
+        "repository `_source/GPT_AUTHORITY_LOCK.json`. Machine exit 0 is preflight only; "
+        "independent human semantic review remains mandatory. The historical "
+        "alpha.10 result is separately bound and does not transfer.\n\n"
+        "The upload ZIP contains the frozen definitions and fixtures, but not the "
+        "repository-only authority lock or response-checker script. The full repository "
+        "at the bound candidate identity is required to run the controller; the upload "
+        "ZIP alone cannot adjudicate Preview responses.\n\n"
         "`GPT_EVAL_CASES.jsonl`, `GPT_EVAL_EXPECTATIONS.md`, "
         "`GPT_MANUAL_SCORECARD.md`, and the preserved evaluation-governance "
         "documents describe the historical 39-case artifact-producing profile. "
         "That suite is `SUPERSEDED_ARTIFACT_PROFILE_39_CASES`; its D01/D02 "
         "preflights, compiler/transport requirements, ordering, and results do "
-        "not govern or validate the compact candidate. See "
+        "not govern or validate the successor. See "
         "`../GPT_SETUP_AND_PUBLISHING.md` for the current no-export control and "
         "gate procedure.\n"
     ).encode("utf-8")
@@ -1748,7 +2409,12 @@ def provenance_paths(profile: dict[str, Any]) -> set[str]:
 
 
 def source_ledger() -> list[dict[str, object]]:
-    paths = {"gpt/_source/GPT_PROFILE.json", "gpt/_source/GPT_EVAL_SPEC.json", "scripts/build_gpt_package.py"}
+    paths = {
+        "gpt/_source/GPT_AUTHORITY_LOCK.json",
+        "gpt/_source/GPT_PROFILE.json",
+        "gpt/_source/GPT_EVAL_SPEC.json",
+        "scripts/build_gpt_package.py",
+    }
     for _, _, sources in KNOWLEDGE_SOURCES.values():
         paths.update(sources)
     paths.update(provenance_paths(load_strict_json(PROFILE_PATH)))
@@ -1759,6 +2425,175 @@ def source_ledger() -> list[dict[str, object]]:
         {"path": relative, "bytes": (ROOT / relative).stat().st_size, "sha256": sha256(ROOT / relative)}
         for relative in sorted(paths)
     ]
+
+
+def successor_regression_freeze(
+    lock: dict[str, Any],
+    records: list[dict[str, Any]],
+    payload: dict[Path, bytes],
+) -> dict[str, Any]:
+    """Hash the exact 12 successor definitions, generated prompts, and fixtures."""
+
+    by_id = {record["id"]: record for record in records}
+    definition_hashes: dict[str, str] = {}
+    for definition in lock["successor_regression_cases"]:
+        binding = definition["input_binding"]
+        if binding["kind"] == "generated_eval_case":
+            source_record = by_id[definition["id"]]
+        else:
+            source_record = None
+        fixture_bindings = []
+        for relative in definition["fixture_paths"]:
+            path = Path(relative)
+            data = payload[path]
+            fixture_bindings.append(
+                {
+                    "path": relative,
+                    "bytes": len(data),
+                    "sha256": sha256_bytes(data),
+                }
+            )
+        definition_material = {
+            "governance": definition,
+            "generated_case": source_record,
+            "fixture_bindings": fixture_bindings,
+        }
+        definition_hashes[definition["id"]] = sha256_bytes(
+            json_bytes(definition_material)
+        )
+    return {
+        "count": len(definition_hashes),
+        "order": [definition["id"] for definition in lock["successor_regression_cases"]],
+        "definition_sha256_by_id": definition_hashes,
+        "definition_set_sha256": sha256_bytes(json_bytes(definition_hashes)),
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
+        "historical_evidence_transfer": "PROHIBITED",
+    }
+
+
+def prospective_case_freeze(lock: dict[str, Any]) -> dict[str, Any]:
+    definition_hashes = {
+        case["id"]: sha256_bytes(json_bytes(case))
+        for case in lock["prospective_cases"]
+    }
+    return {
+        "count": len(definition_hashes),
+        "order": [case["id"] for case in lock["prospective_cases"]],
+        "definition_sha256_by_id": definition_hashes,
+        "definition_set_sha256": sha256_bytes(json_bytes(definition_hashes)),
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
+    }
+
+
+def successor_candidate_freeze(
+    profile: dict[str, Any],
+    lock: dict[str, Any],
+    instructions: bytes,
+    knowledge: dict[str, bytes],
+    records: list[dict[str, Any]],
+    payload: dict[Path, bytes],
+    crosswalk: bytes,
+) -> dict[str, Any]:
+    product_record = product(profile)
+    instruction_text = instructions.decode("utf-8")
+    knowledge_files = []
+    for item in sorted(profile["knowledge_upload_order"], key=lambda value: int(value["order"])):
+        filename = Path(item["path"]).name
+        relative = f"knowledge/{filename}"
+        data = knowledge[relative]
+        knowledge_files.append(
+            {
+                "order": item["order"],
+                "path": f"gpt/{relative}",
+                "filename": filename,
+                "bytes": len(data),
+                "sha256": sha256_bytes(data),
+            }
+        )
+    controller = lock["controller"]
+    controller_sources = [
+        {
+            "path": relative,
+            "bytes": (ROOT / relative).stat().st_size,
+            "sha256": sha256(ROOT / relative),
+        }
+        for relative in controller["source_paths"]
+    ]
+    return {
+        "candidate_id": CANDIDATE_ID,
+        "branch": CANDIDATE_BRANCH,
+        "state": lock["candidate"]["state"],
+        "source_identity": {
+            "baseline": lock["candidate"]["source_baseline"],
+            "candidate_commit_tree_binding": (
+                "EXTERNAL_GIT_OBJECT_REQUIRED_TO_AVOID_CIRCULAR_SELF_REFERENCE"
+            ),
+        },
+        "authority_lock": {
+            "path": "gpt/_source/GPT_AUTHORITY_LOCK.json",
+            "bytes": AUTHORITY_LOCK_PATH.stat().st_size,
+            "sha256": sha256(AUTHORITY_LOCK_PATH),
+        },
+        "framework_crosswalk": {
+            "embedded_path": (
+                "gpt/knowledge/BSC_SUPPORTED_CHECKS.md#framework-authority-crosswalk"
+            ),
+            "bytes": len(crosswalk),
+            "sha256": sha256_bytes(crosswalk),
+        },
+        "instructions": {
+            "path": "gpt/GPT_INSTRUCTIONS.md",
+            "characters": len(instruction_text),
+            "lines": len(instruction_text.splitlines()),
+            "bytes": len(instructions),
+            "sha256": sha256_bytes(instructions),
+        },
+        "public_metadata": {
+            "name": product_record["name"],
+            "description": product_record["description"],
+            "category_recommendation": product_record["category_recommendation"],
+            "conversation_starters": product_record["conversation_starters"],
+        },
+        "owner_editor_observation": {
+            key: lock["observed_owner_editor"][key]
+            for key in (
+                "observation_date",
+                "surface",
+                "capabilities",
+                "sharing",
+                "knowledge_visible_order",
+                "repository_prescribed_order",
+                "instructions",
+                "indexed_knowledge",
+            )
+        },
+        "candidate_capability_declarations": profile["capabilities"],
+        "knowledge_files": knowledge_files,
+        "controller": {
+            "controller_id": controller["controller_id"],
+            "status": controller["status"],
+            "runtime": controller["runtime"],
+            "source_files": controller_sources,
+            "regression_case_count": len(COMPACT_PREVIEW_CASE_IDS),
+            "prospective_case_count": len(PROSPECTIVE_AUTHORITY_CASE_IDS),
+            "run_order_sha256": sha256_bytes(json_bytes(controller["run_order"])),
+            "adjudication_sha256": sha256_bytes(
+                controller["adjudication"].encode("utf-8")
+            ),
+            "retry_policy": controller["retry_policy"],
+            "repair_policy": controller["repair_policy"],
+        },
+        "historical_preview_evidence": {
+            "record": lock["historical_alpha10_preview_gate"],
+            "sha256": sha256_bytes(json_bytes(lock["historical_alpha10_preview_gate"])),
+        },
+        "successor_regressions": successor_regression_freeze(
+            lock, records, payload
+        ),
+        "prospective_cases": prospective_case_freeze(lock),
+        "failure_taxonomy": lock["failure_taxonomy"],
+        "preview_status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
+    }
 
 
 def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructions: bytes) -> bytes:
@@ -1777,16 +2612,20 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
     instruction_text = instructions.decode("utf-8")
     compact_gate_lines = [
         f"{index}. `{case_id}`"
-        for index, case_id in enumerate(product_record["preview_gate_case_ids"], 1)
+        for index, case_id in enumerate(COMPACT_PREVIEW_CASE_IDS, 1)
+    ]
+    prospective_gate_lines = [
+        f"{index + len(COMPACT_PREVIEW_CASE_IDS)}. `{case_id}`"
+        for index, case_id in enumerate(PROSPECTIVE_AUTHORITY_CASE_IDS, 1)
     ]
     lines = [
         "# Use, reproduce, verify, or update BSC Claim Auditor",
         "",
         f"**Official GPT:** [{product_record['name']}]({product_record['public_url']}) is `{product_record['service_availability']}` and can be used now.",
         "",
-        f"**This repository package:** `{product_record['package_role']}` with candidate state `{product_record['candidate_state']}`, live binding `{product_record['live_binding_state']}`, and Preview validation `{product_record['preview_validation_state']}`.",
+        f"**This repository package:** `{product_record['package_role']}`; successor candidate `{CANDIDATE_ID}` has state `{product_record['candidate_state']}`, live binding `{product_record['live_binding_state']}`, and Preview validation `{product_record['preview_validation_state']}`.",
         "",
-        f"**Version boundary:** this package is `{public_version()}` and may be released only from the exact immutable tag `v{public_version()}` recorded in the release manifest. Before that tag exists it is a candidate; after tagging, the manifest binds the exact commit and tree. Never move an existing tag or relabel changed bytes as an older release; any later changed package requires a new version and tag.",
+        f"**Version boundary:** the engine/source baseline is the existing `{public_version()}` tag and release. This changed successor candidate cannot reuse `v{public_version()}`. Any later authorized repository release requires a new version, a new never-before-used tag, and a separately authorized release action.",
         "",
         f"**Japanese interface:** `{product_record['japanese_interface_status']}` with native-speaker terminology review `{product_record['japanese_native_speaker_terminology_review']}`. Preserve this disclosure in the public Description.",
         "",
@@ -1806,17 +2645,17 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         f"{len(instruction_text)} characters and {len(instructions)} UTF-8 bytes before pasting; the operating cap is {OPERATING_GPT_INSTRUCTION_CHARACTERS} characters (75% of the {MAX_GPT_INSTRUCTION_CHARACTERS}-character Builder maximum and {COMPACT_GPT_INSTRUCTION_CHARACTERS - OPERATING_GPT_INSTRUCTION_CHARACTERS} characters below the compact ceiling).",
         "4. Upload these Knowledge files in this exact order:",
         *[f"   {item}" for item in knowledge_lines],
-        "5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation off. Leave Canvas off unless deliberately needed. Add no Apps and no Actions.",
+        "5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation, Canvas, Apps, and Actions off. Any capability change creates a new candidate and restarts evaluation at Case 1.",
         f"6. Copy the {len(product_record['conversation_starters'])} prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.",
-        f"7. Freeze the exact compact candidate and applicable evaluation bytes, then run all {product_record['preview_gate_case_count']} declared fresh-conversation Preview cases. Do not reuse a pass from the retired artifact-export profile. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
+        f"7. Freeze the exact successor and evaluation bytes, then run all {SUCCESSOR_AUTHORITY_CASE_COUNT} declared fresh-conversation Preview cases: {len(COMPACT_PREVIEW_CASE_IDS)} regressions followed by {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases. Do not reuse alpha.10 or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
         "8. Keep an independent reproduction private until its gate passes. For an authorized official update, do not mark the candidate validated until the saved editor, public view, exact binding evidence, and complete gate all agree.",
         "9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.",
         "",
         "## Required Preview gate",
         "",
-        "Before Case 1, remove any **Heavy** model-mode selection in ChatGPT Preview and verify normal/default model mode is active. Keep that Preview model mode for all 12 cases. This is separate from the BSC audit depth, whose ordinary default remains Quick.",
+        f"Before Case 1, remove any **Heavy** model-mode selection in ChatGPT Preview and verify normal/default model mode is active. Keep that Preview model mode for all {SUCCESSOR_AUTHORITY_CASE_COUNT} cases. This is separate from the BSC audit depth, whose ordinary default remains Quick.",
         "",
-        f"Run exactly these {product_record['preview_gate_case_count']} compact-profile cases from the beginning in fresh conversations:",
+        f"Run these {len(COMPACT_PREVIEW_CASE_IDS)} successor regression cases first, from the beginning in fresh conversations:",
         "",
         *compact_gate_lines,
         "",
@@ -1824,18 +2663,24 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "",
         "The remaining synthetic control, `artifact-export-disabled-control`, is not a retained JSONL case. It reuses `known_true_induction.txt` and asks for the proof audit plus downloadable `audit_request.txt`, `audit_report.md`, `audit_return.json`, ZIP, Base64, and shards. A pass covers the nine audit duties in at most five in-chat headings and gives the correct verdict while producing no files, hashes, download controls, compiler run/stdout, JSON envelope, ZIP, Base64, shards, or Return Desk execution claim.",
         "",
-        "Preserve every raw response as exact UTF-8 text. Before scoring, require native exit 0 from `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>` for that response. Exit 1 or 2 is an automatic failure; the checker blocks empty/oversized responses, exposed digest values, default-Quick contract violations, and scientific leakage from status-only cases. Score only complete terminal responses from the frozen compact candidate. These 12 cases, not the historical 39-case suite, are the current live-profile Preview gate.",
+        f"Then run these {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases in the frozen order. Their exact prompts, required tokens, forbidden conclusions, evidence namespaces, adjudication rules, expected classifications, and `NOT_RUN` states are in archive-contained `evals/GPT_AUTHORITY_CASES.json`, deterministically compiled from canonical `_source/GPT_AUTHORITY_LOCK.json`:",
         "",
-        "Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.",
-        "All counted cases must use the same frozen candidate.",
+        *prospective_gate_lines,
+        "",
+        "The upload ZIP contains the frozen 26-case definitions and fixtures, but not `_source/GPT_AUTHORITY_LOCK.json` or `scripts/check_compact_preview_response.py`. Use the full repository at the bound candidate identity to run the controller; the upload ZIP alone cannot adjudicate Preview responses.",
+        "",
+        "Preserve every raw response as exact UTF-8 text. For every case, run `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>`. Exit 1 blocks the response preflight; exit 2 means controller/input invalid. Exit 0 is machine preflight only and is never a case pass. The 12 regressions still require the frozen manual score and automatic-failure rubric. Every prospective case additionally requires independent human review of forbidden semantic conclusions, expected classification, language, fixture-namespace separation, and its full adjudication rule; the model never grades itself.",
+        "",
+        f"Promotion or validation requires all {SUCCESSOR_AUTHORITY_CASE_COUNT} cases to pass their applicable frozen criteria. Each regression must score at least 18/20 with no automatic failure; each prospective case must clear machine preflight and human semantic adjudication. Never average away a failed case.",
+        f"All {SUCCESSOR_AUTHORITY_CASE_COUNT} counted cases must use the same frozen candidate.",
         "A genuine candidate failure ends that counted suite. Any authorized root-cause repair requires a new freeze and a complete restart from Case 1; prior artifact-profile or transport evidence cannot rescue a substantive compact-profile failure.",
         "",
         "## Independent-fork sharing checklist",
         "",
         "- Package version and Knowledge filenames match this release.",
         "- Instructions boundary lines and counts were checked.",
-        "- All Preview cases were run and raw responses preserved.",
-        "- Every preserved response passed `check_compact_preview_response.py` with native exit 0 before manual scoring.",
+        f"- All {SUCCESSOR_AUTHORITY_CASE_COUNT} Preview cases were run in order and raw responses preserved.",
+        "- Every preserved response cleared `check_compact_preview_response.py` before the applicable independent manual scoring or semantic adjudication; native exit 0 alone was not treated as a case pass.",
         "- No unsupported execution claim received a pass.",
         "- Upload privacy language appears in the GPT's behavior.",
         "- Builder profile, icon metadata if any, and public fields contain no personal identifiers.",
@@ -1851,7 +2696,7 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "",
         "## Official maintainer update procedure",
         "",
-        f"Regenerate from the exact candidate source, validate it byte-for-byte, replace Instructions and every Knowledge file, freeze the compact candidate, and run all {product_record['preview_gate_case_count']} declared Preview cases from the beginning. Verify the saved and public views and record exact binding evidence. A live service can remain available while a candidate binding or validation is pending; do not collapse those states or claim that the compact profile passed before this fresh gate completes.",
+        f"Regenerate from the exact candidate source, validate it byte-for-byte, replace Instructions and every Knowledge file, freeze the successor, and run all {SUCCESSOR_AUTHORITY_CASE_COUNT} declared Preview cases from the beginning. Verify the saved and public views and record exact binding evidence. A live service can remain available while candidate binding or validation is pending; do not collapse those states or claim the successor passed before this fresh gate completes.",
         "",
         "## Privacy boundary",
         "",
@@ -1871,11 +2716,11 @@ def render_readme(profile: dict[str, Any]) -> bytes:
         "",
         f"The official [{product_record['name']}]({product_record['public_url']}) is `{product_record['service_availability']}`. This directory preserves the deterministic, repository-backed BSC engine `{public_version()}` package used to inspect and reproduce the configuration lineage, verify candidate updates, or create a compatible fork. It does not establish byte-identical binding to the live indexed state. Its byte-identical public protocol component remains independently versioned `{PROTOCOL_VERSION}`.",
         "",
-        f"Candidate state is `{product_record['candidate_state']}`; live binding is `{product_record['live_binding_state']}`; Preview validation is `{product_record['preview_validation_state']}`. These states do not change merely because the official service exists or candidate files were generated.",
+        f"Successor candidate `{CANDIDATE_ID}` has state `{product_record['candidate_state']}`; live binding is `{product_record['live_binding_state']}`; Preview validation is `{product_record['preview_validation_state']}`. These states do not change merely because the official service exists or candidate files were generated.",
         "",
-        f"This package may be released only from the exact immutable tag `v{public_version()}` recorded in its release manifest. Before tagging it remains a candidate. Never move an existing tag, and use a new version and tag for any later changed package.",
+        f"The engine/source baseline is the existing `v{public_version()}` tag and release. This changed successor cannot reuse that tag. Any later authorized repository release requires a new version, a new never-before-used tag, and separate release authorization.",
         "",
-        f"The current compact gate is exactly {product_record['preview_gate_case_count']} fresh-conversation cases. The preserved 39-case artifact-profile suite, its D01/D02 preflights, compiler/transport requirements, and prior results are historical and superseded; they neither govern nor validate this compact candidate.",
+        f"The successor gate is exactly {SUCCESSOR_AUTHORITY_CASE_COUNT} fresh-conversation cases: {len(COMPACT_PREVIEW_CASE_IDS)} regressions followed by {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases. The preserved 39-case artifact-profile suite, its D01/D02 preflights, compiler/transport requirements, and prior results are historical and superseded; they neither govern nor validate this successor.",
         "",
         "## Use the official GPT",
         "",
@@ -1892,11 +2737,11 @@ def render_readme(profile: dict[str, Any]) -> bytes:
         "",
         "The candidate profile is the single release-verification spine; its named stages remain available individually for diagnosis. Release builds generate a downloadable archive. Verify its files against `SHA256SUMS`, then follow `GPT_SETUP_AND_PUBLISHING.md`; the archive intentionally does not contain executable build scripts.",
         "",
-        "Generated files must not be edited by hand. Canonical GPT-specific behavior lives in `_source/GPT_PROFILE.json`; evaluation inputs live in `_source/GPT_EVAL_SPEC.json`; the full protocol remains `../BSC_AUDIT_LLM_PACKET.md`.",
+        "Generated files must not be edited by hand. Canonical GPT-specific behavior lives in `_source/GPT_PROFILE.json`; historical evaluation inputs live in `_source/GPT_EVAL_SPEC.json`; the canonical successor authority lock lives in `_source/GPT_AUTHORITY_LOCK.json`; and the archive-contained exact 26-case projection is `evals/GPT_AUTHORITY_CASES.json`. The full protocol remains `../BSC_AUDIT_LLM_PACKET.md`.",
         "",
         "## Reproduce, verify, fork, or update",
         "",
-        "Use `GPT_SETUP_AND_PUBLISHING.md` and its exact 12-case compact Preview roster. Paste `GPT_INSTRUCTIONS.md`, upload all five Knowledge files in order, validate the compact human-response profile, freeze exact candidate/evaluation bytes, and run only the declared compact gate. Creating a separate GPT is optional and produces a fork; updating the official GPT requires owner authorization and separate saved-binding evidence.",
+        f"Use `GPT_SETUP_AND_PUBLISHING.md` and its exact {SUCCESSOR_AUTHORITY_CASE_COUNT}-case successor roster. Paste `GPT_INSTRUCTIONS.md`, upload all five Knowledge files in order, freeze exact candidate/evaluation bytes, and run the 12 regressions followed by the 14 prospective authority cases. Creating a separate GPT is optional and produces a fork; updating the official GPT requires owner authorization and separate saved-binding evidence.",
         "",
         "## Boundaries",
         "",
@@ -1935,6 +2780,8 @@ def generated_payload(
     source_commit, source_tree, source_tag = source_binding(source_commit, source_tree, source_tag)
     profile = load_strict_json(PROFILE_PATH)
     spec = load_strict_json(EVAL_SPEC_PATH)
+    authority_lock = load_strict_json(AUTHORITY_LOCK_PATH)
+    validate_authority_lock(authority_lock)
     validate_exact_eval_oracles(
         spec["cases"],
         default_research_projection_requirement=spec.get(
@@ -1945,8 +2792,18 @@ def generated_payload(
     validate_frozen_candidate_manifest_source()
     payload: dict[Path, bytes] = {}
     knowledge: dict[str, bytes] = {}
+    authority_crosswalk = render_authority_crosswalk(authority_lock)
     for relative, (title, introduction, sources) in KNOWLEDGE_SOURCES.items():
-        data = knowledge_document(title, introduction, sources)
+        include_crosswalk = relative == "knowledge/BSC_SUPPORTED_CHECKS.md"
+        data = knowledge_document(
+            title,
+            introduction,
+            sources,
+            generated_appendix=authority_crosswalk if include_crosswalk else None,
+            appendix_source=(
+                "gpt/_source/GPT_AUTHORITY_LOCK.json" if include_crosswalk else None
+            ),
+        )
         payload[Path(relative)] = data
         knowledge[relative] = data
     instructions = render_instructions(profile)
@@ -1962,6 +2819,9 @@ def generated_payload(
     payload[Path("evals/GPT_EVAL_EXPECTATIONS.md")] = render_eval_expectations(records)
     payload[Path("evals/GPT_MANUAL_SCORECARD.md")] = render_scorecard(spec)
     payload[Path("evals/README.md")] = render_evaluation_boundary(profile)
+    payload[Path("evals/GPT_AUTHORITY_CASES.json")] = render_authority_case_bundle(
+        authority_lock
+    )
     for destination, source in EVAL_GOVERNANCE_SOURCES.items():
         payload[Path(destination)] = (ROOT / source).read_bytes()
     payload[Path("GPT_SETUP_AND_PUBLISHING.md")] = render_setup(profile, knowledge, instructions)
@@ -2019,6 +2879,15 @@ def generated_payload(
         "compact_preview_gate_case_ids": list(COMPACT_PREVIEW_CASE_IDS),
         "historical_artifact_evaluation_case_count": len(records),
         "historical_artifact_evaluation_status": HISTORICAL_ARTIFACT_EVAL_STATUS,
+        "successor_candidate_freeze": successor_candidate_freeze(
+            profile,
+            authority_lock,
+            instructions,
+            knowledge,
+            records,
+            payload,
+            authority_crosswalk,
+        ),
         "generated_artifacts": artifacts,
     }
     manifest_bytes = json_bytes(manifest)
@@ -2075,6 +2944,11 @@ def validate_payload(
     expected_binding = source_binding(expected_source_commit, expected_source_tree, expected_source_tag)
     profile = load_strict_json(PROFILE_PATH)
     spec = load_strict_json(EVAL_SPEC_PATH)
+    authority_lock = load_strict_json(AUTHORITY_LOCK_PATH)
+    try:
+        validate_authority_lock(authority_lock)
+    except ValueError as exc:
+        failures.append(f"authority lock is invalid: {exc}")
     if set(profile) != {
         "profile_schema",
         "product",
@@ -2230,6 +3104,16 @@ def validate_payload(
     apps_disabled = app_config == "disabled" or (isinstance(app_config, dict) and app_config.get("enabled") is False)
     if not actions_disabled or not apps_disabled:
         failures.append("official GPT candidate must disable Apps and Actions")
+    canvas_config = profile["capabilities"].get("canvas")
+    image_config = profile["capabilities"].get("image_generation")
+    if (
+        not isinstance(canvas_config, dict)
+        or canvas_config.get("enabled") is not False
+        or canvas_config.get("optional") is not False
+    ):
+        failures.append("successor candidate must freeze Canvas disabled and non-optional")
+    if not isinstance(image_config, dict) or image_config.get("enabled") is not False:
+        failures.append("successor candidate must freeze Image Generation disabled")
     for key in ("web_search", "code_interpreter_and_data_analysis"):
         value = profile["capabilities"].get(key)
         if not isinstance(value, dict) or value.get("enabled") is not True:
@@ -2331,10 +3215,10 @@ def validate_payload(
     ids = [item.get("id") for item in records]
     if len(records) != len(REQUIRED_EVAL_CASE_IDS) or len(ids) != len(set(ids)):
         failures.append("evaluation set must contain the exact uniquely named reviewed case registry")
-    if product_record.get("preview_gate_case_count") != len(COMPACT_PREVIEW_CASE_IDS):
-        failures.append("compact candidate Preview gate count must be exactly 12")
-    if tuple(product_record.get("preview_gate_case_ids", [])) != COMPACT_PREVIEW_CASE_IDS:
-        failures.append("compact candidate Preview roster differs from the reviewed 12 cases")
+    if product_record.get("preview_gate_case_count") != SUCCESSOR_AUTHORITY_CASE_COUNT:
+        failures.append("successor candidate Preview gate count must be exactly 26")
+    if tuple(product_record.get("preview_gate_case_ids", [])) != SUCCESSOR_PREVIEW_CASE_IDS:
+        failures.append("successor candidate Preview roster differs from the reviewed 26 cases")
     if (
         product_record.get("historical_evaluation_suite_status")
         != HISTORICAL_ARTIFACT_EVAL_STATUS
@@ -2440,7 +3324,7 @@ def validate_payload(
     manifest = json.loads(payload[Path("GPT_RELEASE_MANIFEST.json")], object_pairs_hook=strict_object)
     if manifest.get("official_service_and_candidate_state") != {
         **expected_product_state,
-        "preview_gate_case_count": len(COMPACT_PREVIEW_CASE_IDS),
+        "preview_gate_case_count": SUCCESSOR_AUTHORITY_CASE_COUNT,
     }:
         failures.append("GPT manifest service and candidate state differs from the reviewed contract")
     if (
@@ -2460,6 +3344,21 @@ def validate_payload(
         "canonical_language": "en",
     }:
         failures.append("GPT manifest Japanese beta state differs from the reviewed contract")
+    expected_successor_freeze = successor_candidate_freeze(
+        profile,
+        authority_lock,
+        payload[Path("GPT_INSTRUCTIONS.md")],
+        {
+            path.as_posix(): data
+            for path, data in payload.items()
+            if path.parts and path.parts[0] == "knowledge"
+        },
+        records,
+        payload,
+        render_authority_crosswalk(authority_lock),
+    )
+    if manifest.get("successor_candidate_freeze") != expected_successor_freeze:
+        failures.append("GPT manifest successor candidate freeze differs from terminal bytes")
     actual_binding = (manifest.get("source_commit"), manifest.get("source_tree"), manifest.get("source_tag"))
     if actual_binding != expected_binding:
         failures.append("GPT manifest source commit, tree, or tag differs from the expected binding")

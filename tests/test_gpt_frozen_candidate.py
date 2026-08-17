@@ -38,15 +38,19 @@ class FrozenCandidateManifestTests(unittest.TestCase):
     def test_registry_contract_is_explicit_complete_and_current(self) -> None:
         document, findings = checker.build_manifest(ROOT)
         self.assertEqual(findings, [])
-        self.assertEqual(len(checker.registry_entries()), 181)
-        self.assertEqual(document["file_count"], 181)
-        self.assertEqual(len(document["files"]), 181)
+        self.assertEqual(len(checker.registry_entries()), 183)
+        self.assertEqual(document["file_count"], 183)
+        self.assertEqual(len(document["files"]), 183)
+        self.assertEqual(document["file_count"], len(checker.registry_entries()))
+        self.assertEqual(len(document["files"]), len(checker.registry_entries()))
         self.assertEqual(
             [(entry["category"], entry["path"]) for entry in document["files"]],
             list(checker.registry_entries()),
         )
 
         paths = {path for _, path in checker.registry_entries()}
+        self.assertIn("gpt/_source/GPT_AUTHORITY_LOCK.json", paths)
+        self.assertIn("gpt/evals/GPT_AUTHORITY_CASES.json", paths)
         self.assertEqual(
             {
                 path
