@@ -3,11 +3,11 @@
   "apps_state": "disabled",
   "binding_scope": "This lock identifies reproducible source and upload bytes, not opaque indexed service bytes.",
   "builder": {
-    "bytes": 66390,
+    "bytes": 72962,
     "path": "scripts/build_gpt_v04.py",
-    "sha256": "7f8a75760e5cf2702615cffe6f791744e4acd1da4828eaaf2a5e915770511786"
+    "sha256": "e78fa386c345c7eab323cb58c7d9e62a308905d0ceae38cf65bd9ae828476cf9"
   },
-  "candidate_id": "bsc-claim-auditor-v0.4.0-preview.1",
+  "candidate_id": "bsc-claim-auditor-v0.4.0-preview.2",
   "capabilities": {
     "actions": false,
     "apps": false,
@@ -55,15 +55,15 @@
     "characters": 3997,
     "lines": 27,
     "path": "GPT_INSTRUCTIONS.md",
-    "sha256": "58abecf5aaf85651cccfbbff1312969d0b52a4159ceaa51265d7c6ce51a4c1ce"
+    "sha256": "7b0d01a77100b0ad8f636dab8a95bf851ade09995399e9fadb9f4ac04b91bf60"
   },
   "knowledge_upload_order": [
     {
-      "bytes": 6217,
-      "characters": 6211,
-      "lines": 85,
+      "bytes": 7683,
+      "characters": 7673,
+      "lines": 91,
       "path": "knowledge/BSC_CORE_GUIDE.md",
-      "sha256": "147534957282f5eae90efdee0573e4f4fb88a894d3a4afb423bf854116614038"
+      "sha256": "580065df43b95db7b122282a902ebb0a6e7a405e0e909aa11d77110fdc0b6911"
     },
     {
       "bytes": 7886,
@@ -80,11 +80,11 @@
       "sha256": "8a7e3739d726116964fd9a1cd4129e5c29802ff6849b9acb94a115fcc5c5e61e"
     },
     {
-      "bytes": 4524,
-      "characters": 2526,
-      "lines": 64,
+      "bytes": 5694,
+      "characters": 2970,
+      "lines": 70,
       "path": "knowledge/BSC_JAPANESE_GLOSSARY.md",
-      "sha256": "038da53e479eaa6f53e83a7ba8da20b605ae0035971bab5240e90eaec2510945"
+      "sha256": "9c58cce4e80b11d0ca218b799701b423a03617906e19773dde2cdedff20ed4b7"
     }
   ],
   "live_binding_state": "NON_ADMISSIBLE_UNHASHABLE",
@@ -94,7 +94,7 @@
       "characters": 3997,
       "lines": 27,
       "path": "GPT_INSTRUCTIONS.md",
-      "sha256": "58abecf5aaf85651cccfbbff1312969d0b52a4159ceaa51265d7c6ce51a4c1ce"
+      "sha256": "7b0d01a77100b0ad8f636dab8a95bf851ade09995399e9fadb9f4ac04b91bf60"
     },
     {
       "bytes": 637,
@@ -111,11 +111,11 @@
       "sha256": "df19543fdd9fe836dfcef0d70ba4263d0e983ecd8be9c2724226dce3c424064f"
     },
     {
-      "bytes": 6217,
-      "characters": 6211,
-      "lines": 85,
+      "bytes": 7683,
+      "characters": 7673,
+      "lines": 91,
       "path": "knowledge/BSC_CORE_GUIDE.md",
-      "sha256": "147534957282f5eae90efdee0573e4f4fb88a894d3a4afb423bf854116614038"
+      "sha256": "580065df43b95db7b122282a902ebb0a6e7a405e0e909aa11d77110fdc0b6911"
     },
     {
       "bytes": 7886,
@@ -132,18 +132,18 @@
       "sha256": "8a7e3739d726116964fd9a1cd4129e5c29802ff6849b9acb94a115fcc5c5e61e"
     },
     {
-      "bytes": 4524,
-      "characters": 2526,
-      "lines": 64,
+      "bytes": 5694,
+      "characters": 2970,
+      "lines": 70,
       "path": "knowledge/BSC_JAPANESE_GLOSSARY.md",
-      "sha256": "038da53e479eaa6f53e83a7ba8da20b605ae0035971bab5240e90eaec2510945"
+      "sha256": "9c58cce4e80b11d0ca218b799701b423a03617906e19773dde2cdedff20ed4b7"
     }
   ],
   "model_recommendation": {
     "fixed_engine_identity": false,
     "mode": "default"
   },
-  "product_version": "0.4.0-preview.1",
+  "product_version": "0.4.0-preview.2",
   "public_metadata": {
     "fields": {
       "category_recommendation": "Education",
@@ -180,14 +180,14 @@
       "characters": 3997,
       "lines": 27,
       "path": "gpt-v0.4/source/instructions.md",
-      "sha256": "58abecf5aaf85651cccfbbff1312969d0b52a4159ceaa51265d7c6ce51a4c1ce"
+      "sha256": "7b0d01a77100b0ad8f636dab8a95bf851ade09995399e9fadb9f4ac04b91bf60"
     },
     {
-      "bytes": 6217,
-      "characters": 6211,
-      "lines": 85,
+      "bytes": 7683,
+      "characters": 7673,
+      "lines": 91,
       "path": "gpt-v0.4/source/knowledge/01-core-guide.md",
-      "sha256": "147534957282f5eae90efdee0573e4f4fb88a894d3a4afb423bf854116614038"
+      "sha256": "580065df43b95db7b122282a902ebb0a6e7a405e0e909aa11d77110fdc0b6911"
     },
     {
       "bytes": 109,
@@ -204,18 +204,18 @@
       "sha256": "8a7e3739d726116964fd9a1cd4129e5c29802ff6849b9acb94a115fcc5c5e61e"
     },
     {
-      "bytes": 4524,
-      "characters": 2526,
-      "lines": 64,
+      "bytes": 5694,
+      "characters": 2970,
+      "lines": 70,
       "path": "gpt-v0.4/source/knowledge/04-japanese-glossary.md",
-      "sha256": "038da53e479eaa6f53e83a7ba8da20b605ae0035971bab5240e90eaec2510945"
+      "sha256": "9c58cce4e80b11d0ca218b799701b423a03617906e19773dde2cdedff20ed4b7"
     },
     {
       "bytes": 2822,
       "characters": 2822,
       "lines": 82,
       "path": "gpt-v0.4/source/profile.json",
-      "sha256": "b113e67bf383c5323744755db82097acfae19ef2a943b9b17d82025e3ea3612f"
+      "sha256": "9097f29160cb448164398d3afbb28a111e6696ceb8ca0b7974f9af963b4c3371"
     },
     {
       "bytes": 322,

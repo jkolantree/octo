@@ -21,12 +21,12 @@ If one sentence mixes a research proposition, an execution report, and a deploym
 
 These are mathematical, scientific, or technical claims about what is true. A complex audit may assign a stable claim ID; a simple Quick audit need not. Calibrate the verdict to the strongest supported conclusion:
 
-- `proven`: a mathematical proposition has a complete proof or independently checkable exact certificate with no unresolved dependency;
+- `proven`: a mathematical proposition has a complete proof with no unresolved dependency, or an exact certificate actually replayed successfully under an identified verifier, version, inputs, and claim scope;
 - `strongly_supported`: an empirical proposition survives substantial declared testing and independent evidence, without becoming a universal proof;
 - `plausible_but_unresolved`: the proposition is coherent and not refuted, but a material obligation remains;
 - `refuted`: a valid counterexample, contradiction, or decisive falsifier applies to the stated proposition;
 - `ill-posed`: essential objects, domains, comparisons, or limits are not defined well enough for the claimed truth value;
-- `outside_current_knowledge`: the proposition is precise, but no decisive accessible proof, refutation, or test is known.
+- `outside_current_knowledge`: the precise proposition has recognized open status within an explicitly declared knowledge or search boundary; this never asserts that no answer exists globally. Ordinary missing, inaccessible, or uninspected support remains `plausible_but_unresolved` within the stated audit coverage.
 
 ### Lane 2 — evidence, execution, and gates
 
@@ -52,6 +52,12 @@ A positive answer to one question does not answer the others.
 ## 4. Trace the argument and evidence
 
 Map premises to conclusions. Keep definitions, assumptions, deductions, observations, computations, citations, analogies, heuristics, and policy judgments distinct. Check whether the evidence measures the same quantity, unit, boundary, interval, cohort, weighting, and conditioning event as the claim. Look for a hidden change of object or scope between premise and conclusion.
+
+Before changing a verdict, identify the smallest premise or decisive dependency set that carries each conclusion. If a decisive premise is unestablished, keep only its dependent conclusions conditional or unresolved: “If P, then Q; P was not established in this audit.” An independently supported conclusion does not inherit a neighboring gap merely because both appear in one source.
+
+Keep two questions separate: what conclusion follows, and what this audit actually established. Stable background knowledge may support a labeled, scoped assessment or suggest a test, but it is not inspected, observed, verified, or executed case evidence. Reading a report establishes what the report says, not that the reported event occurred. Running a process establishes its observed output under declared inputs, not automatically its relevance, validity, sufficient scope, or external truth.
+
+A named, supplied, parseable, or checkable-in-principle certificate is not yet a successful verification. Record actual replay only when the exact certificate, claim, verifier, version, inputs, scope, result, and adequate run evidence are bound. Evidence for one claim or scope does not transfer to another.
 
 For empirical claims, ask what nearby alternative would produce the same observations. For formal claims, inspect every dependency, quantifier, boundary case, and use of a lemma. For computational claims, require the input, method, version, output, and enough binding evidence to distinguish an actual run from a report about a planned or alleged run.
 

@@ -1,8 +1,8 @@
 {
   "schema": "bsc-claim-auditor-profile/v2",
   "authority_state": "ACTIVE",
-  "product_version": "0.4.0-preview.1",
-  "candidate_id": "bsc-claim-auditor-v0.4.0-preview.1",
+  "product_version": "0.4.0-preview.2",
+  "candidate_id": "bsc-claim-auditor-v0.4.0-preview.2",
   "dependencies": {
     "bsc_engine": {
       "public_version": "v0.3.0-alpha.20",
