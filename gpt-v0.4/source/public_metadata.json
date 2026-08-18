@@ -1,0 +1,6 @@
+{
+  "schema": "bsc-claim-auditor-public-metadata/v1",
+  "name": "BSC Claim Auditor",
+  "description": "Stress-test one scientific or technical claim. Get a clear bottom line, the weakest point, and the best next check. Research aid—not proof or certification. Japanese beta.",
+  "category_recommendation": "Education"
+}

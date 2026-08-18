@@ -1,0 +1,117 @@
+{
+  "schema": "bsc-claim-auditor-checks-catalog/v1",
+  "authority_state": "ACTIVE_IMPLEMENTATION_PROJECTION",
+  "engine_version": "v0.3.0-alpha.20",
+  "checks": [
+    {
+      "id": "claim-manifest-lint",
+      "command": "lint",
+      "accepted_input": "A UTF-8 JSON claim manifest accepted by the registered v0.3, v0.4, or v0.5 manifest schema.",
+      "establishes": "Schema conformance and the implemented structural consistency checks for the submitted manifest.",
+      "does_not_establish": "Truth of the research claim, authenticity of cited evidence, or deployment authority.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "The exact input identity plus retained structured CLI output, engine version, command, and exit code.",
+      "known_limitations": "Only registered fields and predicates are checked; unknown scientific semantics are outside the route."
+    },
+    {
+      "id": "claim-manifest-audit",
+      "command": "audit",
+      "accepted_input": "A UTF-8 JSON claim manifest accepted by the registered manifest schemas, including its declared dependencies and evidence records.",
+      "establishes": "The results of registered manifest, gate-product, and domain checks that actually ran.",
+      "does_not_establish": "A human research verdict, external evidence authenticity, complete coverage of unregistered domains, or permission to deploy.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "The exact input identity and complete structured output listing checks run and not run, findings, decision, version, and exit code.",
+      "known_limitations": "A zero exit code means no blocking implemented finding; it is not a scientific truth badge."
+    },
+    {
+      "id": "exact-certificate-complex",
+      "command": "complex",
+      "accepted_input": "A complex-v0.3 finite rational chain-complex and transport record.",
+      "establishes": "The implemented exact finite matrix equations, including declared differential and transport obligations.",
+      "does_not_establish": "External meaning of the bases, source authenticity, or global path independence beyond the submitted relations.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "A fresh structured result bound to the exact complex record and engine version.",
+      "known_limitations": "Finite rational algebra only; semantic interpretation remains an external premise."
+    },
+    {
+      "id": "finite-observation-descent",
+      "command": "observe",
+      "accepted_input": "An observation-v0.3 record of finite states, declared relation pairs, and total queries.",
+      "establishes": "Whether each submitted query is constant on the submitted relation classes.",
+      "does_not_establish": "Measurement validity, completeness of the state space, causation, or population generalization.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "Structured output bound to the exact observation record, command, version, and exit code.",
+      "known_limitations": "The result is only as complete as the finite states, relations, and queries supplied."
+    },
+    {
+      "id": "finite-atomic-modulus",
+      "command": "atomic",
+      "accepted_input": "An atomic-modulus-v0.3 finite certificate record.",
+      "establishes": "The implemented finite arithmetic conditions in the submitted concentration-modulus record.",
+      "does_not_establish": "The full measure-theoretic theorem, authenticity of an external proof, or facts outside the finite record.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "Structured output bound to the exact certificate bytes and engine version.",
+      "known_limitations": "The finite replay and the nearby manual theorem are separate authority lanes."
+    },
+    {
+      "id": "affine-defect-propagation",
+      "command": "defect",
+      "accepted_input": "A defect-v0.3 record of declared nonnegative rational affine upper bounds.",
+      "establishes": "Exact propagation and comparison of the submitted upper bounds.",
+      "does_not_establish": "Actual error, equality with a bound, source-state authenticity, or a physical tolerance violation.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "Structured output bound to the exact defect record and engine version.",
+      "known_limitations": "An upper enclosure is not an observed or exact value; missing ports are not zero."
+    },
+    {
+      "id": "adapter-receipt-inspection",
+      "command": "adapter",
+      "accepted_input": "An adapter-receipt-v0.1 provenance record and any locally available referenced bytes.",
+      "establishes": "Implemented receipt structure and available local binding consistency.",
+      "does_not_establish": "That an external prover ran, that its result is valid, or that the research claim is proved.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "The exact receipt, available referenced bytes, and retained structured inspection output.",
+      "known_limitations": "This route is non-admissive provenance inspection; unavailable external execution stays unverified."
+    },
+    {
+      "id": "exact-derived-holonomy",
+      "command": "holonomy",
+      "accepted_input": "A derived-holonomy-v0.1 or v0.2 bounded finite-dimensional rational record.",
+      "establishes": "The implemented strict, derived, observed-derived, or exact-kernel finite path comparison selected by the record.",
+      "does_not_establish": "External scientific interpretation, source authenticity, or claims outside the declared finite complexes and maps.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "A fresh structured result bound to the exact record, mode, command, and engine version.",
+      "known_limitations": "Resource-bounded exact rational linear algebra; mode-specific fields are closed and nontransferable."
+    },
+    {
+      "id": "exact-polynomial-identity",
+      "command": "theorem",
+      "accepted_input": "A theorem-certificate-v0.1 expression in the closed rational-polynomial AST and resource envelope.",
+      "establishes": "Canonical normalization equality of the submitted formal polynomial expressions.",
+      "does_not_establish": "Nearby prose, an unencoded theorem, external proof identity, empirical truth, or deployment authority.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "The exact certificate and retained structured replay output with engine version and exit code.",
+      "known_limitations": "Authority is confined to the encoded closed language and exact statement."
+    },
+    {
+      "id": "finite-census-affine-bound",
+      "command": "census",
+      "accepted_input": "A finite-census-certificate-v0.1 complete-frame record with rational enclosures, affine bound, and guard band.",
+      "establishes": "The exact conditional affine-bound proposition over the declared finite frame and enclosures.",
+      "does_not_establish": "The four external premise identities, causation, population generalization, independent replication, or deployment authority.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "The exact certificate plus retained structured replay output, command, version, and exit code.",
+      "known_limitations": "A conditional observational bridge only; every external premise remains separately typed."
+    },
+    {
+      "id": "audit-return-inspection",
+      "command": "return-desk",
+      "accepted_input": "An audit-return-v0.1 envelope and the locally available artifacts it identifies.",
+      "establishes": "Implemented internal consistency and available local byte-binding checks for the returned envelope.",
+      "does_not_establish": "Research truth, proof validity, citation authenticity, external execution, transport completeness, or deployment authority.",
+      "required_executor": "BSC Python CLI v0.3.0-alpha.20",
+      "execution_evidence_required": "The exact envelope, available artifacts, and retained structured inspection output.",
+      "known_limitations": "Non-admissive review only; missing artifacts produce review limits rather than invented verification."
+    }
+  ]
+}
