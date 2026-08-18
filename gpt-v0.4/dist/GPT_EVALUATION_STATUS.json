@@ -13,7 +13,7 @@
   "evaluator_identity": {
     "profile_id": "bsc-claim-auditor-evaluator-v0.4.0-preview.2",
     "protocol_id": "bsc-claim-auditor-nine-canaries-v0.4.0-preview.2",
-    "sha256": "48518902498bfbc19ba394d8bc0f579fad351b082e63e2a20add76433e94e397",
+    "sha256": "1f57badf6d1039b90b760bd40ea7f91bc91b9061b7d1e07b3bec4b98c8300c6a",
     "source_files": [
       {
         "bytes": 3881,
@@ -44,11 +44,11 @@
         "sha256": "8c49084ee3df53010855bf6c62a8e1a7d4d45f80eeea158be68bca0e77cbbd9b"
       },
       {
-        "bytes": 14777,
-        "characters": 14459,
+        "bytes": 18270,
+        "characters": 17800,
         "lines": 271,
         "path": "gpt-v0.4/evals/prospective-canaries.json",
-        "sha256": "925544c4fddd0de123752ba48b7f8b666b540451019f29046a22a7b8be76101e"
+        "sha256": "d9efb90b26e905372956009e2399e2a392ee640ed94f4d4fa5c5c7179886bae2"
       }
     ]
   },
