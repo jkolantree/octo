@@ -1,0 +1,9 @@
+{
+  "schema": "bsc-claim-auditor-conversation-starters/v1",
+  "starters": [
+    "Audit this claim: [paste one sentence]",
+    "Find the strongest counterexample to this claim",
+    "What evidence would most change the verdict?",
+    "この主張を日本語で点検してください：[一文]"
+  ]
+}
