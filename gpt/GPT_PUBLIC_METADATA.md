@@ -4,7 +4,7 @@
 
 **Repository package role:** `REPRODUCIBLE_SOURCE_AND_UPDATE_CANDIDATE`
 
-**Successor candidate ID:** `bsc-claim-auditor-2026-08-17-deployment-r4`
+**Successor candidate ID:** `bsc-claim-auditor-2026-08-17-semantic-r5`
 
 **Candidate state:** `PENDING`
 

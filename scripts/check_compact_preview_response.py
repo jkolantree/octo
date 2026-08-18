@@ -13,7 +13,7 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 AUTHORITY_LOCK_PATH = ROOT / "gpt" / "_source" / "GPT_AUTHORITY_LOCK.json"
-CHECKER_VERSION = "1.7"
+CHECKER_VERSION = "1.8"
 MAX_RESPONSE_CHARACTERS = 12_000
 MAX_RESPONSE_UTF8_BYTES = MAX_RESPONSE_CHARACTERS * 4
 DEFAULT_QUICK_CASE_ID = "known-false-continuity"
@@ -253,7 +253,7 @@ def load_prospective_authority_cases(
     controller = document.get("controller")
     if not isinstance(controller, dict):
         raise ValueError("authority lock controller is missing")
-    if controller.get("controller_id") != "bsc-gpt-authority-preflight-and-human-review/v3":
+    if controller.get("controller_id") != "bsc-gpt-authority-preflight-and-human-review/v4":
         raise ValueError("authority lock controller identity differs")
     run_order = controller.get("run_order")
     if (

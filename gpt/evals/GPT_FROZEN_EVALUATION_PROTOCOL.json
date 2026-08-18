@@ -44,6 +44,9 @@
     "scientific_case_empty_projection": "candidate_failed",
     "status_only_nonempty_projection": "candidate_failed",
     "exact_projection_mismatch": "candidate_failed",
+    "claim_count_projection_mismatch": "candidate_failed",
+    "claim_count_adjudication_scope": "independent_human_review_checks_cardinality_and_allowed_verdicts",
+    "primary_scientific_claim_semantic_binding": "independent_human_review_against_the_fixture_conclusion",
     "forged_research_projection_requirement": "trial_invalid_controller",
     "forged_research_verdict_allowed": "trial_invalid_controller",
     "forged_research_projection_contract_satisfied": "trial_invalid_controller"

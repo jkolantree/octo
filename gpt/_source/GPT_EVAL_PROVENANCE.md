@@ -489,3 +489,39 @@ oracles, scorer, threshold, automatic-failure rules, controller semantics,
 Knowledge files, engine routes, schemas, CLI, or API. Changed Instructions
 require a new freeze and a complete restart at Case 1; a Case 10-only replay
 would be regression evidence, not candidate validation.
+
+## 2026-08-17 r4 counted failure and semantic-projection r5 repair
+
+The r4 candidate was frozen at commit
+`67c9cf0874c5d27689691c724d71f327b87e2944`, tree
+`0bea28c0561433561eb1694fac0c7cfecd04a19d`. Its attachment-free counted run
+preserved passes for Cases 1 through 6, then stopped at Case 7
+`decisive-calculation-not-executed`. The exact effective input and visible
+response were bound by SHA-256
+`fd3f32e20768bc6bf2eff27957f65c4fb11dcf214b008e4811edccda36350855`
+and `468fc63d2dc0c8f4b3b327e12695e36fac11c7c821c529d5b2f310924bac615c`.
+Machine preflight v1.7 cleared with zero findings. The response correctly kept
+the expected p-value separate from observed evidence, marked the proposed
+calculation and empirical test `not_run`, left dependent gates unrun, and used
+`plausible_but_unresolved`; however, the frozen r4 oracle required the literal
+primary claim ID `T`, while the response used `T1`. Under that frozen oracle,
+the terminal adjudication recorded 17/20 plus a canonical-identifier automatic
+failure, so Cases 8 through 26 remain `NOT_RUN`. The terminal run ledger is
+preserved locally with SHA-256
+`ff5d01b526800813fbbe65cba2ed1bcc191f09e23d6eca31ffab7a79ea829926`.
+Public `Update` was not clicked, and no r4 result transfers to a successor.
+
+R5 is a new evaluator profile and local candidate. The r4 result is not
+retroactively relabeled: it remains a failure under its frozen literal-ID
+oracle. R5 corrects the evaluator defect generally by requiring exactly one
+primary scientific projection, with an allowed verdict, when the fixture does
+not define a canonical claim ID. Claim-ID spelling is not prescribed in that
+mode; independent human review must still confirm that the projected claim is
+the fixture's main scientific conclusion rather than an execution, evidence,
+gate, receipt, authority, policy, or deployment proposition. Fixtures that
+explicitly define an identifier, including `Claim T` in
+`nonadmissive-adapter-receipt`, retain the exact-ID contract. The two ID-free
+oracle records change evaluation identity; model-facing prompts, canonical
+fixture bytes, GPT Instructions, Knowledge files, score threshold, and the 14
+prospective definitions do not. All 26 r5 cases reset to
+`NOT_RUN_PREVIEW_NOT_AUTHORIZED` and the counted suite must restart at Case 1.

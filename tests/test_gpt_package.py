@@ -19,6 +19,8 @@ from build_gpt_package import (  # noqa: E402
     AUTHORITY_LOCK_PATH,
     CANDIDATE_BRANCH,
     CANDIDATE_ID,
+    CLAIM_COUNT_RESEARCH_PROJECTION_ORACLES,
+    CLAIM_COUNT_SEMANTIC_SUBSTITUTION_FORBIDDEN,
     COMPACT_PREVIEW_CASE_IDS,
     EVAL_GOVERNANCE_SOURCES,
     EXPECTED_CONVERSATION_STARTERS,
@@ -281,6 +283,22 @@ class CustomGptPackageTests(unittest.TestCase):
             protocol["protocol_schema"],
             "bsc-gpt-frozen-evaluation/v6",
         )
+        self.assertEqual(
+            protocol["research_projection_oracle"][
+                "claim_count_projection_mismatch"
+            ],
+            "candidate_failed",
+        )
+        self.assertEqual(
+            protocol["research_projection_oracle"]["claim_count_adjudication_scope"],
+            "independent_human_review_checks_cardinality_and_allowed_verdicts",
+        )
+        self.assertEqual(
+            protocol["research_projection_oracle"][
+                "primary_scientific_claim_semantic_binding"
+            ],
+            "independent_human_review_against_the_fixture_conclusion",
+        )
         for obsolete_key in (
             "regression_trials",
             "prospective_base_trials",
@@ -350,6 +368,14 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertIn("12 exact successor regression definitions", scorecard)
         self.assertIn("14 prospective authority cases", scorecard)
         self.assertIn("no old result transfers", scorecard.lower())
+        self.assertIn(
+            "independent human review enforces the exact cardinality and allowed verdicts",
+            scorecard,
+        )
+        self.assertIn(
+            "The same review must bind every counted entry to the fixture's primary scientific conclusion",
+            scorecard,
+        )
         self.assertNotIn("Recommended pass", scorecard)
         self.assertNotIn("18/20 is recommended", scorecard)
         expectations = payload[Path("evals/GPT_EVAL_EXPECTATIONS.md")].decode("utf-8")
@@ -376,6 +402,8 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertIn("same frozen candidate", setup)
         self.assertIn("exit 0 is machine preflight only", setup.lower())
         self.assertIn("independent human review", setup)
+        self.assertIn("projection contract", setup)
+        self.assertIn("semantic binding to the fixture's primary scientific conclusion", setup)
         self.assertIn("normal/default model mode", setup)
         self.assertIn("remove any **Heavy** model-mode selection", setup)
         self.assertIn("separate from the BSC audit depth", setup)
@@ -748,7 +776,21 @@ class CustomGptPackageTests(unittest.TestCase):
             self.assertNotIn(overfit_literal, instruction_text)
 
         spec = load_strict_json(ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json")
+        self.assertEqual(spec["eval_schema"], "bsc-custom-gpt-eval/v3")
         cases = {case["id"]: case for case in spec["cases"]}
+        for case_id, oracle in CLAIM_COUNT_RESEARCH_PROJECTION_ORACLES.items():
+            expected = cases[case_id]["expected"]
+            self.assertEqual(
+                expected["research_projection_claim_count_exact"],
+                oracle["count"],
+            )
+            self.assertEqual(expected["research_verdict_any_of"], oracle["verdicts"])
+            self.assertNotIn("research_projection_exact", expected)
+            self.assertIn(oracle["observable"], expected["observable_behaviors"])
+            self.assertIn(
+                CLAIM_COUNT_SEMANTIC_SUBSTITUTION_FORBIDDEN,
+                expected["forbidden_behaviors"],
+            )
         self.assertEqual(
             {
                 case_id: cases[case_id]["expected"]["research_verdict_any_of"]
@@ -787,6 +829,7 @@ class CustomGptPackageTests(unittest.TestCase):
             receipt_only["research_projection_exact"],
             NONADMISSIVE_RECEIPT_RESEARCH_PROJECTION_EXACT,
         )
+        self.assertNotIn("research_projection_claim_count_exact", receipt_only)
         generated_cases = {
             case["id"]: case
             for case in (
@@ -815,6 +858,14 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertIn(
             "**Current compact-gate route:** configured default Quick",
             expectations,
+        )
+        self.assertEqual(
+            expectations.count("**Human research-projection count:** exactly `1`"),
+            2,
+        )
+        self.assertEqual(
+            expectations.count("**Human semantic binding:** bind the counted entry"),
+            2,
         )
         self.assertEqual(
             generated_cases["nonadmissive-adapter-receipt"]["expected"][
@@ -1179,6 +1230,7 @@ class CustomGptPackageTests(unittest.TestCase):
                     "allow_additional_primary_claims": False,
                 },
             ),
+            ("research_projection_claim_count_exact", 1),
         ):
             with self.subTest(field=field):
                 cases = copy.deepcopy(spec["cases"])
@@ -1200,6 +1252,55 @@ class CustomGptPackageTests(unittest.TestCase):
         )["expected"]["research_projection_requirement"] = "unknown"
         with self.assertRaisesRegex(ValueError, "unknown research projection requirement"):
             validate_exact_eval_oracles(unknown)
+
+    def test_claim_count_projection_oracle_rejects_invalid_values_and_drift(
+        self,
+    ) -> None:
+        spec = load_strict_json(ROOT / "gpt" / "_source" / "GPT_EVAL_SPEC.json")
+        for invalid in (None, True, 0, -1, 1.0, "1"):
+            with self.subTest(invalid=invalid):
+                cases = copy.deepcopy(spec["cases"])
+                decisive = next(
+                    case
+                    for case in cases
+                    if case["id"] == "decisive-calculation-not-executed"
+                )
+                decisive["expected"][
+                    "research_projection_claim_count_exact"
+                ] = invalid
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "invalid exact claim-count projection oracle",
+                ):
+                    validate_exact_eval_oracles(cases)
+
+        mutually_exclusive = copy.deepcopy(spec["cases"])
+        decisive = next(
+            case
+            for case in mutually_exclusive
+            if case["id"] == "decisive-calculation-not-executed"
+        )
+        decisive["expected"]["research_projection_exact"] = copy.deepcopy(
+            NONADMISSIVE_RECEIPT_RESEARCH_PROJECTION_EXACT
+        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "invalid exact claim-count projection oracle",
+        ):
+            validate_exact_eval_oracles(mutually_exclusive)
+
+        wrong_reviewed_count = copy.deepcopy(spec["cases"])
+        decisive = next(
+            case
+            for case in wrong_reviewed_count
+            if case["id"] == "decisive-calculation-not-executed"
+        )
+        decisive["expected"]["research_projection_claim_count_exact"] = 2
+        with self.assertRaisesRegex(
+            ValueError,
+            "reviewed claim-count semantic projection oracle",
+        ):
+            validate_exact_eval_oracles(wrong_reviewed_count)
 
     def test_profile_disables_actions_and_preserves_upload_privacy_boundary(self) -> None:
         profile = load_strict_json(PROFILE_PATH)
@@ -1396,6 +1497,20 @@ class CustomGptPackageTests(unittest.TestCase):
             "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
         )
         self.assertEqual(
+            lock["controller"]["controller_id"],
+            "bsc-gpt-authority-preflight-and-human-review/v4",
+        )
+        self.assertEqual(
+            lock["controller"]["source_paths"],
+            [
+                "gpt/_source/GPT_AUTHORITY_LOCK.json",
+                "gpt/_source/GPT_PROFILE.json",
+                "gpt/_source/GPT_EVAL_SPEC.json",
+                "scripts/build_gpt_package.py",
+                "scripts/check_compact_preview_response.py",
+            ],
+        )
+        self.assertEqual(
             tuple(item["id"] for item in lock["successor_regression_cases"]),
             COMPACT_PREVIEW_CASE_IDS,
         )
@@ -1420,7 +1535,10 @@ class CustomGptPackageTests(unittest.TestCase):
             "RAW_CANONICAL_FIXTURE_BYTES_INSERTED_ONCE_NO_NORMALIZATION",
         )
         self.assertEqual(transport["attachment_policy"], "FORBIDDEN_IN_COUNTED_SUITE")
-        self.assertEqual(transport["historical_eval_suite_mutation"], "PROHIBITED")
+        self.assertEqual(
+            transport["historical_eval_suite_mutation"],
+            "PROMPTS_FIXTURES_AND_ORDER_PRESERVED_ORACLE_PROFILE_VERSIONED",
+        )
         self.assertEqual(
             {
                 item["fixture_paths"][0]
@@ -1768,7 +1886,10 @@ class CustomGptPackageTests(unittest.TestCase):
             "RAW_CANONICAL_FIXTURE_BYTES_INSERTED_ONCE_NO_NORMALIZATION",
         )
         self.assertEqual(transport["attachment_policy"], "FORBIDDEN_IN_COUNTED_SUITE")
-        self.assertEqual(transport["historical_eval_suite_mutation"], "PROHIBITED")
+        self.assertEqual(
+            transport["historical_eval_suite_mutation"],
+            "PROMPTS_FIXTURES_AND_ORDER_PRESERVED_ORACLE_PROFILE_VERSIONED",
+        )
         self.assertRegex(transport["definition_sha256"], r"^[0-9a-f]{64}$")
 
         self.assertEqual(frozen["controller"]["status"], "NOT_RUN_PREVIEW_NOT_AUTHORIZED")
@@ -1782,6 +1903,10 @@ class CustomGptPackageTests(unittest.TestCase):
         self.assertEqual(frozen["prospective_cases"]["count"], 14)
         self.assertEqual(
             frozen["successor_regressions"]["definition_set_sha256"],
+            "6e8c234ff3012404e866b1b6ff0ee211a98499956b331b57c1e236872a5789c1",
+        )
+        self.assertNotEqual(
+            frozen["successor_regressions"]["definition_set_sha256"],
             "09aece93c987740daf38d3a17ca9bdf9daf7512f90ecae1dd8ffe94a3bfba689",
         )
         self.assertEqual(
@@ -1790,7 +1915,7 @@ class CustomGptPackageTests(unittest.TestCase):
         )
         self.assertEqual(
             frozen["inline_fixture_projection"]["definition_sha256"],
-            "d52506754198a0765f816b6fbef56515cd83009e54f245235f57adf098b95516",
+            "3841a6179c17b4f6cb8ab5772c46b8b37a4235ed8642ac336433576b8d5d33fd",
         )
         self.assertEqual(
             tuple(frozen["successor_regressions"]["order"]),

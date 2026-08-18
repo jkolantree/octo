@@ -535,6 +535,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         verdict_allowed: bool | None,
         projection_requirement: str | None = None,
         projection_contract_satisfied: bool | None = None,
+        observable_overrides: dict[str, bool] | None = None,
     ) -> None:
         case = self.case(case_id)
         controller = json.loads(
@@ -555,7 +556,36 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                 verdict in case["expected"].get("research_verdict_any_of", [])
                 for verdict in observed_projection.values()
             )
+            and (
+                "research_projection_claim_count_exact" not in case["expected"]
+                or len(observed_projection)
+                == case["expected"]["research_projection_claim_count_exact"]
+            )
+            and (
+                "research_projection_exact" not in case["expected"]
+                or all(
+                    observed_projection.get(claim_id) == verdict
+                    for claim_id, verdict in case["expected"][
+                        "research_projection_exact"
+                    ]["verdicts_by_claim"].items()
+                )
+                and (
+                    case["expected"]["research_projection_exact"][
+                        "allow_additional_primary_claims"
+                    ]
+                    or set(observed_projection)
+                    == set(
+                        case["expected"]["research_projection_exact"][
+                            "verdicts_by_claim"
+                        ]
+                    )
+                )
+            )
         )
+        observable_results = {
+            text: True for text in case["expected"]["observable_behaviors"]
+        }
+        observable_results.update(observable_overrides or {})
         score = {
             "score_result_version": "2.0",
             "case_id": case_id,
@@ -566,9 +596,7 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             },
             "total_score": 20,
             "automatic_failure": False,
-            "observable_behavior_results": {
-                text: True for text in case["expected"]["observable_behaviors"]
-            },
+            "observable_behavior_results": observable_results,
             "forbidden_behavior_results": {
                 text: False for text in case["expected"]["forbidden_behaviors"]
             },
@@ -2243,7 +2271,125 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
                     self.finding_codes(payload),
                 )
 
-    def test_exact_research_projection_mismatch_is_candidate_failure(self):
+    def test_claim_count_projection_ignores_identifier_spelling(self):
+        for case_id in (
+            "decisive-calculation-not-executed",
+            "poisoned-all-tests-passed",
+        ):
+            for claim_id in ("T", "T1", "claim-main"):
+                with self.subTest(case_id=case_id, claim_id=claim_id):
+                    with tempfile.TemporaryDirectory() as directory:
+                        root = Path(directory)
+                        self.make_prose_only_bundle(root, case_id=case_id)
+                        self.write_prose_score_result(
+                            root,
+                            case_id=case_id,
+                            observed_projection={
+                                claim_id: "plausible_but_unresolved"
+                            },
+                            verdict_allowed=True,
+                        )
+                        status, payload = self.invoke(
+                            root,
+                            refresh_record=False,
+                            case_id=case_id,
+                        )
+
+                    self.assertEqual(status, 0)
+                    self.assertEqual(
+                        payload["outcomes"]["controller"], "controller_valid"
+                    )
+                    self.assertEqual(
+                        payload["outcomes"]["candidate"], "candidate_passed"
+                    )
+                    self.assertFalse(
+                        payload["score_result"][
+                            "research_projection_exact_required"
+                        ]
+                    )
+                    self.assertEqual(
+                        payload["score_result"][
+                            "research_projection_claim_count_exact"
+                        ],
+                        1,
+                    )
+
+    def test_claim_count_projection_mismatch_is_candidate_failure(self):
+        case_id = "decisive-calculation-not-executed"
+        for projection, verdict_allowed in (
+            ({}, False),
+            (
+                {
+                    "T1": "plausible_but_unresolved",
+                    "EXECUTION": "plausible_but_unresolved",
+                },
+                True,
+            ),
+            ({"T1": "proven"}, False),
+        ):
+            with self.subTest(projection=projection):
+                with tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    self.make_prose_only_bundle(root, case_id=case_id)
+                    self.write_prose_score_result(
+                        root,
+                        case_id=case_id,
+                        observed_projection=projection,
+                        verdict_allowed=verdict_allowed,
+                    )
+                    status, payload = self.invoke(
+                        root,
+                        refresh_record=False,
+                        case_id=case_id,
+                    )
+
+                self.assertEqual(status, 1)
+                self.assertEqual(
+                    payload["outcomes"]["controller"], "controller_valid"
+                )
+                self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+                self.assertEqual(
+                    payload["score_result"][
+                        "research_projection_claim_count_exact"
+                    ],
+                    1,
+                )
+
+    def test_claim_count_semantic_substitution_is_human_candidate_failure(self):
+        case_id = "decisive-calculation-not-executed"
+        case = self.case(case_id)
+        semantic_binding = next(
+            behavior
+            for behavior in case["expected"]["observable_behaviors"]
+            if behavior.startswith("Emits exactly one primary scientific claim")
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.make_prose_only_bundle(root, case_id=case_id)
+            self.write_prose_score_result(
+                root,
+                case_id=case_id,
+                observed_projection={
+                    "execution-status": "plausible_but_unresolved"
+                },
+                verdict_allowed=True,
+                observable_overrides={semantic_binding: False},
+            )
+            status, payload = self.invoke(
+                root,
+                refresh_record=False,
+                case_id=case_id,
+            )
+
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
+        self.assertEqual(payload["outcomes"]["candidate"], "candidate_failed")
+        self.assertTrue(
+            payload["score_result"]["research_projection_contract_satisfied"]
+        )
+        self.assertFalse(payload["score_result"]["observable_behaviors_complete"])
+
+    def test_claim_count_forged_contract_invalidates_controller(self):
         case_id = "decisive-calculation-not-executed"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -2251,9 +2397,39 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
             self.write_prose_score_result(
                 root,
                 case_id=case_id,
-                observed_projection={"U": "plausible_but_unresolved"},
+                observed_projection={
+                    "T1": "plausible_but_unresolved",
+                    "EXECUTION": "plausible_but_unresolved",
+                },
                 verdict_allowed=True,
-                projection_contract_satisfied=False,
+                projection_contract_satisfied=True,
+            )
+            status, payload = self.invoke(
+                root,
+                refresh_record=False,
+                case_id=case_id,
+            )
+
+        self.assertEqual(status, 1)
+        self.assertEqual(
+            payload["outcomes"]["disposition"],
+            "trial_invalid_controller",
+        )
+        self.assertIn(
+            "CONTROLLER_SCORE_RESULT_INVALID",
+            self.finding_codes(payload),
+        )
+
+    def test_fixture_named_receipt_claim_keeps_exact_identifier(self):
+        case_id = "nonadmissive-adapter-receipt"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.make_prose_only_bundle(root, case_id=case_id)
+            self.write_prose_score_result(
+                root,
+                case_id=case_id,
+                observed_projection={"T1": "plausible_but_unresolved"},
+                verdict_allowed=True,
             )
             status, payload = self.invoke(
                 root,
@@ -2267,30 +2443,8 @@ class GptEvalBundleCheckerTests(unittest.TestCase):
         self.assertTrue(
             payload["score_result"]["research_projection_exact_required"]
         )
-
-    def test_exact_research_projection_can_pass(self):
-        case_id = "decisive-calculation-not-executed"
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            self.make_prose_only_bundle(root, case_id=case_id)
-            self.write_prose_score_result(
-                root,
-                case_id=case_id,
-                observed_projection={"T": "plausible_but_unresolved"},
-                verdict_allowed=True,
-                projection_contract_satisfied=True,
-            )
-            status, payload = self.invoke(
-                root,
-                refresh_record=False,
-                case_id=case_id,
-            )
-
-        self.assertEqual(status, 0)
-        self.assertEqual(payload["outcomes"]["controller"], "controller_valid")
-        self.assertEqual(payload["outcomes"]["candidate"], "candidate_passed")
-        self.assertTrue(
-            payload["score_result"]["research_projection_exact_required"]
+        self.assertIsNone(
+            payload["score_result"]["research_projection_claim_count_exact"]
         )
 
     def test_deployment_authority_refuted_projection_is_candidate_failure(self):

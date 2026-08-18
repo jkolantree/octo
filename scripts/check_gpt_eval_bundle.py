@@ -465,6 +465,7 @@ def _expected_case_context(
     list[str],
     str,
     dict[str, Any] | None,
+    int | None,
 ]:
     cases_path = repository_root / "gpt" / "evals" / "GPT_EVAL_CASES.jsonl"
     selected: dict[str, Any] | None = None
@@ -546,6 +547,7 @@ def _expected_case_context(
         and expected.get("execution") == "status_record_read_only"
         and "research_verdict_any_of" not in expected
         and "research_projection_exact" not in expected
+        and "research_projection_claim_count_exact" not in expected
     )
     exact_projection = (
         expected.get("research_projection_exact")
@@ -594,6 +596,24 @@ def _expected_case_context(
                 bool,
             )
         )
+    claim_count_present = (
+        isinstance(expected, dict)
+        and "research_projection_claim_count_exact" in expected
+    )
+    claim_count_projection = (
+        expected.get("research_projection_claim_count_exact")
+        if isinstance(expected, dict)
+        else None
+    )
+    claim_count_projection_valid = not claim_count_present
+    if claim_count_present:
+        claim_count_projection_valid = (
+            projection_requirement == SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED
+            and not isinstance(claim_count_projection, bool)
+            and isinstance(claim_count_projection, int)
+            and claim_count_projection >= 1
+            and exact_projection is None
+        )
     if (
         not isinstance(scoring_criteria, list)
         or len(scoring_criteria) != 10
@@ -606,6 +626,7 @@ def _expected_case_context(
         or projection_requirement not in RESEARCH_PROJECTION_REQUIREMENTS
         or not (scientific_oracle_valid or status_only_oracle_valid)
         or not exact_projection_valid
+        or not claim_count_projection_valid
     ):
         raise StrictJsonError("selected evaluation case has an invalid frozen scoring oracle")
     return (
@@ -618,6 +639,7 @@ def _expected_case_context(
         allowed_verdicts if isinstance(allowed_verdicts, list) else [],
         projection_requirement,
         exact_projection,
+        claim_count_projection if isinstance(claim_count_projection, int) else None,
     )
 
 
@@ -2491,6 +2513,7 @@ def _load_score_result(
     allowed_research_verdicts: list[str],
     research_projection_requirement: str,
     exact_research_projection: dict[str, Any] | None,
+    research_projection_claim_count_exact: int | None,
 ) -> tuple[str, dict[str, Any] | None, list[dict[str, str]]]:
     """Load a strict preserved manual score without trusting its total."""
 
@@ -2608,8 +2631,17 @@ def _load_score_result(
             exact_research_projection["allow_additional_primary_claims"]
             or set(projection) == set(expected_projection)
         )
+    claim_count_projection_satisfied = (
+        research_projection_claim_count_exact is None
+        or (
+            valid_projection_shape
+            and len(projection) == research_projection_claim_count_exact
+        )
+    )
     recomputed_projection_contract_satisfied = (
-        recomputed_verdict_allowed is True and exact_projection_satisfied
+        recomputed_verdict_allowed is True
+        and exact_projection_satisfied
+        and claim_count_projection_satisfied
         if scientific_projection
         else valid_projection_shape and projection == {}
     )
@@ -2684,6 +2716,9 @@ def _load_score_result(
         "observed_research_projection": projection,
         "research_projection_requirement": research_projection_requirement,
         "research_projection_exact_required": exact_research_projection is not None,
+        "research_projection_claim_count_exact": (
+            research_projection_claim_count_exact
+        ),
         "research_verdict_allowed": submitted_verdict_allowed,
         "research_projection_contract_satisfied": document[
             "research_projection_contract_satisfied"
@@ -2796,6 +2831,7 @@ def check_bundle(
         allowed_research_verdicts: list[str] = []
         research_projection_requirement = ""
         exact_research_projection: dict[str, Any] | None = None
+        research_projection_claim_count_exact: int | None = None
         expected_identity: list[dict[str, Any]] = []
         actual_outputs: set[str] = set()
 
@@ -2832,6 +2868,7 @@ def check_bundle(
                     allowed_research_verdicts,
                     research_projection_requirement,
                     exact_research_projection,
+                    research_projection_claim_count_exact,
                 ) = _expected_case_context(selected_case_id, source_root)
                 expected_identity = _expected_candidate_identity(source_root)
             except (OSError, StrictJsonError) as exc:
@@ -3050,6 +3087,9 @@ def check_bundle(
                 allowed_research_verdicts=allowed_research_verdicts,
                 research_projection_requirement=research_projection_requirement,
                 exact_research_projection=exact_research_projection,
+                research_projection_claim_count_exact=(
+                    research_projection_claim_count_exact
+                ),
             )
             controller_issues.extend(score_issues)
         else:

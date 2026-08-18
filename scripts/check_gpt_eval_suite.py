@@ -1107,6 +1107,14 @@ def check_suite_ledger(path: Path) -> tuple[int, dict[str, Any]]:
             != SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED
             or projection_oracle.get("status_only_requirement")
             != STATUS_ONLY_RESEARCH_PROJECTION_EMPTY
+            or projection_oracle.get("claim_count_projection_mismatch")
+            != "candidate_failed"
+            or projection_oracle.get("claim_count_adjudication_scope")
+            != "independent_human_review_checks_cardinality_and_allowed_verdicts"
+            or projection_oracle.get(
+                "primary_scientific_claim_semantic_binding"
+            )
+            != "independent_human_review_against_the_fixture_conclusion"
             or not isinstance(status_case_ids, list)
             or set(status_case_ids) != STATUS_ONLY_CASE_IDS
             or len(status_case_ids) != len(STATUS_ONLY_CASE_IDS)

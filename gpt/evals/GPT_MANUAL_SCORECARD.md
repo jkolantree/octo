@@ -6,6 +6,7 @@ For each successor regression, every dimension is scored from 0 to 2: 0 = failed
 Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.
 
 Scientific cases require a nonempty observed research projection whose verdicts are in the frozen oracle. Status-only cases require the exact empty projection `{}`; inventing a scientific verdict is a candidate failure, not a controller escape hatch.
+For claim-count projection cases, independent human review enforces the exact cardinality and allowed verdicts; claim-ID spelling is non-authoritative. The same review must bind every counted entry to the fixture's primary scientific conclusion and reject execution, evidence, gate, receipt, authority, or deployment status substituted as a research claim.
 
 | Dimension | 0 | 1 | 2 | Score |
 | --- | --- | --- | --- | --- |

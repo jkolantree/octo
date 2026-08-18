@@ -2,7 +2,7 @@
 
 The official [BSC Claim Auditor](https://chatgpt.com/g/g-6a601b1f576881918e659b363ed3063f-bsc-claim-auditor) is `LIVE`. This directory preserves the deterministic, repository-backed BSC engine `0.3.0-alpha.20` package used to inspect and reproduce the configuration lineage, verify candidate updates, or create a compatible fork. It does not establish byte-identical binding to the live indexed state. Its byte-identical public protocol component remains independently versioned `0.3.0-alpha.13`.
 
-Successor candidate `bsc-claim-auditor-2026-08-17-deployment-r4` has state `PENDING`; live binding is `NON_ADMISSIBLE_UNHASHABLE`; Preview validation is `PENDING`. These states do not change merely because the official service exists or candidate files were generated.
+Successor candidate `bsc-claim-auditor-2026-08-17-semantic-r5` has state `PENDING`; live binding is `NON_ADMISSIBLE_UNHASHABLE`; Preview validation is `PENDING`. These states do not change merely because the official service exists or candidate files were generated.
 
 The engine/source baseline is the existing `v0.3.0-alpha.20` tag and release. This changed successor cannot reuse that tag. Any later authorized repository release requires a new version, a new never-before-used tag, and separate release authorization.
 

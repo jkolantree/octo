@@ -27,9 +27,9 @@
     },
     {
       "source": "docs/CUSTOM_GPT_STATUS.md",
-      "source_sha256": "6a10d1e5e613b7585b31048495e4a0e8d72a017ef29723793c53c8a55a5f7b4e",
+      "source_sha256": "8f24ff4f17ab45febc01efed7509b93c04cdf8157f7a28c3671b5dd36bc49d7c",
       "target": "docs/ja/CUSTOM_GPT_STATUS.md",
-      "target_sha256": "5942a256019d9f9534d5e28791e208bdb0ab06aeac41251d42686881b1e7a6ff"
+      "target_sha256": "a580e87e6187146d0182af9a19d7b59126a244ce14bc1c094372af79a1dfe884"
     },
     {
       "source": "docs/STATUS_MODEL.md",
@@ -68,5 +68,5 @@
       "role": "japanese_custom_gpt_usage_guide"
     }
   ],
-  "manifest_payload_sha256": "90c693105cf347ccb121cb7a1049de57bac0173dea124979697400f712792493"
+  "manifest_payload_sha256": "cdf9da8865b128f989c1d87dc7606b110bdfaab13b59058e80f0e001e6681aa6"
 }

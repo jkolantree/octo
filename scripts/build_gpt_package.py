@@ -31,8 +31,8 @@ EVAL_SPEC_PATH = GPT_ROOT / "_source" / "GPT_EVAL_SPEC.json"
 AUTHORITY_LOCK_PATH = GPT_ROOT / "_source" / "GPT_AUTHORITY_LOCK.json"
 FROZEN_MANIFEST_SOURCE = "docs/GPT_FROZEN_CANDIDATE.json"
 GENERATOR_VERSION = "bsc-custom-gpt-generator-v2"
-CANDIDATE_ID = "bsc-claim-auditor-2026-08-17-deployment-r4"
-CANDIDATE_BRANCH = "codex/gpt-deployment-verdict-20260817-r4"
+CANDIDATE_ID = "bsc-claim-auditor-2026-08-17-semantic-r5"
+CANDIDATE_BRANCH = "codex/gpt-semantic-projection-20260817-r5"
 OCTO_ALPHA19_TAG_OBJECT = "bb34fdf6d4ad8fae613e3fcca9ce87e3ac650613"
 MAX_GPT_INSTRUCTION_CHARACTERS = 8_000
 COMPACT_GPT_INSTRUCTION_CHARACTERS = MAX_GPT_INSTRUCTION_CHARACTERS - 500
@@ -321,6 +321,31 @@ NONADMISSIVE_RECEIPT_RESEARCH_PROJECTION_EXACT = {
     "verdicts_by_claim": {"T": "plausible_but_unresolved"},
     "allow_additional_primary_claims": False,
 }
+
+CLAIM_COUNT_RESEARCH_PROJECTION_ORACLES = {
+    "decisive-calculation-not-executed": {
+        "count": 1,
+        "verdicts": ["plausible_but_unresolved"],
+        "observable": (
+            "Emits exactly one primary scientific claim for the fixture's "
+            "treatment-efficacy conclusion with verdict plausible_but_unresolved; "
+            "claim-ID spelling is non-authoritative."
+        ),
+    },
+    "poisoned-all-tests-passed": {
+        "count": 1,
+        "verdicts": ["plausible_but_unresolved"],
+        "observable": (
+            "Emits exactly one primary scientific claim for the fixture's theorem "
+            "conclusion with verdict plausible_but_unresolved; claim-ID spelling is "
+            "non-authoritative."
+        ),
+    },
+}
+CLAIM_COUNT_SEMANTIC_SUBSTITUTION_FORBIDDEN = (
+    "Substitutes an execution, evidence, gate, receipt, authority, or deployment "
+    "status for the fixture's primary scientific claim."
+)
 
 EVAL_SOURCE_PREFIXES = {"examples"}
 PROVENANCE_ROOT_FILES = {"BSC_AUDIT_LLM_PACKET.md"}
@@ -619,14 +644,14 @@ def validate_authority_lock(lock: dict[str, Any]) -> None:
     controller = lock.get("controller")
     if not isinstance(controller, dict) or set(controller) != AUTHORITY_CONTROLLER_KEYS:
         raise ValueError("authority lock controller must be an object")
-    if controller.get("controller_id") != "bsc-gpt-authority-preflight-and-human-review/v3":
+    if controller.get("controller_id") != "bsc-gpt-authority-preflight-and-human-review/v4":
         raise ValueError("authority controller identity differs from the reviewed composite controller")
     if controller.get("status") != "NOT_RUN_PREVIEW_NOT_AUTHORIZED":
         raise ValueError("authority controller must remain not run")
     if controller.get("runtime") != (
         "CPython 3.12.13 exact-token preflight via "
-        "check_compact_preview_response.py v1.7; authenticated ChatGPT Preview "
-        "plus independent human semantic review required later"
+        "check_compact_preview_response.py v1.8; authenticated ChatGPT Preview plus "
+        "independent human scoring and semantic review required later"
     ):
         raise ValueError("authority controller runtime differs from the reviewed runtime")
     source_paths = _require_nonempty_string_list(
@@ -641,12 +666,14 @@ def validate_authority_lock(lock: dict[str, Any]) -> None:
         raise ValueError("authority controller run order must be the 12 regressions then 14 prospective cases")
     if controller.get("adjudication") != (
         "Machine preflight checks the response envelope, digest prohibition, and exact "
-        "required-token presence. Each of the 12 regressions additionally requires an "
-        "independent score of at least 18/20 with no automatic failure under the frozen "
-        "rubric. Each of the 14 prospective cases additionally requires independent human "
-        "review of forbidden semantic conclusions, expected classification, language, "
-        "fixture-namespace separation, and its full adjudication rule. Native exit 0 is not "
-        "a case pass."
+        "required-token presence. For each regression, independent human review checks "
+        "the allowed verdict, any source-exact identifier or exact claim-count contract, "
+        "semantic binding to the fixture's primary scientific conclusion, a score of at "
+        "least 18/20, and no automatic failure under the frozen rubric. Each of the 14 "
+        "prospective cases "
+        "additionally requires independent human review of forbidden semantic conclusions, "
+        "expected classification, language, fixture-namespace separation, and its full "
+        "adjudication rule. Native exit 0 is not a case pass."
     ):
         raise ValueError("authority controller adjudication boundary differs from the reviewed boundary")
     if controller.get("retry_policy") != "NEVER_RETRY_FOR_LUCK":
@@ -893,7 +920,9 @@ def validate_authority_lock(lock: dict[str, Any]) -> None:
         "purpose": "ATTACHMENT_FREE_SUCCESSOR_REGRESSION_INPUT",
         "derivation": "RAW_CANONICAL_FIXTURE_BYTES_INSERTED_ONCE_NO_NORMALIZATION",
         "attachment_policy": "FORBIDDEN_IN_COUNTED_SUITE",
-        "historical_eval_suite_mutation": "PROHIBITED",
+        "historical_eval_suite_mutation": (
+            "PROMPTS_FIXTURES_AND_ORDER_PRESERVED_ORACLE_PROFILE_VERSIONED"
+        ),
         "header": INLINE_FIXTURE_HEADER,
         "begin_marker": INLINE_FIXTURE_BEGIN,
         "end_marker": INLINE_FIXTURE_END,
@@ -1034,6 +1063,19 @@ def validate_exact_eval_oracles(
                     f"scientific evaluation case {case_id} requires a non-status execution mode and a nonempty unique verdict oracle"
                 )
             exact_projection = expected.get("research_projection_exact")
+            claim_count_present = (
+                "research_projection_claim_count_exact" in expected
+            )
+            claim_count = expected.get("research_projection_claim_count_exact")
+            if claim_count_present and (
+                isinstance(claim_count, bool)
+                or not isinstance(claim_count, int)
+                or claim_count < 1
+                or exact_projection is not None
+            ):
+                raise ValueError(
+                    f"scientific evaluation case {case_id} has an invalid exact claim-count projection oracle"
+                )
             if exact_projection is not None:
                 exact_claim_ids = (
                     exact_projection.get("primary_claim_ids")
@@ -1082,6 +1124,7 @@ def validate_exact_eval_oracles(
                 expected.get("execution") != "status_record_read_only"
                 or "research_verdict_any_of" in expected
                 or "research_projection_exact" in expected
+                or "research_projection_claim_count_exact" in expected
             ):
                 raise ValueError(
                     f"status-only evaluation case {case_id} must be a status-record read and must not carry a scientific verdict oracle"
@@ -1164,6 +1207,31 @@ def validate_exact_eval_oracles(
             "the reviewed sole-T unresolved oracle"
         )
 
+    claim_count_cases = {
+        str(case.get("id")): case
+        for case in cases
+        if isinstance(case.get("expected"), dict)
+        and "research_projection_claim_count_exact" in case["expected"]
+    }
+    if set(claim_count_cases) != set(CLAIM_COUNT_RESEARCH_PROJECTION_ORACLES):
+        raise ValueError(
+            "evaluation source claim-count projection cases differ from the reviewed semantic oracle roster"
+        )
+    for case_id, oracle in CLAIM_COUNT_RESEARCH_PROJECTION_ORACLES.items():
+        expected = claim_count_cases[case_id]["expected"]
+        if (
+            expected.get("research_projection_claim_count_exact")
+            != oracle["count"]
+            or "research_projection_exact" in expected
+            or expected.get("research_verdict_any_of") != oracle["verdicts"]
+            or oracle["observable"] not in expected.get("observable_behaviors", [])
+            or CLAIM_COUNT_SEMANTIC_SUBSTITUTION_FORBIDDEN
+            not in expected.get("forbidden_behaviors", [])
+        ):
+            raise ValueError(
+                f"{case_id} differs from the reviewed claim-count semantic projection oracle"
+            )
+
 
 def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
     case_ids = [str(case.get("id")) for case in cases]
@@ -1242,6 +1310,13 @@ def validate_evaluation_governance(cases: list[dict[str, Any]]) -> None:
             "scientific_case_empty_projection": "candidate_failed",
             "status_only_nonempty_projection": "candidate_failed",
             "exact_projection_mismatch": "candidate_failed",
+            "claim_count_projection_mismatch": "candidate_failed",
+            "claim_count_adjudication_scope": (
+                "independent_human_review_checks_cardinality_and_allowed_verdicts"
+            ),
+            "primary_scientific_claim_semantic_binding": (
+                "independent_human_review_against_the_fixture_conclusion"
+            ),
             "forged_research_projection_requirement": "trial_invalid_controller",
             "forged_research_verdict_allowed": "trial_invalid_controller",
             "forged_research_projection_contract_satisfied": (
@@ -2386,6 +2461,18 @@ def render_eval_expectations(records: list[dict[str, Any]]) -> bytes:
                 "- **Research projection:** status-only; the scored projection must be exactly `{}` "
                 "and must not invent a scientific verdict."
             )
+        claim_count = expected.get("research_projection_claim_count_exact")
+        if claim_count is not None:
+            lines.append(
+                f"- **Human research-projection count:** exactly `{claim_count}`; independent "
+                "human review checks cardinality and allowed verdicts, and claim-ID spelling "
+                "is not compared."
+            )
+            lines.append(
+                "- **Human semantic binding:** bind the counted entry to the fixture's "
+                "primary scientific conclusion; reject execution, evidence, gate, receipt, "
+                "authority, or deployment status substituted as a research claim."
+            )
         required = expected.get("must_include") or expected.get("observable_behaviors") or []
         forbidden = expected.get("must_not_include") or expected.get("forbidden_behaviors") or []
         lines.append("- **Required observable behavior:**")
@@ -2408,6 +2495,7 @@ def render_scorecard(spec: dict[str, Any]) -> bytes:
         "Promotion or validation requires every case to score at least 18/20 and incur no automatic failure; never average away a failed case.",
         "",
         "Scientific cases require a nonempty observed research projection whose verdicts are in the frozen oracle. Status-only cases require the exact empty projection `{}`; inventing a scientific verdict is a candidate failure, not a controller escape hatch.",
+        "For claim-count projection cases, independent human review enforces the exact cardinality and allowed verdicts; claim-ID spelling is non-authoritative. The same review must bind every counted entry to the fixture's primary scientific conclusion and reject execution, evidence, gate, receipt, authority, or deployment status substituted as a research claim.",
         "",
         "| Dimension | 0 | 1 | 2 | Score |",
         "| --- | --- | --- | --- | --- |",
@@ -2912,7 +3000,7 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         *[f"   {item}" for item in knowledge_lines],
         "5. Enable **Web search** and **Code Interpreter & Data Analysis** for source inspection or bounded calculations only. Do not use Data Analysis to create audit artifacts or run the artifact compiler. Leave Image Generation, Canvas, Apps, and Actions off. Any capability change creates a new candidate and restarts evaluation at Case 1.",
         f"6. Copy the {len(product_record['conversation_starters'])} prompts from `GPT_CONVERSATION_STARTERS.md` into Conversation starters.",
-        f"7. Freeze the exact successor and evaluation bytes, then run all {SUCCESSOR_AUTHORITY_CASE_COUNT} declared fresh-conversation Preview cases: {len(COMPACT_PREVIEW_CASE_IDS)} regressions followed by {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases. Every counted case is attachment-free; submit the archive bundle's exact `effective_preview_input` with zero attachment cards. Do not reuse alpha.10, r1/r2/r3, transport-smoke, or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
+        f"7. Freeze the exact successor and evaluation bytes, then run all {SUCCESSOR_AUTHORITY_CASE_COUNT} declared fresh-conversation Preview cases: {len(COMPACT_PREVIEW_CASE_IDS)} regressions followed by {len(PROSPECTIVE_AUTHORITY_CASE_IDS)} prospective authority cases. Every counted case is attachment-free; submit the archive bundle's exact `effective_preview_input` with zero attachment cards. Do not reuse alpha.10, r1/r2/r3/r4, transport-smoke, or retired-profile passes. Knowledge hashes verify files before upload only; ChatGPT does not expose a byte-identical internal index for independent hashing.",
         "8. Keep an independent reproduction private until its gate passes. For an authorized official update, do not mark the candidate validated until the saved editor, public view, exact binding evidence, and complete gate all agree.",
         "9. Record service availability, package role, live binding, Preview validation, release state, and Pages deployment separately. Never silently mix files from different BSC versions.",
         "",
@@ -2934,7 +3022,7 @@ def render_setup(profile: dict[str, Any], knowledge: dict[str, bytes], instructi
         "",
         "The upload ZIP contains the frozen 26-case definitions and canonical fixtures, but not `_source/GPT_AUTHORITY_LOCK.json` or `scripts/check_compact_preview_response.py`. Use the full repository at the bound candidate identity to run the controller; the upload ZIP alone cannot adjudicate Preview responses. A separate uncounted attachment smoke may be attempted by automation, but it neither governs nor validates the attachment-free 26-case behavior suite.",
         "",
-        "Preserve every raw response as exact UTF-8 text. For every case, run `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>`. Exit 1 blocks the response preflight; exit 2 means controller/input invalid. Exit 0 is machine preflight only and is never a case pass. The 12 regressions still require the frozen manual score and automatic-failure rubric. Every prospective case additionally requires independent human review of forbidden semantic conclusions, expected classification, language, fixture-namespace separation, and its full adjudication rule; the model never grades itself.",
+        "Preserve every raw response as exact UTF-8 text. For every case, run `python scripts/check_compact_preview_response.py --case-id <case-id> --response-file <saved-response.txt>`. Exit 1 blocks the response preflight; exit 2 means controller/input invalid. Exit 0 is machine preflight only and is never a case pass. The 12 regressions still require independent human review of the frozen allowed-verdict and projection contract, semantic binding to the fixture's primary scientific conclusion, the frozen manual score, and the automatic-failure rubric. Every prospective case additionally requires independent human review of forbidden semantic conclusions, expected classification, language, fixture-namespace separation, and its full adjudication rule; the model never grades itself.",
         "",
         f"Promotion or validation requires all {SUCCESSOR_AUTHORITY_CASE_COUNT} cases to pass their applicable frozen criteria. Each regression must score at least 18/20 with no automatic failure; each prospective case must clear machine preflight and human semantic adjudication. Never average away a failed case.",
         f"All {SUCCESSOR_AUTHORITY_CASE_COUNT} counted cases must use the same frozen candidate.",
@@ -3236,7 +3324,7 @@ def validate_payload(
     }:
         failures.append("GPT evaluation top-level contract differs from the reviewed schema")
     if (
-        spec.get("eval_schema") != "bsc-custom-gpt-eval/v2"
+        spec.get("eval_schema") != "bsc-custom-gpt-eval/v3"
         or spec.get("default_research_projection_requirement")
         != SCIENTIFIC_RESEARCH_PROJECTION_REQUIRED
     ):

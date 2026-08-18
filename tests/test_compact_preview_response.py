@@ -83,7 +83,7 @@ class CompactPreviewResponseTests(unittest.TestCase):
         )
         self.assertEqual(MAX_DEFAULT_QUICK_WORDS, 250)
         self.assertEqual(MAX_DEFAULT_QUICK_BLOCKS, 4)
-        self.assertEqual(CHECKER_VERSION, "1.7")
+        self.assertEqual(CHECKER_VERSION, "1.8")
 
     def test_no_depth_control_accepts_short_heading_qualifiers(self) -> None:
         response = "\n\n".join(
