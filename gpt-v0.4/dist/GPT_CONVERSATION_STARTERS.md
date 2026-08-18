@@ -6,12 +6,12 @@ Audit this claim: [paste one sentence]
 
 ## 2
 
-Find the strongest counterexample to this claim
+Ask me for a claim, then find its strongest counterexample.
 
 ## 3
 
-What evidence would most change the verdict?
+Ask me for a claim, then identify the evidence most likely to change the verdict.
 
 ## 4
 
-この主張を日本語で点検してください：[一文]
+主張を一文で聞いてから、日本語で点検してください。

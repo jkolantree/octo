@@ -18,17 +18,17 @@
   },
   "conversation_starters": {
     "file": {
-      "bytes": 247,
-      "characters": 207,
+      "bytes": 309,
+      "characters": 259,
       "lines": 17,
       "path": "GPT_CONVERSATION_STARTERS.md",
-      "sha256": "cd954195ac8dc964f092a52c44cf44f3dd6e33b11253a8de248b668022f11a37"
+      "sha256": "df19543fdd9fe836dfcef0d70ba4263d0e983ecd8be9c2724226dce3c424064f"
     },
     "values": [
       "Audit this claim: [paste one sentence]",
-      "Find the strongest counterexample to this claim",
-      "What evidence would most change the verdict?",
-      "この主張を日本語で点検してください：[一文]"
+      "Ask me for a claim, then find its strongest counterexample.",
+      "Ask me for a claim, then identify the evidence most likely to change the verdict.",
+      "主張を一文で聞いてから、日本語で点検してください。"
     ]
   },
   "dependencies": {
@@ -104,11 +104,11 @@
       "sha256": "f95444b2e33c16b6752411f6ca6ab69dbb72f39d7d61459d8a6217c53ef0738e"
     },
     {
-      "bytes": 247,
-      "characters": 207,
+      "bytes": 309,
+      "characters": 259,
       "lines": 17,
       "path": "GPT_CONVERSATION_STARTERS.md",
-      "sha256": "cd954195ac8dc964f092a52c44cf44f3dd6e33b11253a8de248b668022f11a37"
+      "sha256": "df19543fdd9fe836dfcef0d70ba4263d0e983ecd8be9c2724226dce3c424064f"
     },
     {
       "bytes": 6217,
@@ -169,11 +169,11 @@
       "sha256": "6e389bb28439f509f76a9032be21023d4e62cd15004db8e369031982b12c3091"
     },
     {
-      "bytes": 304,
-      "characters": 264,
+      "bytes": 366,
+      "characters": 316,
       "lines": 9,
       "path": "gpt-v0.4/source/conversation_starters.json",
-      "sha256": "4eee09101705c76e5634240680b584aecf355ded1db32a518f6cc8c719274aae"
+      "sha256": "60c3fd6587121923c8ffde4fdb499c9b3bcad16394eaf40cf6b393054fc127fd"
     },
     {
       "bytes": 3997,

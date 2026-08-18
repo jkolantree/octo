@@ -1,5 +1,5 @@
 {
-  "candidate_state": "FROZEN_LOCAL_SOURCE_CANDIDATE",
+  "candidate_state": "PRODUCT_FREEZE_PENDING",
   "claims_not_supported": [
     "validated",
     "certified",
@@ -13,7 +13,7 @@
   "evaluator_identity": {
     "profile_id": "bsc-claim-auditor-evaluator-v0.4.0-preview.1",
     "protocol_id": "bsc-claim-auditor-nine-canaries-v0.4.0-preview.1",
-    "sha256": "560a7d08daead7ae52c1a41ec461a2de4a999464da660c921a2d66379004d9c2",
+    "sha256": "75b39bc3227ef951e83f3071a8c337a353724c5c96ea0a59f23b671b19a06b21",
     "source_files": [
       {
         "bytes": 3007,
@@ -23,18 +23,18 @@
         "sha256": "e0e588fff6537dc315caa92a7c508749717a756b10f6668b2098b004a9c39917"
       },
       {
-        "bytes": 773,
-        "characters": 773,
+        "bytes": 766,
+        "characters": 766,
         "lines": 23,
         "path": "gpt-v0.4/evals/evaluation-status.json",
-        "sha256": "cb604fba416ec06471bd184120a115615aff26779d39a6ddb37601bb5fd258fe"
+        "sha256": "fc2b920e88f79a685c009146556b96916e48ce3b623ddc4817e62f88889fbf0a"
       },
       {
-        "bytes": 13027,
-        "characters": 12901,
-        "lines": 281,
+        "bytes": 413,
+        "characters": 413,
+        "lines": 12,
         "path": "gpt-v0.4/evals/evaluator-calibration.json",
-        "sha256": "85541f35906357c4a2a95d8550786f6186af71d26c17777664cdc91a3eb660f9"
+        "sha256": "5ad92076b431928ceec35c57536c2cb2097292babac2973de3a01102c16c7bbb"
       },
       {
         "bytes": 4512,
@@ -44,11 +44,11 @@
         "sha256": "b29c1622e7961eccbed9bd5d826ec7a6213bbc4161c80e8fdf44d3bb8f98d632"
       },
       {
-        "bytes": 14293,
-        "characters": 14007,
-        "lines": 282,
+        "bytes": 263,
+        "characters": 263,
+        "lines": 9,
         "path": "gpt-v0.4/evals/prospective-canaries.json",
-        "sha256": "065e9bed2fbd72d65cf949c5b32a09c3a818ad124c116e7e4236e254cf689b63"
+        "sha256": "7f5901d6c885632574459ce856db764c07ca36042e40c8650a6569b75d325447"
       }
     ]
   },
@@ -87,46 +87,9 @@
   ],
   "installation_state": "NOT_ASSESSED",
   "live_binding_state": "NON_ADMISSIBLE_UNHASHABLE",
-  "product_lock_sha256": "faf727979328d8d4b52acd82c045168b0d41cd2c29eeb9d928cbe5eb2f2b7df0",
+  "product_lock_sha256": "f10a83af09502db8e708995619e0b832d471a03115ab4e1dea5123f80ff88eb7",
   "prospective_behavioral_cases": {
-    "cases": [
-      {
-        "id": "correct-closed-proof",
-        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
-      },
-      {
-        "id": "decisive-counterexample",
-        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
-      },
-      {
-        "id": "missing-or-truncated-source",
-        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
-      },
-      {
-        "id": "planned-unexecuted-calculation",
-        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
-      },
-      {
-        "id": "contradictory-evidence",
-        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
-      },
-      {
-        "id": "quoted-prompt-injection",
-        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
-      },
-      {
-        "id": "mathematics-to-deployment",
-        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
-      },
-      {
-        "id": "upload-privacy-and-disabled-export",
-        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
-      },
-      {
-        "id": "japanese-official-status-separation",
-        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
-      }
-    ],
+    "cases": [],
     "count": 9,
     "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
   },
