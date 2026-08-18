@@ -80,10 +80,23 @@
       "state": "HISTORICAL_NONCONTROLLING",
       "summary": "Two post-update public smoke observations cleared with documented limitations.",
       "evidence_transfer": "NONE"
+    },
+    {
+      "id": "v0.4-preview.1-faf727-nine-canary-campaign",
+      "state": "HISTORICAL_NONCONTROLLING",
+      "summary": "Nine controller-valid targeted canaries received HARD_PASS from two independent semantic reviewers on the faf727 product lock. This established only that the recorded service-normalized installation cleared those targeted canaries.",
+      "evidence_transfer": "NONE"
+    },
+    {
+      "id": "v0.4-preview.1-f10a83-starters-successor",
+      "state": "HISTORICAL_NONCONTROLLING",
+      "summary": "The self-contained-starter successor was frozen and installed but received no prospective behavioral campaign before this preview.2 successor work began.",
+      "evidence_transfer": "NONE"
     }
   ],
   "limits": [
     "These aggregates do not establish general reliability, certification, formal r5 success, or v0.4 behavior.",
+    "No prior campaign or installation evidence validates preview.2; all fresh prospective cases remain unrun until a separately authorized campaign.",
     "Two privately drafted, unrun prospective wording sets were retired after product refreezes; neither was captured or executed, and neither transfers evidence.",
     "No private prompts, captures, chat identifiers, URLs, local receipts, or browser state are copied into this source candidate.",
     "Opaque indexed Knowledge bytes remain NON_ADMISSIBLE_UNHASHABLE."
