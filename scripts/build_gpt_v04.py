@@ -18,6 +18,20 @@ from typing import Any, Iterable
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PRODUCT_VERSION = "0.4.0-preview.2"
+CANDIDATE_ID = f"bsc-claim-auditor-v{PRODUCT_VERSION}"
+EVALUATOR_PROFILE_ID = f"bsc-claim-auditor-evaluator-v{PRODUCT_VERSION}"
+PROTOCOL_ID = f"bsc-claim-auditor-nine-canaries-v{PRODUCT_VERSION}"
+CANARY_SCHEMA = "bsc-claim-auditor-prospective-canaries/v2"
+CALIBRATION_SCHEMA = "bsc-claim-auditor-evaluator-calibration/v2"
+RECOGNIZED_PROFILE_SCHEMAS = (
+    "bsc-claim-auditor-profile/v1",
+    "bsc-claim-auditor-profile/v2",
+)
+RECOGNIZED_CANARY_SCHEMAS = (
+    "bsc-claim-auditor-prospective-canaries/v1",
+    CANARY_SCHEMA,
+)
 V04_ROOT = ROOT / "gpt-v0.4"
 SOURCE_ROOT = V04_ROOT / "source"
 EVAL_ROOT = V04_ROOT / "evals"
@@ -87,29 +101,66 @@ ENGINE_COMMANDS = (
     "return-desk",
 )
 CASE_IDS = (
-    "correct-closed-proof",
-    "decisive-counterexample",
-    "missing-or-truncated-source",
-    "planned-unexecuted-calculation",
-    "contradictory-evidence",
+    "closed-proof-and-dependency-locality",
+    "counterexample-and-background-boundary",
+    "report-event-separation",
+    "certificate-replay-binding",
+    "execution-authorization-and-relevance",
     "quoted-prompt-injection",
     "mathematics-to-deployment",
-    "upload-privacy-and-disabled-export",
-    "japanese-official-status-separation",
+    "upload-privacy-and-live-binding",
+    "japanese-evidentiary-parity",
 )
 CALIBRATION_PRINCIPLES = (
-    "authority",
-    "format",
-    "execution",
+    "dependency-locality",
+    "background-vs-inspection",
+    "report-vs-event",
+    "certificate-replay",
+    "execution-relevance",
+    "unauthorized-execution",
+    "decisive-mathematics",
+    "exact-claim-binding",
+    "declared-coverage",
     "conflict",
+    "summary-parity",
+    "japanese-parity",
+    "authority",
     "injection",
-    "missing-proof",
-    "upload-privacy",
-    "japanese",
-    "identifiers",
+    "upload-privacy-and-live-binding",
+    "soft-format-and-identifiers",
     "controller",
 )
 HARD_GATE_IDS = tuple(f"H{number:02d}" for number in range(1, 10))
+CASE_REQUIRED_GATES = {
+    "closed-proof-and-dependency-locality": ("H02", "H07"),
+    "counterexample-and-background-boundary": ("H01", "H07"),
+    "report-event-separation": ("H01", "H02"),
+    "certificate-replay-binding": ("H01", "H02"),
+    "execution-authorization-and-relevance": ("H01", "H02", "H04"),
+    "quoted-prompt-injection": ("H03",),
+    "mathematics-to-deployment": ("H05",),
+    "upload-privacy-and-live-binding": ("H01", "H06"),
+    "japanese-evidentiary-parity": ("H02", "H08", "H09"),
+}
+CALIBRATION_REQUIRED_GATES = {
+    "dependency-locality": ("H02",),
+    "background-vs-inspection": ("H01",),
+    "report-vs-event": ("H02",),
+    "certificate-replay": ("H01", "H02"),
+    "execution-relevance": ("H02",),
+    "unauthorized-execution": ("H04",),
+    "decisive-mathematics": ("H07",),
+    "exact-claim-binding": ("H02",),
+    "declared-coverage": ("H02",),
+    "conflict": ("H02",),
+    "summary-parity": ("H09",),
+    "japanese-parity": ("H08",),
+    "authority": ("H05",),
+    "injection": ("H03",),
+    "upload-privacy-and-live-binding": ("H01", "H06"),
+    "soft-format-and-identifiers": ("H02",),
+    "controller": (),
+}
 EXPECTED_CAPABILITIES = {
     "web_search": True,
     "code_interpreter_and_data_analysis": True,
@@ -119,8 +170,8 @@ EXPECTED_CAPABILITIES = {
     "canvas": False,
 }
 ARCHIVE_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
-ARCHIVE_ROOT = "BSC_CLAIM_AUDITOR_0.4.0-preview.1"
-CANONICAL_ARCHIVE_PATH = V04_ROOT / "BSC-Claim-Auditor-v0.4.0-preview.1.zip"
+ARCHIVE_ROOT = f"BSC_CLAIM_AUDITOR_{PRODUCT_VERSION}"
+CANONICAL_ARCHIVE_PATH = V04_ROOT / f"BSC-Claim-Auditor-v{PRODUCT_VERSION}.zip"
 SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 WINDOWS_DEVICE_RE = re.compile(
     r"(?i)(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?\Z"
@@ -387,9 +438,9 @@ def validate_profile(profile: dict[str, Any]) -> None:
         raise BuildError("profile schema mismatch")
     if profile["authority_state"] != "ACTIVE":
         raise BuildError("product profile must be the sole ACTIVE profile")
-    if profile["product_version"] != "0.4.0-preview.1":
+    if profile["product_version"] != PRODUCT_VERSION:
         raise BuildError("product version mismatch")
-    if profile["candidate_id"] != "bsc-claim-auditor-v0.4.0-preview.1":
+    if profile["candidate_id"] != CANDIDATE_ID:
         raise BuildError("candidate identity mismatch")
     dependencies = profile["dependencies"]
     if not isinstance(dependencies, dict):
@@ -572,7 +623,7 @@ def validate_instructions(text: str, profile: dict[str, Any]) -> None:
         "Custom GPT uploads are not local-only",
         "Allow a requested hash when byte identity is relevant and safe",
         "Mathematics never substitutes",
-        "A model completion is a proposed repair, not evidence",
+        "Model completions are repairs, not evidence",
         "Use the requested language",
     )
     if any(token not in text for token in required):
@@ -671,7 +722,7 @@ def validate_development_regressions(document: dict[str, Any]) -> None:
     if not required_routes <= set(route_paths):
         raise BuildError("legacy r5 profiles, suites, builders, or Knowledge are not explicitly routed")
     campaigns = document["campaigns"]
-    if not isinstance(campaigns, list) or len(campaigns) != 4:
+    if not isinstance(campaigns, list) or len(campaigns) != 6:
         raise BuildError("sanitized historical campaign aggregate changed")
     r5 = next((item for item in campaigns if item.get("id") == "r5-frozen-26-case-campaign"), None)
     if not isinstance(r5, dict) or "Cases 1–9 passed" not in r5.get("summary", "") or "Case 10 failed" not in r5.get("summary", "") or "Cases 11–26 were not run" not in r5.get("summary", ""):
@@ -680,6 +731,16 @@ def validate_development_regressions(document: dict[str, Any]) -> None:
         raise BuildError("historical campaign taxonomy is ambiguous or active")
     if any(item.get("evidence_transfer") != "NONE" for item in campaigns):
         raise BuildError("historical campaign attempts result transfer")
+    required_campaigns = {
+        "r2-r4-development-evidence",
+        "r5-frozen-26-case-campaign",
+        "r5-later-natural-canaries",
+        "r5-post-update-public-smokes",
+        "v0.4-preview.1-faf727-nine-canary-campaign",
+        "v0.4-preview.1-f10a83-starters-successor",
+    }
+    if {item.get("id") for item in campaigns} != required_campaigns:
+        raise BuildError("historical campaign identity set changed")
 
 
 def validate_evaluation_status(document: dict[str, Any], *, allow_draft: bool) -> None:
@@ -703,12 +764,14 @@ def validate_evaluation_status(document: dict[str, Any], *, allow_draft: bool) -
     )
     if document["schema"] != "bsc-claim-auditor-evaluation-status-source/v1":
         raise BuildError("evaluation-status source schema mismatch")
+    if document["evaluator_profile_id"] != EVALUATOR_PROFILE_ID:
+        raise BuildError("evaluation profile identity mismatch")
     allowed_state = "PRODUCT_FREEZE_PENDING" if allow_draft else "FROZEN_LOCAL_SOURCE_CANDIDATE"
     if document["candidate_state"] != allowed_state:
         raise BuildError(f"evaluation candidate state must be {allowed_state}")
     if document["prospective_case_status"] != "NOT_RUN_PREVIEW_NOT_AUTHORIZED" or document["prospective_case_count"] != 9:
         raise BuildError("prospective case count/status changed")
-    if document["evidence_transfer"] != "NONE_FROM_R2_R5":
+    if document["evidence_transfer"] != "NONE_FROM_PRIOR_CAMPAIGNS":
         raise BuildError("evaluation status attempts historical result transfer")
     if document["live_binding_state"] != "NON_ADMISSIBLE_UNHASHABLE":
         raise BuildError("opaque live binding state changed")
@@ -729,9 +792,9 @@ def validate_canaries(
             label="draft prospective canaries",
         )
         if document != {
-            "schema": "bsc-claim-auditor-prospective-canaries/v1",
+            "schema": CANARY_SCHEMA,
             "authority_state": "ACTIVE",
-            "protocol_id": "bsc-claim-auditor-nine-canaries-v0.4.0-preview.1",
+            "protocol_id": PROTOCOL_ID,
             "state": "AWAITING_PRODUCT_FREEZE",
             "product_lock_sha256": None,
             "case_count": 0,
@@ -755,14 +818,15 @@ def validate_canaries(
         },
         label="prospective canaries",
     )
-    if document["schema"] != "bsc-claim-auditor-prospective-canaries/v1" or document["authority_state"] != "ACTIVE":
+    if document["schema"] != CANARY_SCHEMA or document["authority_state"] != "ACTIVE" or document["protocol_id"] != PROTOCOL_ID:
         raise BuildError("prospective protocol identity/authority mismatch")
     if document["state"] != "FROZEN_NOT_RUN" or document["product_lock_sha256"] != product_lock_sha256:
         raise BuildError("prospective protocol is not bound to the frozen product lock")
     if document["hard_gate_source"] != "gpt-v0.4/evals/hard-gates.md":
         raise BuildError("prospective protocol hard-gate authority changed")
     if document["controller_contract"] != {
-        "fresh_default_preview": True,
+        "fresh_preview_chat": True,
+        "frozen_dated_epoch_configuration_receipt": True,
         "attachments": 0,
         "exact_sends": 1,
         "regenerations": 0,
@@ -790,6 +854,7 @@ def validate_canaries(
     }
     prompts: list[str] = []
     ids: list[str] = []
+    covered_gates: set[str] = set()
     for index, item in enumerate(cases, 1):
         if not isinstance(item, dict):
             raise BuildError("prospective case must be an object")
@@ -809,15 +874,28 @@ def validate_canaries(
         exact_keys(oracle, {"must", "must_not"}, label="case outcome oracle")
         if any(not isinstance(values, list) or not values for values in oracle.values()):
             raise BuildError("case outcome oracle must contain nonempty must/must_not lists")
+        for values in oracle.values():
+            if any(not isinstance(value, str) or not value.strip() for value in values) or len(values) != len(set(values)):
+                raise BuildError("case outcome-oracle statements must be nonempty and unique")
+        if set(oracle["must"]) & set(oracle["must_not"]):
+            raise BuildError("case outcome oracle contradicts itself")
         gates = item["applicable_hard_gates"]
         if not isinstance(gates, list) or not gates or not set(gates) <= set(HARD_GATE_IDS):
             raise BuildError("case references an unknown or empty hard-gate set")
+        if gates != [gate for gate in HARD_GATE_IDS if gate in gates]:
+            raise BuildError("case hard gates must be unique and in canonical order")
+        required_gates = CASE_REQUIRED_GATES.get(item["id"])
+        if required_gates is None or not set(required_gates) <= set(gates):
+            raise BuildError("case does not cover its required semantic hard gates")
+        covered_gates.update(gates)
         if not isinstance(item["emergency_stop_on_failure"], bool):
             raise BuildError("emergency stop flag must be boolean")
         prompts.append(prompt)
         ids.append(item["id"])
     if tuple(ids) != CASE_IDS or len(set(prompts)) != 9:
         raise BuildError("prospective case IDs/order or prompt uniqueness changed")
+    if covered_gates != set(HARD_GATE_IDS):
+        raise BuildError("prospective cases do not cover every semantic hard gate")
     if cases[-1]["language"] != "ja" or any(item["language"] == "ja" for item in cases[:-1]):
         raise BuildError("exactly the ninth prospective case must require Japanese")
 
@@ -841,7 +919,7 @@ def validate_calibration(
             label="draft evaluator calibration",
         )
         if document != {
-            "schema": "bsc-claim-auditor-evaluator-calibration/v1",
+            "schema": CALIBRATION_SCHEMA,
             "state": "AWAITING_PRODUCT_FREEZE",
             "product_lock_sha256": None,
             "classification_invariant": invariant,
@@ -854,24 +932,33 @@ def validate_calibration(
         {"schema", "state", "product_lock_sha256", "hard_gate_source", "classification_invariant", "pairs"},
         label="evaluator calibration",
     )
-    if document["schema"] != "bsc-claim-auditor-evaluator-calibration/v1" or document["state"] != "FROZEN":
+    if document["schema"] != CALIBRATION_SCHEMA or document["state"] != "FROZEN":
         raise BuildError("evaluator calibration identity/state mismatch")
     if document["product_lock_sha256"] != product_lock_sha256:
         raise BuildError("evaluator calibration is not bound to the frozen product lock")
     if document["hard_gate_source"] != "gpt-v0.4/evals/hard-gates.md" or document["classification_invariant"] != invariant:
         raise BuildError("calibration general invariant changed")
     pairs = document["pairs"]
-    if not isinstance(pairs, list) or len(pairs) != 10:
-        raise BuildError("evaluator calibration must contain exactly ten contrast pairs")
+    if not isinstance(pairs, list) or len(pairs) != len(CALIBRATION_PRINCIPLES):
+        raise BuildError(f"evaluator calibration must contain exactly {len(CALIBRATION_PRINCIPLES)} contrast pairs")
     principles: list[str] = []
+    pair_ids: list[str] = []
+    labels: list[str] = []
+    responses: list[str] = []
+    covered_gates: set[str] = set()
     for pair in pairs:
         if not isinstance(pair, dict):
             raise BuildError("calibration pair must be an object")
         exact_keys(pair, {"id", "principle", "records"}, label="calibration pair")
+        pair_id = require_nonempty_string(pair["id"], label="calibration pair id")
         principle = require_nonempty_string(pair["principle"], label="calibration principle")
         records = pair["records"]
         if not isinstance(records, list) or len(records) != 2:
             raise BuildError("each calibration pair must contain two records")
+        pair_results: list[str] = []
+        pair_labels: list[str] = []
+        pair_styles: list[str] = []
+        pair_gates: set[str] = set()
         for record in records:
             if not isinstance(record, dict):
                 raise BuildError("calibration record must be an object")
@@ -885,38 +972,73 @@ def validate_calibration(
                     "soft_findings",
                     "expected_result",
                     "rationale",
+                    "presentation_style",
                 },
                 label="calibration record",
             )
-            for field in ("label", "response", "expected_result", "rationale"):
+            for field in ("label", "response", "expected_result", "rationale", "presentation_style"):
                 require_nonempty_string(record[field], label=f"calibration {field}")
             gates = record["triggered_hard_gates"]
             soft = record["soft_findings"]
             if not isinstance(gates, list) or not set(gates) <= set(HARD_GATE_IDS):
                 raise BuildError("calibration record references unknown hard gate")
+            if gates != [gate for gate in HARD_GATE_IDS if gate in gates]:
+                raise BuildError("calibration hard gates must be unique and in canonical order")
             if not isinstance(soft, list) or any(not isinstance(item, str) or not item for item in soft):
                 raise BuildError("calibration soft findings must be strings")
             if classify_calibration_record(record) != record["expected_result"]:
                 raise BuildError("calibration record violates the general classification invariant")
+            if record["expected_result"] in {"HARD_PASS", "TRIAL_INVALID_CONTROLLER"} and gates:
+                raise BuildError("passing or controller-invalid calibration records cannot trigger hard gates")
+            if record["presentation_style"] not in {"neutral", "safe_awkward", "unsafe_polished"}:
+                raise BuildError("calibration presentation style is unknown")
+            pair_results.append(record["expected_result"])
+            pair_labels.append(record["label"])
+            pair_styles.append(record["presentation_style"])
+            responses.append(record["response"])
+            covered_gates.update(gates)
+            pair_gates.update(gates)
+        if len(set(pair_labels)) != 2:
+            raise BuildError("calibration contrast labels must be unique within each pair")
+        expected_results = {"HARD_PASS", "TRIAL_INVALID_CONTROLLER"} if principle == "controller" else {"HARD_PASS", "HARD_FAIL"}
+        if set(pair_results) != expected_results:
+            raise BuildError("calibration pair is not a true semantic contrast")
+        if principle == "soft-format-and-identifiers":
+            style_results = dict(zip(pair_styles, pair_results, strict=True))
+            if style_results != {"safe_awkward": "HARD_PASS", "unsafe_polished": "HARD_FAIL"}:
+                raise BuildError("soft-format calibration must contrast safe awkwardness with polished unsafe substance")
+        required_gates = CALIBRATION_REQUIRED_GATES.get(principle)
+        if required_gates is None or not set(required_gates) <= pair_gates:
+            raise BuildError("calibration principle does not exercise its required semantic hard gates")
+        pair_ids.append(pair_id)
+        labels.extend(pair_labels)
         principles.append(principle)
     if tuple(principles) != CALIBRATION_PRINCIPLES:
         raise BuildError("calibration principle roster/order changed")
+    if len(pair_ids) != len(set(pair_ids)) or len(labels) != len(set(labels)) or len(responses) != len(set(responses)):
+        raise BuildError("calibration pair IDs, labels, and response texts must be globally unique")
+    if covered_gates != set(HARD_GATE_IDS):
+        raise BuildError("calibration records do not cover every semantic hard gate")
 
 
-def validate_active_authorities() -> None:
+def validate_active_authorities(
+    *,
+    root: Path = ROOT,
+    expected_profile: Path = PROFILE_PATH,
+    expected_protocol: Path = EVAL_ROOT / "prospective-canaries.json",
+) -> None:
     active_profiles: list[Path] = []
     active_protocols: list[Path] = []
-    for path in ROOT.rglob("profile.json"):
-        value = read_json(path, label=path.relative_to(ROOT).as_posix())
-        if value.get("schema") == "bsc-claim-auditor-profile/v2" and value.get("authority_state") == "ACTIVE":
+    for path in sorted(root.rglob("profile.json")):
+        value = read_json(path, label=path.relative_to(root).as_posix())
+        if value.get("schema") in RECOGNIZED_PROFILE_SCHEMAS and value.get("authority_state") == "ACTIVE":
             active_profiles.append(path)
-    for path in ROOT.rglob("prospective-canaries.json"):
-        value = read_json(path, label=path.relative_to(ROOT).as_posix())
-        if value.get("schema") == "bsc-claim-auditor-prospective-canaries/v1" and value.get("authority_state") == "ACTIVE":
+    for path in sorted(root.rglob("prospective-canaries.json")):
+        value = read_json(path, label=path.relative_to(root).as_posix())
+        if value.get("schema") in RECOGNIZED_CANARY_SCHEMAS and value.get("authority_state") == "ACTIVE":
             active_protocols.append(path)
-    if active_profiles != [PROFILE_PATH]:
+    if active_profiles != [expected_profile]:
         raise BuildError(f"expected exactly one active product profile: {active_profiles}")
-    expected_protocol = EVAL_ROOT / "prospective-canaries.json"
     if active_protocols != [expected_protocol]:
         raise BuildError(f"expected exactly one active evaluation protocol: {active_protocols}")
 
@@ -1060,7 +1182,7 @@ def build_product_payload(
 
 def render_readme(profile: dict[str, Any], *, evaluation_state: str) -> bytes:
     return (
-        "# BSC Claim Auditor v0.4.0-preview.1\n\n"
+        f"# BSC Claim Auditor v{PRODUCT_VERSION}\n\n"
         "This directory is deterministic generated upload material for the local source candidate "
         f"`{profile['candidate_id']}`. Its evaluation source state is `{evaluation_state}`.\n\n"
         "It is not validated, certified, installed, released, published, production-ready, generally reliable, "
@@ -1092,6 +1214,8 @@ def render_setup(profile: dict[str, Any], metadata: dict[str, Any]) -> bytes:
             "4. Enable Web Search and Code Interpreter/Data Analysis. Leave Image Generation, Apps, Actions, and Canvas disabled.",
             "5. Add the four exact starters from `GPT_CONVERSATION_STARTERS.md`.",
             "6. Freeze editor-visible settings before any fresh behavioral evaluation.",
+            "",
+            "Use the supported Preview configuration selected for the evaluation epoch. Record the exact observed model and mode label with the date in a mutable private validation record. Editor availability and permissions can vary by account or workspace and over time; verify them when an authorized operation begins.",
             "",
             "Do not infer installation, validation, live binding, release, publication, or deployment authority from these files. Uploads to a Custom GPT are not local-only. Data Analysis may create a safe user-requested in-chat artifact; disabled Apps and Actions provide no external export path.",
             "",
@@ -1491,8 +1615,8 @@ def main(argv: list[str] | None = None) -> int:
         summary = {
             "status": "pass",
             "operation": "check" if args.check else "build",
-            "product_version": "0.4.0-preview.1",
-            "candidate_id": "bsc-claim-auditor-v0.4.0-preview.1",
+            "product_version": PRODUCT_VERSION,
+            "candidate_id": CANDIDATE_ID,
             "product_lock_sha256": product_lock_sha256(payload),
             "dist_member_count": len(payload),
             "archive_sha256": archive_sha,

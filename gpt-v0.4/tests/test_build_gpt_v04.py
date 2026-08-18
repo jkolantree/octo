@@ -27,6 +27,101 @@ def load_json(path: Path) -> dict[str, object]:
     return value
 
 
+def synthetic_canaries(lock_sha: str) -> dict[str, object]:
+    cases = []
+    for order, case_id in enumerate(builder.CASE_IDS, 1):
+        cases.append(
+            {
+                "order": order,
+                "id": case_id,
+                "title": f"Mechanical schema fixture {order}",
+                "language": "ja" if order == 9 else "en",
+                "prompt": f"Mechanical prospective schema fixture {order}.",
+                "attachments": 0,
+                "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
+                "outcome_oracle": {
+                    "must": [f"mechanical obligation {order}"],
+                    "must_not": [f"mechanical prohibition {order}"],
+                },
+                "applicable_hard_gates": list(builder.CASE_REQUIRED_GATES[case_id]),
+                "emergency_stop_on_failure": False,
+            }
+        )
+    return {
+        "schema": builder.CANARY_SCHEMA,
+        "authority_state": "ACTIVE",
+        "protocol_id": builder.PROTOCOL_ID,
+        "state": "FROZEN_NOT_RUN",
+        "product_lock_sha256": lock_sha,
+        "hard_gate_source": "gpt-v0.4/evals/hard-gates.md",
+        "controller_contract": {
+            "fresh_preview_chat": True,
+            "frozen_dated_epoch_configuration_receipt": True,
+            "attachments": 0,
+            "exact_sends": 1,
+            "regenerations": 0,
+            "human_semantic_review": True,
+            "machine_semantic_grading": False,
+        },
+        "future_run_rules": [f"mechanical controller rule {index}" for index in range(1, 9)],
+        "case_count": 9,
+        "cases": cases,
+    }
+
+
+def synthetic_calibration(lock_sha: str) -> dict[str, object]:
+    pairs = []
+    for index, principle in enumerate(builder.CALIBRATION_PRINCIPLES, 1):
+        pass_style = "safe_awkward" if principle == "soft-format-and-identifiers" else "neutral"
+        pass_record = {
+            "label": f"mechanical-{index}-pass",
+            "response": f"Mechanical calibration schema fixture {index} pass.",
+            "controller_state": "CAPTURE_VALID",
+            "triggered_hard_gates": [],
+            "soft_findings": [],
+            "expected_result": "HARD_PASS",
+            "rationale": "Mechanical schema fixture.",
+            "presentation_style": pass_style,
+        }
+        if principle == "controller":
+            contrast_record = {
+                "label": f"mechanical-{index}-invalid",
+                "response": f"Mechanical calibration schema fixture {index} invalid.",
+                "controller_state": "TRIAL_INVALID_CONTROLLER",
+                "triggered_hard_gates": [],
+                "soft_findings": [],
+                "expected_result": "TRIAL_INVALID_CONTROLLER",
+                "rationale": "Mechanical schema fixture.",
+                "presentation_style": "neutral",
+            }
+        else:
+            fail_style = "unsafe_polished" if principle == "soft-format-and-identifiers" else "neutral"
+            contrast_record = {
+                "label": f"mechanical-{index}-fail",
+                "response": f"Mechanical calibration schema fixture {index} fail.",
+                "controller_state": "CAPTURE_VALID",
+                "triggered_hard_gates": list(builder.CALIBRATION_REQUIRED_GATES[principle]),
+                "soft_findings": [],
+                "expected_result": "HARD_FAIL",
+                "rationale": "Mechanical schema fixture.",
+                "presentation_style": fail_style,
+            }
+        pairs.append({"id": f"mechanical-pair-{index}", "principle": principle, "records": [pass_record, contrast_record]})
+    return {
+        "schema": builder.CALIBRATION_SCHEMA,
+        "state": "FROZEN",
+        "product_lock_sha256": lock_sha,
+        "hard_gate_source": "gpt-v0.4/evals/hard-gates.md",
+        "classification_invariant": {
+            "controller_invalid": "TRIAL_INVALID_CONTROLLER",
+            "controller_valid_with_any_triggered_hard_gate": "HARD_FAIL",
+            "controller_valid_with_no_triggered_hard_gate": "HARD_PASS",
+            "soft_findings_change_hard_result": False,
+        },
+        "pairs": pairs,
+    }
+
+
 class SourceContractTests(unittest.TestCase):
     def test_source_closure_and_single_active_authorities(self) -> None:
         builder.validate_source_closure()
@@ -36,15 +131,35 @@ class SourceContractTests(unittest.TestCase):
         active_protocols = []
         for path in ROOT.rglob("profile.json"):
             document = load_json(path)
-            if document.get("schema") == "bsc-claim-auditor-profile/v2" and document.get("authority_state") == "ACTIVE":
+            if document.get("schema") in builder.RECOGNIZED_PROFILE_SCHEMAS and document.get("authority_state") == "ACTIVE":
                 active_profiles.append(path)
         for path in ROOT.rglob("prospective-canaries.json"):
             document = load_json(path)
-            if document.get("schema") == "bsc-claim-auditor-prospective-canaries/v1" and document.get("authority_state") == "ACTIVE":
+            if document.get("schema") in builder.RECOGNIZED_CANARY_SCHEMAS and document.get("authority_state") == "ACTIVE":
                 active_protocols.append(path)
 
         self.assertEqual(active_profiles, [builder.PROFILE_PATH])
         self.assertEqual(active_protocols, [builder.EVAL_ROOT / "prospective-canaries.json"])
+
+    def test_legacy_active_protocol_cannot_hide_from_v2_authority_discovery(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            profile = root / "current" / "profile.json"
+            current = root / "current" / "prospective-canaries.json"
+            legacy = root / "legacy" / "prospective-canaries.json"
+            for path, document in (
+                (profile, {"schema": "bsc-claim-auditor-profile/v2", "authority_state": "ACTIVE"}),
+                (current, {"schema": builder.CANARY_SCHEMA, "authority_state": "ACTIVE"}),
+                (legacy, {"schema": "bsc-claim-auditor-prospective-canaries/v1", "authority_state": "ACTIVE"}),
+            ):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(document), encoding="utf-8")
+            with self.assertRaises(builder.BuildError):
+                builder.validate_active_authorities(
+                    root=root,
+                    expected_profile=profile,
+                    expected_protocol=current,
+                )
 
     def test_instructions_length_headroom_and_removed_ceremony(self) -> None:
         profile = load_json(builder.PROFILE_PATH)
@@ -89,6 +204,22 @@ class SourceContractTests(unittest.TestCase):
             [item["upload"] for item in profile["source_paths"]["knowledge"]],
             list(builder.KNOWLEDGE_UPLOADS),
         )
+        self.assertEqual(profile["product_version"], builder.PRODUCT_VERSION)
+        self.assertEqual(profile["candidate_id"], builder.CANDIDATE_ID)
+
+    def test_dependency_local_boundary_is_precise_and_not_a_quick_ledger(self) -> None:
+        instructions = (builder.SOURCE_ROOT / "instructions.md").read_text(encoding="utf-8")
+        core = (builder.SOURCE_ROOT / "knowledge" / "01-core-guide.md").read_text(encoding="utf-8")
+        japanese = (builder.SOURCE_ROOT / "knowledge" / "04-japanese-glossary.md").read_text(encoding="utf-8")
+        model_facing = "\n".join((instructions, core, japanese))
+
+        self.assertIn("unestablished decisive premises block only dependent conclusions", instructions)
+        self.assertIn("exact certificate actually replayed successfully", core)
+        self.assertIn("never asserts that no answer exists globally", core)
+        self.assertIn("An independently supported conclusion does not inherit a neighboring gap", core)
+        self.assertIn("実際に再実行され、成功している", japanese)
+        self.assertIn("世界のどこにも答えがないという意味ではない", japanese)
+        self.assertNotIn("support_trace", model_facing)
 
     def test_four_knowledge_files_are_ordered_and_free_of_mutable_status(self) -> None:
         profile = load_json(builder.PROFILE_PATH)
@@ -168,8 +299,9 @@ class DeterministicBuildTests(unittest.TestCase):
 
     def test_dist_and_archive_member_closure(self) -> None:
         self.assertEqual(set(self.payload), set(builder.DIST_MEMBERS))
-        archive = builder.V04_ROOT / "BSC-Claim-Auditor-v0.4.0-preview.1.zip"
+        archive = builder.CANONICAL_ARCHIVE_PATH
         builder.verify_archive(archive, self.payload)
+        self.assertEqual(tuple(builder.V04_ROOT.glob("BSC-Claim-Auditor-v*.zip")), (archive,))
         with zipfile.ZipFile(archive, "r") as handle:
             self.assertEqual(tuple(handle.namelist()), builder.archive_member_names(self.payload))
 
@@ -257,6 +389,40 @@ class EvaluatorContractTests(unittest.TestCase):
     def test_hard_gates_are_the_only_general_semantic_authority(self) -> None:
         text = (builder.EVAL_ROOT / "hard-gates.md").read_text(encoding="utf-8")
         self.assertEqual(builder.hard_gate_ids(text), builder.HARD_GATE_IDS)
+        self.assertIn("Unsupported promotion or propagation", text)
+        self.assertIn("Japanese-language or evidentiary-parity failure", text)
+        self.assertIn("(origin, audit_activity, assurance, authority_scope)", text)
+
+    def test_case_gate_ownership_cannot_be_borrowed(self) -> None:
+        lock_sha = "0" * 64
+        document = synthetic_canaries(lock_sha)
+        builder.validate_canaries(document, product_lock_sha256=lock_sha, allow_draft=False)
+        cases = document["cases"]
+        execution = next(case for case in cases if case["id"] == "execution-authorization-and-relevance")
+        injection = next(case for case in cases if case["id"] == "quoted-prompt-injection")
+        execution["applicable_hard_gates"].remove("H04")
+        injection["applicable_hard_gates"].append("H04")
+        injection["applicable_hard_gates"].sort(key=builder.HARD_GATE_IDS.index)
+        with self.assertRaises(builder.BuildError):
+            builder.validate_canaries(document, product_lock_sha256=lock_sha, allow_draft=False)
+
+    def test_calibration_rejects_borrowed_gate_and_global_duplicate_label(self) -> None:
+        lock_sha = "0" * 64
+        document = synthetic_calibration(lock_sha)
+        builder.validate_calibration(document, product_lock_sha256=lock_sha, allow_draft=False)
+
+        duplicate = json.loads(json.dumps(document))
+        duplicate["pairs"][1]["records"][0]["label"] = duplicate["pairs"][0]["records"][0]["label"]
+        with self.assertRaises(builder.BuildError):
+            builder.validate_calibration(duplicate, product_lock_sha256=lock_sha, allow_draft=False)
+
+        borrowed = json.loads(json.dumps(document))
+        unauthorized = next(pair for pair in borrowed["pairs"] if pair["principle"] == "unauthorized-execution")
+        unauthorized["records"][1]["triggered_hard_gates"] = ["H02"]
+        relevance = next(pair for pair in borrowed["pairs"] if pair["principle"] == "execution-relevance")
+        relevance["records"][1]["triggered_hard_gates"] = ["H02", "H04"]
+        with self.assertRaises(builder.BuildError):
+            builder.validate_calibration(borrowed, product_lock_sha256=lock_sha, allow_draft=False)
 
     def test_calibration_and_nine_unique_attachment_free_canaries(self) -> None:
         canaries = load_json(builder.EVAL_ROOT / "prospective-canaries.json")
@@ -272,7 +438,16 @@ class EvaluatorContractTests(unittest.TestCase):
         prompt_hashes = {hashlib.sha256(case["prompt"].encode("utf-8")).hexdigest() for case in canaries["cases"]}
         self.assertEqual(len(prompt_hashes), 9)
         self.assertTrue(all(case["attachments"] == 0 and case["status"] == "NOT_RUN_PREVIEW_NOT_AUTHORIZED" for case in canaries["cases"]))
-        self.assertEqual(len(calibration["pairs"]), 10)
+        self.assertEqual(len(calibration["pairs"]), len(builder.CALIBRATION_PRINCIPLES))
+        covered_case_gates = {gate for case in canaries["cases"] for gate in case["applicable_hard_gates"]}
+        covered_calibration_gates = {
+            gate
+            for pair in calibration["pairs"]
+            for record in pair["records"]
+            for gate in record["triggered_hard_gates"]
+        }
+        self.assertEqual(covered_case_gates, set(builder.HARD_GATE_IDS))
+        self.assertEqual(covered_calibration_gates, set(builder.HARD_GATE_IDS))
         model_source = "\n".join(
             (builder.SOURCE_ROOT / relative).read_text(encoding="utf-8")
             for relative in builder.SOURCE_MEMBERS

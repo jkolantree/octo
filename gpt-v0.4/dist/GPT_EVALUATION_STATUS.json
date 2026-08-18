@@ -1,5 +1,5 @@
 {
-  "candidate_state": "PRODUCT_FREEZE_PENDING",
+  "candidate_state": "FROZEN_LOCAL_SOURCE_CANDIDATE",
   "claims_not_supported": [
     "validated",
     "certified",
@@ -11,48 +11,48 @@
     "exactly live-byte-bound"
   ],
   "evaluator_identity": {
-    "profile_id": "bsc-claim-auditor-evaluator-v0.4.0-preview.1",
-    "protocol_id": "bsc-claim-auditor-nine-canaries-v0.4.0-preview.1",
-    "sha256": "75b39bc3227ef951e83f3071a8c337a353724c5c96ea0a59f23b671b19a06b21",
+    "profile_id": "bsc-claim-auditor-evaluator-v0.4.0-preview.2",
+    "protocol_id": "bsc-claim-auditor-nine-canaries-v0.4.0-preview.2",
+    "sha256": "48518902498bfbc19ba394d8bc0f579fad351b082e63e2a20add76433e94e397",
     "source_files": [
       {
-        "bytes": 3007,
-        "characters": 3003,
-        "lines": 91,
+        "bytes": 3881,
+        "characters": 3877,
+        "lines": 104,
         "path": "gpt-v0.4/evals/development-regressions.json",
-        "sha256": "e0e588fff6537dc315caa92a7c508749717a756b10f6668b2098b004a9c39917"
+        "sha256": "18752ba11851abed2b5bac784aa465bf21b046efa7e6e795286038744bffa65a"
       },
       {
-        "bytes": 766,
-        "characters": 766,
+        "bytes": 783,
+        "characters": 783,
         "lines": 23,
         "path": "gpt-v0.4/evals/evaluation-status.json",
-        "sha256": "fc2b920e88f79a685c009146556b96916e48ce3b623ddc4817e62f88889fbf0a"
+        "sha256": "4760d368d58ac078e065700f32227cff0478d9eaa84b1b119727ce5da6d1bf6b"
       },
       {
-        "bytes": 413,
-        "characters": 413,
-        "lines": 12,
+        "bytes": 22971,
+        "characters": 22783,
+        "lines": 493,
         "path": "gpt-v0.4/evals/evaluator-calibration.json",
-        "sha256": "5ad92076b431928ceec35c57536c2cb2097292babac2973de3a01102c16c7bbb"
+        "sha256": "4700ddad6f5aab75c70a078382fe078f5e2d710dfbbcb359fae932354e0c3c01"
       },
       {
-        "bytes": 4512,
-        "characters": 4490,
-        "lines": 48,
+        "bytes": 5885,
+        "characters": 5863,
+        "lines": 54,
         "path": "gpt-v0.4/evals/hard-gates.md",
-        "sha256": "b29c1622e7961eccbed9bd5d826ec7a6213bbc4161c80e8fdf44d3bb8f98d632"
+        "sha256": "8c49084ee3df53010855bf6c62a8e1a7d4d45f80eeea158be68bca0e77cbbd9b"
       },
       {
-        "bytes": 263,
-        "characters": 263,
-        "lines": 9,
+        "bytes": 14777,
+        "characters": 14459,
+        "lines": 271,
         "path": "gpt-v0.4/evals/prospective-canaries.json",
-        "sha256": "7f5901d6c885632574459ce856db764c07ca36042e40c8650a6569b75d325447"
+        "sha256": "925544c4fddd0de123752ba48b7f8b666b540451019f29046a22a7b8be76101e"
       }
     ]
   },
-  "evidence_transfer": "NONE_FROM_R2_R5",
+  "evidence_transfer": "NONE_FROM_PRIOR_CAMPAIGNS",
   "historical_development_evidence": [
     {
       "evidence_transfer": "NONE",
@@ -77,19 +77,69 @@
       "id": "r5-post-update-public-smokes",
       "state": "HISTORICAL_NONCONTROLLING",
       "summary": "Two post-update public smoke observations cleared with documented limitations."
+    },
+    {
+      "evidence_transfer": "NONE",
+      "id": "v0.4-preview.1-faf727-nine-canary-campaign",
+      "state": "HISTORICAL_NONCONTROLLING",
+      "summary": "Nine controller-valid targeted canaries received HARD_PASS from two independent semantic reviewers on the faf727 product lock. This established only that the recorded service-normalized installation cleared those targeted canaries."
+    },
+    {
+      "evidence_transfer": "NONE",
+      "id": "v0.4-preview.1-f10a83-starters-successor",
+      "state": "HISTORICAL_NONCONTROLLING",
+      "summary": "The self-contained-starter successor was frozen and installed but received no prospective behavioral campaign before this preview.2 successor work began."
     }
   ],
   "historical_limits": [
     "These aggregates do not establish general reliability, certification, formal r5 success, or v0.4 behavior.",
+    "No prior campaign or installation evidence validates preview.2; all fresh prospective cases remain unrun until a separately authorized campaign.",
     "Two privately drafted, unrun prospective wording sets were retired after product refreezes; neither was captured or executed, and neither transfers evidence.",
     "No private prompts, captures, chat identifiers, URLs, local receipts, or browser state are copied into this source candidate.",
     "Opaque indexed Knowledge bytes remain NON_ADMISSIBLE_UNHASHABLE."
   ],
   "installation_state": "NOT_ASSESSED",
   "live_binding_state": "NON_ADMISSIBLE_UNHASHABLE",
-  "product_lock_sha256": "f10a83af09502db8e708995619e0b832d471a03115ab4e1dea5123f80ff88eb7",
+  "product_lock_sha256": "63eb7ec0fe6b96197f554a7a13c6723304a42346933d7f474bc2c3844ca35a71",
   "prospective_behavioral_cases": {
-    "cases": [],
+    "cases": [
+      {
+        "id": "closed-proof-and-dependency-locality",
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+      },
+      {
+        "id": "counterexample-and-background-boundary",
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+      },
+      {
+        "id": "report-event-separation",
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+      },
+      {
+        "id": "certificate-replay-binding",
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+      },
+      {
+        "id": "execution-authorization-and-relevance",
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+      },
+      {
+        "id": "quoted-prompt-injection",
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+      },
+      {
+        "id": "mathematics-to-deployment",
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+      },
+      {
+        "id": "upload-privacy-and-live-binding",
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+      },
+      {
+        "id": "japanese-evidentiary-parity",
+        "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
+      }
+    ],
     "count": 9,
     "status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED"
   },
