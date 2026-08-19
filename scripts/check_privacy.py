@@ -19,6 +19,7 @@ from xml.etree import ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "privacy-policy.json"
+TRANSPORT_POLICY_PATH = ROOT / "privacy-commit-transport-policy.json"
 
 EMAIL_RE = re.compile(r"(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![A-Za-z0-9.-])")
 PHONE_RES = (
@@ -152,11 +153,24 @@ class Finding:
 
 
 @dataclass(frozen=True)
+class RetainedCommitAuthorException:
+    commit: str
+    parents: tuple[str, ...]
+    subject: str
+    author_identity: str
+    author_email: str
+    committer_identity: str
+    committer_email: str
+
+
+@dataclass(frozen=True)
 class Policy:
     version: str
+    transport_policy_version: str
     project_identities: frozenset[str]
     bot_identities: frozenset[str]
     bot_emails: frozenset[str]
+    retained_commit_author_exceptions: tuple[RetainedCommitAuthorException, ...]
     enforcement_base_commit: str
     pipeline_identity: str
 
@@ -165,7 +179,29 @@ class Policy:
         return self.project_identities | self.bot_identities
 
 
-def load_policy(path: Path = POLICY_PATH) -> Policy:
+def _reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"JSON object contains duplicate key: {key}")
+        result[key] = value
+    return result
+
+
+def _load_strict_json_object(path: Path, label: str) -> dict[str, object]:
+    value = json.loads(
+        path.read_text(encoding="utf-8"),
+        object_pairs_hook=_reject_duplicate_json_keys,
+    )
+    if not isinstance(value, dict):
+        raise ValueError(f"{label} must be a JSON object")
+    return value
+
+
+def load_policy(
+    path: Path = POLICY_PATH,
+    transport_path: Path = TRANSPORT_POLICY_PATH,
+) -> Policy:
     raw = json.loads(path.read_text(encoding="utf-8"))
     expected_keys = {
         "policy_version",
@@ -186,14 +222,76 @@ def load_policy(path: Path = POLICY_PATH) -> Policy:
         raise ValueError("GitHub bot identity allowlist has drifted")
     if any(not email.endswith(("@users.noreply.github.com", "@github.com")) for email in bot_emails):
         raise ValueError("bot email allowlist contains a non-GitHub address")
+    transport = _load_strict_json_object(transport_path, "commit transport policy")
+    if set(transport) != {"policy_version", "retained_commit_author_exceptions"}:
+        raise ValueError("commit transport policy fields differ from the registered contract")
+    transport_version = transport["policy_version"]
+    if not isinstance(transport_version, str):
+        raise ValueError("commit transport policy version must be a string")
+    if transport_version != "1.0.0":
+        raise ValueError("commit transport policy version is unsupported")
+    exception_keys = {
+        "commit",
+        "parents",
+        "subject",
+        "author_identity",
+        "author_email",
+        "committer_identity",
+        "committer_email",
+    }
+    raw_exceptions = transport["retained_commit_author_exceptions"]
+    if not isinstance(raw_exceptions, list):
+        raise ValueError("retained commit author exceptions must be a list")
+    exceptions: list[RetainedCommitAuthorException] = []
+    scalar_exception_keys = exception_keys - {"parents"}
+    for item in raw_exceptions:
+        if not isinstance(item, dict):
+            raise ValueError("each retained commit author exception must be an object")
+        if set(item) != exception_keys:
+            raise ValueError("retained commit author exception fields differ from the registered contract")
+        if any(not isinstance(item[key], str) for key in scalar_exception_keys):
+            raise ValueError("retained commit author exception scalar fields must be strings")
+        parents = item["parents"]
+        if not isinstance(parents, list) or any(not isinstance(parent, str) for parent in parents):
+            raise ValueError("retained commit author exception parents must be a list of strings")
+        exceptions.append(
+            RetainedCommitAuthorException(
+                commit=item["commit"],
+                parents=tuple(parents),
+                subject=item["subject"],
+                author_identity=item["author_identity"],
+                author_email=item["author_email"],
+                committer_identity=item["committer_identity"],
+                committer_email=item["committer_email"],
+            )
+        )
+    expected_exception = RetainedCommitAuthorException(
+        commit="fdfda14d1a0c90ec03b4cf844c91596e9a19dced",
+        parents=(
+            "bcdd04575c88757241182f991c2877fb480369d2",
+            "287a02c7b576f3a052c70deb17a5f6a01add1e1c",
+        ),
+        subject=(
+            "Merge pull request #35 from "
+            "jkolantree/codex/gpt-v0.4.0-preview.2-minimal-integration"
+        ),
+        author_identity="jack",
+        author_email="307349551+jkolantree@users.noreply.github.com",
+        committer_identity="GitHub",
+        committer_email="noreply@github.com",
+    )
+    if tuple(exceptions) != (expected_exception,):
+        raise ValueError("retained commit author exceptions have drifted")
     enforcement_base = raw["enforcement_base_commit"]
     if enforcement_base != "2c611ab693f09bc2f3b5304f972d9a3b8a8f1969":
         raise ValueError("privacy enforcement base commit has drifted")
     return Policy(
         version=raw["policy_version"],
+        transport_policy_version=transport_version,
         project_identities=project,
         bot_identities=bots,
         bot_emails=bot_emails,
+        retained_commit_author_exceptions=tuple(exceptions),
         enforcement_base_commit=enforcement_base,
         pipeline_identity=raw["publication_pipeline_identity"],
     )
@@ -520,8 +618,31 @@ def _noreply_email(identity: str, email: str, policy: Policy) -> bool:
     return _allowed_email(email, policy)
 
 
+def _retained_commit_author_exception_matches(
+    *,
+    commit: str,
+    parents: tuple[str, ...],
+    subject: str,
+    author_identity: str,
+    author_email: str,
+    committer_identity: str,
+    committer_email: str,
+    policy: Policy,
+) -> bool:
+    candidate = RetainedCommitAuthorException(
+        commit=commit,
+        parents=parents,
+        subject=subject,
+        author_identity=author_identity,
+        author_email=author_email,
+        committer_identity=committer_identity,
+        committer_email=committer_email,
+    )
+    return candidate in policy.retained_commit_author_exceptions
+
+
 def scan_commit(ref: str, policy: Policy) -> list[Finding]:
-    format_string = "%H%x00%an%x00%ae%x00%cn%x00%ce"
+    format_string = "%H%x00%P%x00%s%x00%an%x00%ae%x00%cn%x00%ce"
     result = subprocess.run(
         ["git", "show", "-s", f"--format={format_string}", ref],
         cwd=ROOT,
@@ -531,14 +652,27 @@ def scan_commit(ref: str, policy: Policy) -> list[Finding]:
     if result.returncode != 0:
         return [Finding("COMMIT_UNREADABLE", ref, "commit metadata could not be read")]
     fields = result.stdout.rstrip(b"\n").decode("utf-8", errors="replace").split("\0")
-    if len(fields) != 5:
+    if len(fields) != 7:
         return [Finding("COMMIT_UNREADABLE", ref, "commit metadata has an unexpected shape")]
-    commit, author, author_email, committer, committer_email = fields
+    commit, parent_text, subject, author, author_email, committer, committer_email = fields
+    parents = tuple(parent_text.split())
+    retained_author = _retained_commit_author_exception_matches(
+        commit=commit,
+        parents=parents,
+        subject=subject,
+        author_identity=author,
+        author_email=author_email,
+        committer_identity=committer,
+        committer_email=committer_email,
+        policy=policy,
+    )
     findings: list[Finding] = []
     for role, identity, email in (
         ("author", author, author_email),
         ("committer", committer, committer_email),
     ):
+        if role == "author" and retained_author:
+            continue
         if identity not in policy.identities:
             findings.append(Finding("COMMIT_IDENTITY_NOT_ALLOWLISTED", commit, f"{role} identity is unapproved"))
         if not _noreply_email(identity, email, policy):
@@ -604,7 +738,7 @@ def main() -> int:
     try:
         policy = load_policy()
     except (OSError, ValueError, json.JSONDecodeError) as exc:
-        print(json.dumps({"decision": "blocked", "findings": [{"code": "PRIVACY_POLICY_INVALID", "path": "privacy-policy.json", "message": str(exc)}]}, sort_keys=True))
+        print(json.dumps({"decision": "blocked", "findings": [{"code": "PRIVACY_POLICY_INVALID", "path": "privacy policy inputs", "message": str(exc)}]}, sort_keys=True))
         return 1
 
     findings: list[Finding] = []
@@ -641,6 +775,7 @@ def main() -> int:
     payload = {
         "decision": "pass" if not unique else "blocked",
         "policy_version": policy.version,
+        "transport_policy_version": policy.transport_policy_version,
         "files_scanned": len(paths),
         "commits_scanned": commits_scanned,
         "findings": [Finding(*item).as_dict() for item in unique],

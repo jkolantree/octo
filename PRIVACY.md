@@ -11,6 +11,9 @@ committer email addresses must use GitHub's `users.noreply.github.com` service;
 GitHub's own `noreply@github.com` committer is also permitted.
 
 The machine-readable allowlist is [`privacy-policy.json`](privacy-policy.json).
+The exact retained GitHub transport object is separately registered in
+[`privacy-commit-transport-policy.json`](privacy-commit-transport-policy.json),
+without expanding the author allowlist.
 The fail-closed checker is [`scripts/check_privacy.py`](scripts/check_privacy.py).
 Run it before sharing a source tree:
 
@@ -26,6 +29,12 @@ distribution, source bundle, conformance packet, SBOM, and publication files.
 Unsupported tracked binary formats and unreadable archives are blocking errors;
 silence is never treated as a privacy pass.
 
+One post-policy GitHub merge object is retained under an exact-object
+exception: commit `fdfda14d1a0c90ec03b4cf844c91596e9a19dced`. The policy binds
+its commit ID, both parents, subject, author pair, and GitHub committer pair.
+Its projected author name is not a declared project identity and is not
+accepted for any other commit, document, package, or publication field.
+
 ## Prospective enforcement boundary
 
 The immutable ancestry through commit
@@ -34,7 +43,8 @@ commit identities or addresses that do not satisfy the current GitHub-noreply
 contract. Those values are not added to the allowlist and a complete
 `--history HEAD` scan continues to report them. Rewriting that ancestry would
 also rewrite the released and tagged audit trail, so the CI-blocking guarantee
-is prospective from the registered base commit. Every later commit must pass.
+is prospective from the registered base commit. Every later commit must pass,
+apart from the single exact retained merge object documented above.
 
 ## Publication metadata
 

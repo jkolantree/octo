@@ -1,0 +1,17 @@
+{
+  "policy_version": "1.0.0",
+  "retained_commit_author_exceptions": [
+    {
+      "commit": "fdfda14d1a0c90ec03b4cf844c91596e9a19dced",
+      "parents": [
+        "bcdd04575c88757241182f991c2877fb480369d2",
+        "287a02c7b576f3a052c70deb17a5f6a01add1e1c"
+      ],
+      "subject": "Merge pull request #35 from jkolantree/codex/gpt-v0.4.0-preview.2-minimal-integration",
+      "author_identity": "jack",
+      "author_email": "307349551+jkolantree@users.noreply.github.com",
+      "committer_identity": "GitHub",
+      "committer_email": "noreply@github.com"
+    }
+  ]
+}

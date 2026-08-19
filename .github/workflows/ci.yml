@@ -67,6 +67,7 @@ jobs:
           git worktree add --detach "$CANDIDATE_VERIFY_ROOT" "$CANDIDATE_HEAD"
           (
             cd "$CANDIDATE_VERIFY_ROOT"
+            python -m unittest discover -s policy_tests -p "test_*.py"
             python scripts/verify.py candidate
           )
       - run: SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py
