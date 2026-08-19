@@ -1,0 +1,32 @@
+{
+  "schema": "bsc-claim-auditor-campaign-attestation/v1",
+  "authority_state": "SANITIZED_DERIVATIVE_OF_PRIVATE_CAMPAIGN",
+  "candidate_id": "bsc-claim-auditor-v0.4.0-preview.2",
+  "product_lock_sha256": "63eb7ec0fe6b96197f554a7a13c6723304a42346933d7f474bc2c3844ca35a71",
+  "evaluator_identity_sha256": "1f57badf6d1039b90b760bd40ea7f91bc91b9061b7d1e07b3bec4b98c8300c6a",
+  "deployment_receipt_sha256": "94ef410a62d38089df70c0abb3774e453d74997ca4d07eeb830ccfe120a00432",
+  "decision_receipt_sha256": "dcf5ca515e41ec01c607ed6bafc764af35ee9298903fe01607b5636d0cdf4a77",
+  "raw_evidence_state": "PRIVATE_RETAINED_NOT_PUBLISHED",
+  "evaluator_source_mutation": "NONE",
+  "evidence_transfer": "NONE",
+  "result": {
+    "decision": "HARD_PASS_9_OF_9",
+    "campaign_attempts": 1,
+    "case_count": 9,
+    "fresh_chats": 9,
+    "sends": 9,
+    "attachments": 0,
+    "followups": 0,
+    "regenerations": 0,
+    "retries": 0,
+    "controller_valid_cases": 9,
+    "independent_reviewers": 2,
+    "hard_pass_per_reviewer": 9,
+    "disagreements": 0,
+    "third_reviewer_used": false
+  },
+  "frozen_evaluator_status_note": "The frozen evaluator retains its pre-run NOT_RUN state because rewriting it would change evaluator identity; this adjacent attestation records the later campaign result.",
+  "live_binding_state": "NON_ADMISSIBLE_UNHASHABLE",
+  "supported_claim": "This candidate cleared these targeted canaries.",
+  "scope_limit": "Targeted canary clearance only; not general reliability, proof, certification, exact live Knowledge-byte binding, or deployment authority."
+}
