@@ -1,0 +1,228 @@
+{
+  "actions_state": "disabled",
+  "apps_state": "disabled",
+  "binding_scope": "This lock identifies reproducible source and upload bytes, not opaque indexed service bytes.",
+  "builder": {
+    "bytes": 72962,
+    "path": "scripts/build_gpt_v04.py",
+    "sha256": "e78fa386c345c7eab323cb58c7d9e62a308905d0ceae38cf65bd9ae828476cf9"
+  },
+  "candidate_id": "bsc-claim-auditor-v0.4.0-preview.2",
+  "capabilities": {
+    "actions": false,
+    "apps": false,
+    "canvas": false,
+    "code_interpreter_and_data_analysis": true,
+    "image_generation": false,
+    "web_search": true
+  },
+  "conversation_starters": {
+    "file": {
+      "bytes": 309,
+      "characters": 259,
+      "lines": 17,
+      "path": "GPT_CONVERSATION_STARTERS.md",
+      "sha256": "df19543fdd9fe836dfcef0d70ba4263d0e983ecd8be9c2724226dce3c424064f"
+    },
+    "values": [
+      "Audit this claim: [paste one sentence]",
+      "Ask me for a claim, then find its strongest counterexample.",
+      "Ask me for a claim, then identify the evidence most likely to change the verdict.",
+      "主張を一文で聞いてから、日本語で点検してください。"
+    ]
+  },
+  "dependencies": {
+    "bsc_engine": {
+      "behavior": "UNCHANGED",
+      "public_version": "v0.3.0-alpha.20",
+      "python_version": "0.3.0a20"
+    },
+    "canonical_protocol": {
+      "behavior": "UNCHANGED",
+      "component_contract_schema": "bsc-component-contract/v2",
+      "version": "0.3.0-alpha.13"
+    }
+  },
+  "excluded_from_product_identity": [
+    "generated README and setup guidance",
+    "evaluation definitions and status",
+    "SHA256SUMS",
+    "final Git commit identity",
+    "current service or deployment observations"
+  ],
+  "instructions": {
+    "bytes": 3997,
+    "characters": 3997,
+    "lines": 27,
+    "path": "GPT_INSTRUCTIONS.md",
+    "sha256": "7b0d01a77100b0ad8f636dab8a95bf851ade09995399e9fadb9f4ac04b91bf60"
+  },
+  "knowledge_upload_order": [
+    {
+      "bytes": 7683,
+      "characters": 7673,
+      "lines": 91,
+      "path": "knowledge/BSC_CORE_GUIDE.md",
+      "sha256": "580065df43b95db7b122282a902ebb0a6e7a405e0e909aa11d77110fdc0b6911"
+    },
+    {
+      "bytes": 7886,
+      "characters": 7864,
+      "lines": 104,
+      "path": "knowledge/BSC_CHECKS_CATALOG.md",
+      "sha256": "8facc70fbd89271a4fa254566645d2c3ac53aee5429070f5d26865b309cefd83"
+    },
+    {
+      "bytes": 3632,
+      "characters": 3614,
+      "lines": 69,
+      "path": "knowledge/BSC_EXAMPLES.md",
+      "sha256": "8a7e3739d726116964fd9a1cd4129e5c29802ff6849b9acb94a115fcc5c5e61e"
+    },
+    {
+      "bytes": 5694,
+      "characters": 2970,
+      "lines": 70,
+      "path": "knowledge/BSC_JAPANESE_GLOSSARY.md",
+      "sha256": "9c58cce4e80b11d0ca218b799701b423a03617906e19773dde2cdedff20ed4b7"
+    }
+  ],
+  "live_binding_state": "NON_ADMISSIBLE_UNHASHABLE",
+  "model_facing_files": [
+    {
+      "bytes": 3997,
+      "characters": 3997,
+      "lines": 27,
+      "path": "GPT_INSTRUCTIONS.md",
+      "sha256": "7b0d01a77100b0ad8f636dab8a95bf851ade09995399e9fadb9f4ac04b91bf60"
+    },
+    {
+      "bytes": 637,
+      "characters": 635,
+      "lines": 17,
+      "path": "GPT_PUBLIC_METADATA.md",
+      "sha256": "f95444b2e33c16b6752411f6ca6ab69dbb72f39d7d61459d8a6217c53ef0738e"
+    },
+    {
+      "bytes": 309,
+      "characters": 259,
+      "lines": 17,
+      "path": "GPT_CONVERSATION_STARTERS.md",
+      "sha256": "df19543fdd9fe836dfcef0d70ba4263d0e983ecd8be9c2724226dce3c424064f"
+    },
+    {
+      "bytes": 7683,
+      "characters": 7673,
+      "lines": 91,
+      "path": "knowledge/BSC_CORE_GUIDE.md",
+      "sha256": "580065df43b95db7b122282a902ebb0a6e7a405e0e909aa11d77110fdc0b6911"
+    },
+    {
+      "bytes": 7886,
+      "characters": 7864,
+      "lines": 104,
+      "path": "knowledge/BSC_CHECKS_CATALOG.md",
+      "sha256": "8facc70fbd89271a4fa254566645d2c3ac53aee5429070f5d26865b309cefd83"
+    },
+    {
+      "bytes": 3632,
+      "characters": 3614,
+      "lines": 69,
+      "path": "knowledge/BSC_EXAMPLES.md",
+      "sha256": "8a7e3739d726116964fd9a1cd4129e5c29802ff6849b9acb94a115fcc5c5e61e"
+    },
+    {
+      "bytes": 5694,
+      "characters": 2970,
+      "lines": 70,
+      "path": "knowledge/BSC_JAPANESE_GLOSSARY.md",
+      "sha256": "9c58cce4e80b11d0ca218b799701b423a03617906e19773dde2cdedff20ed4b7"
+    }
+  ],
+  "model_recommendation": {
+    "fixed_engine_identity": false,
+    "mode": "default"
+  },
+  "product_version": "0.4.0-preview.2",
+  "public_metadata": {
+    "fields": {
+      "category_recommendation": "Education",
+      "description": "Stress-test one scientific or technical claim. Get a clear bottom line, the weakest point, and the best next check. Research aid—not proof or certification. Japanese beta.",
+      "name": "BSC Claim Auditor",
+      "schema": "bsc-claim-auditor-public-metadata/v1"
+    },
+    "file": {
+      "bytes": 637,
+      "characters": 635,
+      "lines": 17,
+      "path": "GPT_PUBLIC_METADATA.md",
+      "sha256": "f95444b2e33c16b6752411f6ca6ab69dbb72f39d7d61459d8a6217c53ef0738e"
+    }
+  },
+  "schema": "bsc-claim-auditor-product-lock/v1",
+  "source_files": [
+    {
+      "bytes": 8501,
+      "characters": 8501,
+      "lines": 117,
+      "path": "gpt-v0.4/source/checks_catalog.json",
+      "sha256": "6e389bb28439f509f76a9032be21023d4e62cd15004db8e369031982b12c3091"
+    },
+    {
+      "bytes": 366,
+      "characters": 316,
+      "lines": 9,
+      "path": "gpt-v0.4/source/conversation_starters.json",
+      "sha256": "60c3fd6587121923c8ffde4fdb499c9b3bcad16394eaf40cf6b393054fc127fd"
+    },
+    {
+      "bytes": 3997,
+      "characters": 3997,
+      "lines": 27,
+      "path": "gpt-v0.4/source/instructions.md",
+      "sha256": "7b0d01a77100b0ad8f636dab8a95bf851ade09995399e9fadb9f4ac04b91bf60"
+    },
+    {
+      "bytes": 7683,
+      "characters": 7673,
+      "lines": 91,
+      "path": "gpt-v0.4/source/knowledge/01-core-guide.md",
+      "sha256": "580065df43b95db7b122282a902ebb0a6e7a405e0e909aa11d77110fdc0b6911"
+    },
+    {
+      "bytes": 109,
+      "characters": 109,
+      "lines": 3,
+      "path": "gpt-v0.4/source/knowledge/02-checks-catalog.md",
+      "sha256": "97c7b173ebb69642d7fd61ff46f941b7d43de7dbe341c311b21a41d87d168f48"
+    },
+    {
+      "bytes": 3632,
+      "characters": 3614,
+      "lines": 69,
+      "path": "gpt-v0.4/source/knowledge/03-worked-examples.md",
+      "sha256": "8a7e3739d726116964fd9a1cd4129e5c29802ff6849b9acb94a115fcc5c5e61e"
+    },
+    {
+      "bytes": 5694,
+      "characters": 2970,
+      "lines": 70,
+      "path": "gpt-v0.4/source/knowledge/04-japanese-glossary.md",
+      "sha256": "9c58cce4e80b11d0ca218b799701b423a03617906e19773dde2cdedff20ed4b7"
+    },
+    {
+      "bytes": 2822,
+      "characters": 2822,
+      "lines": 82,
+      "path": "gpt-v0.4/source/profile.json",
+      "sha256": "9097f29160cb448164398d3afbb28a111e6696ceb8ca0b7974f9af963b4c3371"
+    },
+    {
+      "bytes": 322,
+      "characters": 320,
+      "lines": 6,
+      "path": "gpt-v0.4/source/public_metadata.json",
+      "sha256": "6eeb66bceb175caaed5ac1f44300acbd58f31441c62ee6cdbdf0e113ca33dfbd"
+    }
+  ]
+}

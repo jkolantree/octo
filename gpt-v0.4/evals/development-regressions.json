@@ -1,0 +1,104 @@
+{
+  "schema": "bsc-claim-auditor-development-regressions/v1",
+  "authority_state": "HISTORICAL_NONCONTROLLING",
+  "result_transfer": "FORBIDDEN",
+  "legacy_authority_routes": [
+    {
+      "path": "gpt/_source/",
+      "state": "HISTORICAL_NONCONTROLLING"
+    },
+    {
+      "path": "gpt/GPT_INSTRUCTIONS.md",
+      "state": "HISTORICAL_NONCONTROLLING"
+    },
+    {
+      "path": "gpt/GPT_PUBLIC_METADATA.md",
+      "state": "HISTORICAL_NONCONTROLLING"
+    },
+    {
+      "path": "gpt/GPT_CONVERSATION_STARTERS.md",
+      "state": "HISTORICAL_NONCONTROLLING"
+    },
+    {
+      "path": "gpt/GPT_SETUP_AND_PUBLISHING.md",
+      "state": "HISTORICAL_NONCONTROLLING"
+    },
+    {
+      "path": "gpt/GPT_RELEASE_MANIFEST.json",
+      "state": "HISTORICAL_NONCONTROLLING"
+    },
+    {
+      "path": "gpt/knowledge/",
+      "state": "HISTORICAL_NONCONTROLLING"
+    },
+    {
+      "path": "gpt/evals/",
+      "state": "HISTORICAL_NONCONTROLLING"
+    },
+    {
+      "path": "docs/GPT_FROZEN_CANDIDATE.json",
+      "state": "HISTORICAL_NONCONTROLLING"
+    },
+    {
+      "path": "scripts/build_gpt_package.py",
+      "state": "HISTORICAL_REPRODUCIBILITY_ONLY"
+    },
+    {
+      "path": "scripts/check_gpt_frozen_candidate.py",
+      "state": "HISTORICAL_REPRODUCIBILITY_ONLY"
+    },
+    {
+      "path": "scripts/gpt_eval_controller.py",
+      "state": "HISTORICAL_REPRODUCIBILITY_ONLY"
+    },
+    {
+      "path": "scripts/gpt_artifact_compiler.py",
+      "state": "HISTORICAL_REPRODUCIBILITY_ONLY"
+    }
+  ],
+  "campaigns": [
+    {
+      "id": "r2-r4-development-evidence",
+      "state": "HISTORICAL_NONCONTROLLING",
+      "summary": "Retained prompts, outputs, and negative results remain development regression evidence only.",
+      "evidence_transfer": "NONE"
+    },
+    {
+      "id": "r5-frozen-26-case-campaign",
+      "state": "HISTORICAL_NONCONTROLLING",
+      "summary": "Cases 1–9 passed the frozen adjudication; Case 10 failed; Cases 11–26 were not run. Machine CLEAR at Case 10 was preflight only.",
+      "evidence_transfer": "NONE"
+    },
+    {
+      "id": "r5-later-natural-canaries",
+      "state": "HISTORICAL_NONCONTROLLING",
+      "summary": "Six later natural canaries cleared with documented limitations.",
+      "evidence_transfer": "NONE"
+    },
+    {
+      "id": "r5-post-update-public-smokes",
+      "state": "HISTORICAL_NONCONTROLLING",
+      "summary": "Two post-update public smoke observations cleared with documented limitations.",
+      "evidence_transfer": "NONE"
+    },
+    {
+      "id": "v0.4-preview.1-faf727-nine-canary-campaign",
+      "state": "HISTORICAL_NONCONTROLLING",
+      "summary": "Nine controller-valid targeted canaries received HARD_PASS from two independent semantic reviewers on the faf727 product lock. This established only that the recorded service-normalized installation cleared those targeted canaries.",
+      "evidence_transfer": "NONE"
+    },
+    {
+      "id": "v0.4-preview.1-f10a83-starters-successor",
+      "state": "HISTORICAL_NONCONTROLLING",
+      "summary": "The self-contained-starter successor was frozen and installed but received no prospective behavioral campaign before this preview.2 successor work began.",
+      "evidence_transfer": "NONE"
+    }
+  ],
+  "limits": [
+    "These aggregates do not establish general reliability, certification, formal r5 success, or v0.4 behavior.",
+    "No prior campaign or installation evidence validates preview.2; all fresh prospective cases remain unrun until a separately authorized campaign.",
+    "Two privately drafted, unrun prospective wording sets were retired after product refreezes; neither was captured or executed, and neither transfers evidence.",
+    "No private prompts, captures, chat identifiers, URLs, local receipts, or browser state are copied into this source candidate.",
+    "Opaque indexed Knowledge bytes remain NON_ADMISSIBLE_UNHASHABLE."
+  ]
+}
