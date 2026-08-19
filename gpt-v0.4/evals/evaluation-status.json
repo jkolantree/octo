@@ -1,0 +1,23 @@
+{
+  "schema": "bsc-claim-auditor-evaluation-status-source/v1",
+  "evaluator_profile_id": "bsc-claim-auditor-evaluator-v0.4.0-preview.2",
+  "candidate_state": "FROZEN_LOCAL_SOURCE_CANDIDATE",
+  "prospective_case_status": "NOT_RUN_PREVIEW_NOT_AUTHORIZED",
+  "prospective_case_count": 9,
+  "historical_status_source": "gpt-v0.4/evals/development-regressions.json",
+  "evidence_transfer": "NONE_FROM_PRIOR_CAMPAIGNS",
+  "live_binding_state": "NON_ADMISSIBLE_UNHASHABLE",
+  "installation_state": "NOT_ASSESSED",
+  "release_state": "NOT_AUTHORIZED",
+  "publication_state": "NOT_AUTHORIZED",
+  "claims_not_supported": [
+    "validated",
+    "certified",
+    "installed",
+    "released",
+    "published",
+    "production-ready",
+    "generally reliable",
+    "exactly live-byte-bound"
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "schema": "bsc-claim-auditor-profile/v2",
+  "authority_state": "ACTIVE",
+  "product_version": "0.4.0-preview.2",
+  "candidate_id": "bsc-claim-auditor-v0.4.0-preview.2",
+  "dependencies": {
+    "bsc_engine": {
+      "public_version": "v0.3.0-alpha.20",
+      "python_version": "0.3.0a20",
+      "behavior": "UNCHANGED"
+    },
+    "canonical_protocol": {
+      "version": "0.3.0-alpha.13",
+      "component_contract_schema": "bsc-component-contract/v2",
+      "behavior": "UNCHANGED"
+    }
+  },
+  "model_recommendation": {
+    "mode": "default",
+    "fixed_engine_identity": false
+  },
+  "capabilities": {
+    "web_search": true,
+    "code_interpreter_and_data_analysis": true,
+    "image_generation": false,
+    "apps": false,
+    "actions": false,
+    "canvas": false
+  },
+  "source_paths": {
+    "instructions": "gpt-v0.4/source/instructions.md",
+    "public_metadata": "gpt-v0.4/source/public_metadata.json",
+    "conversation_starters": "gpt-v0.4/source/conversation_starters.json",
+    "checks_catalog": "gpt-v0.4/source/checks_catalog.json",
+    "knowledge": [
+      {
+        "order": 1,
+        "source": "gpt-v0.4/source/knowledge/01-core-guide.md",
+        "upload": "knowledge/BSC_CORE_GUIDE.md"
+      },
+      {
+        "order": 2,
+        "source": "gpt-v0.4/source/knowledge/02-checks-catalog.md",
+        "upload": "knowledge/BSC_CHECKS_CATALOG.md",
+        "generated_from": "gpt-v0.4/source/checks_catalog.json"
+      },
+      {
+        "order": 3,
+        "source": "gpt-v0.4/source/knowledge/03-worked-examples.md",
+        "upload": "knowledge/BSC_EXAMPLES.md"
+      },
+      {
+        "order": 4,
+        "source": "gpt-v0.4/source/knowledge/04-japanese-glossary.md",
+        "upload": "knowledge/BSC_JAPANESE_GLOSSARY.md"
+      }
+    ]
+  },
+  "authority_homes": {
+    "runtime_behavior": "gpt-v0.4/source/instructions.md",
+    "product_configuration": "gpt-v0.4/source/profile.json",
+    "public_fields": "gpt-v0.4/source/public_metadata.json",
+    "conversation_starters": "gpt-v0.4/source/conversation_starters.json",
+    "audit_method_and_research_verdicts": "gpt-v0.4/source/knowledge/01-core-guide.md",
+    "implemented_check_contracts": "gpt-v0.4/source/checks_catalog.json",
+    "worked_examples": "NON_NORMATIVE",
+    "japanese_terminology": "gpt-v0.4/source/knowledge/04-japanese-glossary.md",
+    "evaluation_semantics": "gpt-v0.4/evals/hard-gates.md",
+    "prospective_protocol": "gpt-v0.4/evals/prospective-canaries.json"
+  },
+  "build": {
+    "encoding": "UTF-8",
+    "newline": "LF",
+    "instructions_target_min_characters": 3000,
+    "instructions_target_max_characters": 4000,
+    "instructions_hard_max_characters": 4500,
+    "knowledge_file_count": 4,
+    "output": "gpt-v0.4/dist",
+    "archive_compression": "ZIP_STORED",
+    "archive_timestamp": "1980-01-01T00:00:00Z"
+  }
+}

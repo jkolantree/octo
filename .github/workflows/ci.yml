@@ -59,7 +59,16 @@ jobs:
           node-version: "22.23.1"
           package-manager-cache: false
       - run: python -m pip install --disable-pip-version-check "setuptools==82.0.1"
-      - run: python scripts/verify.py candidate
+      - name: Verify candidate from the real branch head
+        env:
+          CANDIDATE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          CANDIDATE_VERIFY_ROOT: ${{ runner.temp }}/candidate-verify
+        run: |
+          git worktree add --detach "$CANDIDATE_VERIFY_ROOT" "$CANDIDATE_HEAD"
+          (
+            cd "$CANDIDATE_VERIFY_ROOT"
+            python scripts/verify.py candidate
+          )
       - run: SOURCE_DATE_EPOCH=1784505600 python scripts/build_dist.py
       - name: Fail-closed source, artifact, and commit-identity scan
         env:
