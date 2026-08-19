@@ -96,19 +96,6 @@ class VerifySpineTests(unittest.TestCase):
             ),
             calls,
         )
-        self.assertIn(
-            (
-                (
-                    "PYTHON",
-                    "scripts/check_privacy.py",
-                    "--protected-history",
-                    "HEAD",
-                ),
-                Path("C:/candidate"),
-                False,
-            ),
-            calls,
-        )
         self.assertTrue(
             all(
                 command[0] in {"PYTHON", "NODE", "GIT"}
@@ -176,37 +163,6 @@ class VerifySpineTests(unittest.TestCase):
         self.assertEqual(status, 7)
         self.assertEqual(len(calls), 2)
 
-    def test_privacy_history_uses_explicit_candidate_ref(self) -> None:
-        calls: list[tuple[str, ...]] = []
-
-        def runner(
-            command: tuple[str, ...], *, cwd: Path, check: bool
-        ) -> subprocess.CompletedProcess[object]:
-            calls.append(command)
-            return subprocess.CompletedProcess(command, 0)
-
-        with contextlib.redirect_stdout(io.StringIO()):
-            status = verify.run_stages(
-                ("privacy-history",),
-                runner=runner,
-                python_executable="PYTHON",
-                node_executable="NODE",
-                git_executable="GIT",
-                privacy_ref="refs/pull/35/head",
-            )
-        self.assertEqual(status, 0)
-        self.assertEqual(
-            calls,
-            [
-                (
-                    "PYTHON",
-                    "scripts/check_privacy.py",
-                    "--protected-history",
-                    "refs/pull/35/head",
-                )
-            ],
-        )
-
     def test_list_mode_is_read_only(self) -> None:
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
@@ -224,8 +180,6 @@ class VerifySpineTests(unittest.TestCase):
                         "NODE",
                         "--git-executable",
                         "GIT",
-                        "--privacy-ref",
-                        "PR_HEAD",
                     ]
                 ),
                 0,
@@ -234,7 +188,6 @@ class VerifySpineTests(unittest.TestCase):
             "pages",
             node_executable="NODE",
             git_executable="GIT",
-            privacy_ref="PR_HEAD",
         )
 
     def test_release_and_ci_delegate_to_the_profiles_once(self) -> None:
@@ -259,12 +212,7 @@ class VerifySpineTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertEqual(ci.count("python scripts/verify.py core"), 1)
-        self.assertEqual(
-            ci.count(
-                'python scripts/verify.py candidate --privacy-ref "$PRIVACY_COMMIT"'
-            ),
-            1,
-        )
+        self.assertEqual(ci.count("python scripts/verify.py candidate"), 1)
         pages = (ROOT / ".github" / "workflows" / "pages.yml").read_text(
             encoding="utf-8"
         )

@@ -39,7 +39,7 @@ STAGES: dict[str, Stage] = {
             "{python}",
             "scripts/check_privacy.py",
             "--protected-history",
-            "{privacy_ref}",
+            "HEAD",
         ),
     ),
     "source-tests": Stage(
@@ -228,13 +228,11 @@ def resolve_command(
     python_executable: str,
     node_executable: str,
     git_executable: str,
-    privacy_ref: str,
 ) -> tuple[str, ...]:
     replacements = {
         "{python}": python_executable,
         "{node}": node_executable,
         "{git}": git_executable,
-        "{privacy_ref}": privacy_ref,
     }
     return tuple(replacements.get(part, part) for part in stage.command)
 
@@ -247,7 +245,6 @@ def run_stages(
     python_executable: str = sys.executable,
     node_executable: str | None = None,
     git_executable: str | None = None,
-    privacy_ref: str = "HEAD",
 ) -> int:
     resolved_node = node_executable or shutil.which("node")
     resolved_git = git_executable or shutil.which("git")
@@ -266,7 +263,6 @@ def run_stages(
             python_executable=python_executable,
             node_executable=resolved_node or "node",
             git_executable=resolved_git or "git",
-            privacy_ref=privacy_ref,
         )
         print(f"[run] {name}: {stage.description}", flush=True)
         result = runner(command, cwd=root, check=False)
@@ -314,11 +310,6 @@ def main(argv: list[str] | None = None) -> int:
         help="explicit Git executable for isolated toolchains",
     )
     parser.add_argument(
-        "--privacy-ref",
-        default="HEAD",
-        help="Git ref whose protected history is scanned (default: HEAD)",
-    )
-    parser.add_argument(
         "--check-diff",
         action="store_true",
         help=argparse.SUPPRESS,
@@ -339,13 +330,11 @@ def main(argv: list[str] | None = None) -> int:
             (args.stage,),
             node_executable=args.node_executable,
             git_executable=args.git_executable,
-            privacy_ref=args.privacy_ref,
         )
     return run_profile(
         args.profile,
         node_executable=args.node_executable,
         git_executable=args.git_executable,
-        privacy_ref=args.privacy_ref,
     )
 
 
