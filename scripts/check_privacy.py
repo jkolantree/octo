@@ -266,10 +266,10 @@ def load_policy(
             )
         )
     expected_exception = RetainedCommitAuthorException(
-        commit="fdfda14d1a0c90ec03b4cf844c91596e9a19dced",
+        commit="4135c705a14ea6628481798da123dc62bee40885",
         parents=(
-            "bcdd04575c88757241182f991c2877fb480369d2",
-            "287a02c7b576f3a052c70deb17a5f6a01add1e1c",
+            "f41b47bf0021648e6a389cb4feb6847b383a0ec9",
+            "3b0300d07062a57f8d4d132071471699904d67b3",
         ),
         subject=(
             "Merge pull request #35 from "
@@ -283,7 +283,7 @@ def load_policy(
     if tuple(exceptions) != (expected_exception,):
         raise ValueError("retained commit author exceptions have drifted")
     enforcement_base = raw["enforcement_base_commit"]
-    if enforcement_base != "2c611ab693f09bc2f3b5304f972d9a3b8a8f1969":
+    if enforcement_base != "0659a7c41732d62271a001fe30cf50745905940f":
         raise ValueError("privacy enforcement base commit has drifted")
     return Policy(
         version=raw["policy_version"],

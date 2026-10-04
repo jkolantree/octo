@@ -17,9 +17,9 @@ from scripts.check_privacy import (
 )
 
 
-RETAINED_MERGE = "fdfda14d1a0c90ec03b4cf844c91596e9a19dced"
-FIRST_PARENT = "bcdd04575c88757241182f991c2877fb480369d2"
-SECOND_PARENT = "287a02c7b576f3a052c70deb17a5f6a01add1e1c"
+RETAINED_MERGE = "4135c705a14ea6628481798da123dc62bee40885"
+FIRST_PARENT = "f41b47bf0021648e6a389cb4feb6847b383a0ec9"
+SECOND_PARENT = "3b0300d07062a57f8d4d132071471699904d67b3"
 SUBJECT = (
     "Merge pull request #35 from "
     "jkolantree/codex/gpt-v0.4.0-preview.2-minimal-integration"
@@ -112,6 +112,26 @@ class RetainedMergeIdentityTests(unittest.TestCase):
                     path.write_text(json.dumps(value) + "\n", encoding="utf-8", newline="\n")
                     with self.assertRaises(ValueError):
                         load_policy(transport_path=path)
+
+    def test_original_enforcement_base_is_rejected(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        raw = json.loads((root / "privacy-policy.json").read_text(encoding="utf-8"))
+        raw["enforcement_base_commit"] = "2c611ab693f09bc2f3b5304f972d9a3b8a8f1969"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "policy.json"
+            path.write_text(json.dumps(raw), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "enforcement base commit has drifted"):
+                load_policy(path=path)
+
+    def test_original_retained_merge_is_rejected(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        raw = json.loads((root / "privacy-commit-transport-policy.json").read_text(encoding="utf-8"))
+        raw["retained_commit_author_exceptions"][0]["commit"] = "fdfda14d1a0c90ec03b4cf844c91596e9a19dced"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "transport.json"
+            path.write_text(json.dumps(raw), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "retained commit author exceptions have drifted"):
+                load_policy(transport_path=path)
 
     def test_same_author_pair_on_an_ordinary_commit_fails(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

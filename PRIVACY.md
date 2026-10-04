@@ -22,29 +22,35 @@ python scripts/check_privacy.py --protected-history HEAD
 ```
 
 The protected-history mode checks every author and committer after the
-machine-registered enforcement base, not only the tip. Forensic review of the
-entire immutable ancestry remains available with `--history HEAD`.
+machine-registered enforcement base, not only the tip. Review of the entire reachable ancestry remains available with
+`--history HEAD`; historical identity names can still fail the current policy.
 Release construction additionally scans the generated wheel, source
 distribution, source bundle, conformance packet, SBOM, and publication files.
 Unsupported tracked binary formats and unreadable archives are blocking errors;
 silence is never treated as a privacy pass.
 
 One post-policy GitHub merge object is retained under an exact-object
-exception: commit `fdfda14d1a0c90ec03b4cf844c91596e9a19dced`. The policy binds
+exception: commit `4135c705a14ea6628481798da123dc62bee40885`. The policy binds
 its commit ID, both parents, subject, author pair, and GitHub committer pair.
 Its projected author name is not a declared project identity and is not
 accepted for any other commit, document, package, or publication field.
 
 ## Prospective enforcement boundary
 
-The immutable ancestry through commit
-`2c611ab693f09bc2f3b5304f972d9a3b8a8f1969` predates this policy and contains
-commit identities or addresses that do not satisfy the current GitHub-noreply
-contract. Those values are not added to the allowlist and a complete
-`--history HEAD` scan continues to report them. Rewriting that ancestry would
-also rewrite the released and tagged audit trail, so the CI-blocking guarantee
-is prospective from the registered base commit. Every later commit must pass,
-apart from the single exact retained merge object documented above.
+The ancestry through commit
+`0659a7c41732d62271a001fe30cf50745905940f` predates this policy. A metadata-only
+history migration replaced the owner's exposed personal email with the existing
+GitHub noreply identity. Historical names, dates, messages, and source trees were
+preserved. Some historical names remain outside the current allowlist, so a
+complete `--history HEAD` scan can still fail. They are not added to the allowlist.
+
+Protected-history enforcement retains the same boundary in the migrated graph.
+Every later commit must pass, apart from the single exact retained merge object
+documented above. Its commit and parent pins refer to the migrated objects;
+its identity exception is unchanged and is not reusable on other objects.
+
+See [History migration and historical evidence](docs/PRIVACY_HISTORY_MIGRATION.md)
+for the distinction between current-main checks and original-history attestations.
 
 ## Publication metadata
 
@@ -57,7 +63,7 @@ identifiers are removed by `scripts/sanitize_publications.py`.
 ## GitHub boundary
 
 The repository owner, pre-policy commit metadata, public activity timestamps,
-immutable commit and release history, and links between repositories owned by
+historical commit and release records, and links between repositories owned by
 the same GitHub account remain public GitHub metadata. This policy does not
 claim that a public GitHub account is unlinkable. It prevents new accidental
 real-world contact data and machine or credential leakage inside the project's

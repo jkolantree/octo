@@ -17,6 +17,6 @@
     "github-actions[bot]@users.noreply.github.com",
     "noreply@github.com"
   ],
-  "enforcement_base_commit": "2c611ab693f09bc2f3b5304f972d9a3b8a8f1969",
+  "enforcement_base_commit": "0659a7c41732d62271a001fe30cf50745905940f",
   "publication_pipeline_identity": "BSC publication pipeline"
 }

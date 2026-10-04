@@ -2,10 +2,10 @@
   "policy_version": "1.0.0",
   "retained_commit_author_exceptions": [
     {
-      "commit": "fdfda14d1a0c90ec03b4cf844c91596e9a19dced",
+      "commit": "4135c705a14ea6628481798da123dc62bee40885",
       "parents": [
-        "bcdd04575c88757241182f991c2877fb480369d2",
-        "287a02c7b576f3a052c70deb17a5f6a01add1e1c"
+        "f41b47bf0021648e6a389cb4feb6847b383a0ec9",
+        "3b0300d07062a57f8d4d132071471699904d67b3"
       ],
       "subject": "Merge pull request #35 from jkolantree/codex/gpt-v0.4.0-preview.2-minimal-integration",
       "author_identity": "jack",
